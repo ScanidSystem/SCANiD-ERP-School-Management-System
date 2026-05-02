@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Role } from "@/App";
 import { GraduationCap } from "lucide-react";
+import logo from "@/assets/SCANiD_Logo.png";
 
 interface LoginProps {
   onLogin: (user: any) => void;
@@ -39,7 +40,7 @@ export default function Login({ onLogin }: LoginProps) {
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-full flex items-center justify-center p-2">
             <img 
-              src="https://ais-dev-qbyadn55tzqynrpuxuan4r-416405542511.asia-southeast1.run.app/artifact/logo_scanid_logo.png" 
+              src={logo}
               alt="SCANID Logo" 
               className="h-auto w-full max-w-[200px]"
               referrerPolicy="no-referrer"
@@ -87,7 +88,7 @@ export default function Login({ onLogin }: LoginProps) {
           </form>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 text-center">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs">
             Secure, Encypted & Scalable School Management Solutions
           </p>
         </CardFooter>

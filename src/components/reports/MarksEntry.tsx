@@ -33,7 +33,25 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog";
 
-// Dynamic subjects configuration based on standard
+type SortDirection = 'asc' | 'desc';
+type SubjectSortMode = 'name' | 'entries';
+
+interface MarksStudent {
+  id: string;
+  grno: string;
+  name: string;
+  roll: string;
+  marks: string;
+}
+
+interface SortConfig {
+  key: keyof MarksStudent;
+  direction: SortDirection;
+}
+
+type SpreadsheetRow = Record<string, unknown>;
+
+// Centralized subject mapping keeps marks-entry options consistent for each standard.
 const SUBJECTS_BY_STANDARD: Record<string, string[]> = {
   "8th": ["Mathematics", "Science", "English", "Social Science", "Physical Education"],
   "9th": ["Advanced Mathematics", "Physics", "Chemistry", "Biology", "English Literature", "History"],
@@ -42,7 +60,7 @@ const SUBJECTS_BY_STANDARD: Record<string, string[]> = {
   "12th": ["Physics", "Chemistry", "Mathematics", "Biology", "Computer Science", "Economics", "Accounts"],
 };
 
-const INITIAL_STUDENTS = [
+const INITIAL_STUDENTS: MarksStudent[] = [
   { id: "1", grno: "GR001", name: "Alex James Johnson", roll: "101", marks: "" },
   { id: "2", grno: "GR002", name: "Sarah Anne Williams", roll: "102", marks: "" },
   { id: "3", grno: "GR003", name: "Michael Chen", roll: "103", marks: "" },
@@ -63,9 +81,9 @@ export default function MarksEntry() {
   const [persistentMarks, setPersistentMarks] = useState<Record<string, Record<string, string>>>({});
   
   // State for subject list sorting
-  const [subjectSortMode, setSubjectSortMode] = useState<'name' | 'entries'>('name');
+  const [subjectSortMode, setSubjectSortMode] = useState<SubjectSortMode>('name');
   
-  const [students, setStudents] = useState(INITIAL_STUDENTS);
+  const [students, setStudents] = useState<MarksStudent[]>(INITIAL_STUDENTS);
   const [newStudentName, setNewStudentName] = useState("");
   const [newStudentRoll, setNewStudentRoll] = useState("");
   const [newSubject, setNewSubject] = useState("");
@@ -73,43 +91,37 @@ export default function MarksEntry() {
   const [isUploading, setIsUploading] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
-  const [pendingUploadData, setPendingUploadData] = useState<any[]>([]);
+  const [pendingUploadData, setPendingUploadData] = useState<MarksStudent[]>([]);
   const marksFileInputRef = useRef<HTMLInputElement>(null);
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: 'roll',
     direction: 'asc',
   });
 
   const sortedStudents = useMemo(() => {
-    let sortableItems = [...students];
-    if (sortConfig.key && sortConfig.direction) {
-      sortableItems.sort((a, b) => {
-        let aValue: any = a[sortConfig.key as keyof typeof a];
-        let bValue: any = b[sortConfig.key as keyof typeof b];
+    const sortableItems = [...students];
+    sortableItems.sort((a, b) => {
+      let aValue: string | number = a[sortConfig.key];
+      let bValue: string | number = b[sortConfig.key];
 
-        // Handle numeric sorting for marks and roll
-        if (sortConfig.key === 'marks' || sortConfig.key === 'roll') {
-          aValue = aValue === "" ? -1 : Number(aValue);
-          bValue = bValue === "" ? -1 : Number(bValue);
-        } else {
-          aValue = String(aValue).toLowerCase();
-          bValue = String(bValue).toLowerCase();
-        }
+      // Roll numbers and marks are stored as strings for inputs, but sort numerically.
+      if (sortConfig.key === 'marks' || sortConfig.key === 'roll') {
+        aValue = aValue === "" ? -1 : Number(aValue);
+        bValue = bValue === "" ? -1 : Number(bValue);
+      } else {
+        aValue = String(aValue).toLowerCase();
+        bValue = String(bValue).toLowerCase();
+      }
 
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
     return sortableItems;
   }, [students, sortConfig]);
 
-  const requestSort = (key: string) => {
-    let direction: 'asc' | 'desc' = 'asc';
+  const requestSort = (key: keyof MarksStudent) => {
+    let direction: SortDirection = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
@@ -202,8 +214,9 @@ export default function MarksEntry() {
       return;
     }
 
-    const newStudent = {
+    const newStudent: MarksStudent = {
       id: Date.now().toString(),
+      grno: `GR-${newStudentRoll.trim()}`,
       name: newStudentName.trim(),
       roll: newStudentRoll.trim(),
       marks: ""
@@ -295,7 +308,7 @@ export default function MarksEntry() {
         const wb = XLSX.read(bstr, { type: "binary" });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws) as any[];
+        const data = XLSX.utils.sheet_to_json(ws) as SpreadsheetRow[];
 
         if (data.length === 0) {
           toast.error("The uploaded file is empty.");
@@ -303,12 +316,12 @@ export default function MarksEntry() {
           return;
         }
 
-        // Map data to students
-        // We look for columns like "roll", "roll_number", "marks", "score"
+        // Match imported rows to the active class list by roll number, then accept
+        // common marks column names so schools can use either CSV or Excel exports.
         const mappedData = students.map(s => {
           const row = data.find(item => {
             const rollKey = Object.keys(item).find(key => key.toLowerCase().includes("roll"));
-            return rollKey && item[rollKey].toString().trim() === s.roll.trim();
+            return rollKey && String(item[rollKey]).trim() === s.roll.trim();
           });
 
           if (row) {
@@ -319,7 +332,7 @@ export default function MarksEntry() {
             );
             return {
               ...s,
-              marks: marksKey ? row[marksKey].toString() : ""
+              marks: marksKey ? String(row[marksKey]) : ""
             };
           }
           return { ...s, marks: "" };

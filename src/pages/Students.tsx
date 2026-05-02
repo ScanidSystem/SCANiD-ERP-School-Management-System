@@ -11,9 +11,7 @@ import {
 import { 
   Card, 
   CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
+  CardHeader
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,9 +23,10 @@ import {
   MoreHorizontal, 
   Edit2, 
   Trash2,
-  Filter,
   Camera,
-  UserCircle
+  UserCircle,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -38,6 +37,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 import { 
   Dialog, 
@@ -59,7 +59,52 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 
-const studentsData = [
+interface Student {
+  id: string;
+  grno: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  name: string;
+  motherName: string;
+  address: string;
+  aadharCard: string;
+  birthDate: string;
+  roll: string;
+  standard: string;
+  section: string;
+  attendance: string;
+  performance: string;
+  photo: string;
+}
+
+type StudentFormData = Omit<Student, "id" | "name" | "photo">;
+type SpreadsheetRow = Record<string, unknown>;
+type SortDirection = "asc" | "desc";
+type StudentSortKey = "grno" | "roll" | "name" | "standard" | "birthDate" | "performance";
+
+interface StudentSortConfig {
+  key: StudentSortKey;
+  direction: SortDirection;
+}
+
+const DEFAULT_STUDENT_FORM: StudentFormData = {
+  grno: "",
+  firstName: "",
+  middleName: "",
+  lastName: "",
+  motherName: "",
+  address: "",
+  aadharCard: "",
+  birthDate: "",
+  roll: "",
+  standard: "10th",
+  section: "A",
+  attendance: "100%",
+  performance: "Excellent"
+};
+
+const studentsData: Student[] = [
   { 
     id: "1", 
     grno: "GR001",
@@ -75,7 +120,8 @@ const studentsData = [
     standard: "10th", 
     section: "A", 
     attendance: "94%", 
-    performance: "Excellent" 
+    performance: "Excellent",
+    photo: ""
   },
   { 
     id: "2", 
@@ -92,15 +138,20 @@ const studentsData = [
     standard: "10th", 
     section: "A", 
     attendance: "91%", 
-    performance: "Good" 
+    performance: "Good",
+    photo: ""
   },
 ];
 
-export default function Students({ user }: { user: any }) {
-  const [students, setStudents] = useState(studentsData.map(s => ({ ...s, photo: "" })));
+export default function Students({ user }: { user?: unknown }) {
+  const [students, setStudents] = useState<Student[]>(studentsData);
   const [search, setSearch] = useState("");
   const [standardFilter, setStandardFilter] = useState("all");
   const [sectionFilter, setSectionFilter] = useState("all");
+  const [sortConfig, setSortConfig] = useState<StudentSortConfig>({
+    key: "roll",
+    direction: "asc"
+  });
   
   const [uploadingStudentId, setUploadingStudentId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -109,35 +160,34 @@ export default function Students({ user }: { user: any }) {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const bulkFileInputRef = useRef<HTMLInputElement>(null);
-  const [newStudentFormData, setNewStudentFormData] = useState({
-    grno: "",
-    firstName: "",
-    middleName: "",
-    lastName: "",
-    motherName: "",
-    address: "",
-    aadharCard: "",
-    birthDate: "",
-    roll: "",
-    standard: "10th",
-    section: "A",
-    attendance: "100%",
-    performance: "Excellent"
-  });
+  const [newStudentFormData, setNewStudentFormData] = useState<StudentFormData>(DEFAULT_STUDENT_FORM);
+
+  const buildFullName = ({ firstName, middleName, lastName }: Pick<StudentFormData, "firstName" | "middleName" | "lastName">) =>
+    `${firstName} ${middleName} ${lastName}`.replace(/\s+/g, " ").trim();
+
+  const getCellValue = (row: SpreadsheetRow, ...keys: string[]) => {
+    for (const key of keys) {
+      const value = row[key];
+      if (value !== undefined && value !== null) return String(value).trim();
+    }
+    return "";
+  };
 
   const handleExport = () => {
-    toast.promise(new Promise((resolve) => setTimeout(resolve, 2000)), {
-      loading: "Preparing student export...",
-      success: "Students records exported to Excel successfully!",
-      error: "Export failed",
-    });
+    const exportRows = students.map(({ photo, ...student }) => student);
+    const worksheet = XLSX.utils.json_to_sheet(exportRows);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
+    XLSX.writeFile(workbook, `students_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    toast.success("Student records exported to Excel successfully.");
   };
 
   const handleImport = () => {
     setIsBulkUploadOpen(true);
   };
 
-  const validateStudentData = (data: any, isBulk = false) => {
+  const validateStudentData = (data: StudentFormData) => {
     const errors: string[] = [];
 
     if (!data.grno?.toString().trim()) errors.push("GRNO is required");
@@ -148,7 +198,7 @@ export default function Students({ user }: { user: any }) {
     if (!data.address?.toString().trim()) errors.push("Address is required");
     if (!data.birthDate) errors.push("Birth date is required");
     
-    // Aadhar Card Validation (12 digits)
+    // Government ID rule: store with spaces if entered, but validate the 12 digits only.
     const aadharClean = (data.aadharCard || "").toString().replace(/[\s-]/g, "");
     if (!aadharClean) {
       errors.push("Aadhar card is required");
@@ -156,7 +206,7 @@ export default function Students({ user }: { user: any }) {
       errors.push("Aadhar card must be exactly 12 digits");
     }
 
-    // Birth Date Validation (Must be in the past)
+    // Birth dates must be real dates and cannot be today or in the future.
     if (data.birthDate) {
       const bDate = new Date(data.birthDate);
       if (isNaN(bDate.getTime())) {
@@ -185,7 +235,7 @@ export default function Students({ user }: { user: any }) {
         const wb = XLSX.read(bstr, { type: "binary" });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws) as any[];
+        const data = XLSX.utils.sheet_to_json(ws) as SpreadsheetRow[];
 
         if (data.length === 0) {
           toast.error("The uploaded file is empty.");
@@ -193,36 +243,38 @@ export default function Students({ user }: { user: any }) {
           return;
         }
 
-        const validNewStudents: any[] = [];
+        const validNewStudents: Student[] = [];
         let duplicateCount = 0;
         let invalidCount = 0;
         const existingRolls = new Set(students.map(s => s.roll));
-        const existingGrnos = new Set(students.map(s => (s as any).grno));
+        const existingGrnos = new Set(students.map(s => s.grno));
 
         data.forEach((item, index) => {
-          const fName = item["First Name"] || item.firstName || item.name?.split(" ")[0] || "";
-          const mName = item["Middle Name"] || item.middleName || "";
-          const lName = item["Last Name"] || item.lastName || item.name?.split(" ").slice(1).join(" ") || "";
-          const rollValue = (item.Roll || item.roll || "").toString();
-          const grnoValue = (item.GRNO || item.grno || "").toString();
+          const importedName = getCellValue(item, "Name", "name");
+          const nameParts = importedName.split(" ").filter(Boolean);
+          const fName = getCellValue(item, "First Name", "firstName") || nameParts[0] || "";
+          const mName = getCellValue(item, "Middle Name", "middleName");
+          const lName = getCellValue(item, "Last Name", "lastName") || nameParts.slice(1).join(" ");
+          const rollValue = getCellValue(item, "Roll", "roll");
+          const grnoValue = getCellValue(item, "GRNO", "grno");
 
-          const studentObj = {
+          const studentObj: StudentFormData = {
             grno: grnoValue,
             firstName: fName,
             middleName: mName,
             lastName: lName,
-            motherName: item["Mother Name"] || item.motherName || "",
-            address: item.Address || item.address || "",
-            aadharCard: (item["Aadhar Card"] || item.aadharCard || "").toString(),
-            birthDate: item["Birth Date"] || item.birthDate || "",
+            motherName: getCellValue(item, "Mother Name", "motherName"),
+            address: getCellValue(item, "Address", "address"),
+            aadharCard: getCellValue(item, "Aadhar Card", "aadharCard"),
+            birthDate: getCellValue(item, "Birth Date", "birthDate"),
             roll: rollValue,
-            standard: (item.Standard || item.standard || "10th").toString(),
-            section: (item.Section || item.section || "A").toString(),
-            attendance: (item.Attendance || item.attendance || "100%").toString(),
-            performance: (item.Performance || item.performance || "Excellent").toString(),
+            standard: getCellValue(item, "Standard", "standard") || "10th",
+            section: getCellValue(item, "Section", "section") || "A",
+            attendance: getCellValue(item, "Attendance", "attendance") || "100%",
+            performance: getCellValue(item, "Performance", "performance") || "Excellent",
           };
 
-          const validation = validateStudentData(studentObj, true);
+          const validation = validateStudentData(studentObj);
           
           if (!validation.isValid) {
             invalidCount++;
@@ -237,7 +289,7 @@ export default function Students({ user }: { user: any }) {
           validNewStudents.push({
             ...studentObj,
             id: (Date.now() + index).toString(),
-            name: `${fName} ${mName} ${lName}`.replace(/\s+/g, ' ').trim(),
+            name: buildFullName(studentObj),
             photo: ""
           });
         });
@@ -313,13 +365,13 @@ export default function Students({ user }: { user: any }) {
       return;
     }
 
-    const grnoExists = students.some(s => (s as any).grno === newStudentFormData.grno.trim());
+    const grnoExists = students.some(s => s.grno === newStudentFormData.grno.trim());
     if (grnoExists) {
       toast.error("A student with this GRNO already exists");
       return;
     }
 
-    const fullName = `${newStudentFormData.firstName} ${newStudentFormData.middleName} ${newStudentFormData.lastName}`.replace(/\s+/g, ' ').trim();
+    const fullName = buildFullName(newStudentFormData);
 
     const newStudent = {
       ...newStudentFormData,
@@ -330,21 +382,7 @@ export default function Students({ user }: { user: any }) {
 
     setStudents(prev => [newStudent, ...prev]);
     setIsAddDialogOpen(false);
-    setNewStudentFormData({
-      grno: "",
-      firstName: "",
-      middleName: "",
-      lastName: "",
-      motherName: "",
-      address: "",
-      aadharCard: "",
-      birthDate: "",
-      roll: "",
-      standard: "10th",
-      section: "A",
-      attendance: "100%",
-      performance: "Excellent"
-    });
+    setNewStudentFormData(DEFAULT_STUDENT_FORM);
     toast.success(`Student ${newStudent.name} added successfully`);
   };
 
@@ -355,12 +393,47 @@ export default function Students({ user }: { user: any }) {
     }
   };
 
-  const filteredStudents = students.filter(s => {
-    const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.roll.includes(search);
-    const matchesStandard = standardFilter === "all" || s.standard === standardFilter;
-    const matchesSection = sectionFilter === "all" || s.section === sectionFilter;
-    return matchesSearch && matchesStandard && matchesSection;
-  });
+  const requestSort = (key: StudentSortKey) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc"
+    }));
+  };
+
+  const getSortValue = (student: Student, key: StudentSortKey) => {
+    if (key === "roll") return Number(student.roll) || 0;
+    if (key === "standard") return Number(student.standard.replace(/\D/g, "")) || 0;
+    if (key === "birthDate") return new Date(student.birthDate).getTime() || 0;
+    return student[key].toLowerCase();
+  };
+
+  const filteredStudents = students
+    .filter(s => {
+      const normalizedSearch = search.toLowerCase();
+      const matchesSearch =
+        s.name.toLowerCase().includes(normalizedSearch) ||
+        s.roll.includes(search) ||
+        s.grno.toLowerCase().includes(normalizedSearch);
+      const matchesStandard = standardFilter === "all" || s.standard === standardFilter;
+      const matchesSection = sectionFilter === "all" || s.section === sectionFilter;
+      return matchesSearch && matchesStandard && matchesSection;
+    })
+    .sort((a, b) => {
+      const aValue = getSortValue(a, sortConfig.key);
+      const bValue = getSortValue(b, sortConfig.key);
+
+      // String and numeric fields share the same comparator after normalization.
+      if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+
+  const renderSortIcon = (key: StudentSortKey) => {
+    if (sortConfig.key !== key) return <ChevronUp size={12} className="opacity-20" />;
+    return sortConfig.direction === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />;
+  };
+
+  const sortableHeaderClass = "cursor-pointer select-none hover:text-blue-600 transition-colors";
 
   return (
     <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
@@ -664,19 +737,43 @@ export default function Students({ user }: { user: any }) {
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50/50">
-                <TableHead className="w-[100px]">GRNO</TableHead>
-                <TableHead className="w-[80px]">Roll</TableHead>
-                <TableHead>Student Details</TableHead>
-                <TableHead>Standard</TableHead>
-                <TableHead>Personal Info</TableHead>
-                <TableHead>Performance</TableHead>
+                <TableHead className={cn("w-[100px]", sortableHeaderClass)} onClick={() => requestSort("grno")}>
+                  <div className="flex items-center gap-1">
+                    GRNO {renderSortIcon("grno")}
+                  </div>
+                </TableHead>
+                <TableHead className={cn("w-[80px]", sortableHeaderClass)} onClick={() => requestSort("roll")}>
+                  <div className="flex items-center gap-1">
+                    Roll {renderSortIcon("roll")}
+                  </div>
+                </TableHead>
+                <TableHead className={sortableHeaderClass} onClick={() => requestSort("name")}>
+                  <div className="flex items-center gap-1">
+                    Student Details {renderSortIcon("name")}
+                  </div>
+                </TableHead>
+                <TableHead className={sortableHeaderClass} onClick={() => requestSort("standard")}>
+                  <div className="flex items-center gap-1">
+                    Standard {renderSortIcon("standard")}
+                  </div>
+                </TableHead>
+                <TableHead className={sortableHeaderClass} onClick={() => requestSort("birthDate")}>
+                  <div className="flex items-center gap-1">
+                    Personal Info {renderSortIcon("birthDate")}
+                  </div>
+                </TableHead>
+                <TableHead className={sortableHeaderClass} onClick={() => requestSort("performance")}>
+                  <div className="flex items-center gap-1">
+                    Performance {renderSortIcon("performance")}
+                  </div>
+                </TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredStudents.map((student) => (
                 <TableRow key={student.id} className="hover:bg-slate-50 transition-colors">
-                  <TableCell className="font-mono text-xs font-bold text-blue-600">{(student as any).grno || student.id}</TableCell>
+                  <TableCell className="font-mono text-xs font-bold text-blue-600">{student.grno || student.id}</TableCell>
                   <TableCell className="font-mono text-xs font-bold text-slate-500">{student.roll}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -696,7 +793,7 @@ export default function Students({ user }: { user: any }) {
                       </div>
                       <div className="flex flex-col">
                         <span className="font-bold text-slate-900 leading-none mb-1">{student.name}</span>
-                        <span className="text-[10px] text-slate-400 font-medium">Mother: {(student as any).motherName || 'Not recorded'}</span>
+                        <span className="text-[10px] text-slate-400 font-medium">Mother: {student.motherName || 'Not recorded'}</span>
                       </div>
                     </div>
                   </TableCell>
@@ -709,10 +806,10 @@ export default function Students({ user }: { user: any }) {
                   <TableCell>
                     <div className="flex flex-col gap-1">
                       <span className="text-[10px] text-slate-600 flex items-center gap-1 font-medium">
-                        Birth: {(student as any).birthDate || 'N/A'}
+                        Birth: {student.birthDate || 'N/A'}
                       </span>
                       <span className="text-[10px] text-slate-500 truncate max-w-[150px]">
-                        {(student as any).address || 'No address'}
+                        {student.address || 'No address'}
                       </span>
                     </div>
                   </TableCell>
@@ -760,8 +857,4 @@ export default function Students({ user }: { user: any }) {
       </Card>
     </div>
   );
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(" ");
 }

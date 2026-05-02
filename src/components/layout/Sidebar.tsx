@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Role } from "@/App";
 import { motion } from "motion/react";
+import logo from "@/assets/SCANiD_Logo.png";
 
 interface SidebarProps {
   user: {
@@ -45,6 +46,15 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
   const filteredItems = menuItems.filter(item => item.roles.includes(user.role));
 
   return (
+    <div className="w-64 bg-slate-900 text-white h-full flex flex-col">
+      <div className="p-6 border-b border-slate-800">
+        <div className="flex items-center justify-center mb-2">
+          <img 
+            src={logo}
+            alt="SCANID Logo" 
+            className="h-auto w-full max-w-[140px]"
+            referrerPolicy="no-referrer"
+          />
     <motion.div 
       initial={false}
       animate={{ width: isCollapsed ? 80 : 256 }}
