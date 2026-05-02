@@ -8,13 +8,10 @@ import {
   CreditCard, 
   LogOut,
   Settings,
-  Bell,
   MessageSquare,
   UserCheck,
   ChevronLeft,
-  ChevronRight,
-  PanelLeftClose,
-  PanelLeftOpen
+  ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Role } from "@/App";
@@ -46,15 +43,6 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
   const filteredItems = menuItems.filter(item => item.roles.includes(user.role));
 
   return (
-    <div className="w-64 bg-slate-900 text-white h-full flex flex-col">
-      <div className="p-6 border-b border-slate-800">
-        <div className="flex items-center justify-center mb-2">
-          <img 
-            src={logo}
-            alt="SCANID Logo" 
-            className="h-auto w-full max-w-[140px]"
-            referrerPolicy="no-referrer"
-          />
     <motion.div 
       initial={false}
       animate={{ width: isCollapsed ? 80 : 256 }}
@@ -79,7 +67,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
             </div>
           ) : (
             <img 
-              src="https://ais-dev-qbyadn55tzqynrpuxuan4r-416405542511.asia-southeast1.run.app/artifact/logo_scanid_logo.png" 
+              src={logo}
               alt="SCANID Logo" 
               className="h-auto w-full max-w-[140px]"
               referrerPolicy="no-referrer"
