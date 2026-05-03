@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiService } from "@/lib/api";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -16,33 +18,70 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Calendar as CalendarIcon, Check, X, Clock, Save } from "lucide-react";
+import { Calendar as CalendarIcon, Check, X, Clock, Save, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-const initialStudents = [
-  { id: "1", grno: "GR001", name: "Alex James Johnson", roll: "101", status: "present" },
-  { id: "2", grno: "GR002", name: "Sarah Anne Williams", roll: "102", status: "present" },
-  { id: "3", grno: "GR003", name: "Michael Chen", roll: "103", status: "absent" },
-  { id: "4", grno: "GR004", name: "Emily Davis", roll: "104", status: "present" },
-  { id: "5", grno: "GR005", name: "David Miller", roll: "105", status: "late" },
-  { id: "6", grno: "GR006", name: "Jessica Taylor", roll: "106", status: "present" },
-];
-
 export default function Attendance({ user }: { user: any }) {
-  const [students, setStudents] = useState(initialStudents);
+  const [students, setStudents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [date, setDate] = useState(new Date());
 
+  const canManage = user.role === "superadmin" || user.role === "admin" || user.role === "teacher";
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      setLoading(true);
+      try {
+        const res = await apiService.getStudents(user.schoolId ? parseInt(user.schoolId) : undefined);
+        setStudents(res.data.map((s: any) => ({
+          id: s.id,
+          grno: s.registrationNumber,
+          name: s.fullName,
+          roll: s.rollNumber || "0",
+          status: "present" // Default to present
+        })));
+      } catch (error) {
+        toast.error("Failed to fetch students from API");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStudents();
+  }, [user.schoolId]);
+
   const updateStatus = (id: string, status: string) => {
+    if (!canManage) return;
     setStudents(prev => prev.map(s => s.id === id ? { ...s, status } : s));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const records = students.map(s => ({
+        studentId: s.id,
+        date: date.toISOString(),
+        status: s.status.charAt(0).toUpperCase() + s.status.slice(1),
+        markedByUserId: parseInt(user.id)
+      }));
+      
+      // In a real custom backend you'd have a bulk endpoint
+      // for this demo we assume the markAttendance takes either one or is handled by backend bulk
+      await apiService.markAttendance(records); 
+      toast.success("Attendance marked in database");
+    } catch (error) {
+      toast.error("Failed to save records to SQL Server");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Attendance Tracker</h1>
           <p className="text-slate-500 mt-1">Daily presence marking and reporting for all classes.</p>
         </div>
         <div className="flex items-center gap-3">
@@ -50,9 +89,16 @@ export default function Attendance({ user }: { user: any }) {
             <CalendarIcon size={16} className="text-slate-400" />
             <span className="text-sm font-semibold">{format(date, "PPP")}</span>
           </div>
-          <Button className="bg-emerald-600 hover:bg-emerald-700 gap-2">
-            <Save size={16} /> Save Changes
-          </Button>
+          {canManage && (
+            <Button 
+              className="bg-emerald-600 hover:bg-emerald-700 gap-2" 
+              onClick={handleSave}
+              disabled={isSaving || loading}
+            >
+              {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} 
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -118,67 +164,75 @@ export default function Attendance({ user }: { user: any }) {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px]">GRNO</TableHead>
-                  <TableHead className="w-16">Roll</TableHead>
-                  <TableHead>Student Name</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {students.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell className="font-mono text-[10px] font-bold text-blue-600">{(student as any).grno || `GR-${student.id}`}</TableCell>
-                    <TableCell className="font-mono text-xs font-bold text-slate-400">{student.roll}</TableCell>
-                    <TableCell className="font-semibold text-slate-900">{student.name}</TableCell>
-                    <TableCell>
-                      <Badge 
-                        className={cn(
-                          "capitalize",
-                          student.status === 'present' ? "bg-emerald-100 text-emerald-700" :
-                          student.status === 'absent' ? "bg-red-100 text-red-700" :
-                          "bg-amber-100 text-amber-700"
-                        )}
-                        variant="secondary"
-                      >
-                        {student.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button 
-                          size="icon" 
-                          variant={student.status === 'present' ? "default" : "outline"} 
-                          className={cn("h-8 w-8 rounded-full", student.status === 'present' && "bg-emerald-600 hover:bg-emerald-700")}
-                          onClick={() => updateStatus(student.id, 'present')}
-                        >
-                          <Check size={14} />
-                        </Button>
-                        <Button 
-                          size="icon" 
-                          variant={student.status === 'absent' ? "default" : "outline"}
-                          className={cn("h-8 w-8 rounded-full", student.status === 'absent' && "bg-red-600 hover:bg-red-700")}
-                          onClick={() => updateStatus(student.id, 'absent')}
-                        >
-                          <X size={14} />
-                        </Button>
-                        <Button 
-                          size="icon" 
-                          variant={student.status === 'late' ? "default" : "outline"}
-                          className={cn("h-8 w-8 rounded-full", student.status === 'late' && "bg-amber-500 hover:bg-amber-600")}
-                          onClick={() => updateStatus(student.id, 'late')}
-                        >
-                          <Clock size={14} />
-                        </Button>
-                      </div>
-                    </TableCell>
+            {loading ? (
+              <div className="flex items-center justify-center p-12">
+                <Loader2 size={32} className="animate-spin text-slate-400" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">GRNO</TableHead>
+                    <TableHead className="w-16">Roll</TableHead>
+                    <TableHead>Student Name</TableHead>
+                    <TableHead>Status</TableHead>
+                    {canManage && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {students.map((student) => (
+                    <TableRow key={student.id}>
+                      <TableCell className="font-mono text-[10px] font-bold text-blue-600">{(student as any).grno || `GR-${student.id}`}</TableCell>
+                      <TableCell className="font-mono text-xs font-bold text-slate-400">{student.roll}</TableCell>
+                      <TableCell className="font-semibold text-slate-900">{student.name}</TableCell>
+                      <TableCell>
+                        <Badge 
+                          className={cn(
+                            "capitalize",
+                            student.status === 'present' ? "bg-emerald-100 text-emerald-700" :
+                            student.status === 'absent' ? "bg-red-100 text-red-700" :
+                            "bg-amber-100 text-amber-700"
+                          )}
+                          variant="secondary"
+                        >
+                          {student.status}
+                        </Badge>
+                      </TableCell>
+                      {canManage && (
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button 
+                              size="icon" 
+                              variant={student.status === 'present' ? "default" : "outline"} 
+                              className={cn("h-8 w-8 rounded-full", student.status === 'present' && "bg-emerald-600 hover:bg-emerald-700")}
+                              onClick={() => updateStatus(student.id, 'present')}
+                            >
+                              <Check size={14} />
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              variant={student.status === 'absent' ? "default" : "outline"}
+                              className={cn("h-8 w-8 rounded-full", student.status === 'absent' && "bg-red-600 hover:bg-red-700")}
+                              onClick={() => updateStatus(student.id, 'absent')}
+                            >
+                              <X size={14} />
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              variant={student.status === 'late' ? "default" : "outline"}
+                              className={cn("h-8 w-8 rounded-full", student.status === 'late' && "bg-amber-500 hover:bg-amber-600")}
+                              onClick={() => updateStatus(student.id, 'late')}
+                            >
+                              <Clock size={14} />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

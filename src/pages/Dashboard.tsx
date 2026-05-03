@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { apiService } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
   Users, 
@@ -20,14 +22,11 @@ import {
   BarChart, 
   Bar 
 } from "recharts";
-import { Role } from "@/App";
+import { Role, User as UserType } from "@/App";
 import { cn } from "@/lib/utils";
 
 interface DashboardProps {
-  user: {
-    name: string;
-    role: Role;
-  };
+  user: UserType;
 }
 
 const performanceData = [
@@ -46,21 +45,46 @@ const attendanceData = [
 ];
 
 export default function Dashboard({ user }: DashboardProps) {
-  const isAdmin = user.role === "admin";
+  const isAdmin = user.role === "admin" || user.role === "superadmin";
   const isTeacher = user.role === "teacher";
   const navigate = useNavigate();
+  const [stats, setStats] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await apiService.getStats(user.schoolId ? parseInt(user.schoolId) : undefined);
+        setStats(res.data);
+      } catch (error) {
+        console.error("Dashboard error:", error);
+      }
+    };
+    fetchStats();
+  }, [user.schoolId]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Welcome back, {user.name}</h1>
-        <p className="text-slate-500 mt-1">Here's what's happening at your school today.</p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <p className="text-slate-500 mt-1">Here's what's happening at {user.schoolName || "your school"} today.</p>
+        </div>
+        {user.role === "superadmin" && (
+          <div className="bg-blue-50 border border-blue-100 px-4 py-2 rounded-xl flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-lg shadow-blue-200">
+              SA
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest text-[8px]">System Access</p>
+              <p className="text-sm font-bold text-blue-900">Super Admin View</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           title={isAdmin || isTeacher ? "Total Students" : "My Attendance"}
-          value={isAdmin || isTeacher ? "1,248" : "94%"}
+          value={stats?.totalStudents?.toLocaleString() || "..."}
           trend="+2.5%"
           icon={GraduationCap}
           color="bg-blue-100 text-blue-600"
@@ -68,7 +92,7 @@ export default function Dashboard({ user }: DashboardProps) {
         />
         <StatCard 
           title={isAdmin || isTeacher ? "Active Teachers" : "Class Rank"}
-          value={isAdmin || isTeacher ? "84" : "#4 / 42"}
+          value={stats?.totalTeachers?.toLocaleString() || "..."}
           trend="+4"
           icon={Users}
           color="bg-purple-100 text-purple-600"
@@ -76,7 +100,7 @@ export default function Dashboard({ user }: DashboardProps) {
         />
         <StatCard 
           title={isAdmin ? "Fee Collection" : "Upcoming Exams"}
-          value={isAdmin ? "$42.5k" : "3"}
+          value={stats?.feeCollection || "..."}
           trend={isAdmin ? "85% Paid" : "Next: Math"}
           icon={isAdmin ? DollarSign : BookOpen}
           color="bg-emerald-100 text-emerald-600"
@@ -84,7 +108,7 @@ export default function Dashboard({ user }: DashboardProps) {
         />
         <StatCard 
           title="Daily Attendance"
-          value="92%"
+          value={stats?.attendanceRate || "..."}
           trend="-1%"
           icon={CalendarCheck}
           color="bg-amber-100 text-amber-600"

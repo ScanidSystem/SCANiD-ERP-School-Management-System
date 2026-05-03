@@ -55,6 +55,7 @@ interface Message {
 
 interface Contact {
   id: string;
+  schoolId: string;
   name: string;
   role: string;
   avatar?: string;
@@ -65,12 +66,12 @@ interface Contact {
 }
 
 const contacts: Contact[] = [
-  { id: "1", name: "Prof. Robert Wilson", role: "Principal", status: "online", lastMessage: "Let's discuss the annual report.", unreadCount: 2, lastMessageTime: "10:30 AM" },
-  { id: "2", name: "Sarah Taylor", role: "Teacher", status: "offline", lastMessage: "The assignment grades are updated.", lastMessageTime: "Yesterday" },
-  { id: "3", name: "Michael David", role: "Student", status: "online", lastMessage: "Sir, I have a doubt in Physics.", lastMessageTime: "9:45 AM" },
-  { id: "4", name: "Grade 10-A Group", role: "Classroom", status: "online", lastMessage: "Exam schedule is out!", unreadCount: 5, lastMessageTime: "8:20 AM" },
-  { id: "5", name: "James Smith", role: "Parent", status: "away", lastMessage: "Thank you for the update.", lastMessageTime: "May 10" },
-  { id: "6", name: "Emily Brown", role: "Admin", status: "online", lastMessage: "Salary has been credited.", lastMessageTime: "May 09" },
+  { id: "1", schoolId: "SCH001", name: "Prof. Robert Wilson", role: "Principal", status: "online", lastMessage: "Let's discuss the annual report.", unreadCount: 2, lastMessageTime: "10:30 AM" },
+  { id: "2", schoolId: "SCH001", name: "Sarah Taylor", role: "Teacher", status: "offline", lastMessage: "The assignment grades are updated.", lastMessageTime: "Yesterday" },
+  { id: "3", schoolId: "SCH001", name: "Michael David", role: "Student", status: "online", lastMessage: "Sir, I have a doubt in Physics.", lastMessageTime: "9:45 AM" },
+  { id: "4", schoolId: "SCH001", name: "Grade 10-A Group", role: "Classroom", status: "online", lastMessage: "Exam schedule is out!", unreadCount: 5, lastMessageTime: "8:20 AM" },
+  { id: "5", schoolId: "SCH001", name: "James Smith", role: "Parent", status: "away", lastMessage: "Thank you for the update.", lastMessageTime: "May 10" },
+  { id: "6", schoolId: "SCH002", name: "Emily Brown", role: "Admin", status: "online", lastMessage: "Salary has been credited.", lastMessageTime: "May 09" },
 ];
 
 const initialMessages: Record<string, Message[]> = {
@@ -89,8 +90,18 @@ const initialMessages: Record<string, Message[]> = {
 };
 
 export default function Messages({ user }: { user: any }) {
-  const [allContacts, setAllContacts] = useState<Contact[]>(contacts);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(allContacts[0]);
+  const [allContacts, setAllContacts] = useState<Contact[]>(() => {
+    if (user.role === "superadmin") return contacts;
+    return contacts.filter(c => c.schoolId === user.schoolId);
+  });
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  
+  useEffect(() => {
+    if (allContacts.length > 0 && !selectedContact) {
+      setSelectedContact(allContacts[0]);
+    }
+  }, [allContacts]);
+
   const [messageText, setMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
@@ -261,12 +272,12 @@ export default function Messages({ user }: { user: any }) {
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <button className={cn(
+                  <div className={cn(
                     "flex items-center justify-center h-10 w-10 rounded-full transition-colors border-none bg-transparent outline-none cursor-pointer",
                     filterRole !== "all" ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-100"
                   )}>
                     <Filter size={18} />
-                  </button>
+                  </div>
                 }
               />
               <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl border-slate-100 shadow-2xl">
@@ -557,9 +568,9 @@ export default function Messages({ user }: { user: any }) {
                 <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
                   <PopoverTrigger
                     render={
-                      <button className="flex items-center justify-center h-9 w-9 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 border-none bg-transparent outline-none cursor-pointer">
+                      <div className="flex items-center justify-center h-9 w-9 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 border-none bg-transparent outline-none cursor-pointer">
                         <Smile size={18} />
-                      </button>
+                      </div>
                     }
                   />
                   <PopoverContent side="top" align="start" className="p-3 w-64 border-slate-100 shadow-2xl rounded-2xl">

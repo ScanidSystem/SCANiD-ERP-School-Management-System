@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 // Layout components
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
+import Breadcrumbs from "@/components/layout/Breadcrumbs";
 
 // Pages
 import Dashboard from "@/pages/Dashboard";
@@ -14,15 +15,20 @@ import Attendance from "@/pages/Attendance";
 import Fees from "@/pages/Fees";
 import Messages from "@/pages/Messages";
 import Teachers from "@/pages/Teachers";
+import Schools from "@/pages/Schools";
 import Login from "@/pages/Login";
 
-export type Role = "admin" | "teacher" | "parent" | "student";
+export type Role = "superadmin" | "admin" | "teacher" | "parent" | "student";
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
   role: Role;
+  schoolId?: string;
+  schoolName?: string;
+  academicYearId?: string;
+  academicYearName?: string;
 }
 
 export default function App() {
@@ -58,6 +64,7 @@ export default function App() {
         <Sidebar user={user} onLogout={() => { setUser(null); localStorage.removeItem("user"); }} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Navbar user={user} />
+          <Breadcrumbs />
           <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
             <Routes>
               <Route path="/" element={<Dashboard user={user} />} />
@@ -67,6 +74,7 @@ export default function App() {
               <Route path="/fees" element={<Fees user={user} />} />
               <Route path="/messages" element={<Messages user={user} />} />
               <Route path="/teachers" element={<Teachers user={user} />} />
+              <Route path="/schools" element={<Schools user={user} />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

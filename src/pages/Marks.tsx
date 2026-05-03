@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiService } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -9,7 +10,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Printer, Download, Eye, FileText, ChevronRight, BarChart3, Settings2, Edit3 } from "lucide-react";
+import { Printer, Download, Eye, FileText, ChevronRight, BarChart3, Settings2, Edit3, Loader2 } from "lucide-react";
 import { 
   Dialog, 
   DialogContent, 
@@ -23,26 +24,38 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ReportBuilder from "@/components/reports/ReportBuilder";
 import MarksEntry from "@/components/reports/MarksEntry";
 
-const marksData = [
-  { id: "1", student: "Alex Johnson", roll: "101", class: "10-A", total: "442/500", percentage: "88.4%", grade: "A", status: "Pass" },
-  { id: "2", student: "Sarah Williams", roll: "102", class: "10-A", total: "458/500", percentage: "91.6%", grade: "A+", status: "Pass" },
-  { id: "3", student: "Michael Chen", roll: "103", class: "10-B", total: "385/500", percentage: "77.0%", grade: "B+", status: "Pass" },
-  { id: "4", student: "Emily Davis", roll: "104", class: "9-A", total: "420/500", percentage: "84.0%", grade: "A", status: "Pass" },
-];
+import { User as UserType } from "@/App";
 
-export default function Marks({ user }: { user: any }) {
+export default function Marks({ user }: { user: UserType }) {
+  const [marks, setMarks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchMarks = async () => {
+      try {
+        const res = await apiService.getMarks(user.schoolId ? parseInt(user.schoolId) : undefined);
+        setMarks(res.data);
+      } catch (error) {
+        console.error("Marks error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMarks();
+  }, [user.schoolId]);
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-2 duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Academic Reports</h1>
           <p className="text-slate-500 mt-1">Generate, print and export student marksheets and performance cards.</p>
         </div>
-        <Button className="bg-slate-900 hover:bg-slate-800 gap-2">
-          <FileText size={16} /> Bulk Generate
-        </Button>
+        {(user.role === "superadmin" || user.role === "admin") && (
+          <Button className="bg-slate-900 hover:bg-slate-800 gap-2">
+            <FileText size={16} /> Bulk Generate
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="recent" className="w-full">
@@ -53,9 +66,11 @@ export default function Marks({ user }: { user: any }) {
           <TabsTrigger value="entry" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <Edit3 size={16} /> Marks Entry
           </TabsTrigger>
-          <TabsTrigger value="builder" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <Settings2 size={16} /> Custom Report Builder
-          </TabsTrigger>
+          {(user.role === "superadmin" || user.role === "admin") && (
+            <TabsTrigger value="builder" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <Settings2 size={16} /> Custom Report Builder
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="recent" className="space-y-6">
@@ -66,48 +81,50 @@ export default function Marks({ user }: { user: any }) {
                 <CardDescription>Final Term Examination - May 2024</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Student</TableHead>
-                      <TableHead>Total Marks</TableHead>
-                      <TableHead>Percentage</TableHead>
-                      <TableHead>Grade</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {marksData.map((result) => (
-                      <TableRow key={result.id}>
-                        <TableCell>
-                          <div className="font-semibold text-slate-900">{result.student}</div>
-                          <div className="text-xs text-slate-500">Roll: {result.roll} | Class: {result.class}</div>
-                        </TableCell>
-                        <TableCell className="font-medium">{result.total}</TableCell>
-                        <TableCell className="font-bold text-blue-600">{result.percentage}</TableCell>
-                        <TableCell>
-                          <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs">
-                            {result.grade}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Dialog>
-                            <DialogTrigger
-                              render={
-                                <Button variant="outline" size="sm" onClick={() => setSelectedStudent(result)}>
-                                  View Marksheet
-                                </Button>
-                              }
-                            />
-                            <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">
-                              <MarksheetView student={selectedStudent} />
-                            </DialogContent>
-                          </Dialog>
-                        </TableCell>
+                {loading ? (
+                   <div className="p-12 flex justify-center">
+                     <Loader2 className="animate-spin text-slate-300" size={32} />
+                   </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Student</TableHead>
+                        <TableHead>Score</TableHead>
+                        <TableHead>Term</TableHead>
+                        <TableHead>Exam</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {marks.map((result) => (
+                        <TableRow key={result.id}>
+                          <TableCell>
+                            <div className="font-semibold text-slate-900">{result.student?.fullName || "Student"}</div>
+                            <div className="text-xs text-slate-500">Roll: {result.student?.rollNumber}</div>
+                          </TableCell>
+                          <TableCell className="font-bold text-blue-600">{result.obtMarks} / {result.totalMarks}</TableCell>
+                          <TableCell className="text-sm text-slate-500 font-medium">{result.term}</TableCell>
+                          <TableCell className="text-sm font-semibold">{result.examName}</TableCell>
+                          <TableCell className="text-right">
+                            <Dialog>
+                              <DialogTrigger
+                                render={
+                                  <Button variant="outline" size="sm" onClick={() => setSelectedStudent(result)}>
+                                    View Marksheet
+                                  </Button>
+                                }
+                              />
+                              <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">
+                                <MarksheetView student={selectedStudent} />
+                              </DialogContent>
+                            </Dialog>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
 
@@ -170,7 +187,7 @@ export default function Marks({ user }: { user: any }) {
         </TabsContent>
 
         <TabsContent value="entry">
-          <MarksEntry />
+          <MarksEntry user={user} />
         </TabsContent>
       </Tabs>
     </div>
@@ -181,39 +198,35 @@ function MarksheetView({ student }: { student: any }) {
   if (!student) return null;
 
   const subjects = [
-    { name: "Mathematics", marks: 92, total: 100, grade: "A+" },
-    { name: "Science", marks: 88, total: 100, grade: "A" },
-    { name: "English", marks: 95, total: 100, grade: "A+" },
-    { name: "History", marks: 84, total: 100, grade: "A" },
-    { name: "Geography", marks: 83, total: 100, grade: "A" },
+    { name: "Mathematics", marks: student.obtMarks, total: student.totalMarks, grade: "A+" }
   ];
 
   return (
     <div className="p-6 bg-white space-y-8">
       <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6">
         <div>
-          <h2 className="text-2xl font-black uppercase tracking-tighter">EduFlow International School</h2>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Main Campus, Education District 102</p>
+          <h2 className="text-2xl font-black uppercase tracking-tighter">ScanID International School</h2>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Main Campus, Education District</p>
         </div>
         <div className="text-right">
           <Badge className="bg-slate-900 text-white">OFFICIAL MARKSHEET</Badge>
-          <p className="text-xs mt-2 font-mono">ID: {Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
+          <p className="text-xs mt-2 font-mono">ID: {student.id}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-8 text-sm">
         <div className="space-y-1">
           <p className="text-[10px] uppercase font-bold text-slate-400">Student Name</p>
-          <p className="font-bold text-lg">{student.student}</p>
+          <p className="font-bold text-lg">{student.student?.fullName}</p>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <p className="text-[10px] uppercase font-bold text-slate-400">Roll Number</p>
-            <p className="font-bold">{student.roll}</p>
+            <p className="font-bold">{student.student?.rollNumber}</p>
           </div>
           <div className="space-y-1">
             <p className="text-[10px] uppercase font-bold text-slate-400">Term</p>
-            <p className="font-bold">Final Term 2024</p>
+            <p className="font-bold">{student.term}</p>
           </div>
         </div>
       </div>
@@ -240,9 +253,9 @@ function MarksheetView({ student }: { student: any }) {
           ))}
           <TableRow className="bg-slate-900 text-white hover:bg-slate-900">
             <TableCell className="font-bold">Grand Total</TableCell>
-            <TableCell className="font-bold">500</TableCell>
-            <TableCell className="font-bold text-lg">442</TableCell>
-            <TableCell className="text-right font-black text-lg">88.4% (A)</TableCell>
+            <TableCell className="font-bold">{student.totalMarks}</TableCell>
+            <TableCell className="font-bold text-lg">{student.obtMarks}</TableCell>
+            <TableCell className="text-right font-black text-lg">{(student.obtMarks / student.totalMarks * 100).toFixed(1)}%</TableCell>
           </TableRow>
         </TableBody>
       </Table>

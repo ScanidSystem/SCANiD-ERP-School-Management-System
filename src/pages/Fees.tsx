@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+import { apiService } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -16,28 +18,52 @@ import {
   Plus,
   ArrowUpRight,
   History,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from "lucide-react";
-
-const feeHistory = [
-  { id: "1", grno: "GR001", student: "Alex James Johnson", type: "Tuition Fee", amount: "$1,200", date: "May 01, 2024", status: "Paid", method: "Online" },
-  { id: "2", grno: "GR002", student: "Sarah Anne Williams", type: "Transport Fee", amount: "$300", date: "Apr 28, 2024", status: "Paid", method: "Bank Transfer" },
-  { id: "3", grno: "GR003", student: "Michael Chen", type: "Tuition Fee", amount: "$1,200", date: "Apr 15, 2024", status: "Pending", method: "-" },
-  { id: "4", grno: "GR004", student: "Emily Davis", roll: "104", type: "Tuition Fee", amount: "$1,200", date: "May 05, 2024", status: "Paid", method: "Cash" },
-  { id: "5", grno: "GR005", student: "David Miller", type: "Late Fee", amount: "$50", date: "May 02, 2024", status: "Overdue", method: "-" },
-];
+import { Navigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 export default function Fees({ user }: { user: any }) {
+  const [fees, setFees] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const isManagement = user.role === "superadmin" || user.role === "admin";
+  const isParent = user.role === "parent";
+  
+  useEffect(() => {
+    const fetchFees = async () => {
+      try {
+        const res = await apiService.getFees(user.schoolId ? parseInt(user.schoolId) : undefined);
+        setFees(res.data);
+      } catch (error) {
+        console.error("Fees error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (isManagement) fetchFees();
+  }, [user.schoolId, isManagement]);
+
+  if (!isManagement && !isParent) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <div className="space-y-6 animate-in slide-in-from-top-4 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Fee Management</h1>
           <p className="text-slate-500 mt-1">Track payments, issue invoices and monitor financial health.</p>
         </div>
         <div className="flex items-center gap-2">
-            <Button variant="outline" className="gap-2"><History size={16} /> History</Button>
-            <Button className="bg-slate-900 hover:bg-slate-800 gap-2"><Plus size={16} /> Collect Fees</Button>
+            {isManagement && (
+              <>
+                <Button variant="outline" className="gap-2"><History size={16} /> History</Button>
+                <Button className="bg-slate-900 hover:bg-slate-800 gap-2"><Plus size={16} /> Collect Fees</Button>
+              </>
+            )}
+            {isParent && (
+              <Button className="bg-blue-600 hover:bg-blue-700 gap-2"><CreditCard size={16} /> Pay Online</Button>
+            )}
         </div>
       </div>
 
@@ -49,7 +75,7 @@ export default function Fees({ user }: { user: any }) {
           <CardContent>
             <div className="flex items-end justify-between">
                 <div>
-                    <h2 className="text-4xl font-black">$142,500</h2>
+                    <h2 className="text-4xl font-black">${fees.reduce((acc, curr) => acc + curr.paidAmount, 0).toLocaleString()}</h2>
                     <p className="text-blue-200 text-sm mt-1 flex items-center gap-1">
                         <ArrowUpRight size={14} /> 12% increase from last term
                     </p>
@@ -68,8 +94,8 @@ export default function Fees({ user }: { user: any }) {
           <CardContent>
             <div className="flex items-end justify-between">
                 <div>
-                    <h2 className="text-4xl font-black text-amber-400">$8,420</h2>
-                    <p className="text-slate-400 text-sm mt-1">From 24 students</p>
+                    <h2 className="text-4xl font-black text-amber-400">${fees.reduce((acc, curr) => acc + (curr.totalAmount - curr.paidAmount), 0).toLocaleString()}</h2>
+                    <p className="text-slate-400 text-sm mt-1">From {fees.length} students</p>
                 </div>
                 <div className="p-3 bg-slate-800 rounded-xl">
                     <AlertCircle size={24} className="text-amber-400" />
@@ -85,8 +111,8 @@ export default function Fees({ user }: { user: any }) {
           <CardContent>
             <div className="flex items-end justify-between">
                 <div>
-                    <h2 className="text-4xl font-black text-slate-900">$12,000</h2>
-                    <p className="text-slate-500 text-sm mt-1">Aiding 15 students</p>
+                    <h2 className="text-4xl font-black text-slate-900">$0</h2>
+                    <p className="text-slate-500 text-sm mt-1">Aiding students</p>
                 </div>
                 <div className="p-3 bg-slate-100 rounded-xl">
                     <CreditCard size={24} className="text-slate-600" />
@@ -107,54 +133,52 @@ export default function Fees({ user }: { user: any }) {
           </Button>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>GRNO</TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {feeHistory.map((fee) => (
-                <TableRow key={fee.id}>
-                  <TableCell className="font-mono text-[10px] font-bold text-blue-600">{(fee as any).grno || `GR-${fee.id}`}</TableCell>
-                  <TableCell className="font-semibold text-slate-900">{fee.student}</TableCell>
-                  <TableCell className="text-slate-500 text-sm">{fee.type}</TableCell>
-                  <TableCell className="font-bold">{fee.amount}</TableCell>
-                  <TableCell className="text-slate-500 text-sm">{fee.date}</TableCell>
-                  <TableCell className="text-slate-500 text-sm">{fee.method}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant="secondary"
-                      className={cn(
-                        "font-bold",
-                        fee.status === 'Paid' ? "bg-emerald-100 text-emerald-700" :
-                        fee.status === 'Pending' ? "bg-slate-100 text-slate-600" :
-                        "bg-red-100 text-red-700"
-                      )}
-                    >
-                      {fee.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" className="text-blue-600 font-bold">Print Receipt</Button>
-                  </TableCell>
+          {loading ? (
+             <div className="p-12 flex justify-center">
+               <Loader2 className="animate-spin text-slate-300" size={32} />
+             </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>GRNO</TableHead>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Term</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Paid</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {fees.map((fee) => (
+                  <TableRow key={fee.id}>
+                    <TableCell className="font-mono text-[10px] font-bold text-blue-600 italic">GR-{fee.studentId}</TableCell>
+                    <TableCell className="font-semibold text-slate-900">{fee.student?.fullName || "Student"}</TableCell>
+                    <TableCell className="text-slate-500 text-sm">{fee.term}</TableCell>
+                    <TableCell className="font-bold">${fee.totalAmount}</TableCell>
+                    <TableCell className="font-bold text-emerald-600">${fee.paidAmount}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant="secondary"
+                        className={cn(
+                          "font-bold",
+                          fee.status === 'Paid' ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
+                        )}
+                      >
+                        {fee.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" className="text-blue-600 font-bold">Print Receipt</Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
   );
-}
-
-function cn(...inputs: any[]) {
-    return inputs.filter(Boolean).join(" ");
 }

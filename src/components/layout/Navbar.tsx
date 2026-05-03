@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Bell, Search, User } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -20,11 +20,10 @@ import { useNavigate } from "react-router-dom";
 import { searchItems, SearchItem } from "@/lib/search-data";
 import { useRef, useEffect } from "react";
 
+import { Role, User as UserType } from "@/App";
+
 interface NavbarProps {
-  user: {
-    name: string;
-    role: string;
-  };
+  user: UserType;
 }
 
 export default function Navbar({ user }: NavbarProps) {
@@ -85,8 +84,28 @@ export default function Navbar({ user }: NavbarProps) {
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 shrink-0">
-      <div className="relative flex-1 max-w-md ml-4" ref={searchRef}>
-        <form onSubmit={handleSearch} className="flex items-center bg-slate-100 rounded-lg px-3 py-1 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+      <div className="flex items-center flex-1 gap-6">
+
+        <div className="flex items-center gap-2">
+          {user.schoolName && (
+            <div className="bg-slate-100 px-3 py-1 rounded-full flex items-center gap-2 border border-slate-200">
+              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse"></div>
+              <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider truncate max-w-[150px]">
+                {user.schoolName}
+              </span>
+            </div>
+          )}
+          {user.academicYearName && (
+            <div className="bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+              <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest whitespace-nowrap">
+                AY {user.academicYearName}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="relative flex-1 max-w-md ml-auto" ref={searchRef}>
+          <form onSubmit={handleSearch} className="flex items-center bg-slate-100 rounded-lg px-3 py-1 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
           <Search size={18} className="text-slate-400" />
           <Input 
             placeholder="Search students, classes, reports..." 
@@ -132,8 +151,9 @@ export default function Navbar({ user }: NavbarProps) {
           </div>
         )}
       </div>
+    </div>
 
-      <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -147,7 +167,7 @@ export default function Navbar({ user }: NavbarProps) {
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <button className={cn("flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-50 transition-colors text-slate-600 cursor-pointer border-none bg-transparent outline-none")}>
+              <div className={cn("flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-50 transition-colors text-slate-600 cursor-pointer border-none bg-transparent outline-none")}>
                 <div className="text-right hidden sm:block">
                   <p className="text-sm font-medium text-slate-900 leading-tight">{user.name}</p>
                   <p className="text-xs text-slate-500 capitalize">{user.role}</p>
@@ -157,7 +177,7 @@ export default function Navbar({ user }: NavbarProps) {
                     {user.name.split(" ").map(n => n[0]).join("")}
                   </AvatarFallback>
                 </Avatar>
-              </button>
+              </div>
             }
           />
           <DropdownMenuContent align="end" className="w-56">

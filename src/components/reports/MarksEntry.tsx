@@ -33,25 +33,9 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog";
 
-type SortDirection = 'asc' | 'desc';
-type SubjectSortMode = 'name' | 'entries';
+import { User as UserType } from "@/App";
 
-interface MarksStudent {
-  id: string;
-  grno: string;
-  name: string;
-  roll: string;
-  marks: string;
-}
-
-interface SortConfig {
-  key: keyof MarksStudent;
-  direction: SortDirection;
-}
-
-type SpreadsheetRow = Record<string, unknown>;
-
-// Centralized subject mapping keeps marks-entry options consistent for each standard.
+// Dynamic subjects configuration based on standard
 const SUBJECTS_BY_STANDARD: Record<string, string[]> = {
   "8th": ["Mathematics", "Science", "English", "Social Science", "Physical Education"],
   "9th": ["Advanced Mathematics", "Physics", "Chemistry", "Biology", "English Literature", "History"],
@@ -60,16 +44,16 @@ const SUBJECTS_BY_STANDARD: Record<string, string[]> = {
   "12th": ["Physics", "Chemistry", "Mathematics", "Biology", "Computer Science", "Economics", "Accounts"],
 };
 
-const INITIAL_STUDENTS: MarksStudent[] = [
-  { id: "1", grno: "GR001", name: "Alex James Johnson", roll: "101", marks: "" },
-  { id: "2", grno: "GR002", name: "Sarah Anne Williams", roll: "102", marks: "" },
-  { id: "3", grno: "GR003", name: "Michael Chen", roll: "103", marks: "" },
-  { id: "4", grno: "GR004", name: "Emily Davis", roll: "104", marks: "" },
-  { id: "5", grno: "GR005", name: "David Miller", roll: "105", marks: "" },
-  { id: "6", grno: "GR006", name: "Jessica Taylor", roll: "106", marks: "" },
+const INITIAL_STUDENTS = [
+  { id: "1", schoolId: "SCH001", grno: "GR001", name: "Alex James Johnson", roll: "101", marks: "" },
+  { id: "2", schoolId: "SCH001", grno: "GR002", name: "Sarah Anne Williams", roll: "102", marks: "" },
+  { id: "3", schoolId: "SCH002", grno: "GR003", name: "Michael Chen", roll: "103", marks: "" },
+  { id: "4", schoolId: "SCH001", grno: "GR004", name: "Emily Davis", roll: "104", marks: "" },
+  { id: "5", schoolId: "SCH001", grno: "GR005", name: "David Miller", roll: "105", marks: "" },
+  { id: "6", schoolId: "SCH002", grno: "GR006", name: "Jessica Taylor", roll: "106", marks: "" },
 ];
 
-export default function MarksEntry() {
+export default function MarksEntry({ user }: { user: UserType }) {
   const [standard, setStandard] = useState("10th");
   const [section, setSection] = useState("A");
   const [subject, setSubject] = useState("");
@@ -77,13 +61,19 @@ export default function MarksEntry() {
   const [maxMarks, setMaxMarks] = useState("100");
   const [customSubjects, setCustomSubjects] = useState<Record<string, string[]>>({});
   
+  const canManageSubjects = user.role === "superadmin" || user.role === "admin";
+  const canManageStudents = user.role === "superadmin" || user.role === "admin";
+  
   // Track marks per subject: { "Mathematics": { "1": "85", "2": "90" } }
   const [persistentMarks, setPersistentMarks] = useState<Record<string, Record<string, string>>>({});
   
   // State for subject list sorting
-  const [subjectSortMode, setSubjectSortMode] = useState<SubjectSortMode>('name');
+  const [subjectSortMode, setSubjectSortMode] = useState<'name' | 'entries'>('name');
   
-  const [students, setStudents] = useState<MarksStudent[]>(INITIAL_STUDENTS);
+  const [students, setStudents] = useState(() => {
+    if (user.role === "superadmin") return INITIAL_STUDENTS;
+    return INITIAL_STUDENTS.filter(s => s.schoolId === user.schoolId);
+  });
   const [newStudentName, setNewStudentName] = useState("");
   const [newStudentRoll, setNewStudentRoll] = useState("");
   const [newSubject, setNewSubject] = useState("");
@@ -91,37 +81,43 @@ export default function MarksEntry() {
   const [isUploading, setIsUploading] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
-  const [pendingUploadData, setPendingUploadData] = useState<MarksStudent[]>([]);
+  const [pendingUploadData, setPendingUploadData] = useState<any[]>([]);
   const marksFileInputRef = useRef<HTMLInputElement>(null);
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({
     key: 'roll',
     direction: 'asc',
   });
 
   const sortedStudents = useMemo(() => {
-    const sortableItems = [...students];
-    sortableItems.sort((a, b) => {
-      let aValue: string | number = a[sortConfig.key];
-      let bValue: string | number = b[sortConfig.key];
+    let sortableItems = [...students];
+    if (sortConfig.key && sortConfig.direction) {
+      sortableItems.sort((a, b) => {
+        let aValue: any = a[sortConfig.key as keyof typeof a];
+        let bValue: any = b[sortConfig.key as keyof typeof b];
 
-      // Roll numbers and marks are stored as strings for inputs, but sort numerically.
-      if (sortConfig.key === 'marks' || sortConfig.key === 'roll') {
-        aValue = aValue === "" ? -1 : Number(aValue);
-        bValue = bValue === "" ? -1 : Number(bValue);
-      } else {
-        aValue = String(aValue).toLowerCase();
-        bValue = String(bValue).toLowerCase();
-      }
+        // Handle numeric sorting for marks and roll
+        if (sortConfig.key === 'marks' || sortConfig.key === 'roll') {
+          aValue = aValue === "" ? -1 : Number(aValue);
+          bValue = bValue === "" ? -1 : Number(bValue);
+        } else {
+          aValue = String(aValue).toLowerCase();
+          bValue = String(bValue).toLowerCase();
+        }
 
-      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-      return 0;
-    });
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
     return sortableItems;
   }, [students, sortConfig]);
 
-  const requestSort = (key: keyof MarksStudent) => {
-    let direction: SortDirection = 'asc';
+  const requestSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
@@ -214,9 +210,8 @@ export default function MarksEntry() {
       return;
     }
 
-    const newStudent: MarksStudent = {
+    const newStudent = {
       id: Date.now().toString(),
-      grno: `GR-${newStudentRoll.trim()}`,
       name: newStudentName.trim(),
       roll: newStudentRoll.trim(),
       marks: ""
@@ -308,7 +303,7 @@ export default function MarksEntry() {
         const wb = XLSX.read(bstr, { type: "binary" });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws) as SpreadsheetRow[];
+        const data = XLSX.utils.sheet_to_json(ws) as any[];
 
         if (data.length === 0) {
           toast.error("The uploaded file is empty.");
@@ -316,12 +311,12 @@ export default function MarksEntry() {
           return;
         }
 
-        // Match imported rows to the active class list by roll number, then accept
-        // common marks column names so schools can use either CSV or Excel exports.
+        // Map data to students
+        // We look for columns like "roll", "roll_number", "marks", "score"
         const mappedData = students.map(s => {
           const row = data.find(item => {
             const rollKey = Object.keys(item).find(key => key.toLowerCase().includes("roll"));
-            return rollKey && String(item[rollKey]).trim() === s.roll.trim();
+            return rollKey && item[rollKey].toString().trim() === s.roll.trim();
           });
 
           if (row) {
@@ -332,7 +327,7 @@ export default function MarksEntry() {
             );
             return {
               ...s,
-              marks: marksKey ? String(row[marksKey]) : ""
+              marks: marksKey ? row[marksKey].toString() : ""
             };
           }
           return { ...s, marks: "" };
@@ -717,27 +712,29 @@ export default function MarksEntry() {
                   </SelectContent>
                 </Select>
                 
-                <div className="flex flex-1 gap-1">
-                  <div className="relative flex-1">
-                    <Input 
-                      placeholder="New Subject..." 
-                      value={newSubject}
-                      onChange={(e) => setNewSubject(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddSubject()}
-                      className="bg-white border-slate-200 h-9 text-xs pr-8"
-                    />
-                    <Plus className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={12} />
+                {canManageSubjects && (
+                  <div className="flex flex-1 gap-1">
+                    <div className="relative flex-1">
+                      <Input 
+                        placeholder="New Subject..." 
+                        value={newSubject}
+                        onChange={(e) => setNewSubject(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddSubject()}
+                        className="bg-white border-slate-200 h-9 text-xs pr-8"
+                      />
+                      <Plus className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={12} />
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleAddSubject}
+                      className="h-9 px-3 bg-blue-600 text-white hover:bg-blue-700 border-none font-bold text-xs"
+                      disabled={!newSubject.trim()}
+                    >
+                      Add
+                    </Button>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleAddSubject}
-                    className="h-9 px-3 bg-blue-600 text-white hover:bg-blue-700 border-none font-bold text-xs"
-                    disabled={!newSubject.trim()}
-                  >
-                    Add
-                  </Button>
-                </div>
+                )}
               </div>
             </div>
             <div className="space-y-1.5">
@@ -776,66 +773,68 @@ export default function MarksEntry() {
           </div>
 
           {/* Student List Management Section */}
-          <div className="mb-6 bg-slate-50/80 border border-slate-200 rounded-2xl p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200/60">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-blue-100 rounded-lg">
-                  <UserPlus size={16} className="text-blue-600" />
+          {canManageStudents && (
+            <div className="mb-6 bg-slate-50/80 border border-slate-200 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200/60">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-blue-100 rounded-lg">
+                    <UserPlus size={16} className="text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-800">Add New Student</h3>
+                    <p className="text-[10px] text-slate-500 font-medium tracking-tight">Expand your class list manually</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-black text-slate-800">Add New Student</h3>
-                  <p className="text-[10px] text-slate-500 font-medium tracking-tight">Expand your class list manually</p>
-                </div>
-              </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => {
-                  if (confirm("Are you sure you want to clear the entire student list? This will remove all currently entered marks for this subject.")) {
-                    setStudents([]);
-                    toast.success("Student list cleared");
-                  }
-                }}
-                className="text-red-500 hover:text-red-600 hover:bg-red-50 text-[10px] font-bold uppercase h-8"
-              >
-                Clear All Records
-              </Button>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1 space-y-1.5">
-                <Label htmlFor="std-name" className="text-[10px] uppercase font-black text-slate-400 ml-1">Student Full Name</Label>
-                <div className="relative">
-                  <Input 
-                    id="std-name"
-                    placeholder="e.g. John Doe"
-                    value={newStudentName}
-                    onChange={(e) => setNewStudentName(e.target.value)}
-                    className="bg-white border-slate-200 h-10 pl-9 transition-all focus:ring-2 focus:ring-blue-100"
-                  />
-                  <Edit3 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                </div>
-              </div>
-              <div className="sm:w-36 space-y-1.5">
-                <Label htmlFor="std-roll" className="text-[10px] uppercase font-black text-slate-400 ml-1">Roll Number</Label>
-                <Input 
-                  id="std-roll"
-                  placeholder="Roll No"
-                  value={newStudentRoll}
-                  onChange={(e) => setNewStudentRoll(e.target.value)}
-                  className="bg-white border-slate-200 h-10 font-mono text-sm transition-all focus:ring-2 focus:ring-blue-100"
-                />
-              </div>
-              <div className="flex items-end">
                 <Button 
-                  onClick={handleAddStudentManually}
-                  className="h-10 bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-100 gap-2 w-full sm:w-auto px-6 font-bold"
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => {
+                    if (confirm("Are you sure you want to clear the entire student list? This will remove all currently entered marks for this subject.")) {
+                      setStudents([]);
+                      toast.success("Student list cleared");
+                    }
+                  }}
+                  className="text-red-500 hover:text-red-600 hover:bg-red-50 text-[10px] font-bold uppercase h-8"
                 >
-                  <UserPlus size={16} /> Register Student
+                  Clear All Records
                 </Button>
               </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1 space-y-1.5">
+                  <Label htmlFor="std-name" className="text-[10px] uppercase font-black text-slate-400 ml-1">Student Full Name</Label>
+                  <div className="relative">
+                    <Input 
+                      id="std-name"
+                      placeholder="e.g. John Doe"
+                      value={newStudentName}
+                      onChange={(e) => setNewStudentName(e.target.value)}
+                      className="bg-white border-slate-200 h-10 pl-9 transition-all focus:ring-2 focus:ring-blue-100"
+                    />
+                    <Edit3 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                  </div>
+                </div>
+                <div className="sm:w-36 space-y-1.5">
+                  <Label htmlFor="std-roll" className="text-[10px] uppercase font-black text-slate-400 ml-1">Roll Number</Label>
+                  <Input 
+                    id="std-roll"
+                    placeholder="Roll No"
+                    value={newStudentRoll}
+                    onChange={(e) => setNewStudentRoll(e.target.value)}
+                    className="bg-white border-slate-200 h-10 font-mono text-sm transition-all focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button 
+                    onClick={handleAddStudentManually}
+                    className="h-10 bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-100 gap-2 w-full sm:w-auto px-6 font-bold"
+                  >
+                    <UserPlus size={16} /> Register Student
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
             <Table>
