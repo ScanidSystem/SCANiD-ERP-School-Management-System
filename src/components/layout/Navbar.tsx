@@ -20,7 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { searchItems, SearchItem } from "@/lib/search-data";
 import { useRef, useEffect } from "react";
 
-import { Role, User as UserType } from "@/App";
+import { Role, User as UserType } from "@/types";
 
 interface NavbarProps {
   user: UserType;

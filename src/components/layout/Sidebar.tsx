@@ -16,7 +16,7 @@ import {
   School,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Role } from "@/App";
+import { Role } from "@/types";
 import { motion, AnimatePresence } from "motion/react";
 
 interface SidebarProps {

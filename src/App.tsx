@@ -18,18 +18,7 @@ import Teachers from "@/pages/Teachers";
 import Schools from "@/pages/Schools";
 import Login from "@/pages/Login";
 
-export type Role = "superadmin" | "admin" | "teacher" | "parent" | "student";
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: Role;
-  schoolId?: string;
-  schoolName?: string;
-  academicYearId?: string;
-  academicYearName?: string;
-}
+import { Role, User } from "@/types";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);

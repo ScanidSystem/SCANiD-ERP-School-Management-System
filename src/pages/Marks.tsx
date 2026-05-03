@@ -24,7 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ReportBuilder from "@/components/reports/ReportBuilder";
 import MarksEntry from "@/components/reports/MarksEntry";
 
-import { User as UserType } from "@/App";
+import { User as UserType } from "@/types";
 
 export default function Marks({ user }: { user: UserType }) {
   const [marks, setMarks] = useState<any[]>([]);

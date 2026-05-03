@@ -22,7 +22,7 @@ import {
   BarChart, 
   Bar 
 } from "recharts";
-import { Role, User as UserType } from "@/App";
+import { Role, User as UserType } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface DashboardProps {

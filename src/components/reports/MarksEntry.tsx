@@ -33,7 +33,7 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog";
 
-import { User as UserType } from "@/App";
+import { User as UserType } from "@/types";
 
 // Dynamic subjects configuration based on standard
 const SUBJECTS_BY_STANDARD: Record<string, string[]> = {

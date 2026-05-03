@@ -117,7 +117,7 @@ const studentsData = [
   },
 ];
 
-import { User as UserType } from "@/App";
+import { User as UserType } from "@/types";
 
 export default function Students({ user }: { user: UserType }) {
   const [students, setStudents] = useState<any[]>([]);

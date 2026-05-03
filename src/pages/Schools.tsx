@@ -32,7 +32,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Navigate } from "react-router-dom";
-import { User as UserType } from "@/App";
+import { User as UserType } from "@/types";
 import { cn } from "@/lib/utils";
 
 export default function Schools({ user }: { user: UserType }) {
