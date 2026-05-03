@@ -101,7 +101,7 @@ export default function Login({ onLogin }: LoginProps) {
                   </Label>
                   <Select 
                     value={selectedSchool} 
-                    onValueChange={(v) => setSelectedSchool(v)}
+                    onValueChange={(v) => v && setSelectedSchool(v)}
                   >
                     <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white h-9 text-xs">
                       <SelectValue placeholder="Select School" />
@@ -128,7 +128,7 @@ export default function Login({ onLogin }: LoginProps) {
                 <Label className="text-slate-300 text-xs flex items-center gap-2">
                   <Calendar size={12} /> Academic Year
                 </Label>
-                <Select value={selectedYear} onValueChange={(v) => setSelectedYear(v)}>
+                <Select value={selectedYear} onValueChange={(v) => v && setSelectedYear(v)}>
                   <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white h-9 text-xs">
                     <SelectValue placeholder="Select Year" />
                   </SelectTrigger>
