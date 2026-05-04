@@ -48,6 +48,17 @@ Follow these steps to set up the application on your local machine with a .NET C
 ## 5. Mapping UI to Database
 The React frontend has been structured to call the API endpoints provided by the .NET backend. All "Master" data (Schools, Teachers, Students) are fetched dynamically from the SQL Server via the `StudentsController`, `SchoolsController`, etc.
 
-### Notes:
-- **Authentication**: The current setup uses a simplified login flow. You should implement JWT Authentication in the `AccountController` for production.
-- **CORS**: Ensure the `Program.cs` in the backend allows the origin of your React app (usually `http://localhost:3000` or `http://localhost:5173`).
+## 6. Debugging in VS Code
+I have added a `.vscode` folder with `launch.json` and `tasks.json` to make debugging easier.
+
+1. **Launch Backend**:
+   - Go to the **Run and Debug** tab in VS Code.
+   - Select **.NET Core Launch (Backend)** from the dropdown.
+   - Press **F5**. This will build the API and start it with the debugger attached.
+2. **Attach to existing process**:
+   - If you already ran `dotnet run`, use the **.NET Core Attach** configuration.
+
+## Troubleshooting
+- **CORS Errors**: If you see CORS errors in the browser, ensure your current React URL (e.g., `http://localhost:4173`) is listed in `Program.cs` under `.WithOrigins(...)`.
+- **Database Connection**: Ensure you have updated the `DefaultConnection` in `appsettings.json` and that your SQL Server is running.
+- **Backend Port**: The project is configured to run on `http://localhost:5000` via `Properties/launchSettings.json`. Ensure this matches your `VITE_API_BASE_URL` in the frontend `.env`.

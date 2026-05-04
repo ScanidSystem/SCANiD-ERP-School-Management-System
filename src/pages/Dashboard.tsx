@@ -49,8 +49,10 @@ export default function Dashboard({ user }: DashboardProps) {
   const isTeacher = user.role === "teacher";
   const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const fetchStats = async () => {
       try {
         const res = await apiService.getStats(user.schoolId ? parseInt(user.schoolId) : undefined);
@@ -135,48 +137,52 @@ export default function Dashboard({ user }: DashboardProps) {
             </div>
           </CardHeader>
           <CardContent className="h-80 w-full pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: "#94a3b8", fontSize: 12 }}
-                  dy={10}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: "#94a3b8", fontSize: 12 }}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: "#1e293b", 
-                    border: "none", 
-                    borderRadius: "8px",
-                    color: "#fff"
-                  }} 
-                  itemStyle={{ color: "#fff" }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="top" 
-                  stroke="#3b82f6" 
-                  strokeWidth={3} 
-                  dot={{ r: 4, fill: "#3b82f6", strokeWidth: 2, stroke: "#fff" }}
-                  activeDot={{ r: 6, strokeWidth: 0 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="avg" 
-                  stroke="#cbd5e1" 
-                  strokeWidth={3} 
-                  dot={{ r: 4, fill: "#cbd5e1", strokeWidth: 2, stroke: "#fff" }}
-                  activeDot={{ r: 6, strokeWidth: 0 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {isMounted ? (
+              <ResponsiveContainer width="100%" height="100%" debounce={100}>
+                <LineChart data={performanceData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: "#94a3b8", fontSize: 12 }}
+                    dy={10}
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: "#94a3b8", fontSize: 12 }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: "#1e293b", 
+                      border: "none", 
+                      borderRadius: "8px",
+                      color: "#fff"
+                    }} 
+                    itemStyle={{ color: "#fff" }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="top" 
+                    stroke="#3b82f6" 
+                    strokeWidth={3} 
+                    dot={{ r: 4, fill: "#3b82f6", strokeWidth: 2, stroke: "#fff" }}
+                    activeDot={{ r: 6, strokeWidth: 0 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="avg" 
+                    stroke="#cbd5e1" 
+                    strokeWidth={3} 
+                    dot={{ r: 4, fill: "#cbd5e1", strokeWidth: 2, stroke: "#fff" }}
+                    activeDot={{ r: 6, strokeWidth: 0 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full bg-slate-50 animate-pulse rounded-lg" />
+            )}
           </CardContent>
         </Card>
 
@@ -186,26 +192,30 @@ export default function Dashboard({ user }: DashboardProps) {
             <CardDescription>Daily student presence</CardDescription>
           </CardHeader>
           <CardContent className="h-80 w-full pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={attendanceData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="day" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: "#94a3b8", fontSize: 12 }}
-                  dy={10}
-                />
-                <YAxis hide />
-                <Tooltip cursor={{ fill: '#f8fafc' }} />
-                <Bar 
-                  dataKey="attendance" 
-                  fill="#1e293b" 
-                  radius={[4, 4, 0, 0]} 
-                  barSize={40}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            {isMounted ? (
+              <ResponsiveContainer width="100%" height="100%" debounce={100}>
+                <BarChart data={attendanceData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis 
+                    dataKey="day" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: "#94a3b8", fontSize: 12 }}
+                    dy={10}
+                  />
+                  <YAxis hide />
+                  <Tooltip cursor={{ fill: '#f8fafc' }} />
+                  <Bar 
+                    dataKey="attendance" 
+                    fill="#1e293b" 
+                    radius={[4, 4, 0, 0]} 
+                    barSize={40}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full bg-slate-50 animate-pulse rounded-lg" />
+            )}
           </CardContent>
         </Card>
       </div>
