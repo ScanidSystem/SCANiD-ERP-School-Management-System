@@ -45,6 +45,7 @@ api.interceptors.response.use(
 export const apiService = {
   // Auth
   login: (credentials: any) => api.post('/auth/login', credentials),
+  forgotPassword: (username: string) => api.post('/auth/forgot-password', { username }),
 
   // Students
   getStudents: (schoolId?: number) => api.get('/students', { params: { schoolId } }),
