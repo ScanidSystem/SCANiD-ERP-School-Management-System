@@ -92,6 +92,24 @@ namespace ScanID.Api.Models
         public Student? Student { get; set; }
     }
 
+    public class Teacher
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public int SchoolId { get; set; }
+        public string EmployeeId { get; set; } = string.Empty;
+        public string? Department { get; set; }
+        public string? Qualification { get; set; }
+        public string? ContactNumber { get; set; }
+        public string Status { get; set; } = "Active";
+
+        [ForeignKey("UserId")]
+        public User? User { get; set; }
+
+        [ForeignKey("SchoolId")]
+        public School? School { get; set; }
+    }
+
     public class Message
     {
         public int Id { get; set; }

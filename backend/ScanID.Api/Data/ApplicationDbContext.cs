@@ -16,6 +16,7 @@ namespace ScanID.Api.Data
         public DbSet<Attendance> Attendance { get; set; }
         public DbSet<Fee> Fees { get; set; }
         public DbSet<Mark> Marks { get; set; }
+        public DbSet<Teacher> Teachers { get; set; }
         public DbSet<Message> Messages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
