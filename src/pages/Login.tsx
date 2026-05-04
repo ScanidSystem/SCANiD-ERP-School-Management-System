@@ -20,25 +20,26 @@ interface LoginProps {
 }
 
 const MOCK_SCHOOLS = [
-  { id: "sch_01", name: "Green Valley High School" },
-  { id: "sch_02", name: "St. Xavier's International" },
-  { id: "sch_03", name: "Oakridge Academy" },
+  { id: "1", name: "Green Valley High School" },
+  { id: "2", name: "St. Xavier's International" },
+  { id: "3", name: "Oakridge Academy" },
 ];
 
 const MOCK_YEARS = [
-  { id: "yr_2425", name: "2024-2025" },
-  { id: "yr_2526", name: "2025-2026" },
-  { id: "yr_2627", name: "2026-2027" },
+  { id: "1", name: "2024-2025" },
+  { id: "2", name: "2025-2026" },
+  { id: "3", name: "2026-2027" },
 ];
 
 export default function Login({ onLogin }: LoginProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("admin");
-  const [selectedSchool, setSelectedSchool] = useState(MOCK_SCHOOLS[0].id);
-  const [selectedYear, setSelectedYear] = useState(MOCK_YEARS[0].id);
+  const [selectedSchool, setSelectedSchool] = useState("1");
+  const [selectedYear, setSelectedYear] = useState("1");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    const isAll = selectedSchool === "all";
     const school = MOCK_SCHOOLS.find(s => s.id === selectedSchool);
     const year = MOCK_YEARS.find(y => y.id === selectedYear);
 
@@ -47,8 +48,8 @@ export default function Login({ onLogin }: LoginProps) {
       name: email.split("@")[0] || "Demo User",
       email: email || "demo@school.com",
       role: role,
-      schoolId: role === "superadmin" ? undefined : selectedSchool,
-      schoolName: role === "superadmin" ? "All Schools" : school?.name,
+      schoolId: isAll ? undefined : selectedSchool,
+      schoolName: isAll ? "All Schools" : school?.name,
       academicYearId: selectedYear,
       academicYearName: year?.name
     };
@@ -100,6 +101,7 @@ export default function Login({ onLogin }: LoginProps) {
                     <School size={12} /> Target School
                   </Label>
                   <Select 
+                    defaultValue="all"
                     value={selectedSchool} 
                     onValueChange={(v) => v && setSelectedSchool(v)}
                   >
@@ -107,6 +109,7 @@ export default function Login({ onLogin }: LoginProps) {
                       <SelectValue placeholder="Select School" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                      <SelectItem value="all" className="text-xs font-bold text-blue-400">All Schools (System-wide)</SelectItem>
                       {MOCK_SCHOOLS.map(s => (
                         <SelectItem key={s.id} value={s.id} className="text-xs">{s.name}</SelectItem>
                       ))}

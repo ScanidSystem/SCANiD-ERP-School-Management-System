@@ -184,17 +184,28 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
         "p-3 border-t border-slate-800/50 space-y-1.5",
         isCollapsed && "px-3"
       )}>
-        <button 
+        <Link 
+          to="/settings"
           className={cn(
             "w-full flex items-center px-3 py-2.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-xl transition-all group relative h-11",
+            location.pathname === "/settings" && "bg-blue-600/10 text-blue-400",
             isCollapsed && "justify-center"
           )}
         >
+          {location.pathname === "/settings" && (
+            <motion.div 
+              layoutId="active-nav-bottom"
+              className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full"
+            />
+          )}
           <div className="flex items-center justify-center shrink-0 group-hover:rotate-45 transition-transform duration-300">
             <Settings size={20} />
           </div>
           {!isCollapsed && (
-            <span className="ml-3 font-semibold text-sm tracking-tight">Settings</span>
+            <span className={cn(
+              "ml-3 font-semibold text-sm tracking-tight",
+              location.pathname === "/settings" ? "text-slate-100" : "text-slate-400"
+            )}>Settings</span>
           )}
           {isCollapsed && (
             <div className="fixed left-[88px] bg-slate-800 text-white px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all translate-x-2 group-hover:translate-x-0 z-[100] shadow-2xl border border-slate-700/50 backdrop-blur-md">
@@ -202,7 +213,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45 border-l border-b border-slate-700/50" />
             </div>
           )}
-        </button>
+        </Link>
         <button 
           onClick={onLogout}
           className={cn(

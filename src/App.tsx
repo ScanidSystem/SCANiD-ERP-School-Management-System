@@ -17,6 +17,8 @@ import Messages from "@/pages/Messages";
 import Teachers from "@/pages/Teachers";
 import Schools from "@/pages/Schools";
 import Login from "@/pages/Login";
+import Profile from "@/pages/Profile";
+import Settings from "@/pages/Settings";
 
 import { Role, User } from "@/types";
 
@@ -32,6 +34,11 @@ export default function App() {
     }
     setLoading(false);
   }, []);
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem("user");
+  };
 
   if (loading) return <div className="h-screen w-screen flex items-center justify-center">Loading...</div>;
 
@@ -50,9 +57,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="flex h-screen bg-slate-50">
-        <Sidebar user={user} onLogout={() => { setUser(null); localStorage.removeItem("user"); }} />
+        <Sidebar user={user} onLogout={handleLogout} />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Navbar user={user} />
+          <Navbar user={user} onLogout={handleLogout} />
           <Breadcrumbs />
           <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
             <Routes>
@@ -64,6 +71,8 @@ export default function App() {
               <Route path="/messages" element={<Messages user={user} />} />
               <Route path="/teachers" element={<Teachers user={user} />} />
               <Route path="/schools" element={<Schools user={user} />} />
+              <Route path="/profile" element={<Profile user={user} />} />
+              <Route path="/settings" element={<Settings user={user} />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

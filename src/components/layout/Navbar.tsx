@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, User, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -24,9 +24,10 @@ import { Role, User as UserType } from "@/types";
 
 interface NavbarProps {
   user: UserType;
+  onLogout: () => void;
 }
 
-export default function Navbar({ user }: NavbarProps) {
+export default function Navbar({ user, onLogout }: NavbarProps) {
   const [search, setSearch] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [filteredResults, setFilteredResults] = useState<SearchItem[]>([]);
@@ -180,15 +181,39 @@ export default function Navbar({ user }: NavbarProps) {
               </div>
             }
           />
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">Logout</DropdownMenuItem>
-            </DropdownMenuGroup>
+          <DropdownMenuContent align="end" className="w-64 p-0 overflow-hidden" forceMount>
+            <div className="flex items-center gap-3 p-4 bg-slate-50/50 border-b border-slate-100">
+              <Avatar className="h-10 w-10 border border-white shadow-sm shrink-0">
+                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} />
+                <AvatarFallback className="bg-blue-600 text-white">
+                  {user.name.split(" ").map(n => n[0]).join("")}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col space-y-0.5 min-w-0">
+                <p className="text-sm font-bold text-slate-900 truncate leading-none">{user.name}</p>
+                <p className="text-[11px] text-slate-500 truncate leading-none">{user.email}</p>
+              </div>
+            </div>
+            <div className="p-1.5">
+              <DropdownMenuGroup>
+                <DropdownMenuItem className="cursor-pointer gap-3 py-2.5 rounded-md px-3 text-sm font-medium" onClick={() => navigate("/profile")}>
+                  <User size={16} className="text-slate-400" />
+                  <span>My Account</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer gap-3 py-2.5 rounded-md px-3 text-sm font-medium" onClick={() => navigate("/settings")}>
+                  <SettingsIcon size={16} className="text-slate-400" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator className="my-1.5 mx-1" />
+              <DropdownMenuItem 
+                className="text-red-600 cursor-pointer gap-3 py-2.5 rounded-md px-3 text-sm font-bold hover:bg-red-50 hover:text-red-700" 
+                onClick={onLogout}
+              >
+                <LogOut size={16} />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
