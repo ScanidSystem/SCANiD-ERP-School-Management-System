@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Role, User } from "@/types";
 import { GraduationCap, School, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiService } from "@/lib/api";
 import { 
   Select, 
   SelectContent, 
@@ -33,28 +34,55 @@ const MOCK_YEARS = [
 
 export default function Login({ onLogin }: LoginProps) {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("admin123"); // Default for convenience
   const [role, setRole] = useState<Role>("admin");
+  const [loading, setLoading] = useState(false);
+  const [errorVisible, setErrorVisible] = useState<string | null>(null);
   const [selectedSchool, setSelectedSchool] = useState("1");
   const [selectedYear, setSelectedYear] = useState("1");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const isAll = selectedSchool === "all";
-    const school = MOCK_SCHOOLS.find(s => s.id === selectedSchool);
-    const year = MOCK_YEARS.find(y => y.id === selectedYear);
+    setLoading(true);
+    setErrorVisible(null);
 
-    const mockUser: User = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: email.split("@")[0] || "Demo User",
-      email: email || "demo@school.com",
-      role: role,
-      schoolId: isAll ? undefined : selectedSchool,
-      schoolName: isAll ? "All Schools" : school?.name,
-      academicYearId: selectedYear,
-      academicYearName: year?.name
-    };
-    localStorage.setItem("user", JSON.stringify(mockUser));
-    onLogin(mockUser);
+    try {
+      const response = await apiService.login({
+        email,
+        password,
+        role,
+        schoolId: parseInt(selectedSchool)
+      });
+      
+      const user = response.data;
+      localStorage.setItem("user", JSON.stringify(user));
+      onLogin(user);
+    } catch (err: any) {
+      console.error("Login Error:", err);
+      setErrorVisible("Could not connect to local API. Ensure backend is running at http://localhost:5000");
+      
+      // FALLBACK for development if API is offline
+      if (import.meta.env.DEV) {
+        console.warn("API Offline - Using dev fallback");
+        const isAll = selectedSchool === "all";
+        const school = MOCK_SCHOOLS.find(s => s.id === selectedSchool);
+        const year = MOCK_YEARS.find(y => y.id === selectedYear);
+        const mockUser: User = {
+          id: "demo-" + Math.random().toString(36).substr(2, 4),
+          name: email.split("@")[0] || "Demo User",
+          email: email || "demo@school.com",
+          role: role,
+          schoolId: isAll ? undefined : selectedSchool,
+          schoolName: isAll ? "All Schools" : school?.name,
+          academicYearId: selectedYear,
+          academicYearName: year?.name
+        };
+        localStorage.setItem("user", JSON.stringify(mockUser));
+        onLogin(mockUser);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,6 +109,11 @@ export default function Login({ onLogin }: LoginProps) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
+            {errorVisible && (
+              <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-xs text-center font-medium animate-in fade-in slide-in-from-top-1">
+                {errorVisible}
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-slate-300 text-xs">Email Address</Label>
               <Input 
@@ -180,8 +213,12 @@ export default function Login({ onLogin }: LoginProps) {
               </div>
             </div>
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white h-11 text-base font-bold shadow-lg shadow-blue-500/20 mt-4 uppercase tracking-widest">
-              Sign In to Portal
+            <Button 
+              type="submit" 
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white h-11 text-base font-bold shadow-lg shadow-blue-500/20 mt-4 uppercase tracking-widest disabled:opacity-50"
+            >
+              {loading ? "Verifying..." : "Sign In to Portal"}
             </Button>
           </form>
         </CardContent>
