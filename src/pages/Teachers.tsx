@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DeleteConfirmation } from "@/components/shared/DeleteConfirmation";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -85,6 +86,8 @@ export default function Teachers({ user }: { user: any }) {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteInfo, setDeleteInfo] = useState<{ id: string; name: string } | null>(null);
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: keyof Teacher; direction: "asc" | "desc" } | null>(null);
@@ -230,7 +233,7 @@ export default function Teachers({ user }: { user: any }) {
     try {
       const payload = {
         schoolId: parseInt(formData.schoolId),
-        employeeId: `EMP-${Date.now()}`,
+        employeeId: isEditing ? selectedTeacher?.employeeId : `EMP-${Date.now()}`,
         designation: "Faculty",
         department: formData.subject,
         qualification: formData.qualification,
@@ -245,13 +248,40 @@ export default function Teachers({ user }: { user: any }) {
         }
       };
 
-      await apiService.createTeacher(payload as any); // Assuming endpoint exists or mapping to correct payload
-      toast.success("Teacher profile saved to database");
+      if (isEditing && selectedTeacher) {
+        await apiService.updateTeacher(parseInt(selectedTeacher.id), payload as any);
+        toast.success("Teacher profile updated successfully");
+      } else {
+        await apiService.createTeacher(payload as any);
+        toast.success("Teacher profile saved to database");
+      }
+      
       setIsAddDialogOpen(false);
       resetForm();
       fetchTeachers();
     } catch (error) {
       toast.error("Failed to save to database");
+    }
+  };
+
+  const handleDeleteTeacher = (id: string, name: string) => {
+    setDeleteInfo({ id, name });
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteInfo) return;
+    setLoading(true);
+    try {
+      await apiService.deleteTeacher(parseInt(deleteInfo.id));
+      setTeachers(prev => prev.filter(t => t.id !== deleteInfo.id));
+      toast.success(`${deleteInfo.name} removed successfully`);
+      setIsDeleteDialogOpen(false);
+      setDeleteInfo(null);
+    } catch (error) {
+      toast.error("Failed to delete record");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -263,6 +293,14 @@ export default function Teachers({ user }: { user: any }) {
         </div>
         {isAdmin && (
           <Dialog open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if(!open) resetForm(); else fetchSchools(); }}>
+            <DeleteConfirmation 
+              isOpen={isDeleteDialogOpen}
+              onClose={() => setIsDeleteDialogOpen(false)}
+              onConfirm={confirmDelete}
+              loading={loading && isDeleteDialogOpen}
+              title="Remove Faculty Member?"
+              description={`This will permanently delete ${deleteInfo?.name}'s profile and employment records. Access to the portal for this user will be revoked.`}
+            />
             <DialogTrigger
               render={
                 <div className="flex items-center justify-center gap-2 h-10 px-6 rounded-md bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 text-white border-none outline-none cursor-pointer font-bold text-sm">
@@ -562,7 +600,8 @@ export default function Teachers({ user }: { user: any }) {
                       Credentials <ChevronDown size={14} className={cn("transition-transform", sortConfig?.key === 'qualification' && sortConfig.direction === 'desc' && "rotate-180")} />
                     </div>
                   </TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest text-right pr-8">Status</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Status</TableHead>
+                  <TableHead className="text-right pr-8 text-xs font-black text-slate-500 uppercase tracking-widest">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -590,13 +629,56 @@ export default function Teachers({ user }: { user: any }) {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs text-slate-500 italic">{teacher.qualification}</TableCell>
-                    <TableCell className="text-right pr-8">
+                    <TableCell>
                       <Badge className={cn(
                         "font-black text-[10px] uppercase tracking-wider",
                         teacher.status === "Active" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
                       )} variant="outline">
                         {teacher.status}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-right pr-8">
+                       <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <div className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-600 transition-colors cursor-pointer outline-none">
+                              <MoreHorizontal size={16} />
+                            </div>
+                          }
+                        />
+                        <DropdownMenuContent align="end" className="rounded-2xl border-slate-200 shadow-2xl p-2 min-w-[200px]">
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem className="gap-3 py-2.5 rounded-xl cursor-pointer" onClick={() => {
+                              setSelectedTeacher(teacher);
+                              setIsEditing(true);
+                              const names = teacher.fullName.split(' ');
+                              setFormData({
+                                firstName: names[0],
+                                lastName: names.slice(-1)[0],
+                                middleName: names.length > 2 ? names.slice(1, -1).join(' ') : "",
+                                email: teacher.email,
+                                phone: teacher.phone,
+                                qualification: teacher.qualification,
+                                subject: teacher.subject,
+                                status: teacher.status,
+                                schoolId: user.schoolId || ""
+                              });
+                              setIsAddDialogOpen(true);
+                            }}>
+                              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                                <Edit size={14} />
+                              </div>
+                              <span className="font-bold text-slate-700">Modify Profile</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-3 py-2.5 rounded-xl cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50" onClick={() => handleDeleteTeacher(teacher.id, teacher.fullName)}>
+                              <div className="p-2 bg-red-50 text-red-600 rounded-lg">
+                                <Trash2 size={14} />
+                              </div>
+                              <span className="font-bold text-red-600">Remove Faculty</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}

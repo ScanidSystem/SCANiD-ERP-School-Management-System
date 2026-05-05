@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DeleteConfirmation } from "@/components/shared/DeleteConfirmation";
 
 import { 
   Dialog, 
@@ -185,6 +186,8 @@ export default function Students({ user }: { user: UserType }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteInfo, setDeleteInfo] = useState<{ id: string; name: string } | null>(null);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const bulkFileInputRef = useRef<HTMLInputElement>(null);
@@ -487,7 +490,7 @@ export default function Students({ user }: { user: UserType }) {
       };
 
       if (isEditMode && currentStudentId) {
-        await apiService.updateStudent(parseInt(currentStudentId), payload);
+        await apiService.updateStudent(parseInt(currentStudentId), { ...payload, id: parseInt(currentStudentId) });
         toast.success("Student updated successfully!");
       } else {
         await apiService.createStudent(payload);
@@ -505,14 +508,24 @@ export default function Students({ user }: { user: UserType }) {
   };
 
   const handleDeleteStudent = async (id: string, name: string) => {
-    if (confirm(`Are you sure you want to remove ${name} from the database?`)) {
-      try {
-        await apiService.deleteStudent(parseInt(id));
-        toast.info("Deleted from database");
-        fetchStudents();
-      } catch (error) {
-        toast.error("Failed to delete record");
-      }
+    setDeleteInfo({ id, name });
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteInfo) return;
+    
+    setIsProcessing(true);
+    try {
+      await apiService.deleteStudent(parseInt(deleteInfo.id));
+      toast.success(`${deleteInfo.name} removed successfully`);
+      setIsDeleteDialogOpen(false);
+      setDeleteInfo(null);
+      fetchStudents();
+    } catch (error) {
+      toast.error("Failed to delete record");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -568,6 +581,14 @@ export default function Students({ user }: { user: UserType }) {
           
           {canManage && (
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DeleteConfirmation 
+                isOpen={isDeleteDialogOpen}
+                onClose={() => setIsDeleteDialogOpen(false)}
+                onConfirm={confirmDelete}
+                loading={isProcessing}
+                title="Remove Student Record?"
+                description={`This will permanently delete ${deleteInfo?.name}'s profile, enrollment details, and academic history. This action cannot be reversed.`}
+              />
               <DialogContent className="sm:max-w-[900px] w-[95vw] max-h-[90vh] flex flex-col p-0 border-none shadow-3xl rounded-[2rem] overflow-hidden">
                 <div className="bg-slate-900 px-8 py-5 text-white relative shrink-0">
                   <div className="relative z-10 flex items-center justify-between">

@@ -58,6 +58,7 @@ import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 import { User as UserType } from "@/types";
 import { cn } from "@/lib/utils";
+import { DeleteConfirmation } from "@/components/shared/DeleteConfirmation";
 
 export default function Schools({ user }: { user: UserType }) {
   const [schools, setSchools] = useState<any[]>([]);
@@ -65,6 +66,8 @@ export default function Schools({ user }: { user: UserType }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentSchool, setCurrentSchool] = useState<any>(null);
   const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
@@ -132,7 +135,7 @@ export default function Schools({ user }: { user: UserType }) {
 
     setIsProcessing(true);
     try {
-      await apiService.updateSchool(currentSchool.id, formData);
+      await apiService.updateSchool(currentSchool.id, { ...formData, id: currentSchool.id });
       toast.success("School details updated!");
       setIsEditDialogOpen(false);
       fetchSchools();
@@ -144,14 +147,24 @@ export default function Schools({ user }: { user: UserType }) {
   };
 
   const handleDeleteSchool = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this school? This action cannot be undone.")) return;
+    setDeleteId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
     
+    setIsProcessing(true);
     try {
-      await apiService.deleteSchool(id);
+      await apiService.deleteSchool(deleteId);
       toast.success("School removed successfully");
+      setIsDeleteDialogOpen(false);
+      setDeleteId(null);
       fetchSchools();
     } catch (error) {
       toast.error("Failed to delete school");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -384,6 +397,14 @@ export default function Schools({ user }: { user: UserType }) {
         </Dialog>
 
         {/* Edit School Dialog */}
+        <DeleteConfirmation 
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={confirmDelete}
+          loading={isProcessing}
+          title="Delete School Branch?"
+          description="This will permanently remove this institution, all its teachers, students and academic data. This action is irreversible."
+        />
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[650px] w-[95vw] max-h-[90vh] flex flex-col p-0 border-none shadow-3xl rounded-[2rem] overflow-hidden">
             <div className="bg-slate-900 px-8 py-5 text-white relative shrink-0">
