@@ -104,32 +104,32 @@ export default function Fees({ user }: { user: any }) {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm">
+        <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden bg-white">
           <CardHeader className="pb-2">
-            <CardTitle className="text-slate-400 text-xs uppercase tracking-widest font-bold">Scholarships Issued</CardTitle>
+            <CardTitle className="text-slate-400 text-[10px] uppercase tracking-[0.2em] font-black">Scholarships Issued</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pb-8">
             <div className="flex items-end justify-between">
                 <div>
-                    <h2 className="text-4xl font-black text-slate-900">$0</h2>
-                    <p className="text-slate-500 text-sm mt-1">Aiding students</p>
+                    <h2 className="text-4xl font-black text-slate-900 tracking-tight">$0</h2>
+                    <p className="text-slate-400 text-xs mt-2 font-bold uppercase tracking-widest">Financial Aid</p>
                 </div>
-                <div className="p-3 bg-slate-100 rounded-xl">
-                    <CreditCard size={24} className="text-slate-600" />
+                <div className="p-4 bg-slate-50 rounded-2xl shadow-sm">
+                    <CreditCard size={28} className="text-slate-400" />
                 </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between">
+      <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
+        <CardHeader className="pb-6 border-b border-slate-100 bg-white px-8 pt-8 flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Recent Transactions</CardTitle>
-            <CardDescription>Overview of latest fee payments across all classes.</CardDescription>
+            <CardTitle className="text-2xl font-black text-slate-900">Financial Ledger</CardTitle>
+            <CardDescription className="text-slate-500 font-medium tracking-tight">Consolidated payment history for current session.</CardDescription>
           </div>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Download size={16} /> Export CSV
+          <Button variant="outline" size="sm" className="gap-2 rounded-xl border-slate-200 font-bold hover:bg-slate-50">
+            <Download size={16} /> Export Records
           </Button>
         </CardHeader>
         <CardContent className="p-0">
@@ -140,37 +140,37 @@ export default function Fees({ user }: { user: any }) {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>GRNO</TableHead>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Term</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Paid</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="bg-slate-50/50 h-14">
+                  <TableHead className="pl-8 text-xs font-black text-slate-500 uppercase tracking-widest">Digital ID</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Student Profile</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Billing Term</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Total Invoice</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Paid to Date</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Standing</TableHead>
+                  <TableHead className="text-right pr-8 text-xs font-black text-slate-500 uppercase tracking-widest">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {fees.map((fee) => (
-                  <TableRow key={fee.id}>
-                    <TableCell className="font-mono text-[10px] font-bold text-blue-600 italic">GR-{fee.studentId}</TableCell>
-                    <TableCell className="font-semibold text-slate-900">{fee.student?.fullName || "Student"}</TableCell>
-                    <TableCell className="text-slate-500 text-sm">{fee.term}</TableCell>
-                    <TableCell className="font-bold">${fee.totalAmount}</TableCell>
-                    <TableCell className="font-bold text-emerald-600">${fee.paidAmount}</TableCell>
+                  <TableRow key={fee.id} className="hover:bg-slate-50/80 transition-colors group border-b border-slate-50">
+                    <TableCell className="pl-8 font-mono text-xs font-black text-blue-600 italic">GR-{fee.studentId}</TableCell>
+                    <TableCell className="font-black text-slate-900 group-hover:text-blue-700 transition-colors">{fee.student?.fullName || "Student"}</TableCell>
+                    <TableCell className="text-slate-500 font-bold text-sm tracking-tight">{fee.term}</TableCell>
+                    <TableCell className="font-black text-slate-900">${fee.totalAmount}</TableCell>
+                    <TableCell className="font-black text-emerald-600">${fee.paidAmount}</TableCell>
                     <TableCell>
                       <Badge 
                         variant="secondary"
                         className={cn(
-                          "font-bold",
+                          "font-black text-[10px] uppercase tracking-wider px-3",
                           fee.status === 'Paid' ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
                         )}
                       >
                         {fee.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" className="text-blue-600 font-bold">Print Receipt</Button>
+                    <TableCell className="text-right pr-8">
+                      <Button variant="ghost" size="sm" className="text-blue-600 font-black hover:bg-blue-50">Print Receipt</Button>
                     </TableCell>
                   </TableRow>
                 ))}

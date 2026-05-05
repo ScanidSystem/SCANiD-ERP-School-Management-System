@@ -136,10 +136,11 @@ export default function Dashboard({ user }: DashboardProps) {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="h-80 w-full pt-4">
+          <CardContent className="h-80 w-full pt-4 min-w-0 min-h-0">
             {isMounted ? (
-              <ResponsiveContainer width="100%" height="100%" debounce={100}>
-                <LineChart data={performanceData}>
+              <div className="h-full w-full min-h-0 min-w-0">
+                <ResponsiveContainer width="100%" height="100%" debounce={50}>
+                  <LineChart data={performanceData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis 
                     dataKey="name" 
@@ -180,7 +181,8 @@ export default function Dashboard({ user }: DashboardProps) {
                   />
                 </LineChart>
               </ResponsiveContainer>
-            ) : (
+            </div>
+          ) : (
               <div className="h-full w-full bg-slate-50 animate-pulse rounded-lg" />
             )}
           </CardContent>
@@ -191,10 +193,11 @@ export default function Dashboard({ user }: DashboardProps) {
             <CardTitle>Weekly Attendance</CardTitle>
             <CardDescription>Daily student presence</CardDescription>
           </CardHeader>
-          <CardContent className="h-80 w-full pt-4">
+          <CardContent className="h-80 w-full pt-4 min-w-0 min-h-0">
             {isMounted ? (
-              <ResponsiveContainer width="100%" height="100%" debounce={100}>
-                <BarChart data={attendanceData}>
+              <div className="h-full w-full min-h-0 min-w-0">
+                <ResponsiveContainer width="100%" height="100%" debounce={50}>
+                  <BarChart data={attendanceData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis 
                     dataKey="day" 
@@ -213,7 +216,8 @@ export default function Dashboard({ user }: DashboardProps) {
                   />
                 </BarChart>
               </ResponsiveContainer>
-            ) : (
+            </div>
+          ) : (
               <div className="h-full w-full bg-slate-50 animate-pulse rounded-lg" />
             )}
           </CardContent>
@@ -266,24 +270,27 @@ export default function Dashboard({ user }: DashboardProps) {
 
 function StatCard({ title, value, trend, icon: Icon, color, onClick }: any) {
   return (
-    <Card className="shadow-sm cursor-pointer hover:shadow-md transition-all hover:-translate-y-1 hover:ring-2 hover:ring-blue-500/20 overflow-hidden group" onClick={onClick}>
-      <CardContent className="pt-6 relative">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/50 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+    <Card 
+      className="shadow-md border-none cursor-pointer hover:shadow-2xl transition-all hover:-translate-y-2 hover:ring-4 hover:ring-blue-500/5 overflow-hidden group rounded-[2rem]" 
+      onClick={onClick}
+    >
+      <CardContent className="p-8 relative">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-125 group-hover:bg-blue-50/50"></div>
         <div className="flex items-center justify-between relative z-10">
-          <div className={cn("p-2 rounded-lg", color)}>
-            <Icon size={20} />
+          <div className={cn("p-4 rounded-2xl shadow-lg", color)}>
+            <Icon size={24} />
           </div>
           <div className={cn(
-            "flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full",
-            trend.startsWith("+") ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-600"
+            "flex items-center gap-1 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm",
+            trend.startsWith("+") ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"
           )}>
             {trend}
-            <ArrowUpRight size={12} />
+            <ArrowUpRight size={14} />
           </div>
         </div>
-        <div className="mt-4 relative z-10">
-          <h2 className="text-2xl font-bold text-slate-900">{value}</h2>
-          <p className="text-sm text-slate-500 font-medium">{title}</p>
+        <div className="mt-8 relative z-10">
+          <h2 className="text-4xl font-black text-slate-900 tracking-tight">{value}</h2>
+          <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mt-2">{title}</p>
         </div>
       </CardContent>
     </Card>

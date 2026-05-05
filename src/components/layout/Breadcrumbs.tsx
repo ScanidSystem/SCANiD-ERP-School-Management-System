@@ -29,6 +29,11 @@ export default function Breadcrumbs() {
     return last.charAt(0).toUpperCase() + last.slice(1).replace(/-/g, " ");
   }, [location.pathname]);
 
+  const displayPageTitle = useMemo(() => {
+    if (pageTitle === "Marks") return "Academic Reports";
+    return pageTitle;
+  }, [pageTitle]);
+
   return (
     <div className="bg-white border-b border-slate-200 px-8 py-4 shrink-0 transition-all duration-300">
       <nav className="flex items-center space-x-1 text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5 overflow-x-auto whitespace-nowrap scrollbar-hide">
@@ -43,13 +48,13 @@ export default function Breadcrumbs() {
               )}
             >
               {index === 0 && <Home size={10} />}
-              {crumb.name}
+              {crumb.name === "Marks" ? "Academic Reports" : crumb.name}
             </Link>
           </React.Fragment>
         ))}
       </nav>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">{pageTitle}</h1>
+        <h1 className="text-2xl font-black text-slate-900 tracking-tight">{displayPageTitle}</h1>
       </div>
     </div>
   );

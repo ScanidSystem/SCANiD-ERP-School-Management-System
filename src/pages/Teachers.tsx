@@ -90,7 +90,8 @@ export default function Teachers({ user }: { user: any }) {
   const [sortConfig, setSortConfig] = useState<{ key: keyof Teacher; direction: "asc" | "desc" } | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterSubject, setFilterSubject] = useState<string>("all");
-
+  const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
+  const inputRefs = React.useRef<Record<string, any>>({});
   const [formData, setFormData] = useState<any>({
     firstName: "",
     middleName: "",
@@ -181,8 +182,34 @@ export default function Teachers({ user }: { user: any }) {
   };
 
   const handleCreateOrUpdate = async () => {
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.subject) {
-      toast.error("Please fill all required fields");
+    const newErrors: Record<string, boolean> = {};
+    let firstErrorField = "";
+
+    const checkField = (field: string, condition: boolean) => {
+      if (condition) {
+        newErrors[field] = true;
+        if (!firstErrorField) firstErrorField = field;
+      }
+    };
+
+    checkField("firstName", !formData.firstName?.trim());
+    checkField("lastName", !formData.lastName?.trim());
+    checkField("email", !formData.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email));
+    checkField("phone", !formData.phone?.trim() || !/^\d{10}$/.test(formData.phone.replace(/\D/g, "")));
+    checkField("qualification", !formData.qualification?.trim());
+    checkField("subject", !formData.subject?.trim());
+
+    setFormErrors(newErrors);
+
+    if (firstErrorField) {
+      toast.error("Please ensure all critical details are provided correctly.");
+      const element = inputRefs.current[firstErrorField];
+      if (element) {
+        element.focus();
+        if (element.scrollIntoView) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
       return;
     }
 
@@ -229,86 +256,213 @@ export default function Teachers({ user }: { user: any }) {
                 </div>
               }
             />
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{isEditing ? "Update Teacher Profile" : "Add New Faculty Member"}</DialogTitle>
-                <DialogDescription>
-                  Fill in the professional details for the teaching staff. Fields marked with <span className="text-red-500">*</span> are required.
-                </DialogDescription>
-              </DialogHeader>
+            <DialogContent className="sm:max-w-[850px] w-[95vw] max-h-[90vh] flex flex-col p-0 border-none shadow-3xl rounded-[2rem] overflow-hidden">
+                <div className="bg-slate-900 px-8 py-5 text-white relative shrink-0">
+                  <div className="relative z-10 flex items-center justify-between">
+                    <DialogHeader>
+                      <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-3">
+                        <div className="p-2 bg-blue-500 rounded-xl shadow-xl shadow-blue-500/20">
+                          <UserPlus size={22} className="text-white" />
+                        </div>
+                        {isEditing ? "Modify Faculty Profile" : "Register Faculty"}
+                      </DialogTitle>
+                      <DialogDescription className="text-slate-400 text-[12px] mt-1 font-medium max-w-2xl leading-relaxed">
+                        {isEditing 
+                          ? "Update professional qualifications and work assignments." 
+                          : "Enter credentials and department assignments for new staff."}
+                      </DialogDescription>
+                    </DialogHeader>
+                  </div>
+                  <div className="absolute right-[-10%] top-[-10%] w-64 h-64 bg-blue-600/10 rounded-full blur-[80px] pointer-events-none"></div>
+                </div>
               
-              <div className="space-y-6 py-4">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-1.5">
-                    <Label>First Name <span className="text-red-500">*</span></Label>
-                    <Input value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} placeholder="First" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Middle Name</Label>
-                    <Input value={formData.middleName} onChange={e => setFormData({...formData, middleName: e.target.value})} placeholder="Middle" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Last Name <span className="text-red-500">*</span></Label>
-                    <Input value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} placeholder="Last" />
-                  </div>
-                </div>
+                <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-6 bg-white scrollbar-thin scrollbar-thumb-slate-200">
+                  <div className="max-w-4xl mx-auto space-y-8">
+                    {/* Basic Info */}
+                    <section>
+                      <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
+                        <div className="w-1.5 h-5 bg-blue-600 rounded-full"></div>
+                        <h3 className="text-sm font-black text-slate-900 tracking-tight">Personal Information</h3>
+                      </div>
+                      
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                          <div className="space-y-1.5">
+                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">First Name</Label>
+                            <Input 
+                              ref={el => inputRefs.current["firstName"] = el}
+                              value={formData.firstName} 
+                              onChange={e => {
+                                setFormData({...formData, firstName: e.target.value});
+                                if (formErrors.firstName) setFormErrors(prev => ({ ...prev, firstName: false }));
+                              }} 
+                              placeholder="e.g. Robert" 
+                              className={cn(
+                                "h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm",
+                                formErrors.firstName && "border-red-500 ring-2 ring-red-500/10"
+                              )}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Middle Name</Label>
+                            <Input value={formData.middleName} onChange={e => setFormData({...formData, middleName: e.target.value})} placeholder="Optional" className="h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Last Name</Label>
+                            <Input 
+                              ref={el => inputRefs.current["lastName"] = el}
+                              value={formData.lastName} 
+                              onChange={e => {
+                                setFormData({...formData, lastName: e.target.value});
+                                if (formErrors.lastName) setFormErrors(prev => ({ ...prev, lastName: false }));
+                              }} 
+                              placeholder="e.g. Smith" 
+                              className={cn(
+                                "h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm",
+                                formErrors.lastName && "border-red-500 ring-2 ring-red-500/10"
+                              )}
+                            />
+                          </div>
+                        </div>
+                    </section>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label>Professional Email <span className="text-red-500">*</span></Label>
-                    <Input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="email@school.edu" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Phone Number</Label>
-                    <Input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+1..." />
-                  </div>
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                      {/* Contact Info */}
+                      <section>
+                        <div className="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
+                          <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
+                          <h3 className="text-base font-black text-slate-900 tracking-tight">Contact Info</h3>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Professional Email</Label>
+                            <Input 
+                              ref={el => inputRefs.current["email"] = el}
+                              type="email" 
+                              value={formData.email} 
+                              onChange={e => {
+                                setFormData({...formData, email: e.target.value});
+                                if (formErrors.email) setFormErrors(prev => ({ ...prev, email: false }));
+                              }} 
+                              placeholder="faculty@school.edu" 
+                              className={cn(
+                                "h-12 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm",
+                                formErrors.email && "border-red-500 ring-2 ring-red-500/10"
+                              )}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Mobile Number</Label>
+                            <Input 
+                              ref={el => inputRefs.current["phone"] = el}
+                              value={formData.phone} 
+                              onChange={e => {
+                                setFormData({...formData, phone: e.target.value});
+                                if (formErrors.phone) setFormErrors(prev => ({ ...prev, phone: false }));
+                              }} 
+                              placeholder="+91 XXXX XXX XXX" 
+                              className={cn(
+                                "h-12 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm",
+                                formErrors.phone && "border-red-500 ring-2 ring-red-500/10"
+                              )}
+                            />
+                          </div>
+                        </div>
+                      </section>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label>Educational Qualification</Label>
-                    <Input value={formData.qualification} onChange={e => setFormData({...formData, qualification: e.target.value})} placeholder="e.g. M.Sc Physics, B.Ed" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Years of Experience</Label>
-                    <Input value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} placeholder="e.g. 10 Years" />
-                  </div>
-                </div>
-
-                <div className="bg-slate-50 p-4 rounded-xl space-y-4 border border-slate-100">
-                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                    <BookOpen size={14} /> Subject & Class Assignment
-                  </h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-1.5">
-                      <Label>Primary Subject <span className="text-red-500">*</span></Label>
-                      <Input value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} placeholder="e.g. Mathematics" />
+                      {/* Professional Info */}
+                      <section>
+                        <div className="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
+                          <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
+                          <h3 className="text-base font-black text-slate-900 tracking-tight">Credentials</h3>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Highest Qualification</Label>
+                            <Input 
+                              ref={el => inputRefs.current["qualification"] = el}
+                              value={formData.qualification} 
+                              onChange={e => {
+                                setFormData({...formData, qualification: e.target.value});
+                                if (formErrors.qualification) setFormErrors(prev => ({ ...prev, qualification: false }));
+                              }} 
+                              placeholder="e.g. M.Ed, PhD" 
+                              className={cn(
+                                "h-12 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm",
+                                formErrors.qualification && "border-red-500 ring-2 ring-red-500/10"
+                              )}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Experience (Years)</Label>
+                            <Input value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} placeholder="e.g. 5 Years" className="h-12 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm" />
+                          </div>
+                        </div>
+                      </section>
                     </div>
-                    <div className="space-y-1.5">
-                      <Label>Target Standard</Label>
-                      <Input value={formData.standard} onChange={e => setFormData({...formData, standard: e.target.value})} placeholder="e.g. 10th, 12th" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Sections</Label>
-                      <Input value={formData.section} onChange={e => setFormData({...formData, section: e.target.value})} placeholder="e.g. A, B" />
-                    </div>
+
+                    {/* Department */}
+                    <section className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100">
+                      <div className="flex items-center gap-3 mb-4 pb-1">
+                        <div className="w-1.5 h-5 bg-red-500 rounded-full"></div>
+                        <h3 className="text-sm font-black text-slate-900 tracking-tight">Assignments</h3>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div className="space-y-1.5">
+                          <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Subject</Label>
+                          <Input 
+                            ref={el => inputRefs.current["subject"] = el}
+                            value={formData.subject} 
+                            onChange={e => {
+                              setFormData({...formData, subject: e.target.value});
+                              if (formErrors.subject) setFormErrors(prev => ({ ...prev, subject: false }));
+                            }} 
+                            placeholder="Expertise" 
+                            className={cn(
+                              "h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm",
+                              formErrors.subject && "border-red-500 ring-2 ring-red-500/10"
+                            )}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Grade</Label>
+                          <Input value={formData.standard} onChange={e => setFormData({...formData, standard: e.target.value})} placeholder="e.g. 10th" className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Status</Label>
+                          <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
+                            <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl border-slate-200">
+                              <SelectItem value="Active" className="font-semibold py-1.5 text-xs">Active</SelectItem>
+                              <SelectItem value="On Leave" className="font-semibold py-1.5 text-xs">On Leave</SelectItem>
+                              <SelectItem value="Resigned" className="font-semibold py-1.5 text-xs">Resigned</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </section>
                   </div>
                 </div>
-              </div>
 
-              <DialogFooter className="bg-slate-50 p-4 -mx-6 -mb-6 border-t mt-4">
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreateOrUpdate} className="bg-blue-600 hover:bg-blue-700">
-                  {isEditing ? "Update Profile" : "Register Teacher"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
+                <DialogFooter className="bg-slate-50 px-10 py-5 shrink-0 border-t border-slate-100 flex flex-row items-center justify-end gap-3">
+                  <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="h-9 px-5 font-bold text-slate-500 hover:text-slate-900 rounded-xl text-xs uppercase tracking-wider">
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleCreateOrUpdate} 
+                    className="h-10 px-8 bg-blue-600 hover:bg-blue-700 font-black shadow-lg shadow-blue-600/20 rounded-xl transition-all active:scale-[0.98] text-xs uppercase tracking-wider"
+                  >
+                    {isEditing ? "Update Profile" : "Onboard Faculty"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
           </Dialog>
         )}
       </div>
 
-      <Card className="border-none shadow-xl shadow-slate-200/50">
-        <CardHeader className="border-b border-slate-50">
+      <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
+        <CardHeader className="pb-6 border-b border-slate-100 bg-white px-8 pt-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -329,27 +483,18 @@ export default function Teachers({ user }: { user: any }) {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50/50">
-                  <TableHead 
-                    className="w-[100px] pl-6 font-bold text-slate-800 cursor-pointer hover:text-blue-600"
-                    onClick={() => handleSort("id")}
-                  >
-                    ID
-                  </TableHead>
-                  <TableHead 
-                    className="font-bold text-slate-800 cursor-pointer hover:text-blue-600"
-                  >
-                    Teacher Profile
-                  </TableHead>
-                  <TableHead className="font-bold text-slate-800">Subject Expertise</TableHead>
-                  <TableHead className="font-bold text-slate-800">Qual.</TableHead>
-                  <TableHead className="font-bold text-slate-800">Status</TableHead>
+                <TableRow className="bg-slate-50/50 h-14">
+                  <TableHead className="w-[120px] pl-8 text-xs font-black text-slate-500 uppercase tracking-widest">Employee ID</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Faculty Profile</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Expertise</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Credentials</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest text-right pr-8">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredTeachers.map((teacher) => (
-                  <TableRow key={teacher.id} className="hover:bg-slate-50/80 transition-colors group">
-                    <TableCell className="pl-6 font-mono text-xs font-bold text-blue-600 italic">
+                  <TableRow key={teacher.id} className="hover:bg-slate-50/80 transition-colors group border-b border-slate-50">
+                    <TableCell className="pl-8 font-mono text-xs font-black text-blue-600 italic">
                       {teacher.employeeId || teacher.id}
                     </TableCell>
                     <TableCell>
@@ -371,9 +516,9 @@ export default function Teachers({ user }: { user: any }) {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs text-slate-500 italic">{teacher.qualification}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-right pr-8">
                       <Badge className={cn(
-                        "font-bold",
+                        "font-black text-[10px] uppercase tracking-wider",
                         teacher.status === "Active" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
                       )} variant="outline">
                         {teacher.status}

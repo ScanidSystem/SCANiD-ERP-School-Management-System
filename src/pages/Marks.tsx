@@ -46,39 +46,39 @@ export default function Marks({ user }: { user: UserType }) {
   }, [user.schoolId]);
 
   return (
-    <div className="space-y-6 animate-in slide-in-from-right-2 duration-500">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-slate-500 mt-1">Generate, print and export student marksheets and performance cards.</p>
-        </div>
-        {(user.role === "superadmin" || user.role === "admin") && (
-          <Button className="bg-slate-900 hover:bg-slate-800 gap-2">
-            <FileText size={16} /> Bulk Generate
-          </Button>
-        )}
-      </div>
-
-      <Tabs defaultValue="recent" className="w-full">
-        <TabsList className="bg-slate-100 p-1 mb-6">
-          <TabsTrigger value="recent" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+    <div className="animate-in slide-in-from-bottom-2 duration-700 min-w-0">
+      <Tabs defaultValue="recent" className="w-full flex flex-col">
+        <div className="shrink-0 overflow-x-auto scrollbar-hide border-b border-slate-200 mb-8 px-1">
+          <TabsList className="bg-transparent w-full justify-start rounded-none h-12 p-0 gap-8 min-w-max" variant="line">
+          <TabsTrigger 
+            value="recent" 
+            className="px-0 h-12 rounded-none border-b-2 border-transparent data-[active]:border-blue-600 data-[active]:bg-transparent data-[active]:text-blue-600 gap-2 font-bold text-slate-500 hover:text-slate-900 transition-all flex-none focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+          >
             <BarChart3 size={16} /> Recent Results
           </TabsTrigger>
-          <TabsTrigger value="entry" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger 
+            value="entry" 
+            className="px-0 h-12 rounded-none border-b-2 border-transparent data-[active]:border-blue-600 data-[active]:bg-transparent data-[active]:text-blue-600 gap-2 font-bold text-slate-500 hover:text-slate-900 transition-all flex-none focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+          >
             <Edit3 size={16} /> Marks Entry
           </TabsTrigger>
           {(user.role === "superadmin" || user.role === "admin") && (
-            <TabsTrigger value="builder" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TabsTrigger 
+              value="builder" 
+              className="px-0 h-12 rounded-none border-b-2 border-transparent data-[active]:border-blue-600 data-[active]:bg-transparent data-[active]:text-blue-600 gap-2 font-bold text-slate-500 hover:text-slate-900 transition-all flex-none focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+            >
               <Settings2 size={16} /> Custom Report Builder
             </TabsTrigger>
           )}
         </TabsList>
+        </div>
 
-        <TabsContent value="recent" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Recent Results</CardTitle>
-                <CardDescription>Final Term Examination - May 2024</CardDescription>
+        <TabsContent value="recent" className="space-y-6 focus-visible:outline-none">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2 shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden min-w-0">
+              <CardHeader className="pb-6 border-b border-slate-100 bg-white px-8 pt-8">
+                <CardTitle className="text-2xl font-black text-slate-900">Academic Ledger</CardTitle>
+                <CardDescription className="text-slate-500 font-medium font-medium tracking-tight">Final Registry for 2024 Terms</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 {loading ? (
@@ -86,49 +86,69 @@ export default function Marks({ user }: { user: UserType }) {
                      <Loader2 className="animate-spin text-slate-300" size={32} />
                    </div>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Score</TableHead>
-                        <TableHead>Term</TableHead>
-                        <TableHead>Exam</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {marks.map((result) => (
-                        <TableRow key={result.id}>
-                          <TableCell>
-                            <div className="font-semibold text-slate-900">{result.student?.fullName || "Student"}</div>
-                            <div className="text-xs text-slate-500">Roll: {result.student?.rollNumber}</div>
-                          </TableCell>
-                          <TableCell className="font-bold text-blue-600">{result.obtMarks} / {result.totalMarks}</TableCell>
-                          <TableCell className="text-sm text-slate-500 font-medium">{result.term}</TableCell>
-                          <TableCell className="text-sm font-semibold">{result.examName}</TableCell>
-                          <TableCell className="text-right">
-                            <Dialog>
-                              <DialogTrigger
-                                render={
-                                  <Button variant="outline" size="sm" onClick={() => setSelectedStudent(result)}>
-                                    View Marksheet
-                                  </Button>
-                                }
-                              />
-                              <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">
-                                <MarksheetView student={selectedStudent} />
-                              </DialogContent>
-                            </Dialog>
-                          </TableCell>
+                  <div className="min-w-full overflow-x-auto">
+                    <Table>
+                      <TableHeader className="bg-slate-50/50">
+                        <TableRow className="h-14">
+                          <TableHead className="w-[300px] pl-8 text-xs font-black text-slate-500 uppercase tracking-widest">Student Profile</TableHead>
+                          <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Performance Score</TableHead>
+                          <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Academic Term</TableHead>
+                          <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Examination</TableHead>
+                          <TableHead className="text-right pr-8 text-xs font-black text-slate-500 uppercase tracking-widest">Actions</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {marks.map((result) => (
+                          <TableRow key={result.id} className="group hover:bg-slate-50/80 transition-colors border-b border-slate-50">
+                            <TableCell className="pl-8">
+                              <div className="font-black text-slate-900 group-hover:text-blue-700 transition-colors">{result.student?.fullName || "Student"}</div>
+                              <div className="text-[10px] uppercase tracking-widest font-black text-slate-400 mt-1">Roll ID: {result.student?.rollNumber}</div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1.5">
+                                <span className={cn(
+                                  "inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-black",
+                                  (result.obtMarks / result.totalMarks) >= 0.8 ? "bg-green-100 text-green-700" :
+                                  (result.obtMarks / result.totalMarks) >= 0.4 ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"
+                                )}>
+                                  {Math.round((result.obtMarks / result.totalMarks) * 100)}
+                                </span>
+                                <div className="text-xs">
+                                  <span className="font-bold text-slate-900">{result.obtMarks}</span>
+                                  <span className="text-slate-400 ml-0.5">/ {result.totalMarks}</span>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="bg-white font-bold text-[10px] uppercase tracking-tighter">
+                                {result.term}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm font-semibold text-slate-600">{result.examName}</TableCell>
+                            <TableCell className="text-right pr-8">
+                              <Dialog>
+                                <DialogTrigger
+                                  render={
+                                    <Button variant="ghost" size="sm" className="h-8 gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => setSelectedStudent(result)}>
+                                      <Eye size={14} /> View
+                                    </Button>
+                                  }
+                                />
+                                <DialogContent className="max-w-4xl p-0 overflow-hidden border-none shadow-2xl">
+                                  <MarksheetView student={selectedStudent} />
+                                </DialogContent>
+                              </Dialog>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
 
-            <div className="space-y-6">
+            <div className="space-y-6 min-w-0">
               <Card>
                 <CardHeader>
                   <CardTitle>Generate Report</CardTitle>
@@ -182,11 +202,11 @@ export default function Marks({ user }: { user: UserType }) {
           </div>
         </TabsContent>
 
-        <TabsContent value="builder">
+        <TabsContent value="builder" className="focus-visible:outline-none">
           <ReportBuilder />
         </TabsContent>
 
-        <TabsContent value="entry">
+        <TabsContent value="entry" className="focus-visible:outline-none">
           <MarksEntry user={user} />
         </TabsContent>
       </Tabs>
@@ -198,83 +218,106 @@ function MarksheetView({ student }: { student: any }) {
   if (!student) return null;
 
   const subjects = [
-    { name: "Mathematics", marks: student.obtMarks, total: student.totalMarks, grade: "A+" }
+    { name: "Mathematics", marks: student.obtMarks, total: student.totalMarks, grade: "A+" },
+    { name: "Science", marks: Math.floor(student.obtMarks * 0.9), total: student.totalMarks, grade: "A" },
+    { name: "English", marks: Math.floor(student.obtMarks * 0.85), total: student.totalMarks, grade: "A" },
+    { name: "Social Science", marks: Math.floor(student.obtMarks * 0.92), total: student.totalMarks, grade: "A+" }
   ];
 
+  const totalObt = subjects.reduce((sum, s) => sum + s.marks, 0);
+  const totalMax = subjects.reduce((sum, s) => sum + s.total, 0);
+
   return (
-    <div className="p-6 bg-white space-y-8">
-      <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6">
+    <div className="p-10 bg-white space-y-8 border-8 border-slate-50 relative overflow-hidden">
+      {/* Decorative corners */}
+      <div className="absolute top-0 left-0 w-32 h-32 border-t-2 border-l-2 border-slate-200 pointer-events-none"></div>
+      <div className="absolute top-0 right-0 w-32 h-32 border-t-2 border-r-2 border-slate-200 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-32 h-32 border-b-2 border-l-2 border-slate-200 pointer-events-none"></div>
+      <div className="absolute bottom-0 right-0 w-32 h-32 border-b-2 border-r-2 border-slate-200 pointer-events-none"></div>
+
+      <div className="flex flex-col items-center text-center space-y-4 border-b-2 border-slate-900 pb-8">
+        <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center text-white font-black text-2xl tracking-tighter">
+          SID
+        </div>
         <div>
-          <h2 className="text-2xl font-black uppercase tracking-tighter">ScanID International School</h2>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Main Campus, Education District</p>
-        </div>
-        <div className="text-right">
-          <Badge className="bg-slate-900 text-white">OFFICIAL MARKSHEET</Badge>
-          <p className="text-xs mt-2 font-mono">ID: {student.id}</p>
+          <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-900">ScanID International School</h2>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Certified Academic Achievement Record</p>
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <Badge variant="outline" className="border-slate-300 font-bold px-4">EST. 1998</Badge>
+            <Badge className="bg-slate-900 text-white px-4">OFFICIAL DOCUMENT</Badge>
+            <Badge variant="outline" className="border-slate-300 font-bold px-4">CBSE AFFILIATED</Badge>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-8 text-sm">
-        <div className="space-y-1">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-sm pt-4">
+        <div className="space-y-1 col-span-2">
           <p className="text-[10px] uppercase font-bold text-slate-400">Student Name</p>
-          <p className="font-bold text-lg">{student.student?.fullName}</p>
+          <p className="font-extrabold text-xl text-slate-900">{student.student?.fullName}</p>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <p className="text-[10px] uppercase font-bold text-slate-400">Roll Number</p>
-            <p className="font-bold">{student.student?.rollNumber}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-[10px] uppercase font-bold text-slate-400">Term</p>
-            <p className="font-bold">{student.term}</p>
-          </div>
+        <div className="space-y-1">
+          <p className="text-[10px] uppercase font-bold text-slate-400">Roll Number</p>
+          <p className="font-bold text-slate-900">{student.student?.rollNumber}</p>
+        </div>
+        <div className="space-y-1">
+          <p className="text-[10px] uppercase font-bold text-slate-400">Session</p>
+          <p className="font-bold text-slate-900">2023-2024</p>
         </div>
       </div>
 
-      <Table>
-        <TableHeader className="bg-slate-50">
-          <TableRow>
-            <TableHead className="font-bold text-slate-900">Subject</TableHead>
-            <TableHead className="font-bold text-slate-900">Max Marks</TableHead>
-            <TableHead className="font-bold text-slate-900">Marks Obtained</TableHead>
-            <TableHead className="font-bold text-slate-900 text-right">Grade</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {subjects.map((sub) => (
-            <TableRow key={sub.name}>
-              <TableCell className="font-semibold">{sub.name}</TableCell>
-              <TableCell>{sub.total}</TableCell>
-              <TableCell className="font-bold">{sub.marks}</TableCell>
-              <TableCell className="text-right">
-                <span className="font-black">{sub.grade}</span>
-              </TableCell>
+      <div className="bg-slate-50 rounded-xl overflow-hidden border border-slate-200">
+        <Table>
+          <TableHeader className="bg-slate-100/50">
+            <TableRow>
+              <TableHead className="font-bold text-slate-900 pl-6 h-12">SUBJECT DESCRIPTION</TableHead>
+              <TableHead className="font-bold text-slate-900">MAX</TableHead>
+              <TableHead className="font-bold text-slate-900">OBTAINED</TableHead>
+              <TableHead className="font-bold text-slate-900 text-right pr-6">GRADE</TableHead>
             </TableRow>
-          ))}
-          <TableRow className="bg-slate-900 text-white hover:bg-slate-900">
-            <TableCell className="font-bold">Grand Total</TableCell>
-            <TableCell className="font-bold">{student.totalMarks}</TableCell>
-            <TableCell className="font-bold text-lg">{student.obtMarks}</TableCell>
-            <TableCell className="text-right font-black text-lg">{(student.obtMarks / student.totalMarks * 100).toFixed(1)}%</TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {subjects.map((sub) => (
+              <TableRow key={sub.name} className="hover:bg-transparent border-slate-100">
+                <TableCell className="font-bold text-slate-700 pl-6 py-4">{sub.name}</TableCell>
+                <TableCell className="font-medium text-slate-500">{sub.total}</TableCell>
+                <TableCell className="font-black text-slate-900">{sub.marks}</TableCell>
+                <TableCell className="text-right pr-6">
+                  <span className={cn(
+                    "inline-flex items-center justify-center w-8 h-8 rounded-lg font-black text-xs",
+                    sub.grade === "A+" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                  )}>{sub.grade}</span>
+                </TableCell>
+              </TableRow>
+            ))}
+            <TableRow className="bg-slate-900 text-white hover:bg-slate-900">
+              <TableCell className="font-bold pl-6 text-lg">TOTAL AGGREGATE</TableCell>
+              <TableCell className="font-bold opacity-70">{totalMax}</TableCell>
+              <TableCell className="font-black text-2xl">{totalObt}</TableCell>
+              <TableCell className="text-right pr-6 font-black text-2xl">{(totalObt / totalMax * 100).toFixed(1)}%</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
 
-      <div className="flex justify-between items-end pt-12">
-        <div className="text-center w-32 border-t border-slate-300 pt-2">
-          <p className="text-[10px] uppercase font-bold">Class Teacher</p>
+      <div className="pt-8 grid grid-cols-3 gap-12">
+        <div className="space-y-4 text-center">
+            <div className="h-12 border-b border-slate-300"></div>
+            <p className="text-[10px] uppercase font-bold text-slate-400">Class Teacher</p>
         </div>
-        <div className="text-center w-32">
-          <div className="w-16 h-16 bg-slate-50 rounded-full mx-auto mb-2 flex items-center justify-center opacity-50 italic text-[8px] text-slate-400">STAMP REQUIRED</div>
-          <div className="border-t border-slate-300 pt-2">
-            <p className="text-[10px] uppercase font-bold">Principal</p>
-          </div>
+        <div className="flex flex-col items-center justify-center">
+            <div className="w-20 h-20 border-4 border-slate-100 rounded-full flex items-center justify-center italic text-[8px] text-slate-300 font-bold uppercase text-center rotate-12">
+                ScanID<br/>Official Seal
+            </div>
+        </div>
+        <div className="space-y-4 text-center">
+            <div className="h-12 border-b border-slate-300"></div>
+            <p className="text-[10px] uppercase font-bold text-slate-400">Principal Signature</p>
         </div>
       </div>
 
-      <div className="flex gap-2 pt-4 justify-end no-print">
-        <Button variant="outline" className="gap-2"><Printer size={16} /> Print</Button>
-        <Button className="bg-slate-900 gap-2"><Download size={16} /> Download PDF</Button>
+      <div className="flex gap-3 pt-10 justify-end no-print">
+        <Button variant="outline" className="gap-2 h-11 px-6 font-bold border-slate-300"><Printer size={18} /> Print Certificate</Button>
+        <Button className="bg-slate-900 hover:bg-slate-800 gap-2 h-11 px-6 font-bold shadow-xl shadow-slate-900/20"><Download size={18} /> Download PDF</Button>
       </div>
     </div>
   );

@@ -153,42 +153,42 @@ export default function Attendance({ user }: { user: any }) {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-3">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Attendance Sheet</CardTitle>
-              <CardDescription>Roll call for Class 10th - A</CardDescription>
+      <Card className="lg:col-span-3 shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
+        <CardHeader className="pb-6 border-b border-slate-100 bg-white px-8 pt-8 flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-2xl font-black text-slate-900">Attendance Sheet</CardTitle>
+            <CardDescription className="text-slate-500 font-medium tracking-tight">Daily Roll Call Registry</CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="rounded-xl font-bold border-slate-200 hover:bg-slate-50" onClick={() => setStudents(s => s.map(x => ({...x, status: 'present'})))}>Mark All Present</Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="flex items-center justify-center p-12">
+              <Loader2 size={32} className="animate-spin text-slate-400" />
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setStudents(s => s.map(x => ({...x, status: 'present'})))}>Select All Present</Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {loading ? (
-              <div className="flex items-center justify-center p-12">
-                <Loader2 size={32} className="animate-spin text-slate-400" />
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[100px]">GRNO</TableHead>
-                    <TableHead className="w-16">Roll</TableHead>
-                    <TableHead>Student Name</TableHead>
-                    <TableHead>Status</TableHead>
-                    {canManage && <TableHead className="text-right">Actions</TableHead>}
-                  </TableRow>
-                </TableHeader>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50/50 h-14">
+                  <TableHead className="w-[120px] pl-8 text-xs font-black text-slate-500 uppercase tracking-widest">Digital ID</TableHead>
+                  <TableHead className="w-16 text-xs font-black text-slate-500 uppercase tracking-widest">Roll</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Student Identity</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Presence</TableHead>
+                  {canManage && <TableHead className="text-right pr-8 text-xs font-black text-slate-500 uppercase tracking-widest">Actions</TableHead>}
+                </TableRow>
+              </TableHeader>
                 <TableBody>
                   {students.map((student) => (
-                    <TableRow key={student.id}>
-                      <TableCell className="font-mono text-[10px] font-bold text-blue-600">{(student as any).grno || `GR-${student.id}`}</TableCell>
+                    <TableRow key={student.id} className="hover:bg-slate-50/80 transition-colors group border-b border-slate-50">
+                      <TableCell className="pl-8 font-mono text-xs font-black text-blue-600 italic">{(student as any).grno || `GR-${student.id}`}</TableCell>
                       <TableCell className="font-mono text-xs font-bold text-slate-400">{student.roll}</TableCell>
-                      <TableCell className="font-semibold text-slate-900">{student.name}</TableCell>
+                      <TableCell className="font-black text-slate-900">{student.name}</TableCell>
                       <TableCell>
                         <Badge 
                           className={cn(
-                            "capitalize",
+                            "capitalize font-black text-[10px] uppercase tracking-wider px-3",
                             student.status === 'present' ? "bg-emerald-100 text-emerald-700" :
                             student.status === 'absent' ? "bg-red-100 text-red-700" :
                             "bg-amber-100 text-amber-700"
@@ -199,8 +199,8 @@ export default function Attendance({ user }: { user: any }) {
                         </Badge>
                       </TableCell>
                       {canManage && (
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
+                        <TableCell className="text-right pr-8">
+                          <div className="flex justify-end gap-1.5 font-bold">
                             <Button 
                               size="icon" 
                               variant={student.status === 'present' ? "default" : "outline"} 

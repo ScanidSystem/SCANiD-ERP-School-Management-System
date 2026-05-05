@@ -772,71 +772,7 @@ export default function MarksEntry({ user }: { user: UserType }) {
             </div>
           </div>
 
-          {/* Student List Management Section */}
-          {canManageStudents && (
-            <div className="mb-6 bg-slate-50/80 border border-slate-200 rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200/60">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-blue-100 rounded-lg">
-                    <UserPlus size={16} className="text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-800">Add New Student</h3>
-                    <p className="text-[10px] text-slate-500 font-medium tracking-tight">Expand your class list manually</p>
-                  </div>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => {
-                    if (confirm("Are you sure you want to clear the entire student list? This will remove all currently entered marks for this subject.")) {
-                      setStudents([]);
-                      toast.success("Student list cleared");
-                    }
-                  }}
-                  className="text-red-500 hover:text-red-600 hover:bg-red-50 text-[10px] font-bold uppercase h-8"
-                >
-                  Clear All Records
-                </Button>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1 space-y-1.5">
-                  <Label htmlFor="std-name" className="text-[10px] uppercase font-black text-slate-400 ml-1">Student Full Name</Label>
-                  <div className="relative">
-                    <Input 
-                      id="std-name"
-                      placeholder="e.g. John Doe"
-                      value={newStudentName}
-                      onChange={(e) => setNewStudentName(e.target.value)}
-                      className="bg-white border-slate-200 h-10 pl-9 transition-all focus:ring-2 focus:ring-blue-100"
-                    />
-                    <Edit3 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                  </div>
-                </div>
-                <div className="sm:w-36 space-y-1.5">
-                  <Label htmlFor="std-roll" className="text-[10px] uppercase font-black text-slate-400 ml-1">Roll Number</Label>
-                  <Input 
-                    id="std-roll"
-                    placeholder="Roll No"
-                    value={newStudentRoll}
-                    onChange={(e) => setNewStudentRoll(e.target.value)}
-                    className="bg-white border-slate-200 h-10 font-mono text-sm transition-all focus:ring-2 focus:ring-blue-100"
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button 
-                    onClick={handleAddStudentManually}
-                    className="h-10 bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-100 gap-2 w-full sm:w-auto px-6 font-bold"
-                  >
-                    <UserPlus size={16} /> Register Student
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="border border-slate-200 rounded-xl overflow-x-auto shadow-sm">
             <Table>
               <TableHeader className="bg-slate-50">
                 <TableRow>

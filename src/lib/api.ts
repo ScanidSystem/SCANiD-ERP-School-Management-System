@@ -60,6 +60,9 @@ export const apiService = {
   // Schools
   getSchools: () => api.get('/schools'),
   getSchoolById: (id: number) => api.get(`/schools/${id}`),
+  createSchool: (data: any) => api.post('/schools', data),
+  updateSchool: (id: number, data: any) => api.put(`/schools/${id}`, data),
+  deleteSchool: (id: number) => api.delete(`/schools/${id}`),
 
   // Teachers
   getTeachers: (schoolId?: number) => api.get('/teachers', { params: { schoolId } }),
