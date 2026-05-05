@@ -121,9 +121,14 @@ export default function Profile({ user }: ProfileProps) {
                     <Input 
                       id="phone" 
                       value={formData.phone} 
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      maxLength={10}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                        setFormData({...formData, phone: val});
+                      }}
                       disabled={!isEditing}
                       className="pl-10 bg-slate-50/50 border-slate-200" 
+                      placeholder="10-digit number"
                     />
                   </div>
                 </div>

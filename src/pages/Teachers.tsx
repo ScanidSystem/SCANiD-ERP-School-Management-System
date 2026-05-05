@@ -411,11 +411,13 @@ export default function Teachers({ user }: { user: any }) {
                             <Input 
                               ref={el => inputRefs.current["phone"] = el}
                               value={formData.phone} 
+                              maxLength={10}
                               onChange={e => {
-                                setFormData({...formData, phone: e.target.value});
+                                const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                                setFormData({...formData, phone: val});
                                 if (formErrors.phone) setFormErrors(prev => ({ ...prev, phone: false }));
                               }} 
-                              placeholder="+91 XXXX XXX XXX" 
+                              placeholder="10-digit mobile number" 
                               className={cn(
                                 "h-12 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm",
                                 formErrors.phone && "border-red-500 ring-2 ring-red-500/10"

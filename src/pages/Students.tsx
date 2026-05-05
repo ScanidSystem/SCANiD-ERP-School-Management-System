@@ -771,11 +771,13 @@ export default function Students({ user }: { user: UserType }) {
                               ref={el => inputRefs.current["aadharCard"] = el}
                               id="aadharCard" 
                               value={newStudentFormData.aadharCard} 
+                              maxLength={12}
                               onChange={(e) => {
-                                setNewStudentFormData({...newStudentFormData, aadharCard: e.target.value});
+                                const val = e.target.value.replace(/\D/g, "").slice(0, 12);
+                                setNewStudentFormData({...newStudentFormData, aadharCard: val});
                                 if (formErrors.aadharCard) setFormErrors(prev => ({ ...prev, aadharCard: false }));
                               }} 
-                              placeholder="XXXX XXXX XXXX" 
+                              placeholder="12-digit number" 
                               className={cn(
                                 "h-10 border-slate-200 bg-slate-50/30 tracking-widest font-mono font-bold rounded-xl px-4 text-sm",
                                 formErrors.aadharCard && "border-red-500 ring-2 ring-red-500/10"
@@ -884,8 +886,10 @@ export default function Students({ user }: { user: UserType }) {
                             id="contactNumber" 
                             type="tel" 
                             value={newStudentFormData.contactNumber} 
+                            maxLength={10}
                             onChange={(e) => {
-                              setNewStudentFormData({...newStudentFormData, contactNumber: e.target.value});
+                              const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                              setNewStudentFormData({...newStudentFormData, contactNumber: val});
                               if (formErrors.contactNumber) setFormErrors(prev => ({ ...prev, contactNumber: false }));
                             }} 
                             placeholder="10-digit number" 
