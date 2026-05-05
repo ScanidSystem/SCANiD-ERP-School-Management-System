@@ -91,6 +91,7 @@ export default function Teachers({ user }: { user: any }) {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterSubject, setFilterSubject] = useState<string>("all");
   const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
+  const [schools, setSchools] = useState<any[]>([]);
   const inputRefs = React.useRef<Record<string, any>>({});
   const [formData, setFormData] = useState<any>({
     firstName: "",
@@ -103,8 +104,18 @@ export default function Teachers({ user }: { user: any }) {
     subject: "",
     standard: "10th",
     section: "A",
-    status: "Active"
+    status: "Active",
+    schoolId: user.schoolId || ""
   });
+
+  const fetchSchools = async () => {
+    try {
+      const res = await apiService.getSchools();
+      setSchools(res.data);
+    } catch (error) {
+      console.error("Failed to fetch schools", error);
+    }
+  };
 
   const fetchTeachers = useCallback(async () => {
     setLoading(true);
@@ -175,10 +186,12 @@ export default function Teachers({ user }: { user: any }) {
       subject: "",
       standard: "10th",
       section: "A",
-      status: "Active"
+      status: "Active",
+      schoolId: user.schoolId || ""
     });
     setSelectedTeacher(null);
     setIsEditing(false);
+    setFormErrors({});
   };
 
   const handleCreateOrUpdate = async () => {
@@ -198,6 +211,7 @@ export default function Teachers({ user }: { user: any }) {
     checkField("phone", !formData.phone?.trim() || !/^\d{10}$/.test(formData.phone.replace(/\D/g, "")));
     checkField("qualification", !formData.qualification?.trim());
     checkField("subject", !formData.subject?.trim());
+    checkField("schoolId", !formData.schoolId);
 
     setFormErrors(newErrors);
 
@@ -215,7 +229,7 @@ export default function Teachers({ user }: { user: any }) {
 
     try {
       const payload = {
-        schoolId: user.schoolId ? parseInt(user.schoolId) : 1,
+        schoolId: parseInt(formData.schoolId),
         employeeId: `EMP-${Date.now()}`,
         designation: "Faculty",
         department: formData.subject,
@@ -227,7 +241,7 @@ export default function Teachers({ user }: { user: any }) {
            passwordHash: "temp123",
            email: formData.email,
            role: "teacher",
-           schoolId: user.schoolId ? parseInt(user.schoolId) : 1
+           schoolId: parseInt(formData.schoolId)
         }
       };
 
@@ -248,7 +262,7 @@ export default function Teachers({ user }: { user: any }) {
           <p className="text-slate-500 mt-1">Manage teaching staff qualifications and classroom assignments.</p>
         </div>
         {isAdmin && (
-          <Dialog open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if(!open) resetForm(); }}>
+          <Dialog open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if(!open) resetForm(); else fetchSchools(); }}>
             <DialogTrigger
               render={
                 <div className="flex items-center justify-center gap-2 h-10 px-6 rounded-md bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 text-white border-none outline-none cursor-pointer font-bold text-sm">
@@ -282,10 +296,52 @@ export default function Teachers({ user }: { user: any }) {
                     <section>
                       <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
                         <div className="w-1.5 h-5 bg-blue-600 rounded-full"></div>
-                        <h3 className="text-sm font-black text-slate-900 tracking-tight">Personal Information</h3>
+                        <h3 className="text-sm font-black text-slate-900 tracking-tight">Assignment & Identity</h3>
                       </div>
                       
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                          <div className="md:col-span-6 space-y-1.5">
+                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned School Branch</Label>
+                            <Select 
+                              value={formData.schoolId.toString()} 
+                              onValueChange={(v) => {
+                                setFormData({...formData, schoolId: v});
+                                if (formErrors.schoolId) setFormErrors(prev => ({ ...prev, schoolId: false }));
+                              }}
+                              disabled={user.role !== "superadmin" && !!user.schoolId}
+                            >
+                              <SelectTrigger 
+                                ref={el => inputRefs.current["schoolId"] = el}
+                                className={cn(
+                                  "h-10 border-slate-200 bg-slate-50/50 font-bold text-slate-800 rounded-xl px-4 focus:ring-2 focus:ring-blue-500/5 transition-all text-sm",
+                                  formErrors.schoolId && "border-red-500 ring-2 ring-red-500/10",
+                                  (user.role !== "superadmin" && !!user.schoolId) && "opacity-80 cursor-not-allowed bg-slate-100"
+                                )}
+                              >
+                                <SelectValue placeholder="Identify branch" />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-68 rounded-2xl shadow-2xl border-slate-200 p-2">
+                                {schools.length > 0 ? (
+                                  schools.map(s => (
+                                    <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
+                                      <div className="flex flex-col gap-0.5">
+                                        <span className="text-sm font-bold">{s.name}</span>
+                                        <span className="text-[10px] text-slate-400 font-medium tracking-tight">ID: SCH-{s.id} • {s.address?.split(',')[0]}</span>
+                                      </div>
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <div className="p-4 text-sm text-slate-500 text-center italic flex flex-col items-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
+                                    Loading registered branches...
+                                  </div>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
                           <div className="space-y-1.5">
                             <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">First Name</Label>
                             <Input 
@@ -484,10 +540,26 @@ export default function Teachers({ user }: { user: any }) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50/50 h-14">
-                  <TableHead className="w-[120px] pl-8 text-xs font-black text-slate-500 uppercase tracking-widest">Employee ID</TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Faculty Profile</TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Expertise</TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Credentials</TableHead>
+                  <TableHead className="w-[120px] pl-8 text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleSort('employeeId')}>
+                    <div className="flex items-center gap-1.5">
+                      Employee ID <ChevronDown size={14} className={cn("transition-transform", sortConfig?.key === 'employeeId' && sortConfig.direction === 'desc' && "rotate-180")} />
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleSort('fullName')}>
+                    <div className="flex items-center gap-1.5">
+                      Faculty Profile <ChevronDown size={14} className={cn("transition-transform", sortConfig?.key === 'fullName' && sortConfig.direction === 'desc' && "rotate-180")} />
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleSort('subject')}>
+                    <div className="flex items-center gap-1.5">
+                      Expertise <ChevronDown size={14} className={cn("transition-transform", sortConfig?.key === 'subject' && sortConfig.direction === 'desc' && "rotate-180")} />
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleSort('qualification')}>
+                    <div className="flex items-center gap-1.5">
+                      Credentials <ChevronDown size={14} className={cn("transition-transform", sortConfig?.key === 'qualification' && sortConfig.direction === 'desc' && "rotate-180")} />
+                    </div>
+                  </TableHead>
                   <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest text-right pr-8">Status</TableHead>
                 </TableRow>
               </TableHeader>

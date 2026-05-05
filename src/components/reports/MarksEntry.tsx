@@ -53,7 +53,7 @@ const INITIAL_STUDENTS = [
   { id: "6", schoolId: "SCH002", grno: "GR006", name: "Jessica Taylor", roll: "106", marks: "" },
 ];
 
-export default function MarksEntry({ user }: { user: UserType }) {
+export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, forcedSchoolId?: number }) {
   const [standard, setStandard] = useState("10th");
   const [section, setSection] = useState("A");
   const [subject, setSubject] = useState("");
@@ -70,10 +70,8 @@ export default function MarksEntry({ user }: { user: UserType }) {
   // State for subject list sorting
   const [subjectSortMode, setSubjectSortMode] = useState<'name' | 'entries'>('name');
   
-  const [students, setStudents] = useState(() => {
-    if (user.role === "superadmin") return INITIAL_STUDENTS;
-    return INITIAL_STUDENTS.filter(s => s.schoolId === user.schoolId);
-  });
+  const [students, setStudents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newStudentName, setNewStudentName] = useState("");
   const [newStudentRoll, setNewStudentRoll] = useState("");
   const [newSubject, setNewSubject] = useState("");
@@ -87,6 +85,29 @@ export default function MarksEntry({ user }: { user: UserType }) {
     key: 'roll',
     direction: 'asc',
   });
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      setLoading(true);
+      try {
+        const schoolId = forcedSchoolId || (user.schoolId ? parseInt(user.schoolId) : undefined);
+        const res = await apiService.getStudents(schoolId);
+        setStudents(res.data.map((s: any) => ({
+          id: s.id.toString(),
+          schoolId: s.schoolId.toString(),
+          grno: s.registrationNumber,
+          name: s.fullName,
+          roll: s.rollNumber || s.id.toString(),
+          marks: ""
+        })));
+      } catch (error) {
+        toast.error("Failed to load students for marks entry");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStudents();
+  }, [forcedSchoolId, user.schoolId]);
 
   const sortedStudents = useMemo(() => {
     let sortableItems = [...students];

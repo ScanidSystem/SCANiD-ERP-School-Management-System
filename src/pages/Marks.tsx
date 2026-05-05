@@ -10,7 +10,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Printer, Download, Eye, FileText, ChevronRight, BarChart3, Settings2, Edit3, Loader2 } from "lucide-react";
+import { Printer, Download, Eye, FileText, ChevronRight, BarChart3, Settings2, Edit3, Loader2, Search, ArrowUpDown } from "lucide-react";
 import { 
   Dialog, 
   DialogContent, 
@@ -21,6 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import ReportBuilder from "@/components/reports/ReportBuilder";
 import MarksEntry from "@/components/reports/MarksEntry";
 
@@ -30,11 +31,31 @@ export default function Marks({ user }: { user: UserType }) {
   const [marks, setMarks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
+  const [schools, setSchools] = useState<any[]>([]);
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string>(user.schoolId?.toString() || "");
+
+  useEffect(() => {
+    const fetchSchools = async () => {
+      if (user.role === "superadmin") {
+        try {
+          const res = await apiService.getSchools();
+          setSchools(res.data);
+        } catch (error) {
+          console.error("Failed to fetch schools", error);
+        }
+      }
+    };
+    fetchSchools();
+  }, [user.role]);
 
   useEffect(() => {
     const fetchMarks = async () => {
+      setLoading(true);
       try {
-        const res = await apiService.getMarks(user.schoolId ? parseInt(user.schoolId) : undefined);
+        const schoolIdToUse = user.role === "superadmin" ? (selectedSchoolId ? parseInt(selectedSchoolId) : undefined) : (user.schoolId ? parseInt(user.schoolId) : undefined);
+        const res = await apiService.getMarks(schoolIdToUse);
         setMarks(res.data);
       } catch (error) {
         console.error("Marks error:", error);
@@ -43,7 +64,44 @@ export default function Marks({ user }: { user: UserType }) {
       }
     };
     fetchMarks();
-  }, [user.schoolId]);
+  }, [user.schoolId, user.role, selectedSchoolId]);
+
+  const requestSort = (key: string) => {
+    let direction: "asc" | "desc" = "asc";
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const filteredMarks = marks.filter(m => 
+    m.student?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    m.student?.registrationNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    m.student?.rollNumber?.toString().includes(searchQuery) ||
+    m.examName?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const sortedMarks = [...filteredMarks].sort((a, b) => {
+    if (!sortConfig) return 0;
+    const { key, direction } = sortConfig;
+    
+    let aValue, bValue;
+    
+    if (key === 'studentName') {
+      aValue = a.student?.fullName || "";
+      bValue = b.student?.fullName || "";
+    } else if (key === 'performance') {
+      aValue = a.obtMarks / a.totalMarks;
+      bValue = b.obtMarks / b.totalMarks;
+    } else {
+      aValue = a[key] || "";
+      bValue = b[key] || "";
+    }
+
+    if (aValue < bValue) return direction === "asc" ? -1 : 1;
+    if (aValue > bValue) return direction === "asc" ? 1 : -1;
+    return 0;
+  });
 
   return (
     <div className="animate-in slide-in-from-bottom-2 duration-700 min-w-0">
@@ -74,11 +132,54 @@ export default function Marks({ user }: { user: UserType }) {
         </div>
 
         <TabsContent value="recent" className="space-y-6 focus-visible:outline-none">
+          {user.role === "superadmin" && (
+            <Card className="border-none shadow-xl shadow-slate-200/40 bg-white rounded-3xl overflow-hidden mb-2">
+              <CardContent className="p-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
+                    <Settings2 size={18} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Global Context</p>
+                    <h4 className="text-sm font-black text-slate-800">Switch Academic Branch</h4>
+                  </div>
+                </div>
+                <div className="w-full max-w-xs">
+                  <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
+                    <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50 rounded-xl font-bold text-slate-700">
+                      <SelectValue placeholder="Select Branch" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-slate-200 shadow-2xl p-2">
+                      {schools.map(s => (
+                        <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold">{s.name}</span>
+                            <span className="text-[10px] text-slate-400 font-medium">SCH-{s.id}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2 shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden min-w-0">
-              <CardHeader className="pb-6 border-b border-slate-100 bg-white px-8 pt-8">
-                <CardTitle className="text-2xl font-black text-slate-900">Academic Ledger</CardTitle>
-                <CardDescription className="text-slate-500 font-medium font-medium tracking-tight">Final Registry for 2024 Terms</CardDescription>
+              <CardHeader className="pb-6 border-b border-slate-100 bg-white px-8 pt-8 flex flex-row items-center justify-between gap-4">
+                <div>
+                  <CardTitle className="text-2xl font-black text-slate-900">Academic Ledger</CardTitle>
+                  <CardDescription className="text-slate-500 font-medium font-medium tracking-tight">Final Registry for 2024 Terms</CardDescription>
+                </div>
+                <div className="relative max-w-xs w-full">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                  <Input 
+                    placeholder="Search by student, ID, roll..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 h-10 border-slate-200 bg-slate-50/50 rounded-xl text-xs"
+                  />
+                </div>
               </CardHeader>
               <CardContent className="p-0">
                 {loading ? (
@@ -90,15 +191,43 @@ export default function Marks({ user }: { user: UserType }) {
                     <Table>
                       <TableHeader className="bg-slate-50/50">
                         <TableRow className="h-14">
-                          <TableHead className="w-[300px] pl-8 text-xs font-black text-slate-500 uppercase tracking-widest">Student Profile</TableHead>
-                          <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Performance Score</TableHead>
-                          <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Academic Term</TableHead>
-                          <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Examination</TableHead>
+                          <TableHead 
+                            className="w-[300px] pl-8 text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
+                            onClick={() => requestSort('studentName')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Student Profile <ArrowUpDown size={12} />
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className="text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
+                            onClick={() => requestSort('performance')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Performance Score <ArrowUpDown size={12} />
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className="text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
+                            onClick={() => requestSort('term')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Academic Term <ArrowUpDown size={12} />
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className="text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
+                            onClick={() => requestSort('examName')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Examination <ArrowUpDown size={12} />
+                            </div>
+                          </TableHead>
                           <TableHead className="text-right pr-8 text-xs font-black text-slate-500 uppercase tracking-widest">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {marks.map((result) => (
+                        {sortedMarks.map((result) => (
                           <TableRow key={result.id} className="group hover:bg-slate-50/80 transition-colors border-b border-slate-50">
                             <TableCell className="pl-8">
                               <div className="font-black text-slate-900 group-hover:text-blue-700 transition-colors">{result.student?.fullName || "Student"}</div>
@@ -207,7 +336,7 @@ export default function Marks({ user }: { user: UserType }) {
         </TabsContent>
 
         <TabsContent value="entry" className="focus-visible:outline-none">
-          <MarksEntry user={user} />
+          <MarksEntry user={user} forcedSchoolId={user.role === "superadmin" ? (selectedSchoolId ? parseInt(selectedSchoolId) : undefined) : undefined} />
         </TabsContent>
       </Tabs>
     </div>

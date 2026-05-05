@@ -218,6 +218,7 @@ export default function Students({ user }: { user: UserType }) {
     setNewStudentFormData(initialFormState);
     setFormErrors({});
     setIsAddDialogOpen(true);
+    fetchSchools(); // Ensure we have the latest school list when opening
   };
 
   const openEditDialog = (student: any) => {
@@ -226,7 +227,7 @@ export default function Students({ user }: { user: UserType }) {
     setFormErrors({});
     setNewStudentFormData({
       grno: student.grno,
-      schoolId: student.schoolId || user.schoolId || "",
+      schoolId: (student.schoolId || user.schoolId || "").toString(),
       firstName: student.firstName,
       middleName: student.middleName,
       lastName: student.lastName,
@@ -243,6 +244,7 @@ export default function Students({ user }: { user: UserType }) {
       performance: student.performance
     });
     setIsAddDialogOpen(true);
+    fetchSchools(); // Ensure we have the latest school list when opening
   };
 
   const handleExport = () => {
@@ -598,36 +600,43 @@ export default function Students({ user }: { user: UserType }) {
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
                         <div className="md:col-span-6 space-y-1.5">
                           <Label htmlFor="school" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned School Branch</Label>
-                          <Select 
-                            value={newStudentFormData.schoolId.toString()} 
-                            onValueChange={(v) => {
-                              setNewStudentFormData({...newStudentFormData, schoolId: v});
-                              setFormErrors(prev => ({ ...prev, schoolId: false }));
-                            }}
-                            disabled={user.role !== "superadmin"}
-                          >
-                            <SelectTrigger 
-                              ref={el => inputRefs.current["schoolId"] = el}
-                              id="school" 
-                              className={cn(
-                                "h-10 border-slate-200 bg-slate-50/50 font-bold text-slate-800 rounded-xl px-4 focus:ring-2 focus:ring-blue-500/5 transition-all text-sm",
-                                formErrors.schoolId && "border-red-500 ring-2 ring-red-500/10"
-                              )}
+                            <Select 
+                              value={newStudentFormData.schoolId} 
+                              onValueChange={(v) => {
+                                setNewStudentFormData({...newStudentFormData, schoolId: v});
+                                if (formErrors.schoolId) setFormErrors(prev => ({ ...prev, schoolId: false }));
+                              }}
+                              disabled={user.role !== "superadmin" && !!user.schoolId}
                             >
-                              <SelectValue placeholder="Identify branch" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-60 rounded-xl shadow-2xl border-slate-200">
-                              {schools.length > 0 ? (
-                                schools.map(s => (
-                                  <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2 px-3">
-                                    {s.name}
-                                  </SelectItem>
-                                ))
-                              ) : (
-                                <div className="p-3 text-sm text-slate-500 text-center italic">Loading schools...</div>
-                              )}
-                            </SelectContent>
-                          </Select>
+                              <SelectTrigger 
+                                ref={el => inputRefs.current["schoolId"] = el}
+                                id="school" 
+                                className={cn(
+                                  "h-10 border-slate-200 bg-slate-50/50 font-bold text-slate-800 rounded-xl px-4 focus:ring-2 focus:ring-blue-500/5 transition-all text-sm",
+                                  formErrors.schoolId && "border-red-500 ring-2 ring-red-500/10",
+                                  (user.role !== "superadmin" && !!user.schoolId) && "opacity-80 cursor-not-allowed bg-slate-100"
+                                )}
+                              >
+                                <SelectValue placeholder="Identify branch" />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-68 rounded-2xl shadow-2xl border-slate-200 p-2">
+                                {schools.length > 0 ? (
+                                  schools.map(s => (
+                                    <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
+                                      <div className="flex flex-col gap-0.5">
+                                        <span className="text-sm font-bold">{s.name}</span>
+                                        <span className="text-[10px] text-slate-400 font-medium tracking-tight">ID: SCH-{s.id} • {s.address?.split(',')[0]}</span>
+                                      </div>
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <div className="p-4 text-sm text-slate-500 text-center italic flex flex-col items-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
+                                    Loading registered branches...
+                                  </div>
+                                )}
+                              </SelectContent>
+                            </Select>
                         </div>
 
                         <div className="md:col-span-3 space-y-1.5">
@@ -1020,7 +1029,17 @@ export default function Students({ user }: { user: UserType }) {
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="text-slate-600 font-bold">{student.standard}-{student.section}</span>
-                      <span className="text-[10px] text-slate-400">Attendance: {student.attendance}</span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] text-slate-400">Attendance: {student.attendance}</span>
+                        {user.role === "superadmin" && (
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <span className="text-[10px] font-black text-blue-500 bg-blue-50 px-1.5 rounded-sm uppercase tracking-tighter">
+                              {schools.find(sch => sch.id.toString() === student.schoolId)?.name || `Branch ${student.schoolId}`}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>

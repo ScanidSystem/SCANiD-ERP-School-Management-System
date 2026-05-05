@@ -28,14 +28,34 @@ export default function Attendance({ user }: { user: any }) {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [date, setDate] = useState(new Date());
+  const [schools, setSchools] = useState<any[]>([]);
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string>(user.schoolId?.toString() || "");
 
   const canManage = user.role === "superadmin" || user.role === "admin" || user.role === "teacher";
+
+  useEffect(() => {
+    const fetchSchools = async () => {
+      if (user.role === "superadmin") {
+        try {
+          const res = await apiService.getSchools();
+          setSchools(res.data);
+          if (!selectedSchoolId && res.data.length > 0) {
+            setSelectedSchoolId(res.data[0].id.toString());
+          }
+        } catch (error) {
+          console.error("Failed to fetch schools", error);
+        }
+      }
+    };
+    fetchSchools();
+  }, [user.role, selectedSchoolId]);
 
   useEffect(() => {
     const fetchStudents = async () => {
       setLoading(true);
       try {
-        const res = await apiService.getStudents(user.schoolId ? parseInt(user.schoolId) : undefined);
+        const schoolIdToUse = user.role === "superadmin" ? (selectedSchoolId ? parseInt(selectedSchoolId) : undefined) : (user.schoolId ? parseInt(user.schoolId) : undefined);
+        const res = await apiService.getStudents(schoolIdToUse);
         setStudents(res.data.map((s: any) => ({
           id: s.id,
           grno: s.registrationNumber,
@@ -50,7 +70,7 @@ export default function Attendance({ user }: { user: any }) {
       }
     };
     fetchStudents();
-  }, [user.schoolId]);
+  }, [user.schoolId, user.role, selectedSchoolId]);
 
   const updateStatus = (id: string, status: string) => {
     if (!canManage) return;
@@ -105,10 +125,30 @@ export default function Attendance({ user }: { user: any }) {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Class Selection</CardTitle>
-            <CardDescription>Select standard and section</CardDescription>
+            <CardTitle>Attendance Context</CardTitle>
+            <CardDescription>Select unit and date registry</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {user.role === "superadmin" && (
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase text-slate-500 tracking-widest ml-1">School Branch</label>
+                <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
+                  <SelectTrigger className="border-slate-200 bg-blue-50/30 font-bold rounded-xl h-11">
+                    <SelectValue placeholder="Identify branch" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-68 rounded-2xl shadow-2xl border-slate-200 p-2">
+                    {schools.map(s => (
+                      <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-bold">{s.name}</span>
+                          <span className="text-[10px] text-slate-400 font-medium tracking-tight">ID: SCH-{s.id}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-slate-400">Standard</label>
               <Select defaultValue="10">

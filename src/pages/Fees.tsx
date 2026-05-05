@@ -10,6 +10,13 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { 
   DollarSign, 
@@ -27,13 +34,31 @@ import { cn } from "@/lib/utils";
 export default function Fees({ user }: { user: any }) {
   const [fees, setFees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [schools, setSchools] = useState<any[]>([]);
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string>(user.schoolId?.toString() || "");
   const isManagement = user.role === "superadmin" || user.role === "admin";
   const isParent = user.role === "parent";
+
+  useEffect(() => {
+    const fetchSchools = async () => {
+      if (user.role === "superadmin") {
+        try {
+          const res = await apiService.getSchools();
+          setSchools(res.data);
+        } catch (error) {
+          console.error("Failed to fetch schools", error);
+        }
+      }
+    };
+    fetchSchools();
+  }, [user.role]);
   
   useEffect(() => {
     const fetchFees = async () => {
+      setLoading(true);
       try {
-        const res = await apiService.getFees(user.schoolId ? parseInt(user.schoolId) : undefined);
+        const schoolIdToUse = user.role === "superadmin" ? (selectedSchoolId ? parseInt(selectedSchoolId) : undefined) : (user.schoolId ? parseInt(user.schoolId) : undefined);
+        const res = await apiService.getFees(schoolIdToUse);
         setFees(res.data);
       } catch (error) {
         console.error("Fees error:", error);
@@ -42,7 +67,7 @@ export default function Fees({ user }: { user: any }) {
       }
     };
     if (isManagement) fetchFees();
-  }, [user.schoolId, isManagement]);
+  }, [user.schoolId, isManagement, selectedSchoolId, user.role]);
 
   if (!isManagement && !isParent) {
     return <Navigate to="/" replace />;
@@ -54,6 +79,23 @@ export default function Fees({ user }: { user: any }) {
         <div>
           <p className="text-slate-500 mt-1">Track payments, issue invoices and monitor financial health.</p>
         </div>
+        {user.role === "superadmin" && (
+          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Branch:</span>
+            <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
+              <SelectTrigger className="h-9 w-[180px] border-none bg-slate-50 font-bold text-xs rounded-xl focus:ring-0">
+                <SelectValue placeholder="Identify branch" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border-slate-200 shadow-2xl p-2">
+                {schools.map(s => (
+                  <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2 px-3 rounded-lg">
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <div className="flex items-center gap-2">
             {isManagement && (
               <>
