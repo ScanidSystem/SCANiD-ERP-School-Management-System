@@ -21,24 +21,28 @@ export default function SystemLogs({ user }: SystemLogsProps) {
   const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
   const [appLogs, setAppLogs] = useState<string>("");
   const [dbScript, setDbScript] = useState<string>("");
+  const [seedScript, setSeedScript] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [seedCopied, setSeedCopied] = useState(false);
 
   const fetchData = async () => {
     setRefreshing(true);
     try {
-      const [auditRes, errorRes, scriptRes, appLogsRes] = await Promise.all([
+      const [auditRes, errorRes, scriptRes, appLogsRes, seedRes] = await Promise.all([
         apiService.getAuditLogs(),
         apiService.getErrorLogs(),
         apiService.getDbScript(),
-        apiService.getFileSystemLogs()
+        apiService.getFileSystemLogs(),
+        apiService.getSeedScript()
       ]);
 
       setAuditLogs(auditRes.data || []);
       setErrorLogs(errorRes.data || []);
       setDbScript(scriptRes.data?.content || "");
       setAppLogs(appLogsRes.data?.content || "");
+      setSeedScript(seedRes.data?.content || "");
     } catch (error) {
       console.error("Error fetching system data:", error);
       toast.error("Failed to load system logs");
@@ -123,6 +127,10 @@ export default function SystemLogs({ user }: SystemLogsProps) {
           <TabsTrigger value="database" className="px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50">
             <Database className="mr-2 h-4 w-4" />
             DB Schema
+          </TabsTrigger>
+          <TabsTrigger value="seed" className="px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Dummy Data
           </TabsTrigger>
         </TabsList>
 
@@ -301,6 +309,38 @@ export default function SystemLogs({ user }: SystemLogsProps) {
               <ScrollArea className="h-[600px] w-full rounded-[1.5rem] bg-slate-50 border border-slate-200 p-8 font-mono text-[13px] text-slate-700 leading-relaxed shadow-inner">
                 <pre className="whitespace-pre-wrap selection:bg-blue-100">
                   {dbScript || "-- The database script could not be loaded at this time."}
+                </pre>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="seed" className="mt-8">
+          <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
+            <CardHeader className="bg-white px-8 pt-8 pb-4 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl font-black text-slate-900">Dummy Data Insert Script</CardTitle>
+                <CardDescription className="font-medium text-slate-400">SQL script to populate all tables with dummy data for testing.</CardDescription>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  navigator.clipboard.writeText(seedScript);
+                  setSeedCopied(true);
+                  toast.success("Seed script copied");
+                  setTimeout(() => setSeedCopied(false), 2000);
+                }}
+                className="rounded-xl font-black px-6 h-9 border-slate-200 text-[10px] uppercase tracking-widest bg-white shadow-sm hover:bg-slate-50"
+              >
+                {seedCopied ? <Check className="mr-2 h-4 w-4 text-emerald-500" /> : <Copy className="mr-2 h-4 w-4" />}
+                {seedCopied ? "Data Script Saved" : "Copy Data SQL"}
+              </Button>
+            </CardHeader>
+            <CardContent className="p-8 pb-10">
+              <ScrollArea className="h-[600px] w-full rounded-[1.5rem] bg-slate-100 border border-slate-200 p-8 font-mono text-[13px] text-slate-700 leading-relaxed shadow-inner">
+                <pre className="whitespace-pre-wrap selection:bg-blue-100">
+                  {seedScript || "-- The seed data script could not be loaded at this time."}
                 </pre>
               </ScrollArea>
             </CardContent>

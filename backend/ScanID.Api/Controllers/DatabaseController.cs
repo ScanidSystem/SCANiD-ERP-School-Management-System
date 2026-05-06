@@ -23,20 +23,31 @@ namespace ScanID.Api.Controllers
         [HttpGet("script")]
         public IActionResult GetScript()
         {
-            // The file was created at the root of the applet directory
-            // In a real app we might store it in App_Data or similar
-            string filePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "database.sql");
+            return FetchScript("database.sql");
+        }
+
+        /// <summary>
+        /// Retrieves the contents of the seed data script.
+        /// </summary>
+        /// <returns>The SQL script as text.</returns>
+        [HttpGet("seed")]
+        public IActionResult GetSeedScript()
+        {
+            return FetchScript("seed_data.sql");
+        }
+
+        private IActionResult FetchScript(string fileName)
+        {
+            string filePath = Path.Combine(Directory.GetCurrentDirectory(), "..", fileName);
             
-            // Check if file exists, if not check current directory (depending on where it started)
             if (!System.IO.File.Exists(filePath))
             {
-                filePath = Path.Combine(Directory.GetCurrentDirectory(), "database.sql");
+                filePath = Path.Combine(Directory.GetCurrentDirectory(), fileName);
             }
 
             if (!System.IO.File.Exists(filePath))
             {
-                // Try searching for it
-                return NotFound("Database script NOT found at " + filePath);
+                return NotFound($"Script file '{fileName}' NOT found.");
             }
 
             string script = System.IO.File.ReadAllText(filePath);

@@ -86,6 +86,7 @@ export const apiService = {
   clearErrorLogs: () => api.delete('/errorlogs/clear'),
   getFileSystemLogs: () => api.get('/errorlogs/filesystem'),
   getDbScript: () => api.get('/database/script'),
+  getSeedScript: () => api.get('/database/seed'),
 };
 
 export default api;
