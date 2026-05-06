@@ -62,17 +62,30 @@ async function startServer() {
     }
   });
 
+  const mockUsers = [
+    { username: "superadmin", password: "Password123", role: "superadmin", name: "Global Admin", email: "admin@scanid.com", schoolId: null, schoolName: "System-wide" },
+    { username: "schooladmin1", password: "Password123", role: "admin", name: "John Doe", email: "john@greenvalley.edu", schoolId: 1, schoolName: "Greenwood High" },
+    { username: "teacher1", password: "Password123", role: "teacher", name: "Sarah Wilson", email: "sarah@greenvalley.edu", schoolId: 1, schoolName: "Greenwood High" },
+    { username: "student1", password: "Password123", role: "student", name: "James Brown", email: "james@student.com", schoolId: 1, schoolName: "Greenwood High" },
+  ];
+
   app.post("/api/auth/login", (req, res) => {
-    const { username, role, schoolId } = req.body;
-    // Mock login that returns a user object
-    res.json({
-      id: "u" + Math.random().toString(36).substr(2, 4),
-      name: username.split("@")[0],
-      email: username.includes("@") ? username : `${username}@school.com`,
-      role: role || "admin",
-      schoolId: schoolId,
-      schoolName: schools.find(s => s.id === schoolId)?.name || "Default School"
-    });
+    const { username, password } = req.body;
+    
+    const user = mockUsers.find(u => u.username === username && u.password === password);
+    
+    if (user) {
+      res.json({
+        id: "u" + Math.random().toString(36).substr(2, 4),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        schoolId: user.schoolId,
+        schoolName: user.schoolName
+      });
+    } else {
+      res.status(401).json({ message: "Invalid username or password" });
+    }
   });
 
   app.post("/api/auth/forgot-password", (req, res) => {

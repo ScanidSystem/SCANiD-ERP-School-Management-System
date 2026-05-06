@@ -61,11 +61,13 @@ export default function Login({ onLogin }: LoginProps) {
       onLogin(user);
     } catch (err: any) {
       console.error("Login Error:", err);
-      setErrorVisible("Could not connect to local API. Ensure backend is running at http://localhost:5000");
       
-      // FALLBACK for development if API is offline
-      if (import.meta.env.DEV) {
-        console.warn("API Offline - Using dev fallback");
+      const errorMessage = err.response?.data?.message || err.response?.data || "Invalid username or password";
+      setErrorVisible(errorMessage);
+      
+      // FALLBACK for development ONLY if it's a connection error (not a 401/403)
+      if (import.meta.env.DEV && (!err.response || err.response.status >= 500)) {
+        console.warn("API Error/Offline - Using dev fallback");
         const isAll = selectedSchool === "all";
         const school = MOCK_SCHOOLS.find(s => s.id === selectedSchool);
         const year = MOCK_YEARS.find(y => y.id === selectedYear);
