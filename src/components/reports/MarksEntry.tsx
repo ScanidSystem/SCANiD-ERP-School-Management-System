@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { User as UserType } from "@/types";
+import { apiService } from "@/lib/api";
 
 // Dynamic subjects configuration based on standard
 const SUBJECTS_BY_STANDARD: Record<string, string[]> = {

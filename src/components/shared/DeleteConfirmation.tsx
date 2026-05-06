@@ -47,7 +47,6 @@ export function DeleteConfirmation({
         
         <AlertDialogFooter className="p-6 bg-white sm:justify-center gap-3">
           <AlertDialogCancel 
-            onClick={onClose}
             className="rounded-xl px-8 h-12 font-bold text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all border-2"
           >
             Cancel, Keep it

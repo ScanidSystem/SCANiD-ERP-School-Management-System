@@ -19,6 +19,7 @@ import Schools from "@/pages/Schools";
 import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
+import SystemLogs from "@/pages/SystemLogs";
 
 import { Role, User } from "@/types";
 
@@ -73,6 +74,9 @@ export default function App() {
               <Route path="/schools" element={<Schools user={user} />} />
               <Route path="/profile" element={<Profile user={user} />} />
               <Route path="/settings" element={<Settings user={user} />} />
+              {user.role === "superadmin" && (
+                <Route path="/system-logs" element={<SystemLogs user={user} />} />
+              )}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

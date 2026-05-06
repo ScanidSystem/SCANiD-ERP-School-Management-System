@@ -5,6 +5,9 @@ using ScanID.Api.Models;
 
 namespace ScanID.Api.Controllers
 {
+    /// <summary>
+    /// Controller for managing student marks and academic performance.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class MarksController : ControllerBase
@@ -16,10 +19,16 @@ namespace ScanID.Api.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Retrieves marks records, optionally filtered by student or school.
+        /// </summary>
+        /// <param name="studentId">Optional student filter.</param>
+        /// <param name="schoolId">Optional school filter.</param>
+        /// <returns>A list of marks records.</returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Mark>>> GetMarks(int? studentId, int? schoolId)
         {
-            var query = _context.Marks.Include(m => m.Student).AsQueryable();
+            var query = _context.Marks.Include(m => m.Student).AsNoTracking().AsQueryable();
             
             if (studentId.HasValue)
                 query = query.Where(m => m.StudentId == studentId.Value);
@@ -30,6 +39,11 @@ namespace ScanID.Api.Controllers
             return await query.ToListAsync();
         }
 
+        /// <summary>
+        /// Records new marks for a student.
+        /// </summary>
+        /// <param name="mark">The mark entry details.</param>
+        /// <returns>The created mark record.</returns>
         [HttpPost]
         public async Task<ActionResult<Mark>> PostMark(Mark mark)
         {
@@ -38,4 +52,5 @@ namespace ScanID.Api.Controllers
             return Ok(mark);
         }
     }
+
 }

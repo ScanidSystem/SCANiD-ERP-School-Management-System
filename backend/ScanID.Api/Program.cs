@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ScanID.Api.Data;
+using ScanID.Api.Models;
+using ScanID.Api.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +36,28 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Global Exception Handler Middleware
+app.Use(async (context, next) => {
+    try {
+        await next();
+    } catch (Exception ex) {
+        // Log to Filesystem
+        FileLogger.LogError(ex);
+
+        // Log to Database
+        var db = context.RequestServices.GetRequiredService<ApplicationDbContext>();
+        db.ErrorLogs.Add(new ErrorLog {
+            Message = ex.Message,
+            Exception = ex.ToString(),
+            Level = "Error",
+            Timestamp = DateTime.UtcNow,
+            Properties = $"Path: {context.Request.Path}"
+        });
+        await db.SaveChangesAsync();
+        throw; // Re-throw to let standard handlers work
+    }
+});
+
 // Enable Swagger UI always for easier local testing
 app.UseSwagger();
 app.UseSwaggerUI(c =>
@@ -57,3 +81,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+

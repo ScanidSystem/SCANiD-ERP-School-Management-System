@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE_URL = '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -67,6 +67,8 @@ export const apiService = {
   // Teachers
   getTeachers: (schoolId?: number) => api.get('/teachers', { params: { schoolId } }),
   createTeacher: (data: any) => api.post('/teachers', data),
+  updateTeacher: (id: number, data: any) => api.put(`/teachers/${id}`, data),
+  deleteTeacher: (id: number) => api.delete(`/teachers/${id}`),
   
   // Stats
   getStats: (schoolId?: number) => api.get('/stats', { params: { schoolId } }),
@@ -77,6 +79,13 @@ export const apiService = {
 
   // Fees
   getFees: (schoolId?: number) => api.get('/fees', { params: { schoolId } }),
+
+  // System Logs
+  getAuditLogs: () => api.get('/auditlogs'),
+  getErrorLogs: () => api.get('/errorlogs'),
+  clearErrorLogs: () => api.delete('/errorlogs/clear'),
+  getFileSystemLogs: () => api.get('/errorlogs/filesystem'),
+  getDbScript: () => api.get('/database/script'),
 };
 
 export default api;

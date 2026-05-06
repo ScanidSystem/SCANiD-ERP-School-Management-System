@@ -5,6 +5,9 @@ using ScanID.Api.Models;
 
 namespace ScanID.Api.Controllers
 {
+    /// <summary>
+    /// Controller for authentication and user sessions.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
@@ -16,6 +19,11 @@ namespace ScanID.Api.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Authenticates a user based on username and password.
+        /// </summary>
+        /// <param name="request">Login credentials.</param>
+        /// <returns>User profile data on success.</returns>
         [HttpPost("login")]
         public async Task<ActionResult<User>> Login([FromBody] LoginRequest request)
         {
@@ -37,6 +45,11 @@ namespace ScanID.Api.Controllers
             });
         }
 
+        /// <summary>
+        /// Initiates a password reset process for a user.
+        /// </summary>
+        /// <param name="request">The request containing the username.</param>
+        /// <returns>Success message.</returns>
         [HttpPost("forgot-password")]
         public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
@@ -54,14 +67,21 @@ namespace ScanID.Api.Controllers
         }
     }
 
+    /// <summary>
+    /// DTO for login request.
+    /// </summary>
     public class LoginRequest
     {
         public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
     }
 
+    /// <summary>
+    /// DTO for forgot password request.
+    /// </summary>
     public class ForgotPasswordRequest
     {
         public string Username { get; set; } = string.Empty;
     }
+
 }

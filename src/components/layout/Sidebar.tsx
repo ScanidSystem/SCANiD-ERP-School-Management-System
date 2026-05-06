@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   School,
+  Terminal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Role } from "@/types";
@@ -40,6 +41,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
     { name: "Attendance", path: "/attendance", icon: CalendarCheck, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
     { name: "Fees", path: "/fees", icon: CreditCard, roles: ["superadmin", "admin", "parent"] },
     { name: "Messages", path: "/messages", icon: MessageSquare, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
+    { name: "System Logs", path: "/system-logs", icon: Terminal, roles: ["superadmin"] },
   ];
 
   const filteredItems = menuItems.filter(item => item.roles.includes(user.role));

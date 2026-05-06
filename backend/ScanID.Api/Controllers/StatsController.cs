@@ -4,6 +4,9 @@ using ScanID.Api.Data;
 
 namespace ScanID.Api.Controllers
 {
+    /// <summary>
+    /// Controller for retrieving dashboard statistics and analytical data.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class StatsController : ControllerBase
@@ -15,12 +18,17 @@ namespace ScanID.Api.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Gathers high-level statistics for the dashboard.
+        /// </summary>
+        /// <param name="schoolId">Optional school ID to filter stats.</param>
+        /// <returns>A summary of students, teachers, and performance metrics.</returns>
         [HttpGet]
         public async Task<IActionResult> GetDashboardStats(int? schoolId)
         {
-            var studentQuery = _context.Students.AsQueryable();
-            var teacherQuery = _context.Teachers.AsQueryable();
-            var attendanceQuery = _context.Attendance.AsQueryable();
+            var studentQuery = _context.Students.AsNoTracking().AsQueryable();
+            var teacherQuery = _context.Teachers.AsNoTracking().AsQueryable();
+            var attendanceQuery = _context.Attendance.AsNoTracking().AsQueryable();
 
             if (schoolId.HasValue)
             {
@@ -43,4 +51,5 @@ namespace ScanID.Api.Controllers
             });
         }
     }
+
 }

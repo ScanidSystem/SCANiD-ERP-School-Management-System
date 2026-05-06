@@ -4,7 +4,52 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ScanID.Api.Models
 {
-    public class School
+    /// <summary>
+    /// Base class for all entities with audit fields.
+    /// </summary>
+    public abstract class BaseEntity
+    {
+        public bool IsActive { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
+        public string? CreatedBy { get; set; }
+        public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
+        public string? ModifiedBy { get; set; }
+        public DateTime ModifiedOn { get; set; } = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Model for tracking data changes.
+    /// </summary>
+    public class AuditLog
+    {
+        public int Id { get; set; }
+        public string? UserId { get; set; }
+        public string? Type { get; set; }
+        public string? TableName { get; set; }
+        public DateTime DateTime { get; set; }
+        public string? OldValues { get; set; }
+        public string? NewValues { get; set; }
+        public string? AffectedColumns { get; set; }
+        public string? PrimaryKey { get; set; }
+    }
+
+    /// <summary>
+    /// Model for structured error logging in the database.
+    /// </summary>
+    public class ErrorLog
+    {
+        public int Id { get; set; }
+        public string? Message { get; set; }
+        public string? Level { get; set; }
+        public DateTime Timestamp { get; set; }
+        public string? Exception { get; set; }
+        public string? Properties { get; set; }
+    }
+
+    /// <summary>
+    /// Represents a school registration.
+    /// </summary>
+    public class School : BaseEntity
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -14,10 +59,12 @@ namespace ScanID.Api.Models
         public string? Phone { get; set; }
         public int TotalStudents { get; set; }
         public string Status { get; set; } = "Active";
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 
-    public class User
+    /// <summary>
+    /// Represents a system user.
+    /// </summary>
+    public class User : BaseEntity
     {
         public int Id { get; set; }
         public string Username { get; set; } = string.Empty;
@@ -30,11 +77,17 @@ namespace ScanID.Api.Models
         public School? School { get; set; }
     }
 
-    public class Student
+    /// <summary>
+    /// Represents a student record.
+    /// </summary>
+    public class Student : BaseEntity
     {
         public int Id { get; set; }
         [Required]
         public string RegistrationNumber { get; set; } = string.Empty;
+        public string? FirstName { get; set; }
+        public string? MiddleName { get; set; }
+        public string? LastName { get; set; }
         [Required]
         public string FullName { get; set; } = string.Empty;
         public int SchoolId { get; set; }
@@ -43,7 +96,11 @@ namespace ScanID.Api.Models
         public DateTime? DateOfBirth { get; set; }
         public string? Gender { get; set; }
         public string? FatherName { get; set; }
+        public string? MotherName { get; set; }
         public string? ContactNumber { get; set; }
+        public string? Address { get; set; }
+        public string? AadharCard { get; set; }
+        public string? Photo { get; set; }
         public string Status { get; set; } = "Active";
         public int RollNumber { get; set; }
 
@@ -51,7 +108,11 @@ namespace ScanID.Api.Models
         public School? School { get; set; }
     }
 
-    public class Attendance
+
+    /// <summary>
+    /// Tracks student attendance.
+    /// </summary>
+    public class Attendance : BaseEntity
     {
         public int Id { get; set; }
         public int StudentId { get; set; }
@@ -63,7 +124,10 @@ namespace ScanID.Api.Models
         public Student? Student { get; set; }
     }
 
-    public class Fee
+    /// <summary>
+    /// Manages student fees.
+    /// </summary>
+    public class Fee : BaseEntity
     {
         public int Id { get; set; }
         public int StudentId { get; set; }
@@ -79,7 +143,10 @@ namespace ScanID.Api.Models
         public Student? Student { get; set; }
     }
 
-    public class Mark
+    /// <summary>
+    /// Tracks student academic marks.
+    /// </summary>
+    public class Mark : BaseEntity
     {
         public int Id { get; set; }
         public int StudentId { get; set; }
@@ -93,7 +160,10 @@ namespace ScanID.Api.Models
         public Student? Student { get; set; }
     }
 
-    public class Teacher
+    /// <summary>
+    /// Represents a teacher record.
+    /// </summary>
+    public class Teacher : BaseEntity
     {
         public int Id { get; set; }
         public int UserId { get; set; }
@@ -111,7 +181,10 @@ namespace ScanID.Api.Models
         public School? School { get; set; }
     }
 
-    public class Message
+    /// <summary>
+    /// Manages system messages and alerts.
+    /// </summary>
+    public class Message : BaseEntity
     {
         public int Id { get; set; }
         public int SenderId { get; set; }
@@ -120,6 +193,6 @@ namespace ScanID.Api.Models
         public string Content { get; set; } = string.Empty;
         public bool IsRead { get; set; }
         public string Type { get; set; } = "Alert";
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
+

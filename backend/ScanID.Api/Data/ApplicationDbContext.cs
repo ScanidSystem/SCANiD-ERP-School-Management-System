@@ -1,8 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using ScanID.Api.Models;
+using System.Text.Json;
 
 namespace ScanID.Api.Data
 {
+    /// <summary>
+    /// Database context for the ScanID application, handles audit logging and soft deletes.
+    /// </summary>
     public class ApplicationDbContext : DbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -18,11 +22,140 @@ namespace ScanID.Api.Data
         public DbSet<Mark> Marks { get; set; }
         public DbSet<Teacher> Teachers { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<ErrorLog> ErrorLogs { get; set; }
 
+        /// <summary>
+        /// Configures the model, including global query filters for soft deletion.
+        /// </summary>
+        /// <param name="modelBuilder">The model builder.</param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Seed data or configure relationships if needed
             base.OnModelCreating(modelBuilder);
+
+            // Configure global query filter for IsDeleted
+            modelBuilder.Entity<School>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<User>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Student>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Attendance>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Fee>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Mark>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Teacher>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Message>().HasQueryFilter(x => !x.IsDeleted);
+        }
+
+        /// <summary>
+        /// Saves changes to the database, automatically populating audit fields and generating audit logs.
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The number of state entries written to the database.</returns>
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            OnBeforeSaveChanges();
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Internal method to process entities before saving, handling audit trail properties.
+        /// </summary>
+        private void OnBeforeSaveChanges()
+        {
+            ChangeTracker.DetectChanges();
+            var auditEntries = new List<AuditEntry>();
+
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                if (entry.Entity is AuditLog || entry.Entity is ErrorLog || entry.State == EntityState.Detached || entry.State == EntityState.Unchanged)
+                    continue;
+
+                var auditEntry = new AuditEntry(entry);
+                auditEntry.TableName = entry.Entity.GetType().Name;
+                auditEntries.Add(auditEntry);
+
+                if (entry.Entity is BaseEntity entity)
+                {
+                    var now = DateTime.UtcNow;
+                    if (entry.State == EntityState.Added)
+                    {
+                        entity.CreatedOn = now;
+                        entity.ModifiedOn = now;
+                    }
+                    else if (entry.State == EntityState.Modified)
+                    {
+                        entity.ModifiedOn = now;
+                    }
+                }
+
+                foreach (var property in entry.Properties)
+                {
+                    string propertyName = property.Metadata.Name;
+                    if (property.Metadata.IsPrimaryKey())
+                    {
+                        auditEntry.KeyValues[propertyName] = property.CurrentValue;
+                        continue;
+                    }
+
+                    switch (entry.State)
+                    {
+                        case EntityState.Added:
+                            auditEntry.AuditType = "Create";
+                            auditEntry.NewValues[propertyName] = property.CurrentValue;
+                            break;
+
+                        case EntityState.Deleted:
+                            auditEntry.AuditType = "Delete";
+                            auditEntry.OldValues[propertyName] = property.OriginalValue;
+                            break;
+
+                        case EntityState.Modified:
+                            if (property.IsModified)
+                            {
+                                auditEntry.ChangedColumns.Add(propertyName);
+                                auditEntry.AuditType = "Update";
+                                auditEntry.OldValues[propertyName] = property.OriginalValue;
+                                auditEntry.NewValues[propertyName] = property.CurrentValue;
+                            }
+                            break;
+                    }
+                }
+            }
+
+            foreach (var auditEntry in auditEntries)
+            {
+                AuditLogs.Add(auditEntry.ToAudit());
+            }
+        }
+    }
+
+    /// <summary>
+    /// Helper class to track audit entry details during the change process.
+    /// </summary>
+    internal class AuditEntry
+    {
+        public AuditEntry(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry)
+        {
+            Entry = entry;
+        }
+        public Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry Entry { get; }
+        public string? TableName { get; set; }
+        public Dictionary<string, object?> KeyValues { get; } = new Dictionary<string, object?>();
+        public Dictionary<string, object?> OldValues { get; } = new Dictionary<string, object?>();
+        public Dictionary<string, object?> NewValues { get; } = new Dictionary<string, object?>();
+        public string? AuditType { get; set; }
+        public List<string> ChangedColumns { get; } = new List<string>();
+
+        public AuditLog ToAudit()
+        {
+            var audit = new AuditLog();
+            audit.Type = AuditType;
+            audit.TableName = TableName;
+            audit.DateTime = DateTime.UtcNow;
+            audit.PrimaryKey = JsonSerializer.Serialize(KeyValues);
+            audit.OldValues = OldValues.Count == 0 ? null : JsonSerializer.Serialize(OldValues);
+            audit.NewValues = NewValues.Count == 0 ? null : JsonSerializer.Serialize(NewValues);
+            audit.AffectedColumns = ChangedColumns.Count == 0 ? null : JsonSerializer.Serialize(ChangedColumns);
+            return audit;
         }
     }
 }
+

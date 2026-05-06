@@ -1,0 +1,312 @@
+import { useState, useEffect } from "react";
+import { User, AuditLog, ErrorLog } from "@/types";
+import { apiService } from "@/lib/api";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2, RefreshCw, Trash2, Database, AlertCircle, History, Copy, Check, ChevronRight, Home, Terminal } from "lucide-react";
+import { toast } from "sonner";
+import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
+
+interface SystemLogsProps {
+  user: User;
+}
+
+export default function SystemLogs({ user }: SystemLogsProps) {
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
+  const [appLogs, setAppLogs] = useState<string>("");
+  const [dbScript, setDbScript] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const fetchData = async () => {
+    setRefreshing(true);
+    try {
+      const [auditRes, errorRes, scriptRes, appLogsRes] = await Promise.all([
+        apiService.getAuditLogs(),
+        apiService.getErrorLogs(),
+        apiService.getDbScript(),
+        apiService.getFileSystemLogs()
+      ]);
+
+      setAuditLogs(auditRes.data || []);
+      setErrorLogs(errorRes.data || []);
+      setDbScript(scriptRes.data?.content || "");
+      setAppLogs(appLogsRes.data?.content || "");
+    } catch (error) {
+      console.error("Error fetching system data:", error);
+      toast.error("Failed to load system logs");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const clearErrorLogs = async () => {
+    if (!confirm("Are you sure you want to clear all error logs?")) return;
+    try {
+      await apiService.clearErrorLogs();
+      setErrorLogs([]);
+      toast.success("Error logs cleared");
+    } catch (error) {
+      toast.error("Failed to clear logs");
+    }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(dbScript);
+    setCopied(true);
+    toast.success("Script copied to clipboard");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500 pb-10">
+      {/* Breadcrumbs */}
+      <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+        <Link to="/" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
+          <Home size={14} /> Home
+        </Link>
+        <ChevronRight size={12} />
+        <span className="text-slate-900">System Logs</span>
+      </div>
+
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-black tracking-tight text-slate-900">System Logs</h1>
+          <p className="text-slate-500 mt-1">Monitor system activities, exceptions, and institutional data health.</p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={fetchData} 
+          disabled={refreshing}
+          className="rounded-xl border-slate-200 font-bold bg-white shadow-sm hover:bg-slate-50"
+        >
+          <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          Sync System Data
+        </Button>
+      </div>
+
+      <Tabs defaultValue="audit" orientation="horizontal" className="w-full">
+        <TabsList className="bg-slate-100/80 p-1.5 rounded-2xl h-12 w-fit flex-row">
+          <TabsTrigger value="audit" className="px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50">
+            <History className="mr-2 h-4 w-4" />
+            Audit Trail
+          </TabsTrigger>
+          <TabsTrigger value="errors" className="px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50">
+            <AlertCircle className="mr-2 h-4 w-4" />
+            Database Errors
+          </TabsTrigger>
+          <TabsTrigger value="applogs" className="px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50">
+            <Terminal className="mr-2 h-4 w-4" />
+            Application Logs
+          </TabsTrigger>
+          <TabsTrigger value="database" className="px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50">
+            <Database className="mr-2 h-4 w-4" />
+            DB Schema
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="audit" className="mt-8">
+          <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
+            <CardHeader className="bg-white px-8 pt-8 pb-4">
+              <CardTitle className="text-2xl font-black text-slate-900">Audit Trail</CardTitle>
+              <CardDescription className="font-medium text-slate-400">Chronological record of data transactions and modifications.</CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50/50 border-y border-slate-100">
+                      <TableHead className="pl-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Timestamp</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Event Type</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Entity Affected</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">UID</TableHead>
+                      <TableHead className="pr-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Operation Context</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {auditLogs.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-20">
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="p-4 bg-slate-50 rounded-full text-slate-300">
+                              <History size={32} />
+                            </div>
+                            <p className="text-slate-400 font-bold text-sm tracking-tight">No audit logs found.</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      auditLogs.map((log) => (
+                        <TableRow key={log.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-50">
+                          <TableCell className="pl-8 font-mono text-[10px] text-slate-500 font-bold italic">
+                            {new Date(log.dateTime).toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={cn(
+                              "font-black text-[9px] uppercase tracking-wider px-2",
+                              log.type === "Create" ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : 
+                              log.type === "Delete" ? "bg-red-100 text-red-700 hover:bg-red-100" : 
+                              "bg-blue-100 text-blue-700 hover:bg-blue-100"
+                            )}>
+                              {log.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-black text-slate-700 tracking-tight text-sm uppercase">{log.tableName}</TableCell>
+                          <TableCell className="text-[10px] font-mono text-slate-400">ID:{log.primaryKey}</TableCell>
+                          <TableCell className="pr-8">
+                            <div className="max-w-md truncate text-[11px] font-bold text-slate-400" title={log.newValues || ""}>
+                              {log.affectedColumns ? `Changes in: ${log.affectedColumns}` : "Full entity record interaction"}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="errors" className="mt-8">
+          <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
+            <CardHeader className="bg-white px-8 pt-8 pb-4 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl font-black text-slate-900">Database Errors</CardTitle>
+                <CardDescription className="font-medium text-slate-400">Exceptions recorded during database operations.</CardDescription>
+              </div>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={clearErrorLogs} 
+                disabled={errorLogs.length === 0}
+                className="rounded-xl font-black px-5 h-9 text-[10px] uppercase tracking-widest shadow-lg shadow-red-100"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Flush Logs
+              </Button>
+            </CardHeader>
+            <CardContent className="px-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50/50 border-y border-slate-100">
+                      <TableHead className="pl-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Event Time</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Severity</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Error Origin</TableHead>
+                      <TableHead className="pr-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Message Detail</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {errorLogs.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-20">
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="p-4 bg-slate-50 rounded-full text-slate-300">
+                              <AlertCircle size={32} />
+                            </div>
+                            <p className="text-slate-400 font-bold text-sm tracking-tight">Systems are healthy. No errors found.</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      errorLogs.map((log) => (
+                        <TableRow key={log.id} className="hover:bg-red-50/30 transition-colors border-b border-slate-50">
+                          <TableCell className="pl-8 font-mono text-[10px] text-slate-500 font-bold italic whitespace-nowrap">
+                            {new Date(log.timestamp).toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className="bg-red-500 text-white font-black text-[9px] uppercase tracking-wider px-2 hover:bg-red-600">
+                              {log.level}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-black text-slate-700 tracking-tight text-xs uppercase">{log.properties}</TableCell>
+                          <TableCell className="pr-8">
+                            <p className="text-[11px] font-bold text-slate-500 max-w-xl">{log.message}</p>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="applogs" className="mt-8">
+          <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
+            <CardHeader className="bg-white px-8 pt-8 pb-4">
+              <CardTitle className="text-2xl font-black text-slate-900">Application Runtime Logs</CardTitle>
+              <CardDescription className="font-medium text-slate-400">Real-time logs captured on the server filesystem.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-8 pb-10">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-blue-500/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                <ScrollArea className="h-[600px] w-full rounded-[1.5rem] border-4 border-slate-900 bg-slate-950 p-6 shadow-2xl relative z-10">
+                  <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-800/50">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                    <span className="text-[10px] font-mono text-slate-600 ml-2 uppercase font-black tracking-widest underline decoration-blue-500/50 decoration-2">server_log_active</span>
+                  </div>
+                  <pre className="font-mono text-xs leading-relaxed text-blue-200/80 whitespace-pre-wrap selection:bg-blue-500/30">
+                    {appLogs || "-- No recent application activity logged yet."}
+                  </pre>
+                </ScrollArea>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="database" className="mt-8">
+          <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
+            <CardHeader className="bg-white px-8 pt-8 pb-4 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl font-black text-slate-900">Database Schema</CardTitle>
+                <CardDescription className="font-medium text-slate-400">Current institutional database structure for environment provisioning.</CardDescription>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={copyToClipboard}
+                className="rounded-xl font-black px-6 h-9 border-slate-200 text-[10px] uppercase tracking-widest bg-white shadow-sm hover:bg-slate-50"
+              >
+                {copied ? <Check className="mr-2 h-4 w-4 text-emerald-500" /> : <Copy className="mr-2 h-4 w-4" />}
+                {copied ? "Script Saved" : "Copy Schema SQL"}
+              </Button>
+            </CardHeader>
+            <CardContent className="p-8 pb-10">
+              <ScrollArea className="h-[600px] w-full rounded-[1.5rem] bg-slate-50 border border-slate-200 p-8 font-mono text-[13px] text-slate-700 leading-relaxed shadow-inner">
+                <pre className="whitespace-pre-wrap selection:bg-blue-100">
+                  {dbScript || "-- The database script could not be loaded at this time."}
+                </pre>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

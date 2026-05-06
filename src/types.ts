@@ -11,3 +11,24 @@ export interface User {
   academicYearName?: string;
   academicYear?: string;
 }
+
+export interface AuditLog {
+  id: number;
+  userId?: string;
+  type?: string;
+  tableName?: string;
+  dateTime: string;
+  oldValues?: string;
+  newValues?: string;
+  affectedColumns?: string;
+  primaryKey?: string;
+}
+
+export interface ErrorLog {
+  id: number;
+  message?: string;
+  level?: string;
+  timestamp: string;
+  exception?: string;
+  properties?: string;
+}
