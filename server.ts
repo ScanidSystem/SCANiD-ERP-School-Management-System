@@ -12,6 +12,11 @@ async function startServer() {
 
   app.use(express.json());
 
+  app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+  });
+
   // API Routes
   let schools = [
     { id: 1, name: "Greenwood High", status: "Active", address: "123 Academic Way", email: "admin@greenwood.edu", phone: "9876543210" },
@@ -62,6 +67,17 @@ async function startServer() {
     }
   });
 
+  app.get("/api/database/seed", async (req, res) => {
+    try {
+      const fs = await import("fs/promises");
+      const scriptPath = path.join(process.cwd(), "seed_data.sql");
+      const content = await fs.readFile(scriptPath, "utf-8");
+      res.json({ content });
+    } catch (err) {
+      res.status(500).json({ error: "Could not read seed script" });
+    }
+  });
+
   const mockUsers = [
     { username: "superadmin", password: "Password123", role: "superadmin", name: "Global Admin", email: "admin@scanid.com", schoolId: null, schoolName: "System-wide" },
     { username: "schooladmin1", password: "Password123", role: "admin", name: "John Doe", email: "john@greenvalley.edu", schoolId: 1, schoolName: "Greenwood High" },
@@ -71,6 +87,7 @@ async function startServer() {
 
   app.post("/api/auth/login", (req, res) => {
     const { username, password } = req.body;
+    console.log(`Login attempt for: ${username}`);
     
     const user = mockUsers.find(u => u.username === username && u.password === password);
     
@@ -86,6 +103,11 @@ async function startServer() {
     } else {
       res.status(401).json({ message: "Invalid username or password" });
     }
+  });
+
+  // Support PascalCase for demo compatibility with C# conventions if needed
+  app.post("/api/Auth/login", (req, res) => {
+    res.redirect(307, "/api/auth/login");
   });
 
   app.post("/api/auth/forgot-password", (req, res) => {
