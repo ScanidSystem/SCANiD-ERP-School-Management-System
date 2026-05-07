@@ -28,7 +28,7 @@ namespace ScanID.Api.Utilities
             try
             {
                 string fileName = Path.GetFileName(filePath);
-                string logEntry = $"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] [{level.ToUpper()}] [{fileName} -> {memberName}]: {message}{Environment.NewLine}";
+                string logEntry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{level.ToUpper()}] [{fileName} -> {memberName}]: {message}{Environment.NewLine}";
                 System.IO.File.AppendAllText(LogFile, logEntry);
             }
             catch

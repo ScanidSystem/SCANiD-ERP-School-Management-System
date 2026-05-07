@@ -74,7 +74,7 @@ namespace ScanID.Api.Data
 
                 if (entry.Entity is BaseEntity entity)
                 {
-                    var now = DateTime.UtcNow;
+                    var now = DateTime.Now;
                     if (entry.State == EntityState.Added)
                     {
                         entity.CreatedOn = now;
@@ -149,7 +149,7 @@ namespace ScanID.Api.Data
             var audit = new AuditLog();
             audit.Type = AuditType;
             audit.TableName = TableName;
-            audit.DateTime = DateTime.UtcNow;
+            audit.DateTime = DateTime.Now;
             audit.PrimaryKey = JsonSerializer.Serialize(KeyValues);
             audit.OldValues = OldValues.Count == 0 ? null : JsonSerializer.Serialize(OldValues);
             audit.NewValues = NewValues.Count == 0 ? null : JsonSerializer.Serialize(NewValues);
