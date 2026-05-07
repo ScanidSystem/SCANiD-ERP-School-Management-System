@@ -1,4 +1,5 @@
 import express from "express";
+import "dotenv/config";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -8,7 +9,7 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT || 5000);
 
   app.use(express.json());
 
@@ -19,18 +20,66 @@ async function startServer() {
 
   // API Routes
   let schools = [
-    { id: 1, name: "Greenwood High", status: "Active", address: "123 Academic Way", email: "admin@greenwood.edu", phone: "9876543210" },
-    { id: 2, name: "St. Xavier International", status: "Active", address: "456 Education Lane", email: "office@stxavier.edu", phone: "9876543211" }
+    {
+      id: 1,
+      name: "Greenwood High",
+      status: "Active",
+      address: "123 Academic Way",
+      email: "admin@greenwood.edu",
+      phone: "9876543210",
+    },
+    {
+      id: 2,
+      name: "St. Xavier International",
+      status: "Active",
+      address: "456 Education Lane",
+      email: "office@stxavier.edu",
+      phone: "9876543211",
+    },
   ];
 
   let students = [
-    { id: 1, registrationNumber: "REG2024001", fullName: "Alice Johnson", schoolId: 1, standard: "10th", section: "A", rollNumber: 1, status: "Active", contactNumber: "9000000001" },
-    { id: 2, registrationNumber: "REG2024002", fullName: "Bob Smith", schoolId: 1, standard: "10th", section: "A", rollNumber: 2, status: "Active", contactNumber: "9000000002" }
+    {
+      id: 1,
+      registrationNumber: "REG2024001",
+      fullName: "Alice Johnson",
+      schoolId: 1,
+      standard: "10th",
+      section: "A",
+      rollNumber: 1,
+      status: "Active",
+      contactNumber: "9000000001",
+    },
+    {
+      id: 2,
+      registrationNumber: "REG2024002",
+      fullName: "Bob Smith",
+      schoolId: 1,
+      standard: "10th",
+      section: "A",
+      rollNumber: 2,
+      status: "Active",
+      contactNumber: "9000000002",
+    },
   ];
 
   let auditLogs = [
-    { id: 1, type: "Create", tableName: "Schools", primaryKey: "{\"Id\":3}", dateTime: new Date().toISOString(), affectedColumns: "Full entity" },
-    { id: 2, type: "Update", tableName: "Students", primaryKey: "{\"Id\":1}", dateTime: new Date(Date.now() - 3600000).toISOString(), affectedColumns: "[\"Status\",\"ModifiedOn\"]" }
+    {
+      id: 1,
+      type: "Create",
+      tableName: "Schools",
+      primaryKey: '{"Id":3}',
+      dateTime: new Date().toISOString(),
+      affectedColumns: "Full entity",
+    },
+    {
+      id: 2,
+      type: "Update",
+      tableName: "Students",
+      primaryKey: '{"Id":1}',
+      dateTime: new Date(Date.now() - 3600000).toISOString(),
+      affectedColumns: '["Status","ModifiedOn"]',
+    },
   ];
 
   let errorLogs: any[] = [];
@@ -53,7 +102,10 @@ async function startServer() {
   });
 
   app.get("/api/errorlogs/filesystem", (req, res) => {
-    res.json({ content: "[INFO] Server started\n[INFO] Connected to mock database\n[DEBUG] Vite middleware initialized" });
+    res.json({
+      content:
+        "[INFO] Server started\n[INFO] Connected to mock database\n[DEBUG] Vite middleware initialized",
+    });
   });
 
   app.get("/api/database/script", async (req, res) => {
@@ -79,18 +131,52 @@ async function startServer() {
   });
 
   const mockUsers = [
-    { username: "superadmin", password: "Password123", role: "superadmin", name: "Global Admin", email: "admin@scanid.com", schoolId: null, schoolName: "System-wide" },
-    { username: "schooladmin1", password: "Password123", role: "admin", name: "John Doe", email: "john@greenvalley.edu", schoolId: 1, schoolName: "Greenwood High" },
-    { username: "teacher1", password: "Password123", role: "teacher", name: "Sarah Wilson", email: "sarah@greenvalley.edu", schoolId: 1, schoolName: "Greenwood High" },
-    { username: "student1", password: "Password123", role: "student", name: "James Brown", email: "james@student.com", schoolId: 1, schoolName: "Greenwood High" },
+    {
+      username: "superadmin",
+      password: "Password123",
+      role: "superadmin",
+      name: "Global Admin",
+      email: "admin@scanid.com",
+      schoolId: null,
+      schoolName: "System-wide",
+    },
+    {
+      username: "schooladmin1",
+      password: "Password123",
+      role: "admin",
+      name: "John Doe",
+      email: "john@greenvalley.edu",
+      schoolId: 1,
+      schoolName: "Greenwood High",
+    },
+    {
+      username: "teacher1",
+      password: "Password123",
+      role: "teacher",
+      name: "Sarah Wilson",
+      email: "sarah@greenvalley.edu",
+      schoolId: 1,
+      schoolName: "Greenwood High",
+    },
+    {
+      username: "student1",
+      password: "Password123",
+      role: "student",
+      name: "James Brown",
+      email: "james@student.com",
+      schoolId: 1,
+      schoolName: "Greenwood High",
+    },
   ];
 
   app.post("/api/auth/login", (req, res) => {
     const { username, password } = req.body;
     console.log(`Login attempt for: ${username}`);
-    
-    const user = mockUsers.find(u => u.username === username && u.password === password);
-    
+
+    const user = mockUsers.find(
+      (u) => u.username === username && u.password === password,
+    );
+
     if (user) {
       res.json({
         id: "u" + Math.random().toString(36).substr(2, 4),
@@ -98,7 +184,7 @@ async function startServer() {
         email: user.email,
         role: user.role,
         schoolId: user.schoolId,
-        schoolName: user.schoolName
+        schoolName: user.schoolName,
       });
     } else {
       res.status(401).json({ message: "Invalid username or password" });
@@ -126,7 +212,7 @@ async function startServer() {
 
   app.put("/api/schools/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = schools.findIndex(s => s.id === id);
+    const index = schools.findIndex((s) => s.id === id);
     if (index !== -1) {
       schools[index] = { ...schools[index], ...req.body };
       res.json(schools[index]);
@@ -136,9 +222,11 @@ async function startServer() {
   });
 
   app.get("/api/students", (req, res) => {
-    const schoolId = req.query.schoolId ? parseInt(req.query.schoolId as string) : null;
+    const schoolId = req.query.schoolId
+      ? parseInt(req.query.schoolId as string)
+      : null;
     if (schoolId) {
-      res.json(students.filter(s => s.schoolId === schoolId));
+      res.json(students.filter((s) => s.schoolId === schoolId));
     } else {
       res.json(students);
     }
@@ -146,7 +234,7 @@ async function startServer() {
 
   app.put("/api/students/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = students.findIndex(s => s.id === id);
+    const index = students.findIndex((s) => s.id === id);
     if (index !== -1) {
       students[index] = { ...students[index], ...req.body };
       res.json(students[index]);
@@ -157,7 +245,7 @@ async function startServer() {
 
   // Role-based access control simulation / session logic can go here
   // For now, we'll proxy everything to Vite in dev
-  
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },

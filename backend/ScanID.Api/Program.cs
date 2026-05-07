@@ -28,7 +28,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReactApp",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:4173")
+            policy.WithOrigins("http://localhost:3000", "http://localhost:5000", "http://localhost:5173", "http://localhost:4173")
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -37,16 +37,21 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Global Exception Handler Middleware
-app.Use(async (context, next) => {
-    try {
+app.Use(async (context, next) =>
+{
+    try
+    {
         await next();
-    } catch (Exception ex) {
+    }
+    catch (Exception ex)
+    {
         // Log to Filesystem
         FileLogger.LogError(ex);
 
         // Log to Database
         var db = context.RequestServices.GetRequiredService<ApplicationDbContext>();
-        db.ErrorLogs.Add(new ErrorLog {
+        db.ErrorLogs.Add(new ErrorLog
+        {
             Message = ex.Message,
             Exception = ex.ToString(),
             Level = "Error",

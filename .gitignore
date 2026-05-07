@@ -6,3 +6,9 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Ignore IDE, build, and local runtime artifacts
+**/.vs/
+**/bin/
+**/obj/
+backend/ScanID.Api/Logs/

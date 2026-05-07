@@ -1,92 +1,119 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = '/api';
+const DEFAULT_API_BASE_URL = "http://localhost:5000/api";
+
+const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
+
+const API_BASE_URL = trimTrailingSlash(
+  import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL,
+);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000, // Increased to 30s so the debugger has time when you pause at a breakpoint
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Fallback data for preview mode
 const mockFallbacks: Record<string, any> = {
-  '/stats': {
+  "/stats": {
     totalStudents: 1248,
     totalTeachers: 84,
     feeCollection: "$45,200",
     attendanceRate: "92%",
-    performanceTrend: "+2.4%"
+    performanceTrend: "+2.4%",
   },
-  '/students': [
-    { id: 1, registrationNumber: "REG001", fullName: "Demo Student (Local Server Offline)", standard: "10th", section: "A", rollNumber: 1, address: "Localhost" }
+  "/students": [
+    {
+      id: 1,
+      registrationNumber: "REG001",
+      fullName: "Demo Student (Local Server Offline)",
+      standard: "10th",
+      section: "A",
+      rollNumber: 1,
+      address: "Localhost",
+    },
   ],
-  '/schools': [
-    { id: 1, name: "Preview School (Demo)", status: "Active", address: "Cloud Preview" }
-  ]
+  "/schools": [
+    {
+      id: 1,
+      name: "Preview School (Demo)",
+      status: "Active",
+      address: "Cloud Preview",
+    },
+  ],
 };
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.message === "Network Error" || error.code === "ECONNABORTED") {
-      console.warn("Backend not detected at " + API_BASE_URL + ". Using demo fallback data.");
-      const url = error.config.url.split('?')[0];
+      console.warn(
+        "Backend not detected at " +
+          API_BASE_URL +
+          ". Using demo fallback data.",
+      );
+      const url = error.config.url.split("?")[0];
       if (mockFallbacks[url]) {
         return Promise.resolve({ data: mockFallbacks[url] });
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // Generic CRUD operations
 export const apiService = {
   // Auth
-  login: (credentials: any) => api.post('/auth/login', credentials),
-  forgotPassword: (username: string) => api.post('/auth/forgot-password', { username }),
+  login: (credentials: any) => api.post("/auth/login", credentials),
+  forgotPassword: (username: string) =>
+    api.post("/auth/forgot-password", { username }),
 
   // Students
-  getStudents: (schoolId?: number) => api.get('/students', { params: { schoolId } }),
+  getStudents: (schoolId?: number) =>
+    api.get("/students", { params: { schoolId } }),
   getStudentById: (id: number) => api.get(`/students/${id}`),
-  createStudent: (data: any) => api.post('/students', data),
+  createStudent: (data: any) => api.post("/students", data),
   updateStudent: (id: number, data: any) => api.put(`/students/${id}`, data),
   deleteStudent: (id: number) => api.delete(`/students/${id}`),
 
   // Marks
-  getMarks: (schoolId?: number) => api.get('/marks', { params: { schoolId } }),
-  
+  getMarks: (schoolId?: number) => api.get("/marks", { params: { schoolId } }),
+
   // Schools
-  getSchools: () => api.get('/schools'),
+  getSchools: () => api.get("/schools"),
   getSchoolById: (id: number) => api.get(`/schools/${id}`),
-  createSchool: (data: any) => api.post('/schools', data),
+  createSchool: (data: any) => api.post("/schools", data),
   updateSchool: (id: number, data: any) => api.put(`/schools/${id}`, data),
   deleteSchool: (id: number) => api.delete(`/schools/${id}`),
 
   // Teachers
-  getTeachers: (schoolId?: number) => api.get('/teachers', { params: { schoolId } }),
-  createTeacher: (data: any) => api.post('/teachers', data),
+  getTeachers: (schoolId?: number) =>
+    api.get("/teachers", { params: { schoolId } }),
+  createTeacher: (data: any) => api.post("/teachers", data),
   updateTeacher: (id: number, data: any) => api.put(`/teachers/${id}`, data),
   deleteTeacher: (id: number) => api.delete(`/teachers/${id}`),
-  
+
   // Stats
-  getStats: (schoolId?: number) => api.get('/stats', { params: { schoolId } }),
-  
+  getStats: (schoolId?: number) => api.get("/stats", { params: { schoolId } }),
+
   // Attendance
-  getAttendance: (date: string, schoolId?: number) => api.get('/attendance', { params: { date, schoolId } }),
-  markAttendance: (data: any) => api.post('/attendance', data),
+  getAttendance: (date: string, schoolId?: number) =>
+    api.get("/attendance", { params: { date, schoolId } }),
+  markAttendance: (data: any) => api.post("/attendance", data),
 
   // Fees
-  getFees: (schoolId?: number) => api.get('/fees', { params: { schoolId } }),
+  getFees: (schoolId?: number) => api.get("/fees", { params: { schoolId } }),
 
   // System Logs
-  getAuditLogs: () => api.get('/auditlogs'),
-  getErrorLogs: () => api.get('/errorlogs'),
-  clearErrorLogs: () => api.delete('/errorlogs/clear'),
-  getFileSystemLogs: () => api.get('/errorlogs/filesystem'),
-  getDbScript: () => api.get('/database/script'),
-  getSeedScript: () => api.get('/database/seed'),
+  getAuditLogs: () => api.get("/auditlogs"),
+  getErrorLogs: () => api.get("/errorlogs"),
+  clearErrorLogs: () => api.delete("/errorlogs/clear"),
+  getFileSystemLogs: () => api.get("/errorlogs/filesystem"),
+  getDbScript: () => api.get("/database/script"),
+  getSeedScript: () => api.get("/database/seed"),
 };
 
 export default api;

@@ -59,7 +59,7 @@ namespace ScanID.Api.Controllers
             var existingTeacher = await _context.Teachers.Include(t => t.User).FirstOrDefaultAsync(t => t.Id == id);
             if (existingTeacher == null) return NotFound();
 
-            existingTeacher.Phone = teacher.Phone;
+            existingTeacher.ContactNumber = teacher.ContactNumber;
             existingTeacher.Department = teacher.Department;
             existingTeacher.Qualification = teacher.Qualification;
             existingTeacher.Status = teacher.Status;
@@ -100,7 +100,7 @@ namespace ScanID.Api.Controllers
             {
                 teacher.User.IsDeleted = true;
             }
-            
+
             await _context.SaveChangesAsync();
 
             return NoContent();
