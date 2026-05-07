@@ -30,7 +30,8 @@ export default function SystemLogs({ user }: SystemLogsProps) {
   const fetchData = async () => {
     setRefreshing(true);
     try {
-      const [auditRes, errorRes, scriptRes, appLogsRes, seedRes] = await Promise.all([
+      // Use Promise.allSettled to ensure one failing endpoint doesn't block the whole page
+      const results = await Promise.allSettled([
         apiService.getAuditLogs(),
         apiService.getErrorLogs(),
         apiService.getDbScript(),
@@ -38,11 +39,39 @@ export default function SystemLogs({ user }: SystemLogsProps) {
         apiService.getSeedScript()
       ]);
 
-      setAuditLogs(auditRes.data || []);
-      setErrorLogs(errorRes.data || []);
-      setDbScript(scriptRes.data?.content || "");
-      setAppLogs(appLogsRes.data?.content || "");
-      setSeedScript(seedRes.data?.content || "");
+      // Helper to extract data from settled promise
+      const getData = (result: any) => {
+        if (result.status === 'fulfilled') {
+          return result.value.data;
+        }
+        return null;
+      };
+
+      const auditData = getData(results[0]);
+      const errorData = getData(results[1]);
+      const scriptData = getData(results[2]);
+      const appLogsData = getData(results[3]);
+      const seedData = getData(results[4]);
+
+      // Normalize data (handle array in property or PascalCase)
+      const normalizeArray = (data: any): any[] => {
+        if (!data) return [];
+        if (Array.isArray(data)) return data;
+        if (data.items && Array.isArray(data.items)) return data.items;
+        if (data.$values && Array.isArray(data.$values)) return data.$values;
+        if (data.data && Array.isArray(data.data)) return data.data;
+        return [];
+      };
+
+      setAuditLogs(normalizeArray(auditData));
+      setErrorLogs(normalizeArray(errorData));
+      setDbScript(scriptData?.content || "");
+      setAppLogs(appLogsData?.content || "");
+      setSeedScript(seedData?.content || "");
+
+      if (results.some(r => r.status === 'rejected')) {
+        console.warn("Some data sources failed to load:", results.filter(r => r.status === 'rejected'));
+      }
     } catch (error) {
       console.error("Error fetching system data:", error);
       toast.error("Failed to load system logs");
@@ -165,26 +194,26 @@ export default function SystemLogs({ user }: SystemLogsProps) {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      auditLogs.map((log) => (
-                        <TableRow key={log.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-50">
+                      auditLogs.map((log: any) => (
+                        <TableRow key={log.id || log.Id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-50">
                           <TableCell className="pl-8 font-mono text-[10px] text-slate-500 font-bold italic">
-                            {new Date(log.dateTime).toLocaleString()}
+                            {new Date(log.dateTime || log.DateTime || log.Timestamp || log.timestamp).toLocaleString()}
                           </TableCell>
                           <TableCell>
                             <Badge className={cn(
                               "font-black text-[9px] uppercase tracking-wider px-2",
-                              log.type === "Create" ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : 
-                              log.type === "Delete" ? "bg-red-100 text-red-700 hover:bg-red-100" : 
+                              (log.type || log.Type) === "Create" ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : 
+                              (log.type || log.Type) === "Delete" ? "bg-red-100 text-red-700 hover:bg-red-100" : 
                               "bg-blue-100 text-blue-700 hover:bg-blue-100"
                             )}>
-                              {log.type}
+                              {log.type || log.Type}
                             </Badge>
                           </TableCell>
-                          <TableCell className="font-black text-slate-700 tracking-tight text-sm uppercase">{log.tableName}</TableCell>
-                          <TableCell className="text-[10px] font-mono text-slate-400">ID:{log.primaryKey}</TableCell>
+                          <TableCell className="font-black text-slate-700 tracking-tight text-sm uppercase">{log.tableName || log.TableName}</TableCell>
+                          <TableCell className="text-[10px] font-mono text-slate-400">ID:{log.primaryKey || log.PrimaryKey}</TableCell>
                           <TableCell className="pr-8">
-                            <div className="max-w-md truncate text-[11px] font-bold text-slate-400" title={log.newValues || ""}>
-                              {log.affectedColumns ? `Changes in: ${log.affectedColumns}` : "Full entity record interaction"}
+                            <div className="max-w-md truncate text-[11px] font-bold text-slate-400" title={log.newValues || log.NewValues || ""}>
+                              {(log.affectedColumns || log.AffectedColumns) ? `Changes in: ${log.affectedColumns || log.AffectedColumns}` : "Full entity record interaction"}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -239,19 +268,19 @@ export default function SystemLogs({ user }: SystemLogsProps) {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      errorLogs.map((log) => (
-                        <TableRow key={log.id} className="hover:bg-red-50/30 transition-colors border-b border-slate-50">
+                      errorLogs.map((log: any) => (
+                        <TableRow key={log.id || log.Id} className="hover:bg-red-50/30 transition-colors border-b border-slate-50">
                           <TableCell className="pl-8 font-mono text-[10px] text-slate-500 font-bold italic whitespace-nowrap">
-                            {new Date(log.timestamp).toLocaleString()}
+                            {new Date(log.timestamp || log.Timestamp || log.dateTime || log.DateTime).toLocaleString()}
                           </TableCell>
                           <TableCell>
                             <Badge className="bg-red-500 text-white font-black text-[9px] uppercase tracking-wider px-2 hover:bg-red-600">
-                              {log.level}
+                              {log.level || log.Level || "Error"}
                             </Badge>
                           </TableCell>
-                          <TableCell className="font-black text-slate-700 tracking-tight text-xs uppercase">{log.properties}</TableCell>
+                          <TableCell className="font-black text-slate-700 tracking-tight text-xs uppercase">{log.properties || log.Properties || "System"}</TableCell>
                           <TableCell className="pr-8">
-                            <p className="text-[11px] font-bold text-slate-500 max-w-xl">{log.message}</p>
+                            <p className="text-[11px] font-bold text-slate-500 max-w-xl">{log.message || log.Message}</p>
                           </TableCell>
                         </TableRow>
                       ))

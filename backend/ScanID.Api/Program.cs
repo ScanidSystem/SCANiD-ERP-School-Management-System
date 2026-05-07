@@ -55,7 +55,7 @@ app.Use(async (context, next) =>
             Message = ex.Message,
             Exception = ex.ToString(),
             Level = "Error",
-            Timestamp = DateTime.UtcNow,
+            Timestamp = DateTime.Now,
             Properties = $"Path: {context.Request.Path}"
         });
         await db.SaveChangesAsync();

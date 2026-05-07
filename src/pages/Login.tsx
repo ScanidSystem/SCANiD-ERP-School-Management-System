@@ -33,8 +33,8 @@ const MOCK_YEARS = [
 ];
 
 export default function Login({ onLogin }: LoginProps) {
-  const [username, setUsername] = useState("schooladmin1");
-  const [password, setPassword] = useState("Password123");
+  const [username, setUsername] = useState("admin");
+  const [password, setPassword] = useState("admin123");
   const [role, setRole] = useState<Role>("admin");
   const [loading, setLoading] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
