@@ -52,7 +52,7 @@ export default function Dashboard({ user }: DashboardProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
+    const timer = setTimeout(() => setIsMounted(true), 100);
     const fetchStats = async () => {
       try {
         const res = await apiService.getStats(user.schoolId ? parseInt(user.schoolId) : undefined);
@@ -62,6 +62,7 @@ export default function Dashboard({ user }: DashboardProps) {
       }
     };
     fetchStats();
+    return () => clearTimeout(timer);
   }, [user.schoolId]);
 
   return (
@@ -139,7 +140,7 @@ export default function Dashboard({ user }: DashboardProps) {
           <CardContent className="h-80 w-full pt-4 min-w-0 min-h-0">
             {isMounted ? (
               <div className="h-full w-full min-h-0 min-w-0">
-                <ResponsiveContainer width="100%" height="100%" debounce={50}>
+                <ResponsiveContainer width="100%" height={300} debounce={50} minWidth={0}>
                   <LineChart data={performanceData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis 
@@ -196,7 +197,7 @@ export default function Dashboard({ user }: DashboardProps) {
           <CardContent className="h-80 w-full pt-4 min-w-0 min-h-0">
             {isMounted ? (
               <div className="h-full w-full min-h-0 min-w-0">
-                <ResponsiveContainer width="100%" height="100%" debounce={50}>
+                <ResponsiveContainer width="100%" height={300} debounce={50} minWidth={0}>
                   <BarChart data={attendanceData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis 
