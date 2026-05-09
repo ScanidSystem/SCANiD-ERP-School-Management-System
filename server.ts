@@ -1,4 +1,5 @@
 import express from "express";
+// Import cors middleware for cross-origin requests
 import cors from "cors";
 import "dotenv/config";
 import { createServer as createViteServer } from "vite";
