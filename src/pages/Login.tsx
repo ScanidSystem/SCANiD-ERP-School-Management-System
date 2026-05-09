@@ -102,6 +102,24 @@ export default function Login({ onLogin }: LoginProps) {
       if (!userData.name && userData.fullName) userData.name = userData.fullName;
       if (!userData.name) userData.name = username.split("@")[0] || "User";
       if (!userData.role) userData.role = role;
+
+      // PERSIST LOGIN SELECTIONS TO USER OBJECT
+      // This ensures the Navbar and other components reflect the choices made during login
+      userData.academicYearId = selectedYear;
+      const year = academicYears.find(y => y.id.toString() === selectedYear);
+      if (year) userData.academicYearName = year.name;
+
+      if (selectedSchool && selectedSchool !== "all") {
+        userData.schoolId = selectedSchool;
+        userData.schoolName = schools.find(s => s.id.toString() === selectedSchool)?.name;
+      } else if (selectedSchool === "all") {
+        userData.schoolId = "all";
+        userData.schoolName = "All Schools";
+      } else if (role !== "superadmin" && schools.length > 0) {
+        // For non-superadmin, they are locked to their primary school
+        userData.schoolId = schools[0].id.toString();
+        userData.schoolName = schools[0].name;
+      }
       
       localStorage.setItem("user", JSON.stringify(userData));
       onLogin(userData);
@@ -302,7 +320,7 @@ export default function Login({ onLogin }: LoginProps) {
                         formErrors.school && "border-red-500/50 ring-1 ring-red-500/20"
                       )}>
                         <SelectValue placeholder="Select Current School">
-                          {selectedSchool && selectedSchool !== "none" ? (selectedSchool === "all" ? "All Schools (System-wide)" : schools.find(s => s.id.toString() === selectedSchool)?.name) : "Select Current School"}
+                          {selectedSchool && selectedSchool !== "none" ? (selectedSchool === "all" ? "All Schools (System-wide)" : schools.find(s => s.id.toString() === selectedSchool)?.name) : undefined}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="bg-slate-900 border-slate-800 text-white">
@@ -335,7 +353,7 @@ export default function Login({ onLogin }: LoginProps) {
                       formErrors.year && "border-red-500/50 ring-1 ring-red-500/20"
                     )}>
                       <SelectValue placeholder="Select Academic Year">
-                        {selectedYear && selectedYear !== "none" ? academicYears.find(y => y.id.toString() === selectedYear)?.name : "Select Academic Year"}
+                        {selectedYear && selectedYear !== "none" ? academicYears.find(y => y.id.toString() === selectedYear)?.name : undefined}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-slate-800 text-white">

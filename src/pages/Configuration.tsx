@@ -476,7 +476,7 @@ export default function Configuration({ user, defaultTab = "standards" }: Config
                     )}
                   >
                     <SelectValue placeholder="Select Parent Caste">
-                      {formData.casteId && formData.casteId !== "none" ? dependencies.castes?.find(c => c.id.toString() === formData.casteId)?.name : "Select Parent Caste"}
+                      {formData.casteId && formData.casteId !== "none" ? dependencies.castes?.find(c => c.id.toString() === formData.casteId)?.name : undefined}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-200 shadow-xl">
@@ -509,7 +509,7 @@ export default function Configuration({ user, defaultTab = "standards" }: Config
                     )}
                   >
                     <SelectValue placeholder="Select State Name">
-                      {formData.stateId && formData.stateId !== "none" ? dependencies.states?.find(s => s.id.toString() === formData.stateId)?.name : "Select State Name"}
+                      {formData.stateId && formData.stateId !== "none" ? dependencies.states?.find(s => s.id.toString() === formData.stateId)?.name : undefined}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-200 shadow-xl">

@@ -68,7 +68,7 @@ export default function Navbar({ user, onLogout, onUserUpdate }: NavbarProps) {
     if (schoolId === "all") {
       onUserUpdate({
         ...user,
-        schoolId: undefined,
+        schoolId: "all",
         schoolName: "All Schools"
       });
     } else if (school) {
@@ -76,6 +76,12 @@ export default function Navbar({ user, onLogout, onUserUpdate }: NavbarProps) {
         ...user,
         schoolId: schoolId,
         schoolName: school.name
+      });
+    } else if (schoolId === "none") {
+      onUserUpdate({
+        ...user,
+        schoolId: undefined,
+        schoolName: undefined
       });
     }
   };
@@ -87,6 +93,12 @@ export default function Navbar({ user, onLogout, onUserUpdate }: NavbarProps) {
         ...user,
         academicYearId: yearId,
         academicYearName: year.name
+      });
+    } else if (yearId === "none") {
+      onUserUpdate({
+        ...user,
+        academicYearId: undefined,
+        academicYearName: undefined
       });
     }
   };
@@ -146,14 +158,14 @@ export default function Navbar({ user, onLogout, onUserUpdate }: NavbarProps) {
         
         <div className="flex items-center gap-3">
           {user.role === "superadmin" ? (
-            <Select value={user.schoolId?.toString() || "all"} onValueChange={handleSchoolChange}>
+            <Select value={user.schoolId?.toString() || "none"} onValueChange={handleSchoolChange}>
               <SelectTrigger className="w-[180px] h-9 bg-slate-50 border-slate-200 text-xs font-bold rounded-lg focus:ring-2 focus:ring-blue-500/10">
                 <div className="flex items-center gap-2 truncate">
                   <div className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0"></div>
                   <SelectValue placeholder="Select School Branch">
                     {user.schoolId && user.schoolId !== "none" && user.schoolId !== "all" 
                       ? schools.find(s => s.id.toString() === user.schoolId.toString())?.name 
-                      : (user.schoolId === "all" ? "Global Admin View" : "Select School Branch")}
+                      : (user.schoolId === "all" ? "Global Admin View" : undefined)}
                   </SelectValue>
                 </div>
               </SelectTrigger>
@@ -174,12 +186,14 @@ export default function Navbar({ user, onLogout, onUserUpdate }: NavbarProps) {
             </div>
           )}
 
-          <Select value={user.academicYearId?.toString() || ""} onValueChange={handleYearChange}>
+          <Select value={user.academicYearId?.toString() || "none"} onValueChange={handleYearChange}>
             <SelectTrigger className="w-[140px] h-9 bg-blue-50 border-blue-100 text-xs font-black text-blue-700 rounded-lg">
               <div className="flex items-center gap-2">
                 <Calendar size={13} strokeWidth={3} />
                 <SelectValue placeholder="Select Academic Year">
-                  {user.academicYearId && user.academicYearId !== "none" && academicYears.length > 0 ? academicYears.find(y => y.id.toString() === user.academicYearId?.toString())?.name : "Select Academic Year"}
+                  {user.academicYearId && user.academicYearId !== "none" && academicYears.length > 0 
+                    ? academicYears.find(y => y.id.toString() === user.academicYearId?.toString())?.name 
+                    : undefined}
                 </SelectValue>
               </div>
             </SelectTrigger>
@@ -270,7 +284,7 @@ export default function Navbar({ user, onLogout, onUserUpdate }: NavbarProps) {
               </div>
             }
           />
-          <DropdownMenuContent align="end" className="w-64 p-0 overflow-hidden" forceMount>
+          <DropdownMenuContent align="end" className="w-64 p-0 overflow-hidden">
             <div className="flex items-center gap-3 p-4 bg-slate-50/50 border-b border-slate-100">
               <Avatar className="h-10 w-10 border border-white shadow-sm shrink-0">
                 <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} />
