@@ -55,8 +55,10 @@ const INITIAL_STUDENTS = [
 ];
 
 export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, forcedSchoolId?: number }) {
-  const [standard, setStandard] = useState("10th");
-  const [section, setSection] = useState("A");
+  const [standard, setStandard] = useState("");
+  const [section, setSection] = useState("");
+  const [standardsMaster, setStandardsMaster] = useState<any[]>([]);
+  const [sectionsMaster, setSectionsMaster] = useState<any[]>([]);
   const [subject, setSubject] = useState("");
   const [exam, setExam] = useState("final");
   const [maxMarks, setMaxMarks] = useState("100");
@@ -86,6 +88,29 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
     key: 'roll',
     direction: 'asc',
   });
+
+  useEffect(() => {
+    const fetchMasters = async () => {
+      try {
+        const [standardsRes, sectionsRes] = await Promise.all([
+          apiService.getStandards(),
+          apiService.getSections()
+        ]);
+        setStandardsMaster(standardsRes.data || []);
+        setSectionsMaster(sectionsRes.data || []);
+        
+        if (standardsRes.data?.length > 0 && !standard) {
+          setStandard(standardsRes.data[0].name);
+        }
+        if (sectionsRes.data?.length > 0 && !section) {
+          setSection(sectionsRes.data[0].name);
+        }
+      } catch (error) {
+        console.error("Failed to fetch masters", error);
+      }
+    };
+    fetchMasters();
+  }, []);
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -483,6 +508,7 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
             <div className="flex items-center gap-2">
               <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
                 <DialogTrigger
+                  nativeButton={true}
                   render={
                     <Button variant="outline" size="sm" className="gap-2">
                       <Upload size={16} /> Bulk Upload
@@ -648,11 +674,14 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
               <Label className="text-[10px] uppercase font-bold text-slate-400">Standard</Label>
               <Select value={standard} onValueChange={setStandard}>
                 <SelectTrigger className="bg-white border-slate-200">
-                  <SelectValue />
+                  <SelectValue placeholder="Select Academic Standard">
+                    {standard && standard !== "none" ? standard : "Select Academic Standard"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.keys(SUBJECTS_BY_STANDARD).map(s => (
-                    <SelectItem key={s} value={s}>{s} Standard</SelectItem>
+                  <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select Academic Standard</SelectItem>
+                  {standardsMaster.map(s => (
+                    <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -661,12 +690,15 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
               <Label className="text-[10px] uppercase font-bold text-slate-400">Section</Label>
               <Select value={section} onValueChange={setSection}>
                 <SelectTrigger className="bg-white border-slate-200">
-                  <SelectValue />
+                  <SelectValue placeholder="Select Class Section">
+                    {section && section !== "none" ? `Section ${section}` : "Select Class Section"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="A">Section A</SelectItem>
-                  <SelectItem value="B">Section B</SelectItem>
-                  <SelectItem value="C">Section C</SelectItem>
+                  <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select Class Section</SelectItem>
+                  {sectionsMaster.map(s => (
+                    <SelectItem key={s.id} value={s.name}>Section {s.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -674,9 +706,15 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
               <Label className="text-[10px] uppercase font-bold text-slate-400">Exam Type</Label>
               <Select value={exam} onValueChange={setExam}>
                 <SelectTrigger className="bg-white border-slate-200">
-                  <SelectValue />
+                  <SelectValue placeholder="Select Exam Type">
+                    {exam === "unit_1" ? "Unit Test 1" : 
+                     exam === "mid_term" ? "Mid-Term" : 
+                     exam === "unit_2" ? "Unit Test 2" : 
+                     exam === "final" ? "Final Examination" : (exam && exam !== "none" ? exam : "Select Exam Type")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic font-bold">Select Exam Type</SelectItem>
                   <SelectItem value="unit_1">Unit Test 1</SelectItem>
                   <SelectItem value="mid_term">Mid-Term</SelectItem>
                   <SelectItem value="unit_2">Unit Test 2</SelectItem>
@@ -700,8 +738,10 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
                 <Select value={subject} onValueChange={setSubject}>
                   <SelectTrigger className="bg-white border-slate-200 flex-1">
                     <div className="flex items-center justify-between w-full pr-2">
-                      <SelectValue placeholder="Select Subject" />
-                      {subject && (
+                      <SelectValue placeholder="Select Examination Subject">
+                        {subject && subject !== "none" ? subject : "Select Examination Subject"}
+                      </SelectValue>
+                      {subject && subject !== "none" && (
                         <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-md font-black ring-1 ring-blue-100">
                           {subjectEntryCounts[subject] || 0}
                         </span>
@@ -709,6 +749,7 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
                     </div>
                   </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
+                    <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select Examination Subject</SelectItem>
                     {sortedSubjects.map(s => {
                       const count = subjectEntryCounts[s] || 0;
                       const isSelected = subject === s;

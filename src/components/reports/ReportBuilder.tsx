@@ -28,6 +28,7 @@ export default function ReportBuilder() {
   const [selectedFields, setSelectedFields] = useState<string[]>(["name", "roll", "total", "percentage"]);
   const [format, setFormat] = useState("pdf");
   const [grouping, setGrouping] = useState("none");
+  const [attendanceFilter, setAttendanceFilter] = useState("none");
   const [includeCharts, setIncludeCharts] = useState(false);
 
   const toggleField = (id: string) => {
@@ -48,7 +49,7 @@ export default function ReportBuilder() {
       loading: `Generating custom ${format.toUpperCase()} report...`,
       success: `Report generated successfully!`,
       error: "Generation failed",
-      description: `Includes ${selectedFields.length} fields ${grouping !== 'none' ? `grouped by ${grouping}` : ''}`,
+      description: `Includes ${selectedFields.length} fields ${grouping !== 'none' ? `grouped by ${grouping}` : ''} ${attendanceFilter !== 'none' ? `filtered by attendance` : ''}`,
     });
   };
 
@@ -109,10 +110,16 @@ export default function ReportBuilder() {
                 <Label>Group Data By</Label>
                 <Select value={grouping} onValueChange={setGrouping}>
                   <SelectTrigger>
-                    <SelectValue placeholder="No grouping" />
+                    <SelectValue placeholder="Select Grouping Mode">
+                      {grouping && grouping !== "none" ? (
+                        grouping === "standard" ? "Standard" : 
+                        grouping === "section" ? "Section" : 
+                        grouping === "grade" ? "Grade Level" : grouping
+                      ) : "Select Grouping Mode"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">None (Flat List)</SelectItem>
+                    <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic font-bold">Select Grouping Mode</SelectItem>
                     <SelectItem value="standard">Standard</SelectItem>
                     <SelectItem value="section">Section</SelectItem>
                     <SelectItem value="grade">Grade Level</SelectItem>
@@ -121,11 +128,19 @@ export default function ReportBuilder() {
               </div>
               <div className="space-y-2">
                 <Label>Minimum Attendance Filter</Label>
-                <Select defaultValue="0">
+                <Select value={attendanceFilter} onValueChange={setAttendanceFilter}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All students" />
+                    <SelectValue placeholder="Select Attendance Filter">
+                      {attendanceFilter && attendanceFilter !== "none" ? (
+                        attendanceFilter === "0" ? "All Students" :
+                        attendanceFilter === "75" ? "75% and Above" :
+                        attendanceFilter === "90" ? "90% and Above" : 
+                        attendanceFilter === "below_75" ? "Below 75% (At Risk)" : attendanceFilter
+                      ) : "Select Attendance Filter"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic font-bold">Select Attendance Filter</SelectItem>
                     <SelectItem value="0">All Students</SelectItem>
                     <SelectItem value="75">75% and Above</SelectItem>
                     <SelectItem value="90">90% and Above</SelectItem>

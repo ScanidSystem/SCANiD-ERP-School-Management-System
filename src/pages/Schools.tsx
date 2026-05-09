@@ -255,16 +255,19 @@ export default function Schools({ user }: { user: UserType }) {
           <p className="text-slate-500 mt-1">Configure and monitor all registered educational institutions.</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700 gap-2 shadow-lg shadow-blue-200">
-              <Plus size={18} /> Register New School
-            </Button>
-          </DialogTrigger>
+          <DialogTrigger 
+            nativeButton={true}
+            render={
+              <Button className="bg-blue-600 hover:bg-blue-700 gap-2 shadow-lg shadow-blue-200">
+                <Plus size={18} /> Register New School
+              </Button>
+            } 
+          />
           <DialogContent className="sm:max-w-[650px] w-[95vw] max-h-[90vh] flex flex-col p-0 border-none shadow-3xl rounded-[2rem] overflow-hidden">
             <div className="bg-slate-900 px-8 py-5 text-white relative shrink-0">
               <div className="relative z-10 flex items-center justify-between">
                 <DialogHeader>
-                  <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-3">
+                    <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-3">
                     <div className="p-2 bg-blue-500 rounded-xl shadow-xl shadow-blue-500/20">
                       <School size={22} className="text-white" />
                     </div>
@@ -369,9 +372,12 @@ export default function Schools({ user }: { user: UserType }) {
                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">System Status</Label>
                     <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
                       <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
-                        <SelectValue />
+                        <SelectValue placeholder="Select System Status">
+                          {formData.status && formData.status !== "none" ? formData.status : "Select System Status"}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-slate-200">
+                        <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select System Status</SelectItem>
                         <SelectItem value="Active" className="font-semibold py-1.5 text-xs">Active</SelectItem>
                         <SelectItem value="Suspended" className="font-semibold py-1.5 text-xs">Suspended</SelectItem>
                       </SelectContent>
@@ -410,7 +416,7 @@ export default function Schools({ user }: { user: UserType }) {
             <div className="bg-slate-900 px-8 py-5 text-white relative shrink-0">
               <div className="relative z-10 flex items-center justify-between">
                 <DialogHeader>
-                  <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-3">
+                    <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-3">
                     <div className="p-2 bg-blue-500 rounded-xl shadow-xl shadow-blue-500/20">
                       <Edit size={22} className="text-white" />
                     </div>
@@ -515,9 +521,12 @@ export default function Schools({ user }: { user: UserType }) {
                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">System Status</Label>
                     <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
                       <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
-                        <SelectValue />
+                        <SelectValue placeholder="Select System Status">
+                          {formData.status && formData.status !== "none" ? formData.status : "Select System Status"}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-slate-200">
+                        <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select System Status</SelectItem>
                         <SelectItem value="Active" className="font-semibold py-1.5 text-xs">Active</SelectItem>
                         <SelectItem value="Suspended" className="font-semibold py-1.5 text-xs">Suspended</SelectItem>
                       </SelectContent>

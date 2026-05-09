@@ -164,6 +164,7 @@ function AlertDialogCancel({
       data-slot="alert-dialog-cancel"
       className={cn(className)}
       render={<Button variant={variant} size={size} />}
+      nativeButton={true}
       {...props}
     />
   )

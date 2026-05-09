@@ -84,9 +84,12 @@ export default function Fees({ user }: { user: any }) {
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Branch:</span>
             <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
               <SelectTrigger className="h-9 w-[180px] border-none bg-slate-50 font-bold text-xs rounded-xl focus:ring-0">
-                <SelectValue placeholder="Identify branch" />
+                <SelectValue placeholder="Select School Branch">
+                  {selectedSchoolId && selectedSchoolId !== "none" ? schools.find(s => s.id.toString() === selectedSchoolId)?.name : "Select School Branch"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent className="rounded-2xl border-slate-200 shadow-2xl p-2">
+                <SelectItem value="none" className="font-semibold py-2 px-3 rounded-lg text-slate-400 italic">Select School Branch</SelectItem>
                 {schools.map(s => (
                   <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2 px-3 rounded-lg">
                     {s.name}

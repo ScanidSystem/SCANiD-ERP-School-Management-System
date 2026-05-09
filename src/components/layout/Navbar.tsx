@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Bell, Search, User, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Bell, Search, User, Settings as SettingsIcon, LogOut, School, Calendar } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -9,30 +9,87 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 
 import { useNavigate } from "react-router-dom";
 import { searchItems, SearchItem } from "@/lib/search-data";
 import { useRef, useEffect } from "react";
+import { apiService } from "@/lib/api";
 
 import { Role, User as UserType } from "@/types";
 
 interface NavbarProps {
   user: UserType;
   onLogout: () => void;
+  onUserUpdate: (user: UserType) => void;
 }
 
-export default function Navbar({ user, onLogout }: NavbarProps) {
+export default function Navbar({ user, onLogout, onUserUpdate }: NavbarProps) {
   const [search, setSearch] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [filteredResults, setFilteredResults] = useState<SearchItem[]>([]);
   const navigate = useNavigate();
   const searchRef = useRef<HTMLDivElement>(null);
+
+  const [schools, setSchools] = useState<any[]>([]);
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
+
+  const fetchLookups = useCallback(async () => {
+    try {
+      const [schoolsRes, yearsRes] = await Promise.all([
+        apiService.getSchools(),
+        apiService.getAcademicYears()
+      ]);
+      setSchools(schoolsRes.data || []);
+      setAcademicYears(yearsRes.data || []);
+    } catch (error) {
+      console.error("Navbar lookups error:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLookups();
+  }, [fetchLookups]);
+
+  const handleSchoolChange = (schoolId: string) => {
+    const school = schools.find(s => s.id.toString() === schoolId);
+    if (schoolId === "all") {
+      onUserUpdate({
+        ...user,
+        schoolId: undefined,
+        schoolName: "All Schools"
+      });
+    } else if (school) {
+      onUserUpdate({
+        ...user,
+        schoolId: schoolId,
+        schoolName: school.name
+      });
+    }
+  };
+
+  const handleYearChange = (yearId: string) => {
+    const year = academicYears.find(y => y.id.toString() === yearId);
+    if (year) {
+      onUserUpdate({
+        ...user,
+        academicYearId: yearId,
+        academicYearName: year.name
+      });
+    }
+  };
 
   useEffect(() => {
     if (search.trim()) {
@@ -84,25 +141,57 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 shrink-0">
-      <div className="flex items-center flex-1 gap-6">
+    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-20 shrink-0 shadow-sm">
+      <div className="flex items-center flex-1 gap-4">
+        
+        <div className="flex items-center gap-3">
+          {user.role === "superadmin" ? (
+            <Select value={user.schoolId?.toString() || "all"} onValueChange={handleSchoolChange}>
+              <SelectTrigger className="w-[180px] h-9 bg-slate-50 border-slate-200 text-xs font-bold rounded-lg focus:ring-2 focus:ring-blue-500/10">
+                <div className="flex items-center gap-2 truncate">
+                  <div className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0"></div>
+                  <SelectValue placeholder="Select School Branch">
+                    {user.schoolId && user.schoolId !== "none" && user.schoolId !== "all" 
+                      ? schools.find(s => s.id.toString() === user.schoolId.toString())?.name 
+                      : (user.schoolId === "all" ? "Global Admin View" : "Select School Branch")}
+                  </SelectValue>
+                </div>
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                <SelectItem value="none" className="text-xs italic text-slate-400">Select School Branch</SelectItem>
+                <SelectItem value="all" className="text-xs font-black text-blue-600">Global Admin View</SelectItem>
+                {schools.map(s => (
+                  <SelectItem key={s.id} value={s.id.toString()} className="text-xs font-medium">{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="bg-slate-50 px-3 py-1.5 rounded-lg flex items-center gap-2 border border-slate-100">
+              <School size={14} className="text-slate-400" />
+              <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider truncate max-w-[140px]">
+                {user.schoolName || "Institutional Access"}
+              </span>
+            </div>
+          )}
 
-        <div className="flex items-center gap-2">
-          {user.schoolName && (
-            <div className="bg-slate-100 px-3 py-1 rounded-full flex items-center gap-2 border border-slate-200">
-              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse"></div>
-              <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider truncate max-w-[150px]">
-                {user.schoolName}
-              </span>
-            </div>
-          )}
-          {user.academicYearName && (
-            <div className="bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
-              <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest whitespace-nowrap">
-                AY {user.academicYearName}
-              </span>
-            </div>
-          )}
+          <Select value={user.academicYearId?.toString() || ""} onValueChange={handleYearChange}>
+            <SelectTrigger className="w-[140px] h-9 bg-blue-50 border-blue-100 text-xs font-black text-blue-700 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Calendar size={13} strokeWidth={3} />
+                <SelectValue placeholder="Select Academic Year">
+                  {user.academicYearId && user.academicYearId !== "none" && academicYears.length > 0 ? academicYears.find(y => y.id.toString() === user.academicYearId?.toString())?.name : "Select Academic Year"}
+                </SelectValue>
+              </div>
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+              <SelectItem value="none" className="text-xs italic text-slate-400">Select Academic Year</SelectItem>
+              {academicYears.map(y => (
+                <SelectItem key={y.id} value={y.id.toString()} className="text-xs font-bold">
+                  {y.name} {y.isCurrent ? "★" : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="relative flex-1 max-w-md ml-auto" ref={searchRef}>
@@ -175,7 +264,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                 </div>
                 <Avatar className="h-8 w-8 border border-slate-200">
                   <AvatarFallback className="bg-slate-900 text-white text-xs">
-                    {user.name.split(" ").map(n => n[0]).join("")}
+                    {user.name ? user.name.split(" ").map(n => n[0]).join("") : "U"}
                   </AvatarFallback>
                 </Avatar>
               </div>
@@ -186,7 +275,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
               <Avatar className="h-10 w-10 border border-white shadow-sm shrink-0">
                 <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} />
                 <AvatarFallback className="bg-blue-600 text-white">
-                  {user.name.split(" ").map(n => n[0]).join("")}
+                  {user.name ? user.name.split(" ").map(n => n[0]).join("") : "U"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col space-y-0.5 min-w-0">

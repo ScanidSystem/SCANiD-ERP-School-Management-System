@@ -105,8 +105,8 @@ export default function Teachers({ user }: { user: any }) {
     qualification: "",
     experience: "",
     subject: "",
-    standard: "10th",
-    section: "A",
+    standard: "",
+    section: "",
     status: "Active",
     schoolId: user.schoolId || ""
   });
@@ -138,7 +138,7 @@ export default function Teachers({ user }: { user: any }) {
         employeeId: t.employeeId
       })));
     } catch (error) {
-      toast.error("Cloud not connect to database");
+      toast.error("Could not connect to database");
     } finally {
       setLoading(false);
     }
@@ -147,8 +147,6 @@ export default function Teachers({ user }: { user: any }) {
   useEffect(() => {
     fetchTeachers();
   }, [fetchTeachers]);
-
-  const subjects = Array.from(new Set(teachers.map(t => t.subject)));
 
   const handleSort = (key: keyof Teacher) => {
     let direction: "asc" | "desc" = "asc";
@@ -330,7 +328,6 @@ export default function Teachers({ user }: { user: any }) {
               
                 <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-6 bg-white scrollbar-thin scrollbar-thumb-slate-200">
                   <div className="max-w-4xl mx-auto space-y-8">
-                    {/* Basic Info */}
                     <section>
                       <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
                         <div className="w-1.5 h-5 bg-blue-600 rounded-full"></div>
@@ -339,7 +336,7 @@ export default function Teachers({ user }: { user: any }) {
                       
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
                           <div className="md:col-span-6 space-y-1.5">
-                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned School Branch</Label>
+                            <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.schoolId ? "text-red-500" : "text-slate-500")}>Assigned School Branch {formErrors.schoolId && "*"}</Label>
                             <Select 
                               value={formData.schoolId.toString()} 
                               onValueChange={(v) => {
@@ -356,9 +353,14 @@ export default function Teachers({ user }: { user: any }) {
                                   (user.role !== "superadmin" && !!user.schoolId) && "opacity-80 cursor-not-allowed bg-slate-100"
                                 )}
                               >
-                                <SelectValue placeholder="Identify branch" />
+                                <SelectValue placeholder="Select School Branch">
+                                  {formData.schoolId && formData.schoolId !== "none" ? schools.find(s => s.id.toString() === formData.schoolId.toString())?.name : "Select School Branch"}
+                                </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="max-h-68 rounded-2xl shadow-2xl border-slate-200 p-2">
+                                <SelectItem value="none" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">
+                                  Select School Branch
+                                </SelectItem>
                                 {schools.length > 0 ? (
                                   schools.map(s => (
                                     <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
@@ -381,7 +383,7 @@ export default function Teachers({ user }: { user: any }) {
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
                           <div className="space-y-1.5">
-                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">First Name</Label>
+                            <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.firstName ? "text-red-500" : "text-slate-500")}>First Name {formErrors.firstName && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["firstName"] = el}
                               value={formData.firstName} 
@@ -401,7 +403,7 @@ export default function Teachers({ user }: { user: any }) {
                             <Input value={formData.middleName} onChange={e => setFormData({...formData, middleName: e.target.value})} placeholder="Optional" className="h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm" />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Last Name</Label>
+                            <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.lastName ? "text-red-500" : "text-slate-500")}>Last Name {formErrors.lastName && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["lastName"] = el}
                               value={formData.lastName} 
@@ -420,7 +422,6 @@ export default function Teachers({ user }: { user: any }) {
                     </section>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                      {/* Contact Info */}
                       <section>
                         <div className="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
                           <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
@@ -428,7 +429,7 @@ export default function Teachers({ user }: { user: any }) {
                         </div>
                         <div className="space-y-4">
                           <div className="space-y-2">
-                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Professional Email</Label>
+                            <Label className={cn("text-[10px] font-black uppercase tracking-widest", formErrors.email ? "text-red-500" : "text-slate-500")}>Professional Email {formErrors.email && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["email"] = el}
                               type="email" 
@@ -445,7 +446,7 @@ export default function Teachers({ user }: { user: any }) {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Mobile Number</Label>
+                            <Label className={cn("text-[10px] font-black uppercase tracking-widest", formErrors.phone ? "text-red-500" : "text-slate-500")}>Mobile Number {formErrors.phone && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["phone"] = el}
                               value={formData.phone} 
@@ -465,7 +466,6 @@ export default function Teachers({ user }: { user: any }) {
                         </div>
                       </section>
 
-                      {/* Professional Info */}
                       <section>
                         <div className="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
                           <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
@@ -473,7 +473,7 @@ export default function Teachers({ user }: { user: any }) {
                         </div>
                         <div className="space-y-4">
                           <div className="space-y-2">
-                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Highest Qualification</Label>
+                            <Label className={cn("text-[10px] font-black uppercase tracking-widest", formErrors.qualification ? "text-red-500" : "text-slate-500")}>Highest Qualification {formErrors.qualification && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["qualification"] = el}
                               value={formData.qualification} 
@@ -496,7 +496,6 @@ export default function Teachers({ user }: { user: any }) {
                       </section>
                     </div>
 
-                    {/* Department */}
                     <section className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100">
                       <div className="flex items-center gap-3 mb-4 pb-1">
                         <div className="w-1.5 h-5 bg-red-500 rounded-full"></div>
@@ -504,7 +503,7 @@ export default function Teachers({ user }: { user: any }) {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                         <div className="space-y-1.5">
-                          <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Subject</Label>
+                          <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.subject ? "text-red-500" : "text-slate-500")}>Subject {formErrors.subject && "*"}</Label>
                           <Input 
                             ref={el => inputRefs.current["subject"] = el}
                             value={formData.subject} 
@@ -527,9 +526,12 @@ export default function Teachers({ user }: { user: any }) {
                           <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Status</Label>
                           <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
                             <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
-                              <SelectValue />
+                              <SelectValue placeholder="Select Employment Status">
+                               {formData.status && formData.status !== "none" ? formData.status : "Select Employment Status"}
+                             </SelectValue>
                             </SelectTrigger>
                             <SelectContent className="rounded-xl border-slate-200">
+                              <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic font-bold">Select Employment Status</SelectItem>
                               <SelectItem value="Active" className="font-semibold py-1.5 text-xs">Active</SelectItem>
                               <SelectItem value="On Leave" className="font-semibold py-1.5 text-xs">On Leave</SelectItem>
                               <SelectItem value="Resigned" className="font-semibold py-1.5 text-xs">Resigned</SelectItem>

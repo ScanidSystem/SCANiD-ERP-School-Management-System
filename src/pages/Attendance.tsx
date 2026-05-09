@@ -29,26 +29,39 @@ export default function Attendance({ user }: { user: any }) {
   const [isSaving, setIsSaving] = useState(false);
   const [date, setDate] = useState(new Date());
   const [schools, setSchools] = useState<any[]>([]);
+  const [standardsMaster, setStandardsMaster] = useState<any[]>([]);
+  const [sectionsMaster, setSectionsMaster] = useState<any[]>([]);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>(user.schoolId?.toString() || "");
+  const [selectedStandard, setSelectedStandard] = useState<string>("10th");
+  const [selectedSection, setSelectedSection] = useState<string>("A");
 
   const canManage = user.role === "superadmin" || user.role === "admin" || user.role === "teacher";
 
   useEffect(() => {
-    const fetchSchools = async () => {
-      if (user.role === "superadmin") {
-        try {
-          const res = await apiService.getSchools();
-          setSchools(res.data);
-          if (!selectedSchoolId && res.data.length > 0) {
-            setSelectedSchoolId(res.data[0].id.toString());
-          }
-        } catch (error) {
-          console.error("Failed to fetch schools", error);
+    setSelectedSchoolId(user.schoolId?.toString() || "");
+  }, [user.schoolId]);
+
+  useEffect(() => {
+    const fetchMasters = async () => {
+      try {
+        const [schoolsRes, standardsRes, sectionsRes] = await Promise.all([
+          apiService.getSchools(),
+          apiService.getStandards(),
+          apiService.getSections()
+        ]);
+        setSchools(schoolsRes.data || []);
+        setStandardsMaster(standardsRes.data || []);
+        setSectionsMaster(sectionsRes.data || []);
+        
+        if (user.role === "superadmin" && !selectedSchoolId && schoolsRes.data.length > 0) {
+          setSelectedSchoolId(schoolsRes.data[0].id.toString());
         }
+      } catch (error) {
+        console.error("Failed to fetch masters", error);
       }
     };
-    fetchSchools();
-  }, [user.role, selectedSchoolId]);
+    fetchMasters();
+  }, [user.role]);
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -134,9 +147,14 @@ export default function Attendance({ user }: { user: any }) {
                 <label className="text-xs font-black uppercase text-slate-500 tracking-widest ml-1">School Branch</label>
                 <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
                   <SelectTrigger className="border-slate-200 bg-blue-50/30 font-bold rounded-xl h-11">
-                    <SelectValue placeholder="Identify branch" />
+                    <SelectValue placeholder="Select School Branch">
+                      {selectedSchoolId && selectedSchoolId !== "none" ? schools.find(s => s.id.toString() === selectedSchoolId)?.name : "Select School Branch"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="max-h-68 rounded-2xl shadow-2xl border-slate-200 p-2">
+                    <SelectItem value="none" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">
+                      Select School Branch
+                    </SelectItem>
                     {schools.map(s => (
                       <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
                         <div className="flex flex-col gap-0.5">
@@ -150,30 +168,34 @@ export default function Attendance({ user }: { user: any }) {
               </div>
             )}
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-slate-400">Standard</label>
-              <Select defaultValue="10">
-                <SelectTrigger>
-                  <SelectValue placeholder="Standard" />
+              <label className="text-xs font-bold uppercase text-slate-400 tracking-widest ml-1">Academic Grade</label>
+              <Select value={selectedStandard} onValueChange={setSelectedStandard}>
+                <SelectTrigger className="border-slate-200 bg-slate-50/50 font-bold rounded-xl h-11">
+                  <SelectValue placeholder="Select Academic Standard">
+                    {selectedStandard && selectedStandard !== "none" ? selectedStandard : "Select Academic Standard"}
+                  </SelectValue>
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="8">Standard 8th</SelectItem>
-                  <SelectItem value="9">Standard 9th</SelectItem>
-                  <SelectItem value="10">Standard 10th</SelectItem>
-                  <SelectItem value="11">Standard 11th</SelectItem>
-                  <SelectItem value="12">Standard 12th</SelectItem>
+                <SelectContent className="rounded-xl shadow-2xl border-slate-200 p-2">
+                  <SelectItem value="none" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Standard</SelectItem>
+                  {standardsMaster.map(std => (
+                    <SelectItem key={std.id} value={std.name} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{std.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-slate-400">Section</label>
-              <Select defaultValue="A">
-                <SelectTrigger>
-                  <SelectValue placeholder="Section" />
+              <label className="text-xs font-bold uppercase text-slate-400 tracking-widest ml-1">Division/Section</label>
+              <Select value={selectedSection} onValueChange={setSelectedSection}>
+                <SelectTrigger className="border-slate-200 bg-slate-50/50 font-bold rounded-xl h-11">
+                  <SelectValue placeholder="Select Class Section">
+                    {selectedSection && selectedSection !== "none" ? `Section ${selectedSection}` : "Select Class Section"}
+                  </SelectValue>
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="A">Section A</SelectItem>
-                  <SelectItem value="B">Section B</SelectItem>
-                  <SelectItem value="C">Section C</SelectItem>
+                <SelectContent className="rounded-xl shadow-2xl border-slate-200 p-2">
+                  <SelectItem value="none" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Class Section</SelectItem>
+                  {sectionsMaster.map(sec => (
+                    <SelectItem key={sec.id} value={sec.name} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Section {sec.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

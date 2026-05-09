@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,18 +20,6 @@ interface LoginProps {
   onLogin: (user: User) => void;
 }
 
-const MOCK_SCHOOLS = [
-  { id: "1", name: "Green Valley High School" },
-  { id: "2", name: "St. Xavier's International" },
-  { id: "3", name: "Oakridge Academy" },
-];
-
-const MOCK_YEARS = [
-  { id: "1", name: "2024-2025" },
-  { id: "2", name: "2025-2026" },
-  { id: "3", name: "2026-2027" },
-];
-
 export default function Login({ onLogin }: LoginProps) {
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("admin123");
@@ -40,37 +28,96 @@ export default function Login({ onLogin }: LoginProps) {
   const [showForgot, setShowForgot] = useState(false);
   const [recoverySuccess, setRecoverySuccess] = useState(false);
   const [errorVisible, setErrorVisible] = useState<string | null>(null);
-  const [selectedSchool, setSelectedSchool] = useState("1");
-  const [selectedYear, setSelectedYear] = useState("1");
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [selectedSchool, setSelectedSchool] = useState("");
+  const [selectedYear, setSelectedYear] = useState("");
+  
+  const usernameRef = React.useRef<HTMLInputElement>(null);
+  const passwordRef = React.useRef<HTMLInputElement>(null);
+  const schoolRef = React.useRef<HTMLButtonElement>(null);
+  const yearRef = React.useRef<HTMLButtonElement>(null);
+  
+  const [schools, setSchools] = useState<any[]>([]);
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
+
+  const fetchLookups = useCallback(async () => {
+    try {
+      const [schoolsRes, yearsRes] = await Promise.all([
+        apiService.getSchools(),
+        apiService.getAcademicYears()
+      ]);
+      setSchools(schoolsRes.data || []);
+      setAcademicYears(yearsRes.data || []);
+      
+      // We don't default to current year anymore as per user request "show Select by default"
+      setSelectedYear("");
+      setSelectedSchool("");
+    } catch (error) {
+      console.error("Fetch lookups error:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLookups();
+  }, [fetchLookups]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorVisible(null);
+    setFormErrors({});
+
+    // Validation
+    const errors: Record<string, string> = {};
+    if (!username.trim()) errors.username = "Username is required";
+    if (!password.trim()) errors.password = "Password is required";
+    if (role === "superadmin" && !selectedSchool) errors.school = "Target school is required";
+    if (!selectedYear) errors.year = "Academic year is required";
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      setLoading(false);
+      
+      // Focus first error
+      if (errors.username) usernameRef.current?.focus();
+      else if (errors.password) passwordRef.current?.focus();
+      else if (errors.school) schoolRef.current?.focus();
+      else if (errors.year) yearRef.current?.focus();
+      
+      return;
+    }
 
     try {
       const response = await apiService.login({
         username,
         password,
         role,
-        schoolId: parseInt(selectedSchool)
+        schoolId: selectedSchool && selectedSchool !== "all" ? parseInt(selectedSchool) : (role === "superadmin" ? 0 : undefined)
       });
       
-      const user = response.data;
-      localStorage.setItem("user", JSON.stringify(user));
-      onLogin(user);
+      // Handle both { token, user } structure and flat user object
+      const userData = response.data.user || response.data;
+      
+      // Ensure name and role are present
+      if (!userData.name && userData.fullName) userData.name = userData.fullName;
+      if (!userData.name) userData.name = username.split("@")[0] || "User";
+      if (!userData.role) userData.role = role;
+      
+      localStorage.setItem("user", JSON.stringify(userData));
+      onLogin(userData);
     } catch (err: any) {
       console.error("Login Error:", err);
       
-      const errorMessage = err.response?.data?.message || err.response?.data || "Invalid username or password";
+      const errorData = err.response?.data;
+      const errorMessage = typeof errorData === 'string' ? errorData : (errorData?.message || "Invalid username or password");
       setErrorVisible(errorMessage);
       
       // FALLBACK for development ONLY if it's a connection error (not a 401/403)
       if (import.meta.env.DEV && (!err.response || err.response.status >= 500)) {
         console.warn("API Error/Offline - Using dev fallback");
         const isAll = selectedSchool === "all";
-        const school = MOCK_SCHOOLS.find(s => s.id === selectedSchool);
-        const year = MOCK_YEARS.find(y => y.id === selectedYear);
+        const school = schools.find(s => s.id.toString() === selectedSchool);
+        const year = academicYears.find(y => y.id.toString() === selectedYear);
         const mockUser: User = {
           id: "demo-" + Math.random().toString(36).substr(2, 4),
           name: username.split("@")[0] || "Demo User",
@@ -196,21 +243,28 @@ export default function Login({ onLogin }: LoginProps) {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-slate-300 text-xs">Username</Label>
+                <Label htmlFor="username" className={cn("text-slate-300 text-xs", formErrors.username && "text-red-400")}>
+                  Username {formErrors.username && <span className="text-[10px] font-bold italic ml-1">- {formErrors.username}</span>}
+                </Label>
                 <Input 
                   id="username" 
+                  ref={usernameRef}
                   type="text" 
                   placeholder="Enter username" 
-                  required 
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 h-9"
+                  className={cn(
+                    "bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 h-9",
+                    formErrors.username && "border-red-500/50 ring-1 ring-red-500/20"
+                  )}
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-slate-300 text-xs">Password</Label>
+                  <Label htmlFor="password" className={cn("text-slate-300 text-xs", formErrors.password && "text-red-400")}>
+                    Password {formErrors.password && <span className="text-[10px] font-bold italic ml-1">- {formErrors.password}</span>}
+                  </Label>
                   <button 
                     type="button"
                     onClick={() => setShowForgot(true)}
@@ -221,33 +275,41 @@ export default function Login({ onLogin }: LoginProps) {
                 </div>
                 <Input 
                   id="password" 
+                  ref={passwordRef}
                   type="password" 
                   placeholder="••••••••" 
-                  required 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 h-9"
+                  className={cn(
+                    "bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 h-9",
+                    formErrors.password && "border-red-500/50 ring-1 ring-red-500/20"
+                  )}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 {role === "superadmin" ? (
                   <div className="space-y-2 col-span-1">
-                    <Label className="text-slate-300 text-xs flex items-center gap-2">
-                      <School size={12} /> Target School
+                    <Label className={cn("text-slate-300 text-xs flex items-center gap-2", formErrors.school && "text-red-400")}>
+                      <School size={12} /> Target School {formErrors.school && <span className="text-[10px] font-bold italic ml-1">*</span>}
                     </Label>
                     <Select 
-                      defaultValue="all"
                       value={selectedSchool} 
-                      onValueChange={(v) => v && setSelectedSchool(v)}
+                      onValueChange={(v) => { setSelectedSchool(v); setFormErrors(prev => ({...prev, school: ""})); }}
                     >
-                      <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white h-9 text-xs">
-                        <SelectValue placeholder="Select School" />
+                      <SelectTrigger ref={schoolRef} className={cn(
+                        "bg-slate-800/50 border-slate-700 text-white h-9 text-xs",
+                        formErrors.school && "border-red-500/50 ring-1 ring-red-500/20"
+                      )}>
+                        <SelectValue placeholder="Select Current School">
+                          {selectedSchool && selectedSchool !== "none" ? (selectedSchool === "all" ? "All Schools (System-wide)" : schools.find(s => s.id.toString() === selectedSchool)?.name) : "Select Current School"}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                        <SelectItem value="none" className="text-xs italic text-slate-400">Select Current School</SelectItem>
                         <SelectItem value="all" className="text-xs font-bold text-blue-400">All Schools (System-wide)</SelectItem>
-                        {MOCK_SCHOOLS.map(s => (
-                          <SelectItem key={s.id} value={s.id} className="text-xs">{s.name}</SelectItem>
+                        {schools.map(s => (
+                          <SelectItem key={s.id} value={s.id.toString()} className="text-xs">{s.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -257,23 +319,29 @@ export default function Login({ onLogin }: LoginProps) {
                     <Label className="text-slate-500 text-xs flex items-center gap-2">
                       <School size={12} /> Current School
                     </Label>
-                    <div className="h-9 flex items-center px-3 rounded-md bg-slate-800/30 border border-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                      {MOCK_SCHOOLS[0].name}
+                    <div className="h-9 flex items-center px-3 rounded-md bg-slate-800/30 border border-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-wider overflow-hidden truncate">
+                      {schools.length > 0 ? schools[0].name : "No Schools Configured"}
                     </div>
                   </div>
                 )}
 
                 <div className="space-y-2 col-span-1">
-                  <Label className="text-slate-300 text-xs flex items-center gap-2">
-                    <Calendar size={12} /> Academic Year
+                  <Label className={cn("text-slate-300 text-xs flex items-center gap-2", formErrors.year && "text-red-400")}>
+                    <Calendar size={12} /> Academic Year {formErrors.year && <span className="text-[10px] font-bold italic ml-1">*</span>}
                   </Label>
-                  <Select value={selectedYear} onValueChange={(v) => v && setSelectedYear(v)}>
-                    <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white h-9 text-xs">
-                      <SelectValue placeholder="Select Year" />
+                  <Select value={selectedYear} onValueChange={(v) => { setSelectedYear(v); setFormErrors(prev => ({...prev, year: ""})); }}>
+                    <SelectTrigger ref={yearRef} className={cn(
+                      "bg-slate-800/50 border-slate-700 text-white h-9 text-xs",
+                      formErrors.year && "border-red-500/50 ring-1 ring-red-500/20"
+                    )}>
+                      <SelectValue placeholder="Select Academic Year">
+                        {selectedYear && selectedYear !== "none" ? academicYears.find(y => y.id.toString() === selectedYear)?.name : "Select Academic Year"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-slate-800 text-white">
-                      {MOCK_YEARS.map(y => (
-                        <SelectItem key={y.id} value={y.id} className="text-xs">{y.name}</SelectItem>
+                      <SelectItem value="none" className="text-xs italic text-slate-400">Select Academic Year</SelectItem>
+                      {academicYears.map(y => (
+                        <SelectItem key={y.id} value={y.id.toString()} className="text-xs">{y.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

@@ -337,7 +337,7 @@ export default function Messages({ user }: { user: any }) {
               <div className="relative">
                 <Avatar className="h-11 w-11 border-2 border-white shadow-sm">
                   <AvatarFallback className="bg-blue-50 text-blue-600 font-bold">
-                    {contact.name.split(" ").map(n => n[0]).join("")}
+                    {contact.name ? contact.name.split(" ").map(n => n[0]).join("") : "C"}
                   </AvatarFallback>
                 </Avatar>
                 <div className={cn(
@@ -384,7 +384,7 @@ export default function Messages({ user }: { user: any }) {
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
                 <AvatarFallback className="bg-blue-100 text-blue-700">
-                  {selectedContact.name.split(" ").map(n => n[0]).join("")}
+                  {selectedContact.name ? selectedContact.name.split(" ").map(n => n[0]).join("") : "C"}
                 </AvatarFallback>
               </Avatar>
               <div>
@@ -516,7 +516,7 @@ export default function Messages({ user }: { user: any }) {
                         className="px-3 py-2 hover:bg-slate-50 cursor-pointer flex items-center gap-2 rounded-lg transition-colors group"
                       >
                         <Avatar className="h-6 w-6">
-                          <AvatarFallback className="text-[8px] bg-blue-100 text-blue-600">{staff.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                          <AvatarFallback className="text-[8px] bg-blue-100 text-blue-600">{staff.name ? staff.name.split(" ").map(n => n[0]).join("") : "U"}</AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="text-xs font-bold text-slate-800 group-hover:text-blue-700">{staff.name}</p>

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const DEFAULT_API_BASE_URL = "http://localhost:5000/api";
+const DEFAULT_API_BASE_URL = "/api";
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
@@ -44,20 +44,80 @@ const mockFallbacks: Record<string, any> = {
       address: "Cloud Preview",
     },
   ],
+  "/masters/academic-years": [
+    { id: 1, name: "2023-24", isCurrent: false, isActive: true },
+    { id: 2, name: "2024-25", isCurrent: true, isActive: true },
+  ],
+  "/masters/standards": [
+    { id: 1, name: "10th Standard", isActive: true },
+  ],
+  "/masters/sections": [
+    { id: 1, name: "A", isActive: true },
+  ],
+  "/masters/religions": [
+    { id: 1, name: "Hindu", isActive: true },
+    { id: 2, name: "Muslim", isActive: true },
+  ],
+  "/masters/blood-groups": [
+    { id: 1, name: "A+", isActive: true },
+    { id: 2, name: "B+", isActive: true },
+  ],
+  "/masters/houses": [
+    { id: 1, name: "Red House", color: "#ef4444", isActive: true },
+  ],
+  "/masters/admission-types": [
+    { id: 1, name: "Regular", isActive: true },
+  ],
+  "/masters/castes": [
+    { id: 1, name: "General", isActive: true },
+  ],
+  "/masters/sub-castes": [
+    { id: 1, casteId: 1, name: "Sub-Caste 1", isActive: true },
+  ],
+  "/masters/states": [
+    { id: 1, name: "Maharashtra", isActive: true },
+  ],
+  "/masters/cities": [
+    { id: 1, stateId: 1, name: "Mumbai", isActive: true },
+  ],
+  "/auth/login": {
+    token: "demo-token",
+    user: {
+      id: 1,
+      fullName: "Super Admin",
+      username: "admin",
+      role: "superadmin",
+      schoolId: null,
+      academicYearId: 2
+    }
+  }
 };
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.message === "Network Error" || error.code === "ECONNABORTED") {
+    const isNetworkError = error.message?.includes("Network Error") || 
+                           error.code === "ECONNABORTED" || 
+                           error.message?.includes("ERR_CONNECTION_REFUSED");
+    const isNotFound = error.response && error.response.status === 404;
+
+    if (isNetworkError || isNotFound) {
+      const configUrl = error.config?.url || "";
+      const urlWithPrefix = configUrl.split("?")[0];
+      const url = urlWithPrefix.startsWith("/api") ? urlWithPrefix.substring(4) : urlWithPrefix;
+      
       console.warn(
-        "Backend not detected at " +
-          API_BASE_URL +
-          ". Using demo fallback data.",
+        `Backend connection issue at [${urlWithPrefix}]. Error: ${error.message}. Using demo fallback data for URL: ${url}`
       );
-      const url = error.config.url.split("?")[0];
-      if (mockFallbacks[url]) {
-        return Promise.resolve({ data: mockFallbacks[url] });
+
+      // Try exact match then startsWith for reliability
+      const mockData = mockFallbacks[url] || 
+                       Object.keys(mockFallbacks).find(key => url.startsWith(key)) ? 
+                       mockFallbacks[Object.keys(mockFallbacks).find(key => url.startsWith(key))!] : 
+                       null;
+
+      if (mockData) {
+        return Promise.resolve({ data: mockData });
       }
     }
     return Promise.reject(error);
@@ -114,6 +174,62 @@ export const apiService = {
   getFileSystemLogs: () => api.get("/errorlogs/filesystem"),
   getDbScript: () => api.get("/database/script"),
   getSeedScript: () => api.get("/database/seed"),
+
+  // Master Data (Configuration)
+  getStandards: () => api.get("/masters/standards"),
+  createStandard: (data: any) => api.post("/masters/standards", data),
+  updateStandard: (id: number, data: any) => api.put(`/masters/standards/${id}`, data),
+  deleteStandard: (id: number) => api.delete(`/masters/standards/${id}`),
+
+  getSections: () => api.get("/masters/sections"),
+  createSection: (data: any) => api.post("/masters/sections", data),
+  updateSection: (id: number, data: any) => api.put(`/masters/sections/${id}`, data),
+  deleteSection: (id: number) => api.delete(`/masters/sections/${id}`),
+
+  getAcademicYears: () => api.get("/masters/academic-years"),
+  createAcademicYear: (data: any) => api.post("/masters/academic-years", data),
+  updateAcademicYear: (id: number, data: any) => api.put(`/masters/academic-years/${id}`, data),
+  deleteAcademicYear: (id: number) => api.delete(`/masters/academic-years/${id}`),
+
+  getCastes: () => api.get("/masters/castes"),
+  createCaste: (data: any) => api.post("/masters/castes", data),
+  updateCaste: (id: number, data: any) => api.put(`/masters/castes/${id}`, data),
+  deleteCaste: (id: number) => api.delete(`/masters/castes/${id}`),
+
+  getSubCastes: () => api.get("/masters/sub-castes"),
+  createSubCaste: (data: any) => api.post("/masters/sub-castes", data),
+  updateSubCaste: (id: number, data: any) => api.put(`/masters/sub-castes/${id}`, data),
+  deleteSubCaste: (id: number) => api.delete(`/masters/sub-castes/${id}`),
+
+  getReligions: () => api.get("/masters/religions"),
+  createReligion: (data: any) => api.post("/masters/religions", data),
+  updateReligion: (id: number, data: any) => api.put(`/masters/religions/${id}`, data),
+  deleteReligion: (id: number) => api.delete(`/masters/religions/${id}`),
+
+  getStates: () => api.get("/masters/states"),
+  createState: (data: any) => api.post("/masters/states", data),
+  updateState: (id: number, data: any) => api.put(`/masters/states/${id}`, data),
+  deleteState: (id: number) => api.delete(`/masters/states/${id}`),
+
+  getCities: () => api.get("/masters/cities"),
+  createCity: (data: any) => api.post("/masters/cities", data),
+  updateCity: (id: number, data: any) => api.put(`/masters/cities/${id}`, data),
+  deleteCity: (id: number) => api.delete(`/masters/cities/${id}`),
+
+  getBloodGroups: () => api.get("/masters/blood-groups"),
+  createBloodGroup: (data: any) => api.post("/masters/blood-groups", data),
+  updateBloodGroup: (id: number, data: any) => api.put(`/masters/blood-groups/${id}`, data),
+  deleteBloodGroup: (id: number) => api.delete(`/masters/blood-groups/${id}`),
+
+  getHouses: () => api.get("/masters/houses"),
+  createHouse: (data: any) => api.post("/masters/houses", data),
+  updateHouse: (id: number, data: any) => api.put(`/masters/houses/${id}`, data),
+  deleteHouse: (id: number) => api.delete(`/masters/houses/${id}`),
+
+  getAdmissionTypes: () => api.get("/masters/admission-types"),
+  createAdmissionType: (data: any) => api.post("/masters/admission-types", data),
+  updateAdmissionType: (id: number, data: any) => api.put(`/masters/admission-types/${id}`, data),
+  deleteAdmissionType: (id: number) => api.delete(`/masters/admission-types/${id}`),
 };
 
 export default api;

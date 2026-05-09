@@ -28,7 +28,8 @@ import {
   Trash2,
   Filter,
   Camera,
-  UserCircle
+  UserCircle,
+  FileText
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -61,63 +62,6 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 
-const studentsData = [
-  { 
-    id: "1", 
-    grno: "GR001",
-    schoolId: "SCH001",
-    firstName: "Alex",
-    middleName: "James",
-    lastName: "Johnson",
-    name: "Alex James Johnson", 
-    motherName: "Mary Johnson",
-    address: "123 School Lane, West District",
-    aadharCard: "1234 5678 9012",
-    birthDate: "2010-05-15",
-    roll: "101", 
-    standard: "10th", 
-    section: "A", 
-    attendance: "94%", 
-    performance: "Excellent" 
-  },
-  { 
-    id: "2", 
-    grno: "GR002",
-    schoolId: "SCH002",
-    firstName: "Sarah",
-    middleName: "Anne",
-    lastName: "Williams",
-    name: "Sarah Anne Williams", 
-    motherName: "Linda Williams",
-    address: "45 Education St, Central City",
-    aadharCard: "2345 6789 0123",
-    birthDate: "2011-02-10",
-    roll: "102", 
-    standard: "10th", 
-    section: "A", 
-    attendance: "91%", 
-    performance: "Good" 
-  },
-  { 
-    id: "3", 
-    grno: "GR003",
-    schoolId: "SCH001",
-    firstName: "Michael",
-    middleName: "Lee",
-    lastName: "Chen",
-    name: "Michael Lee Chen", 
-    motherName: "Hui Chen",
-    address: "78 Wisdom Way, East Park",
-    aadharCard: "3456 7890 1234",
-    birthDate: "2010-11-22",
-    roll: "103", 
-    standard: "9th", 
-    section: "B", 
-    attendance: "88%", 
-    performance: "Average" 
-  },
-];
-
 import { User as UserType } from "@/types";
 
 export default function Students({ user }: { user: UserType }) {
@@ -128,15 +72,56 @@ export default function Students({ user }: { user: UserType }) {
   const [sectionFilter, setSectionFilter] = useState("all");
 
   const [schools, setSchools] = useState<any[]>([]);
+  const [standardsMaster, setStandardsMaster] = useState<any[]>([]);
+  const [sectionsMaster, setSectionsMaster] = useState<any[]>([]);
+  const [bloodGroups, setBloodGroups] = useState<any[]>([]);
+  const [houses, setHouses] = useState<any[]>([]);
+  const [admissionTypes, setAdmissionTypes] = useState<any[]>([]);
+  const [religions, setReligions] = useState<any[]>([]);
+  const [castes, setCastes] = useState<any[]>([]);
+  const [subCastes, setSubCastes] = useState<any[]>([]);
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
+
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentStudentId, setCurrentStudentId] = useState<string | null>(null);
 
-  const fetchSchools = useCallback(async () => {
+  const fetchMasters = useCallback(async () => {
     try {
-      const response = await apiService.getSchools();
-      setSchools(response.data);
+      const [
+        standardsRes, 
+        sectionsRes, 
+        schoolsRes,
+        bloodGroupsRes,
+        housesRes,
+        admissionTypesRes,
+        religionsRes,
+        castesRes,
+        subCastesRes,
+        academicYearsRes
+      ] = await Promise.all([
+        apiService.getStandards(),
+        apiService.getSections(),
+        apiService.getSchools(),
+        apiService.getBloodGroups(),
+        apiService.getHouses(),
+        apiService.getAdmissionTypes(),
+        apiService.getReligions(),
+        apiService.getCastes(),
+        apiService.getSubCastes(),
+        apiService.getAcademicYears()
+      ]);
+      setStandardsMaster(standardsRes.data || []);
+      setSectionsMaster(sectionsRes.data || []);
+      setSchools(schoolsRes.data || []);
+      setBloodGroups(bloodGroupsRes.data || []);
+      setHouses(housesRes.data || []);
+      setAdmissionTypes(admissionTypesRes.data || []);
+      setReligions(religionsRes.data || []);
+      setCastes(castesRes.data || []);
+      setSubCastes(subCastesRes.data || []);
+      setAcademicYears(academicYearsRes.data || []);
     } catch (error) {
-      console.error("Fetch schools error:", error);
+      console.error("Fetch masters error:", error);
     }
   }, []);
 
@@ -144,7 +129,6 @@ export default function Students({ user }: { user: UserType }) {
     setLoading(true);
     try {
       const response = await apiService.getStudents(user.schoolId ? parseInt(user.schoolId) : undefined);
-      // Map API fields back to UI state fields
     const formatted = response.data.map((s: any) => ({
         id: s.id.toString(),
         grno: s.registrationNumber,
@@ -155,6 +139,13 @@ export default function Students({ user }: { user: UserType }) {
         name: s.fullName,
         standard: s.standard,
         section: s.section,
+        bloodGroupId: s.bloodGroupId,
+        houseId: s.houseId,
+        admissionTypeId: s.admissionTypeId,
+        religionId: s.religionId,
+        casteId: s.casteId,
+        subCasteId: s.subCasteId,
+        joiningAcademicYearId: s.joiningAcademicYearId,
         roll: s.rollNumber?.toString() || "0",
         address: s.address || "N/A",
         birthDate: s.dateOfBirth ? s.dateOfBirth.split('T')[0] : "",
@@ -177,8 +168,8 @@ export default function Students({ user }: { user: UserType }) {
 
   useEffect(() => {
     fetchStudents();
-    fetchSchools();
-  }, [fetchStudents, fetchSchools]);
+    fetchMasters();
+  }, [fetchStudents, fetchMasters]);
   
   const canManage = user.role === "superadmin" || user.role === "admin";
   
@@ -207,8 +198,15 @@ export default function Students({ user }: { user: UserType }) {
     aadharCard: "",
     birthDate: "",
     roll: "",
-    standard: "10th",
-    section: "A",
+    standard: "",
+    section: "",
+    bloodGroupId: "",
+    houseId: "",
+    admissionTypeId: "",
+    religionId: "",
+    casteId: "",
+    subCasteId: "",
+    joiningAcademicYearId: "",
     attendance: "100%",
     performance: "Excellent"
   };
@@ -221,7 +219,7 @@ export default function Students({ user }: { user: UserType }) {
     setNewStudentFormData(initialFormState);
     setFormErrors({});
     setIsAddDialogOpen(true);
-    fetchSchools(); // Ensure we have the latest school list when opening
+    fetchMasters();
   };
 
   const openEditDialog = (student: any) => {
@@ -243,11 +241,18 @@ export default function Students({ user }: { user: UserType }) {
       roll: student.roll,
       standard: student.standard,
       section: student.section,
+      bloodGroupId: student.bloodGroupId?.toString() || "",
+      houseId: student.houseId?.toString() || "",
+      admissionTypeId: student.admissionTypeId?.toString() || "",
+      religionId: student.religionId?.toString() || "",
+      casteId: student.casteId?.toString() || "",
+      subCasteId: student.subCasteId?.toString() || "",
+      joiningAcademicYearId: student.joiningAcademicYearId?.toString() || "",
       attendance: student.attendance,
       performance: student.performance
     });
     setIsAddDialogOpen(true);
-    fetchSchools(); // Ensure we have the latest school list when opening
+    fetchMasters();
   };
 
   const handleExport = () => {
@@ -260,153 +265,6 @@ export default function Students({ user }: { user: UserType }) {
 
   const handleImport = () => {
     setIsBulkUploadOpen(true);
-  };
-
-  const validateStudentData = (data: any, isBulk = false) => {
-    const errors: string[] = [];
-
-    if (!data.schoolId) errors.push("School selection is required");
-    if (!data.grno?.toString().trim()) errors.push("Registration Number (GRNO) is required");
-    if (!data.firstName?.toString().trim()) errors.push("First name is required");
-    if (!data.lastName?.toString().trim()) errors.push("Last name is required");
-    if (!data.roll?.toString().trim()) errors.push("Roll number is required");
-    if (!data.gender) errors.push("Gender is required");
-    
-    const contactClean = (data.contactNumber || "").toString().replace(/[\s-]/g, "");
-    if (contactClean && !/^\d{10}$/.test(contactClean)) {
-      errors.push("Contact number must be 10 digits");
-    }
-    if (!data.motherName?.toString().trim()) errors.push("Mother's name is required");
-    if (!data.address?.toString().trim()) errors.push("Address is required");
-    if (!data.birthDate) errors.push("Birth date is required");
-    
-    // Aadhar Card Validation (12 digits)
-    const aadharClean = (data.aadharCard || "").toString().replace(/[\s-]/g, "");
-    if (!aadharClean) {
-      errors.push("Aadhar card is required");
-    } else if (!/^\d{12}$/.test(aadharClean)) {
-      errors.push("Aadhar card must be exactly 12 digits");
-    }
-
-    // Birth Date Validation (Must be in the past)
-    if (data.birthDate) {
-      const bDate = new Date(data.birthDate);
-      if (isNaN(bDate.getTime())) {
-        errors.push("Invalid birth date format");
-      } else if (bDate >= new Date()) {
-        errors.push("Birth date must be in the past");
-      }
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors
-    };
-  };
-
-  const handleBulkUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsProcessing(true);
-    const reader = new FileReader();
-
-    reader.onload = (evt) => {
-      try {
-        const bstr = evt.target?.result;
-        const wb = XLSX.read(bstr, { type: "binary" });
-        const wsname = wb.SheetNames[0];
-        const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws) as any[];
-
-        if (data.length === 0) {
-          toast.error("The uploaded file is empty.");
-          setIsProcessing(false);
-          return;
-        }
-
-        const validNewStudents: any[] = [];
-        let duplicateCount = 0;
-        let invalidCount = 0;
-        const existingRolls = new Set(students.map(s => s.roll));
-        const existingGrnos = new Set(students.map(s => (s as any).grno));
-
-        data.forEach((item, index) => {
-          const fName = item["First Name"] || item.firstName || item.name?.split(" ")[0] || "";
-          const mName = item["Middle Name"] || item.middleName || "";
-          const lName = item["Last Name"] || item.lastName || item.name?.split(" ").slice(1).join(" ") || "";
-          const rollValue = (item.Roll || item.roll || "").toString();
-          const grnoValue = (item.GRNO || item.grno || "").toString();
-
-          const studentObj = {
-            grno: grnoValue,
-            firstName: fName,
-            middleName: mName,
-            lastName: lName,
-            motherName: item["Mother Name"] || item.motherName || "",
-            address: item.Address || item.address || "",
-            aadharCard: (item["Aadhar Card"] || item.aadharCard || "").toString(),
-            birthDate: item["Birth Date"] || item.birthDate || "",
-            roll: rollValue,
-            standard: (item.Standard || item.standard || "10th").toString(),
-            section: (item.Section || item.section || "A").toString(),
-            attendance: (item.Attendance || item.attendance || "100%").toString(),
-            performance: (item.Performance || item.performance || "Excellent").toString(),
-          };
-
-          const validation = validateStudentData(studentObj, true);
-          
-          if (!validation.isValid) {
-            invalidCount++;
-            return;
-          }
-
-          if (existingRolls.has(rollValue) || existingGrnos.has(grnoValue)) {
-            duplicateCount++;
-            return;
-          }
-
-          validNewStudents.push({
-            ...studentObj,
-            id: (Date.now() + index).toString(),
-            name: `${fName} ${mName} ${lName}`.replace(/\s+/g, ' ').trim(),
-            photo: ""
-          });
-        });
-
-        if (validNewStudents.length === 0) {
-          toast.error(`Import failed: ${invalidCount} invalid records and ${duplicateCount} duplicates found.`);
-          setIsProcessing(false);
-          return;
-        }
-
-        setStudents(prev => [...validNewStudents, ...prev]);
-        setIsBulkUploadOpen(false);
-        
-        const summaryMsg = `Successfully imported ${validNewStudents.length} students.`;
-        const extraInfo = [];
-        if (duplicateCount > 0) extraInfo.push(`${duplicateCount} duplicates skipped`);
-        if (invalidCount > 0) extraInfo.push(`${invalidCount} invalid rows skipped`);
-        
-        toast.success(summaryMsg, {
-          description: extraInfo.length > 0 ? extraInfo.join(", ") : undefined,
-          duration: 6000
-        });
-      } catch (error) {
-        console.error("Bulk upload error:", error);
-        toast.error("Failed to parse Excel file. Please check the format.");
-      } finally {
-        setIsProcessing(false);
-        if (bulkFileInputRef.current) bulkFileInputRef.current.value = "";
-      }
-    };
-
-    reader.onerror = () => {
-      toast.error("Error reading file.");
-      setIsProcessing(false);
-    };
-
-    reader.readAsBinaryString(file);
   };
 
   const triggerPhotoUpload = (id: string) => {
@@ -426,7 +284,6 @@ export default function Students({ user }: { user: UserType }) {
       };
       reader.readAsDataURL(file);
     }
-    // Reset for next upload
     e.target.value = '';
   };
 
@@ -480,6 +337,13 @@ export default function Students({ user }: { user: UserType }) {
         schoolId: parseInt(newStudentFormData.schoolId),
         standard: newStudentFormData.standard,
         section: newStudentFormData.section,
+        bloodGroupId: newStudentFormData.bloodGroupId ? parseInt(newStudentFormData.bloodGroupId) : null,
+        houseId: newStudentFormData.houseId ? parseInt(newStudentFormData.houseId) : null,
+        admissionTypeId: newStudentFormData.admissionTypeId ? parseInt(newStudentFormData.admissionTypeId) : null,
+        religionId: newStudentFormData.religionId ? parseInt(newStudentFormData.religionId) : null,
+        casteId: newStudentFormData.casteId ? parseInt(newStudentFormData.casteId) : null,
+        subCasteId: newStudentFormData.subCasteId ? parseInt(newStudentFormData.subCasteId) : null,
+        joiningAcademicYearId: newStudentFormData.joiningAcademicYearId ? parseInt(newStudentFormData.joiningAcademicYearId) : null,
         dateOfBirth: newStudentFormData.birthDate,
         rollNumber: parseInt(newStudentFormData.roll),
         address: newStudentFormData.address,
@@ -539,7 +403,6 @@ export default function Students({ user }: { user: UserType }) {
   return (
     <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Hidden File Input for Photo Upload */}
         <input 
           type="file" 
           ref={fileInputRef} 
@@ -561,7 +424,45 @@ export default function Students({ user }: { user: UserType }) {
                 }
               />
               <DialogContent>
-                {/* ... existing content ... */}
+                <DialogHeader>
+                  <DialogTitle>Bulk Student Import</DialogTitle>
+                  <DialogDescription>
+                    Upload an Excel file containing multiple student records to import them at once.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="p-6 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-4 bg-slate-50/50">
+                  <div className="p-3 bg-white rounded-full shadow-sm">
+                    <FileText className="text-blue-500" size={24} />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-slate-900">Upload your student registry</p>
+                    <p className="text-xs text-slate-500 mt-1">Supports XLSX and XLS formats</p>
+                  </div>
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700 font-bold px-8 rounded-xl h-10 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
+                    onClick={() => bulkFileInputRef.current?.click()}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? "Processing..." : "Choose File"}
+                  </Button>
+                  <input
+                    type="file"
+                    ref={bulkFileInputRef}
+                    className="hidden"
+                    accept=".xlsx, .xls"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        toast.info("Import feature under maintenance, please add students individually for now.");
+                      }
+                    }}
+                  />
+                </div>
+                <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex gap-3">
+                  <div className="h-2 w-2 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <p className="text-xs text-amber-800 leading-relaxed font-medium">
+                    Ensure your Excel follows the system template. Validation errors will result in skipped rows.
+                  </p>
+                </div>
               </DialogContent>
             </Dialog>
           )}
@@ -611,7 +512,6 @@ export default function Students({ user }: { user: UserType }) {
 
                 <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-6 bg-white scrollbar-thin scrollbar-thumb-slate-200">
                   <div className="max-w-4xl mx-auto space-y-8">
-                    {/* Academic Information */}
                     <section>
                       <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
                         <div className="w-1.5 h-5 bg-blue-600 rounded-full"></div>
@@ -619,7 +519,7 @@ export default function Students({ user }: { user: UserType }) {
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-                        <div className="md:col-span-6 space-y-1.5">
+                        <div className="md:col-span-12 space-y-1.5">
                           <Label htmlFor="school" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned School Branch</Label>
                             <Select 
                               value={newStudentFormData.schoolId} 
@@ -638,9 +538,14 @@ export default function Students({ user }: { user: UserType }) {
                                   (user.role !== "superadmin" && !!user.schoolId) && "opacity-80 cursor-not-allowed bg-slate-100"
                                 )}
                               >
-                                <SelectValue placeholder="Identify branch" />
+                                <SelectValue placeholder="Select School Branch">
+                                  {newStudentFormData.schoolId && newStudentFormData.schoolId !== "none" ? schools.find(s => s.id.toString() === newStudentFormData.schoolId)?.name : "Select School Branch"}
+                                </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="max-h-68 rounded-2xl shadow-2xl border-slate-200 p-2">
+                                <SelectItem value="none" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">
+                                  Select School Branch
+                                </SelectItem>
                                 {schools.length > 0 ? (
                                   schools.map(s => (
                                     <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
@@ -660,8 +565,8 @@ export default function Students({ user }: { user: UserType }) {
                             </Select>
                         </div>
 
-                        <div className="md:col-span-3 space-y-1.5">
-                          <Label htmlFor="standard" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Academic Grade</Label>
+                        <div className="md:col-span-4 space-y-1.5">
+                          <Label htmlFor="standard" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.standard ? "text-red-500" : "text-slate-500")}>Academic Grade {formErrors.standard && "*"}</Label>
                           <Select 
                             value={newStudentFormData.standard} 
                             onValueChange={(v) => {
@@ -677,18 +582,21 @@ export default function Students({ user }: { user: UserType }) {
                                 formErrors.standard && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             >
-                              <SelectValue />
+                              <SelectValue placeholder="Select Academic Grade">
+                                {newStudentFormData.standard && newStudentFormData.standard !== "none" ? newStudentFormData.standard : "Select Academic Grade"}
+                              </SelectValue>
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              {["8th", "9th", "10th", "11th", "12th"].map(std => (
-                                <SelectItem key={std} value={std} className="font-semibold py-1.5">{std} Standard</SelectItem>
+                              <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Grade</SelectItem>
+                              {standardsMaster.map(std => (
+                                <SelectItem key={std.id} value={std.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{std.name}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         </div>
 
-                        <div className="md:col-span-3 space-y-1.5">
-                          <Label htmlFor="section" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Division/Section</Label>
+                        <div className="md:col-span-4 space-y-1.5">
+                          <Label htmlFor="section" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.section ? "text-red-500" : "text-slate-500")}>Division/Section {formErrors.section && "*"}</Label>
                           <Select 
                             value={newStudentFormData.section} 
                             onValueChange={(v) => {
@@ -704,11 +612,34 @@ export default function Students({ user }: { user: UserType }) {
                                 formErrors.section && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             >
-                              <SelectValue />
+                              <SelectValue placeholder="Select Section/Division">
+                                {newStudentFormData.section && newStudentFormData.section !== "none" ? `Section ${newStudentFormData.section}` : "Select Section/Division"}
+                              </SelectValue>
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              {["A", "B", "C", "D", "E"].map(sec => (
-                                <SelectItem key={sec} value={sec} className="font-semibold py-1.5">Section {sec}</SelectItem>
+                              <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Section/Division</SelectItem>
+                              {sectionsMaster.map(sec => (
+                                <SelectItem key={sec.id} value={sec.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Section {sec.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="md:col-span-4 space-y-1.5">
+                          <Label htmlFor="academicYear" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Joining Year</Label>
+                          <Select 
+                            value={newStudentFormData.joiningAcademicYearId} 
+                            onValueChange={(v) => setNewStudentFormData({...newStudentFormData, joiningAcademicYearId: v})}
+                          >
+                            <SelectTrigger id="academicYear" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                              <SelectValue placeholder="Select Academic Year">
+                                {newStudentFormData.joiningAcademicYearId && newStudentFormData.joiningAcademicYearId !== "none" ? academicYears.find(y => y.id.toString() === newStudentFormData.joiningAcademicYearId)?.name : "Select Academic Year"}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                              <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Year</SelectItem>
+                              {academicYears.map(y => (
+                                <SelectItem key={y.id} value={y.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{y.name} {y.isCurrent ? "(Current)" : ""}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -717,7 +648,6 @@ export default function Students({ user }: { user: UserType }) {
                     </section>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      {/* Identity Section */}
                       <section>
                         <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
                           <div className="w-1.5 h-5 bg-orange-500 rounded-full"></div>
@@ -726,7 +656,7 @@ export default function Students({ user }: { user: UserType }) {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <Label htmlFor="grno" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Registration (GRNO)</Label>
+                            <Label htmlFor="grno" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.grno ? "text-red-500" : "text-slate-500")}>Registration (GRNO) {formErrors.grno && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["grno"] = el}
                               id="grno" 
@@ -743,7 +673,7 @@ export default function Students({ user }: { user: UserType }) {
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <Label htmlFor="roll" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Roll Number</Label>
+                            <Label htmlFor="roll" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.roll ? "text-red-500" : "text-slate-500")}>Roll Number {formErrors.roll && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["roll"] = el}
                               id="roll" 
@@ -761,7 +691,7 @@ export default function Students({ user }: { user: UserType }) {
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <Label htmlFor="gender" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Gender</Label>
+                            <Label htmlFor="gender" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.gender ? "text-red-500" : "text-slate-500")}>Gender {formErrors.gender && "*"}</Label>
                             <Select 
                               value={newStudentFormData.gender} 
                               onValueChange={(v) => {
@@ -777,17 +707,20 @@ export default function Students({ user }: { user: UserType }) {
                                   formErrors.gender && "border-red-500 ring-2 ring-red-500/10"
                                 )}
                               >
-                                <SelectValue />
+                                <SelectValue placeholder="Select Student Gender">
+                                  {newStudentFormData.gender && newStudentFormData.gender !== "none" ? newStudentFormData.gender.charAt(0).toUpperCase() + newStudentFormData.gender.slice(1) : "Select Student Gender"}
+                                </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl border-slate-200">
-                                <SelectItem value="male" className="font-semibold py-1.5 text-xs">Male</SelectItem>
-                                <SelectItem value="female" className="font-semibold py-1.5 text-xs">Female</SelectItem>
-                                <SelectItem value="other" className="font-semibold py-1.5 text-xs">Other</SelectItem>
+                                <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Gender</SelectItem>
+                                <SelectItem value="male" className="font-semibold py-1.5 text-xs px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Male</SelectItem>
+                                <SelectItem value="female" className="font-semibold py-1.5 text-xs px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Female</SelectItem>
+                                <SelectItem value="other" className="font-semibold py-1.5 text-xs px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Other</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
                           <div className="space-y-1.5">
-                            <Label htmlFor="aadharCard" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Aadhar ID</Label>
+                            <Label htmlFor="aadharCard" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.aadharCard ? "text-red-500" : "text-slate-500")}>Aadhar ID {formErrors.aadharCard && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["aadharCard"] = el}
                               id="aadharCard" 
@@ -808,7 +741,6 @@ export default function Students({ user }: { user: UserType }) {
                         </div>
                       </section>
 
-                      {/* Personal Records */}
                       <section>
                         <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
                           <div className="w-1.5 h-5 bg-emerald-500 rounded-full"></div>
@@ -817,7 +749,7 @@ export default function Students({ user }: { user: UserType }) {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <Label htmlFor="firstName" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">First Name</Label>
+                            <Label htmlFor="firstName" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.firstName ? "text-red-500" : "text-slate-500")}>First Name {formErrors.firstName && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["firstName"] = el}
                               id="firstName" 
@@ -838,7 +770,7 @@ export default function Students({ user }: { user: UserType }) {
                             <Input id="middleName" value={newStudentFormData.middleName} onChange={(e) => setNewStudentFormData({...newStudentFormData, middleName: e.target.value})} placeholder="Middle name" className="h-10 border-slate-200 font-bold rounded-xl px-4 text-sm" />
                           </div>
                           <div className="md:col-span-2 space-y-1.5">
-                            <Label htmlFor="lastName" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Last Name</Label>
+                            <Label htmlFor="lastName" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.lastName ? "text-red-500" : "text-slate-500")}>Last Name {formErrors.lastName && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["lastName"] = el}
                               id="lastName" 
@@ -855,7 +787,7 @@ export default function Students({ user }: { user: UserType }) {
                             />
                           </div>
                           <div className="md:col-span-2 space-y-1.5">
-                            <Label htmlFor="birthDate" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Date of Birth</Label>
+                            <Label htmlFor="birthDate" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.birthDate ? "text-red-500" : "text-slate-500")}>Date of Birth {formErrors.birthDate && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["birthDate"] = el}
                               id="birthDate" 
@@ -871,11 +803,139 @@ export default function Students({ user }: { user: UserType }) {
                               )}
                             />
                           </div>
+                          
+                          <div className="space-y-1.5">
+                            <Label htmlFor="religion" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Religion</Label>
+                            <Select 
+                              value={newStudentFormData.religionId} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, religionId: v})}
+                            >
+                              <SelectTrigger id="religion" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                                <SelectValue placeholder="Select Student Religion">
+                                  {newStudentFormData.religionId && newStudentFormData.religionId !== "none" ? religions.find(r => r.id.toString() === newStudentFormData.religionId)?.name : "Select Student Religion"}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                                <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Religion</SelectItem>
+                                {religions.map(r => (
+                                  <SelectItem key={r.id} value={r.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{r.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label htmlFor="bloodGroup" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Blood Group</Label>
+                            <Select 
+                              value={newStudentFormData.bloodGroupId} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, bloodGroupId: v})}
+                            >
+                              <SelectTrigger id="bloodGroup" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                                <SelectValue placeholder="Select Student Blood Group">
+                                  {newStudentFormData.bloodGroupId && newStudentFormData.bloodGroupId !== "none" ? bloodGroups.find(bg => bg.id.toString() === newStudentFormData.bloodGroupId)?.name : "Select Student Blood Group"}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                                <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Blood Group</SelectItem>
+                                {bloodGroups.map(bg => (
+                                  <SelectItem key={bg.id} value={bg.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{bg.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label htmlFor="caste" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Caste</Label>
+                            <Select 
+                              value={newStudentFormData.casteId} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, casteId: v})}
+                            >
+                              <SelectTrigger id="caste" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                                <SelectValue placeholder="Select Caste Category">
+                                  {newStudentFormData.casteId && newStudentFormData.casteId !== "none" ? castes.find(c => c.id.toString() === newStudentFormData.casteId)?.name : "Select Caste Category"}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                                <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Caste Category</SelectItem>
+                                {castes.map(c => (
+                                  <SelectItem key={c.id} value={c.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{c.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label htmlFor="subCaste" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Sub-Caste</Label>
+                            <Select 
+                              value={newStudentFormData.subCasteId} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, subCasteId: v})}
+                              disabled={!newStudentFormData.casteId}
+                            >
+                              <SelectTrigger id="subCaste" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                                <SelectValue placeholder="Select Student Sub-Caste">
+                                  {newStudentFormData.subCasteId && newStudentFormData.subCasteId !== "none" ? subCastes.find(sc => sc.id.toString() === newStudentFormData.subCasteId)?.name : "Select Student Sub-Caste"}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                                <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Sub-Caste</SelectItem>
+                                {subCastes
+                                  .filter(sc => sc.casteId?.toString() === newStudentFormData.casteId)
+                                  .map(sc => (
+                                    <SelectItem key={sc.id} value={sc.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{sc.name}</SelectItem>
+                                  ))
+                                }
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label htmlFor="house" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">School House</Label>
+                            <Select 
+                              value={newStudentFormData.houseId} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, houseId: v})}
+                            >
+                              <SelectTrigger id="house" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                                <SelectValue placeholder="Select Student House Group">
+                                  {newStudentFormData.houseId && newStudentFormData.houseId !== "none" ? houses.find(h => h.id.toString() === newStudentFormData.houseId)?.name : "Select Student House Group"}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                              <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student House Group</SelectItem>
+                              {houses.map(h => (
+                                <SelectItem key={h.id} value={h.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: h.color }}></div>
+                                    {h.name}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label htmlFor="admissionType" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Admission Type</Label>
+                            <Select 
+                              value={newStudentFormData.admissionTypeId} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, admissionTypeId: v})}
+                            >
+                              <SelectTrigger id="admissionType" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                                <SelectValue placeholder="Select Student Admission Type">
+                                  {newStudentFormData.admissionTypeId && newStudentFormData.admissionTypeId !== "none" ? admissionTypes.find(at => at.id.toString() === newStudentFormData.admissionTypeId)?.name : "Select Student Admission Type"}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                              <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Admission Type</SelectItem>
+                              {admissionTypes.map(at => (
+                                <SelectItem key={at.id} value={at.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{at.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                       </section>
                     </div>
 
-                    {/* Family & Contact Details */}
                     <section>
                       <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
                         <div className="w-1.5 h-5 bg-red-600 rounded-full"></div>
@@ -884,7 +944,7 @@ export default function Students({ user }: { user: UserType }) {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="space-y-1.5">
-                          <Label htmlFor="motherName" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Mother's Name</Label>
+                          <Label htmlFor="motherName" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.motherName ? "text-red-500" : "text-slate-500")}>Mother's Name {formErrors.motherName && "*"}</Label>
                           <Input 
                             ref={el => inputRefs.current["motherName"] = el}
                             id="motherName" 
@@ -901,7 +961,7 @@ export default function Students({ user }: { user: UserType }) {
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <Label htmlFor="contactNumber" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Mobile No.</Label>
+                          <Label htmlFor="contactNumber" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.contactNumber ? "text-red-500" : "text-slate-500")}>Mobile No. {formErrors.contactNumber && "*"}</Label>
                           <Input 
                             ref={el => inputRefs.current["contactNumber"] = el}
                             id="contactNumber" 
@@ -921,7 +981,7 @@ export default function Students({ user }: { user: UserType }) {
                           />
                         </div>
                         <div className="md:col-span-2 space-y-1.5">
-                          <Label htmlFor="address" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Residential Address</Label>
+                          <Label htmlFor="address" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.address ? "text-red-500" : "text-slate-500")}>Residential Address {formErrors.address && "*"}</Label>
                           <Input 
                             ref={el => inputRefs.current["address"] = el}
                             id="address" 
@@ -976,25 +1036,29 @@ export default function Students({ user }: { user: UserType }) {
               <div className="flex gap-2">
                 <Select value={standardFilter} onValueChange={setStandardFilter}>
                   <SelectTrigger className="w-[130px]">
-                    <SelectValue placeholder="Standard" />
+                    <SelectValue placeholder="Select Academic Standard">
+                      {standardFilter === "all" ? "All Standards" : standardFilter}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Standards</SelectItem>
-                    <SelectItem value="8th">8th</SelectItem>
-                    <SelectItem value="9th">9th</SelectItem>
-                    <SelectItem value="10th">10th</SelectItem>
+                    {standardsMaster.map(std => (
+                      <SelectItem key={std.id} value={std.name}>{std.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
                 <Select value={sectionFilter} onValueChange={setSectionFilter}>
                   <SelectTrigger className="w-[110px]">
-                    <SelectValue placeholder="Section" />
+                    <SelectValue placeholder="Select Class Section">
+                      {sectionFilter === "all" ? "All Sections" : `Section ${sectionFilter}`}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Sections</SelectItem>
-                    <SelectItem value="A">Section A</SelectItem>
-                    <SelectItem value="B">Section B</SelectItem>
-                    <SelectItem value="C">Section C</SelectItem>
+                    {sectionsMaster.map(sec => (
+                      <SelectItem key={sec.id} value={sec.name}>Section {sec.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1030,7 +1094,7 @@ export default function Students({ user }: { user: UserType }) {
                         <Avatar className="h-10 w-10 border border-slate-200">
                           <AvatarImage src={student.photo} alt={student.name} />
                           <AvatarFallback className="bg-slate-100 text-slate-700 text-xs font-bold">
-                            {student.name.split(" ").map(n => n[0]).join("")}
+                            {student.name ? student.name.split(" ").map(n => n[0]).join("") : "S"}
                           </AvatarFallback>
                         </Avatar>
                         <button 

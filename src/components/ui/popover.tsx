@@ -7,12 +7,12 @@ function Popover({ ...props }: PopoverPrimitive.Root.Props) {
   return <PopoverPrimitive.Root data-slot="popover" {...props} />
 }
 
-function PopoverTrigger({ render, ...props }: PopoverPrimitive.Trigger.Props) {
+function PopoverTrigger({ render, nativeButton, ...props }: PopoverPrimitive.Trigger.Props) {
   return (
     <PopoverPrimitive.Trigger
       data-slot="popover-trigger"
       render={render}
-      nativeButton={!render}
+      nativeButton={nativeButton ?? !render}
       {...props}
     />
   )

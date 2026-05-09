@@ -15,6 +15,7 @@ import {
   ChevronRight,
   School,
   Terminal,
+  Database,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Role } from "@/types";
@@ -41,10 +42,37 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
     { name: "Attendance", path: "/attendance", icon: CalendarCheck, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
     { name: "Fees", path: "/fees", icon: CreditCard, roles: ["superadmin", "admin", "parent"] },
     { name: "Messages", path: "/messages", icon: MessageSquare, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
+    { 
+      name: "Masters & Config", 
+      path: "/configuration", 
+      icon: Database, 
+      roles: ["superadmin"],
+      subItems: [
+        { name: "Manage Standards", path: "/configuration/standards", roles: ["superadmin"] },
+        { name: "Manage Divisions/Sections", path: "/configuration/sections", roles: ["superadmin"] },
+        { name: "Academic Years", path: "/configuration/academic-years", roles: ["superadmin"] },
+        { name: "Castes", path: "/configuration/castes", roles: ["superadmin"] },
+        { name: "Sub-Castes", path: "/configuration/sub-castes", roles: ["superadmin"] },
+        { name: "Religions", path: "/configuration/religions", roles: ["superadmin"] },
+        { name: "States", path: "/configuration/states", roles: ["superadmin"] },
+        { name: "Cities", path: "/configuration/cities", roles: ["superadmin"] },
+        { name: "Blood Groups", path: "/configuration/blood-groups", roles: ["superadmin"] },
+        { name: "Houses", path: "/configuration/houses", roles: ["superadmin"] },
+        { name: "Admission Types", path: "/configuration/admission-types", roles: ["superadmin"] },
+      ]
+    },
     { name: "System Logs", path: "/system-logs", icon: Terminal, roles: ["superadmin"] },
   ];
 
-  const filteredItems = menuItems.filter(item => item.roles.includes(user.role));
+  const filteredItems = menuItems.filter(item => user && user.role && item.roles.includes(user.role));
+
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+
+  const toggleExpand = (name: string) => {
+    setExpandedItems(prev => 
+      prev.includes(name) ? prev.filter(i => i !== name) : [...prev, name]
+    );
+  };
 
   const sidebarVariants = {
     expanded: { width: 256 },
@@ -127,57 +155,128 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
       
       <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto overflow-x-visible custom-scrollbar scrollbar-hide">
         {filteredItems.map((item) => {
+          const isParentActive = location.pathname.startsWith(item.path);
           const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "flex items-center px-3 py-2.5 rounded-xl transition-all relative group h-11",
-                isActive 
-                  ? "bg-blue-600/10 text-blue-400" 
-                  : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50",
-                isCollapsed && "justify-center"
-              )}
-            >
-              {isActive && (
-                <motion.div 
-                  layoutId="active-nav"
-                  className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full"
-                />
-              )}
+          const hasSubItems = item.subItems && item.subItems.length > 0;
+          const isExpanded = expandedItems.includes(item.name) || (isParentActive && hasSubItems);
 
-              <div className={cn(
-                "flex items-center justify-center shrink-0 transition-transform duration-200",
-                isActive ? "text-blue-400" : "group-hover:scale-110"
-              )}>
-                <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-              </div>
-              
-              <AnimatePresence initial={false}>
-                {!isCollapsed && (
-                  <motion.span 
-                    key="label"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className={cn(
+          return (
+            <div key={item.path} className="space-y-1">
+              {hasSubItems ? (
+                <button
+                  onClick={() => toggleExpand(item.name)}
+                  className={cn(
+                    "w-full flex items-center px-3 py-2.5 rounded-xl transition-all relative group h-11 text-left",
+                    isParentActive 
+                      ? "bg-blue-600/10 text-blue-400" 
+                      : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50",
+                    isCollapsed && "justify-center"
+                  )}
+                >
+                  {isParentActive && (
+                    <motion.div 
+                      layoutId="active-nav"
+                      className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full"
+                    />
+                  )}
+                  <div className={cn(
+                    "flex items-center justify-center shrink-0 transition-transform duration-200",
+                    isParentActive ? "text-blue-400" : "group-hover:scale-110"
+                  )}>
+                    <item.icon size={20} strokeWidth={isParentActive ? 2.5 : 2} />
+                  </div>
+                  
+                  {!isCollapsed && (
+                    <>
+                      <span className={cn(
+                        "ml-3 font-semibold whitespace-nowrap overflow-hidden text-sm tracking-tight flex-1",
+                        isParentActive ? "text-slate-100" : "text-slate-400"
+                      )}>
+                        {item.name}
+                      </span>
+                      <motion.div
+                        animate={{ rotate: isExpanded ? 90 : 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="text-slate-500"
+                      >
+                        <ChevronRight size={14} />
+                      </motion.div>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <Link
+                  to={item.path}
+                  className={cn(
+                    "flex items-center px-3 py-2.5 rounded-xl transition-all relative group h-11",
+                    isActive 
+                      ? "bg-blue-600/10 text-blue-400" 
+                      : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50",
+                    isCollapsed && "justify-center"
+                  )}
+                >
+                  {isActive && (
+                    <motion.div 
+                      layoutId="active-nav"
+                      className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full"
+                    />
+                  )}
+                  <div className={cn(
+                    "flex items-center justify-center shrink-0 transition-transform duration-200",
+                    isActive ? "text-blue-400" : "group-hover:scale-110"
+                  )}>
+                    <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                  </div>
+                  
+                  {!isCollapsed && (
+                    <span className={cn(
                       "ml-3 font-semibold whitespace-nowrap overflow-hidden text-sm tracking-tight",
                       isActive ? "text-slate-100" : "text-slate-400"
-                    )}
+                    )}>
+                      {item.name}
+                    </span>
+                  )}
+                </Link>
+              )}
+
+              {/* Render Sub Items */}
+              <AnimatePresence initial={false}>
+                {hasSubItems && isExpanded && !isCollapsed && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden pl-11 space-y-1"
                   >
-                    {item.name}
-                  </motion.span>
+                    {item.subItems?.map((subItem) => {
+                      const isSubActive = location.pathname === subItem.path;
+                      return (
+                        <Link
+                          key={subItem.path}
+                          to={subItem.path}
+                          className={cn(
+                            "flex items-center py-2 px-3 rounded-lg text-xs font-bold transition-all",
+                            isSubActive 
+                              ? "text-blue-400 bg-blue-400/5" 
+                              : "text-slate-500 hover:text-slate-200 hover:bg-slate-800/30"
+                          )}
+                        >
+                          {subItem.name}
+                        </Link>
+                      );
+                    })}
+                  </motion.div>
                 )}
               </AnimatePresence>
-              
+
               {isCollapsed && (
                 <div className="fixed left-[88px] bg-slate-800 text-white px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all translate-x-2 group-hover:translate-x-0 z-[100] shadow-2xl border border-slate-700/50 backdrop-blur-md">
                   {item.name}
                   <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45 border-l border-b border-slate-700/50" />
                 </div>
               )}
-            </Link>
+            </div>
           );
         })}
       </nav>

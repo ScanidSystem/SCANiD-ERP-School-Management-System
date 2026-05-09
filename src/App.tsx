@@ -20,6 +20,7 @@ import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
 import SystemLogs from "@/pages/SystemLogs";
+import Configuration from "@/pages/Configuration";
 
 import { Role, User } from "@/types";
 
@@ -41,6 +42,11 @@ export default function App() {
     localStorage.removeItem("user");
   };
 
+  const handleUpdateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  };
+
   if (loading) return <div className="h-screen w-screen flex items-center justify-center">Loading...</div>;
 
   if (!user) {
@@ -60,7 +66,7 @@ export default function App() {
       <div className="flex h-screen bg-slate-50">
         <Sidebar user={user} onLogout={handleLogout} />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Navbar user={user} onLogout={handleLogout} />
+          <Navbar user={user} onLogout={handleLogout} onUserUpdate={handleUpdateUser} />
           <Breadcrumbs />
           <main className="flex-1 overflow-auto p-6 min-w-0">
             <Routes>
@@ -75,7 +81,21 @@ export default function App() {
               <Route path="/profile" element={<Profile user={user} />} />
               <Route path="/settings" element={<Settings user={user} />} />
               {user.role === "superadmin" && (
-                <Route path="/system-logs" element={<SystemLogs user={user} />} />
+                <>
+                  <Route path="/configuration" element={<Configuration user={user} />} />
+                  <Route path="/configuration/standards" element={<Configuration user={user} defaultTab="standards" />} />
+                  <Route path="/configuration/sections" element={<Configuration user={user} defaultTab="sections" />} />
+                  <Route path="/configuration/academic-years" element={<Configuration user={user} defaultTab="academic-years" />} />
+                  <Route path="/configuration/castes" element={<Configuration user={user} defaultTab="castes" />} />
+                  <Route path="/configuration/sub-castes" element={<Configuration user={user} defaultTab="sub-castes" />} />
+                  <Route path="/configuration/religions" element={<Configuration user={user} defaultTab="religions" />} />
+                  <Route path="/configuration/states" element={<Configuration user={user} defaultTab="states" />} />
+                  <Route path="/configuration/cities" element={<Configuration user={user} defaultTab="cities" />} />
+                  <Route path="/configuration/blood-groups" element={<Configuration user={user} defaultTab="blood-groups" />} />
+                  <Route path="/configuration/houses" element={<Configuration user={user} defaultTab="houses" />} />
+                  <Route path="/configuration/admission-types" element={<Configuration user={user} defaultTab="admission-types" />} />
+                  <Route path="/system-logs" element={<SystemLogs user={user} />} />
+                </>
               )}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

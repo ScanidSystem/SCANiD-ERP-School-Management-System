@@ -155,9 +155,12 @@ export default function Marks({ user }: { user: UserType }) {
                 <div className="w-full max-w-xs">
                   <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
                     <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50 rounded-xl font-bold text-slate-700">
-                      <SelectValue placeholder="Select Branch" />
+                      <SelectValue placeholder="Select School Branch">
+                        {selectedSchoolId && selectedSchoolId !== "none" ? schools.find(s => s.id.toString() === selectedSchoolId)?.name : "Select School Branch"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl border-slate-200 shadow-2xl p-2">
+                      <SelectItem value="none" className="font-semibold py-2.5 px-3 rounded-lg text-slate-400 italic">Select School Branch</SelectItem>
                       {schools.map(s => (
                         <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg">
                           <div className="flex flex-col">
@@ -265,6 +268,7 @@ export default function Marks({ user }: { user: UserType }) {
                             <TableCell className="text-right pr-8">
                               <Dialog>
                                 <DialogTrigger
+                                  nativeButton={true}
                                   render={
                                     <Button variant="ghost" size="sm" className="h-8 gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => setSelectedStudent(result)}>
                                       <Eye size={14} /> View
