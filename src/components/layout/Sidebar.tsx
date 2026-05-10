@@ -35,7 +35,6 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
 
   const menuItems = [
     { name: "Dashboard", path: "/", icon: LayoutDashboard, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
-    { name: "Schools", path: "/schools", icon: School, roles: ["superadmin"] },
     { name: "Students", path: "/students", icon: GraduationCap, roles: ["superadmin", "admin", "teacher"] },
     { name: "Teachers", path: "/teachers", icon: UserCheck, roles: ["superadmin", "admin"] },
     { name: "Academic Reports", path: "/marks", icon: Users, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
@@ -48,6 +47,9 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
       icon: Database, 
       roles: ["superadmin"],
       subItems: [
+        { name: "Schools", path: "/configuration/schools", roles: ["superadmin"] },
+        { name: "Role Master", path: "/configuration/role-master", roles: ["superadmin"] },
+        { name: "Role Assignment", path: "/configuration/role-assignment", roles: ["superadmin"] },
         { name: "Manage Standards", path: "/configuration/standards", roles: ["superadmin"] },
         { name: "Manage Divisions/Sections", path: "/configuration/sections", roles: ["superadmin"] },
         { name: "Academic Years", path: "/configuration/academic-years", roles: ["superadmin"] },
@@ -64,7 +66,13 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
     { name: "System Logs", path: "/system-logs", icon: Terminal, roles: ["superadmin"] },
   ];
 
-  const filteredItems = menuItems.filter(item => user && user.role && item.roles.includes(user.role));
+  // RBAC (Role Based Access Control) filtering:
+  // We only show navigation items that match the user's current role.
+  // Superadmin-only items (Schools, configuration, logs) are restricted via the 'roles' array.
+  const filteredItems = menuItems.filter(item => {
+    if (!user || !user.role) return false;
+    return item.roles.includes(user.role);
+  });
 
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 

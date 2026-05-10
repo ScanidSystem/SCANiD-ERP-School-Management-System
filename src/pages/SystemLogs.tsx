@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, RefreshCw, Trash2, Database, AlertCircle, History, Copy, Check, ChevronRight, Home, Terminal } from "lucide-react";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface SystemLogsProps {
@@ -17,6 +17,11 @@ interface SystemLogsProps {
 }
 
 export default function SystemLogs({ user }: SystemLogsProps) {
+  // INTERNAL RBAC CHECK: Secondary layer of protection for superadmin-only page
+  if (user.role !== "superadmin") {
+    return <Navigate to="/" replace />;
+  }
+
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
   const [appLogs, setAppLogs] = useState<string>("");

@@ -77,12 +77,20 @@ export default function App() {
               <Route path="/fees" element={<Fees user={user} />} />
               <Route path="/messages" element={<Messages user={user} />} />
               <Route path="/teachers" element={<Teachers user={user} />} />
-              <Route path="/schools" element={<Schools user={user} />} />
               <Route path="/profile" element={<Profile user={user} />} />
               <Route path="/settings" element={<Settings user={user} />} />
+              {/* 
+                RBAC (Role Based Access Control) check:
+                Only render routes that the current user has permission to view.
+                All superadmin-only routes are grouped together here.
+              */}
               {user.role === "superadmin" && (
                 <>
+                  <Route path="/schools" element={<Navigate to="/configuration/schools" replace />} />
                   <Route path="/configuration" element={<Configuration user={user} />} />
+                  <Route path="/configuration/schools" element={<Configuration user={user} defaultTab="schools" />} />
+                  <Route path="/configuration/role-master" element={<Configuration user={user} defaultTab="role-master" />} />
+                  <Route path="/configuration/role-assignment" element={<Configuration user={user} defaultTab="role-assignment" />} />
                   <Route path="/configuration/standards" element={<Configuration user={user} defaultTab="standards" />} />
                   <Route path="/configuration/sections" element={<Configuration user={user} defaultTab="sections" />} />
                   <Route path="/configuration/academic-years" element={<Configuration user={user} defaultTab="academic-years" />} />

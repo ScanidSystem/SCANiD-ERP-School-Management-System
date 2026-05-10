@@ -17,7 +17,11 @@ import {
   Droplet,
   Home,
   FileText,
-  Milestone
+  Milestone,
+  School,
+  Shield,
+  ShieldCheck,
+  UserCheck
 } from "lucide-react";
 import { 
   Card, 
@@ -67,6 +71,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { apiService } from "@/lib/api";
+import { Navigate } from "react-router-dom";
 import { User } from "@/types";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -77,6 +82,9 @@ interface ConfigurationProps {
 }
 
 const MASTER_TYPES: Record<string, { label: string, icon: any, description: string, apiPrefix: string }> = {
+  "schools": { label: "Schools", icon: School, description: "Manage institutional branches", apiPrefix: "School" },
+  "role-master": { label: "Role Master", icon: Shield, description: "Manage system access roles", apiPrefix: "Role" },
+  "role-assignment": { label: "Role Assignment", icon: UserCheck, description: "Assign roles to system users", apiPrefix: "User" },
   "standards": { label: "Standards", icon: Layers, description: "Manage academic standards/grades", apiPrefix: "Standard" },
   "sections": { label: "Divisions/Sections", icon: Hash, description: "Manage class subdivisions", apiPrefix: "Section" },
   "academic-years": { label: "Academic Years", icon: Calendar, description: "Manage educational sessions", apiPrefix: "AcademicYear" },
@@ -90,7 +98,12 @@ const MASTER_TYPES: Record<string, { label: string, icon: any, description: stri
   "admission-types": { label: "Admission Types", icon: FileText, description: "Manage enrollment categories", apiPrefix: "AdmissionType" },
 };
 
-export default function Configuration({ user, defaultTab = "standards" }: ConfigurationProps) {
+export default function Configuration({ user, defaultTab = "schools" }: ConfigurationProps) {
+  // INTERNAL RBAC CHECK: Secondary layer of protection for superadmin-only page
+  if (user.role !== "superadmin") {
+    return <Navigate to="/" replace />;
+  }
+
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
   const [masterData, setMasterData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +132,10 @@ export default function Configuration({ user, defaultTab = "standards" }: Config
     isCurrent: false,
     color: "",
     casteId: "",
-    stateId: ""
+    stateId: "",
+    address: "",
+    phone: "",
+    email: ""
   });
 
   const fetchData = async () => {
@@ -127,19 +143,27 @@ export default function Configuration({ user, defaultTab = "standards" }: Config
     setLoading(true);
     try {
       const typeConfig = MASTER_TYPES[activeTab];
-      const getMethodName = `get${typeConfig.apiPrefix}s`;
-      // @ts-ignore
-      const response = await apiService[getMethodName]();
-      setMasterData(response.data || []);
+      
+      if (activeTab === "role-assignment") {
+        const usersRes = await apiService.getUsers();
+        const rolesRes = await apiService.getRoles();
+        setMasterData(usersRes.data || []);
+        setDependencies(prev => ({ ...prev, roles: rolesRes.data || [] }));
+      } else {
+        const getMethodName = `get${typeConfig.apiPrefix}s`;
+        // @ts-ignore
+        const response = await apiService[getMethodName]();
+        setMasterData(response.data || []);
 
-      // Fetch dependencies if needed
-      if (activeTab === "sub-castes") {
-        const castesRes = await apiService.getCastes();
-        setDependencies(prev => ({ ...prev, castes: castesRes.data || [] }));
-      }
-      if (activeTab === "cities") {
-        const statesRes = await apiService.getStates();
-        setDependencies(prev => ({ ...prev, states: statesRes.data || [] }));
+        // Fetch dependencies if needed
+        if (activeTab === "sub-castes") {
+          const castesRes = await apiService.getCastes();
+          setDependencies(prev => ({ ...prev, castes: castesRes.data || [] }));
+        }
+        if (activeTab === "cities") {
+          const statesRes = await apiService.getStates();
+          setDependencies(prev => ({ ...prev, states: statesRes.data || [] }));
+        }
       }
     } catch (error) {
       console.error("Error fetching master data:", error);
@@ -158,12 +182,15 @@ export default function Configuration({ user, defaultTab = "standards" }: Config
     setEditingItem(item);
     setFormErrors({});
     setFormData({
-      name: item?.name || "",
+      name: item?.name || item?.fullName || "",
       description: item?.description || "",
       isCurrent: item?.isCurrent || false,
       color: item?.color || "#3b82f6",
       casteId: item?.casteId?.toString() || "",
-      stateId: item?.stateId?.toString() || ""
+      stateId: item?.stateId?.toString() || "",
+      address: item?.address || "",
+      phone: item?.phone || "",
+      email: item?.email || ""
     });
     setIsDialogOpen(true);
   };
@@ -174,6 +201,7 @@ export default function Configuration({ user, defaultTab = "standards" }: Config
     
     if (activeTab === "sub-castes" && !formData.casteId) newErrors.casteId = true;
     if (activeTab === "cities" && !formData.stateId) newErrors.stateId = true;
+    if (activeTab === "schools" && !formData.address) newErrors.address = true;
     
     setFormErrors(newErrors);
 
@@ -284,9 +312,11 @@ export default function Configuration({ user, defaultTab = "standards" }: Config
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button onClick={() => handleOpenDialog()} className="bg-blue-600 hover:bg-blue-700 rounded-2xl h-11 px-6 shadow-lg shadow-blue-200 font-bold">
-                <Plus size={18} className="mr-2" /> Add {activeConfig.label.replace('Manage ', '').slice(0, -1)}
-              </Button>
+              {activeTab !== "role-assignment" && (
+                <Button onClick={() => handleOpenDialog()} className="bg-blue-600 hover:bg-blue-700 rounded-2xl h-11 px-6 shadow-lg shadow-blue-200 font-bold">
+                  <Plus size={18} className="mr-2" /> Add {activeConfig.label.replace('Manage ', '').slice(0, -1)}
+                </Button>
+              )}
             </div>
           </div>
 
@@ -296,12 +326,22 @@ export default function Configuration({ user, defaultTab = "standards" }: Config
                 <TableHeader className="bg-slate-50/50">
                   <TableRow className="hover:bg-transparent border-slate-100">
                     <TableHead className="w-20 pl-8 font-black uppercase text-[10px] tracking-wider text-slate-400">ID</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Name</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">
+                      {activeTab === "role-assignment" ? "User Full Name" : "Name"}
+                    </TableHead>
+                    {activeTab === "role-assignment" && <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Username</TableHead>}
+                    {activeTab === "role-assignment" && <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Assigned Role</TableHead>}
                     {activeTab === "academic-years" && <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Current</TableHead>}
                     {activeTab === "houses" && <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Color</TableHead>}
                     {activeTab === "sub-castes" && <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Parent Caste</TableHead>}
                     {activeTab === "cities" && <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">State</TableHead>}
-                    <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Description/Info</TableHead>
+                    {activeTab === "schools" && (
+                      <>
+                        <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Location/Address</TableHead>
+                        <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Contact Email</TableHead>
+                      </>
+                    )}
+                    {activeTab !== "role-assignment" && <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Description/Info</TableHead>}
                     <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Status</TableHead>
                     <TableHead className="w-20 pr-8 text-right font-black uppercase text-[10px] tracking-wider text-slate-400">Actions</TableHead>
                   </TableRow>
@@ -310,12 +350,12 @@ export default function Configuration({ user, defaultTab = "standards" }: Config
                   {loading ? (
                     [...Array(3)].map((_, i) => (
                       <TableRow key={i} className="animate-pulse border-slate-50">
-                        <TableCell colSpan={8} className="h-16 bg-slate-50/20"></TableCell>
+                        <TableCell colSpan={activeTab === "schools" ? 10 : 8} className="h-16 bg-slate-50/20"></TableCell>
                       </TableRow>
                     ))
                   ) : filteredData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="h-40 text-center text-slate-400 font-bold uppercase text-xs tracking-widest bg-slate-50/10">
+                      <TableCell colSpan={activeTab === "schools" ? 10 : 8} className="h-40 text-center text-slate-400 font-bold uppercase text-xs tracking-widest bg-slate-50/10">
                         No records found
                       </TableCell>
                     </TableRow>
@@ -323,7 +363,50 @@ export default function Configuration({ user, defaultTab = "standards" }: Config
                     filteredData.map((item) => (
                       <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors border-slate-50">
                         <TableCell className="pl-8 font-mono text-xs font-bold text-slate-400">#{item.id}</TableCell>
-                        <TableCell className="font-black text-slate-800 text-sm tracking-tight">{item.name}</TableCell>
+                        <TableCell className="font-black text-slate-800 text-sm tracking-tight">
+                          {item.name || item.fullName}
+                        </TableCell>
+
+                        {activeTab === "role-assignment" && (
+                          <>
+                            <TableCell className="text-xs font-bold text-slate-500">{item.username}</TableCell>
+                            <TableCell>
+                              <Select 
+                                value={item.role} 
+                                onValueChange={async (newRole) => {
+                                  try {
+                                    await apiService.updateUserRole(item.id, newRole);
+                                    toast.success("Role updated successfully");
+                                    fetchData();
+                                  } catch (error) {
+                                    toast.error("Failed to update role");
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="h-8 w-32 rounded-lg bg-blue-50 text-[11px] font-black uppercase border-blue-100 text-blue-700">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl border-slate-200">
+                                  {dependencies.roles?.map((role: any) => (
+                                    <SelectItem key={role.id} value={role.name.toLowerCase().replace(' ', '')} className="text-xs font-bold">
+                                      {role.name}
+                                    </SelectItem>
+                                  ))}
+                                  {/* Fallback roles if master is empty */}
+                                  {(!dependencies.roles || dependencies.roles.length === 0) && (
+                                    <>
+                                      <SelectItem value="superadmin" className="text-xs font-bold">Super Admin</SelectItem>
+                                      <SelectItem value="admin" className="text-xs font-bold">Admin</SelectItem>
+                                      <SelectItem value="teacher" className="text-xs font-bold">Teacher</SelectItem>
+                                      <SelectItem value="parent" className="text-xs font-bold">Parent</SelectItem>
+                                      <SelectItem value="student" className="text-xs font-bold">Student</SelectItem>
+                                    </>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                          </>
+                        )}
                         
                         {activeTab === "academic-years" && (
                           <TableCell>
@@ -354,15 +437,29 @@ export default function Configuration({ user, defaultTab = "standards" }: Config
                           </TableCell>
                         )}
 
-                        <TableCell className="text-sm font-bold text-slate-500 max-w-[200px] truncate">
-                          {item.description || item.color || "-"}
-                        </TableCell>
+                        {activeTab === "schools" && (
+                          <>
+                            <TableCell className="text-xs font-bold text-slate-500 max-w-[150px] truncate">
+                              {item.address || "-"}
+                            </TableCell>
+                            <TableCell className="text-xs font-bold text-slate-500">
+                              {item.email || "-"}
+                            </TableCell>
+                          </>
+                        )}
+
+                        {activeTab !== "role-assignment" && (
+                          <TableCell className="text-sm font-bold text-slate-500 max-w-[200px] truncate">
+                            {item.description || item.color || "-"}
+                          </TableCell>
+                        )}
+
                         <TableCell>
                           <Badge className={cn(
                             "rounded-full px-3 py-0.5 text-[10px] font-black uppercase tracking-wider",
-                            item.isActive ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
+                            item.isActive !== false ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
                           )}>
-                            {item.isActive ? "Active" : "Inactive"}
+                            {item.isActive !== false ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
                         <TableCell className="pr-8 text-right">
@@ -373,11 +470,13 @@ export default function Configuration({ user, defaultTab = "standards" }: Config
                               </div>
                             } />
                             <DropdownMenuContent align="end" className="rounded-xl border-slate-100 shadow-xl p-1">
-                              <DropdownMenuItem onClick={() => handleOpenDialog(item)} className="rounded-lg font-bold text-slate-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer">
-                                <Edit3 size={14} className="mr-2" /> Edit
-                              </DropdownMenuItem>
+                              {activeTab !== "role-assignment" && (
+                                <DropdownMenuItem onClick={() => handleOpenDialog(item)} className="rounded-lg font-bold text-slate-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer">
+                                  <Edit3 size={14} className="mr-2" /> Edit
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem onClick={() => handleDelete(item.id)} className="rounded-lg font-bold text-red-600 focus:bg-red-50 focus:text-red-600 cursor-pointer">
-                                <Trash2 size={14} className="mr-2" /> Delete
+                                <Trash2 size={14} className="mr-2" /> {activeTab === "role-assignment" ? "Deactivate User" : "Delete"}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -407,11 +506,13 @@ export default function Configuration({ user, defaultTab = "standards" }: Config
           
           <div className="p-8 space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="name" className={cn("text-xs font-black uppercase tracking-wider", formErrors.name ? "text-red-500" : "text-slate-400")}>Name / Label {formErrors.name && "*"}</Label>
+              <Label htmlFor="name" className={cn("text-xs font-black uppercase tracking-wider", formErrors.name ? "text-red-500" : "text-slate-400")}>
+                {activeTab === "schools" ? "School Name" : "Name / Label"} {formErrors.name && "*"}
+              </Label>
               <Input 
                 ref={el => inputRefs.current["name"] = el}
                 id="name" 
-                placeholder={`Enter name for ${activeConfig.label.toLowerCase()}...`}
+                placeholder={`Enter ${activeTab === "schools" ? "school name" : "name"}...`}
                 className={cn(
                   "h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold",
                   formErrors.name && "border-red-500 ring-2 ring-red-500/10"
@@ -423,6 +524,49 @@ export default function Configuration({ user, defaultTab = "standards" }: Config
                 }}
               />
             </div>
+
+            {activeTab === "schools" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="address" className={cn("text-xs font-black uppercase tracking-wider", formErrors.address ? "text-red-500" : "text-slate-400")}>Institutional Address {formErrors.address && "*"}</Label>
+                  <Input 
+                    id="address" 
+                    placeholder="Enter full address..."
+                    className={cn(
+                      "h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold",
+                      formErrors.address && "border-red-500 ring-2 ring-red-500/10"
+                    )}
+                    value={formData.address}
+                    onChange={(e) => {
+                      setFormData({...formData, address: e.target.value});
+                      if (formErrors.address) setFormErrors(prev => ({ ...prev, address: false }));
+                    }}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-xs font-black uppercase tracking-wider text-slate-400">Phone</Label>
+                    <Input 
+                      id="phone" 
+                      placeholder="Office Phone"
+                      className="h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-xs font-black uppercase tracking-wider text-slate-400">Email</Label>
+                    <Input 
+                      id="email" 
+                      placeholder="Official Email"
+                      className="h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
 
             {activeTab === "academic-years" && (
               <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">

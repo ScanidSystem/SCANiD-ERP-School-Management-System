@@ -10,14 +10,26 @@ VALUES
 SET IDENTITY_INSERT [dbo].[Schools] OFF;
 GO
 
+-- 1.5 SEED ROLES
+SET IDENTITY_INSERT [dbo].[Roles] ON;
+INSERT INTO [dbo].[Roles] ([Id], [Name], [Description], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES 
+(1, 'Super Admin', 'Full system access', 1, 0, 'system', GETUTCDATE()),
+(2, 'Admin', 'School-level administrative access', 1, 0, 'system', GETUTCDATE()),
+(3, 'Teacher', 'Academic and attendance access', 1, 0, 'system', GETUTCDATE()),
+(4, 'Student', 'Student-level access', 1, 0, 'system', GETUTCDATE()),
+(5, 'Parent', 'Parent-level access', 1, 0, 'system', GETUTCDATE());
+SET IDENTITY_INSERT [dbo].[Roles] OFF;
+GO
+
 -- 2. SEED USERS (Plain text password "Password123" for demo compatibility)
 SET IDENTITY_INSERT [dbo].[Users] ON;
-INSERT INTO [dbo].[Users] ([Id], [Username], [PasswordHash], [FullName], [Email], [Role], [SchoolId], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+INSERT INTO [dbo].[Users] ([Id], [Username], [PasswordHash], [FullName], [Email], [RoleId], [Role], [SchoolId], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
 VALUES 
-(1, 'superadmin', 'Password123', 'Global Admin', 'admin@scanid.com', 'superadmin', NULL, 1, 0, 'system', GETUTCDATE()),
-(2, 'schooladmin1', 'Password123', 'John Doe', 'john@greenvalley.edu', 'admin', 1, 1, 0, 'system', GETUTCDATE()),
-(3, 'teacher1', 'Password123', 'Sarah Wilson', 'sarah@greenvalley.edu', 'teacher', 1, 1, 0, 'system', GETUTCDATE()),
-(4, 'student1', 'Password123', 'James Brown', 'james@student.com', 'student', 1, 1, 0, 'system', GETUTCDATE());
+(1, 'superadmin', 'Password123', 'Global Admin', 'admin@scanid.com', 1, 'superadmin', NULL, 1, 0, 'system', GETUTCDATE()),
+(2, 'schooladmin1', 'Password123', 'John Doe', 'john@greenvalley.edu', 2, 'admin', 1, 1, 0, 'system', GETUTCDATE()),
+(3, 'teacher1', 'Password123', 'Sarah Wilson', 'sarah@greenvalley.edu', 3, 'teacher', 1, 1, 0, 'system', GETUTCDATE()),
+(4, 'student1', 'Password123', 'James Brown', 'james@student.com', 4, 'student', 1, 1, 0, 'system', GETUTCDATE());
 SET IDENTITY_INSERT [dbo].[Users] OFF;
 GO
 

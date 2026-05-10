@@ -66,16 +66,35 @@ CREATE TABLE [dbo].[Schools](
 END
 GO
 
+-- Roles table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Roles]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [dbo].[Roles](
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Name] [nvarchar](100) NOT NULL,
+    [Description] [nvarchar](255) NULL,
+    [IsActive] [bit] NOT NULL DEFAULT (1),
+    [IsDeleted] [bit] NOT NULL DEFAULT (0),
+    [CreatedBy] [nvarchar](max) NULL,
+    [CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+    [ModifiedBy] [nvarchar](max) NULL,
+    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+ CONSTRAINT [PK_Roles] PRIMARY KEY CLUSTERED ([Id] ASC)
+)
+END
+GO
+
 -- Users table
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND type in (N'U'))
 BEGIN
 CREATE TABLE [dbo].[Users](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Username] [nvarchar](max) NOT NULL,
+	[Username] [nvarchar](100) NOT NULL,
 	[PasswordHash] [nvarchar](max) NOT NULL,
-	[FullName] [nvarchar](max) NULL,
-	[Email] [nvarchar](max) NULL,
-	[Role] [nvarchar](max) NOT NULL DEFAULT (N'student'),
+	[FullName] [nvarchar](255) NULL,
+	[Email] [nvarchar](100) NULL,
+	[RoleId] [int] NULL,
+	[Role] [nvarchar](max) NULL, -- Kept for backward compatibility or direct access
 	[SchoolId] [int] NULL,
     [IsActive] [bit] NOT NULL DEFAULT (1),
     [IsDeleted] [bit] NOT NULL DEFAULT (0),
@@ -84,7 +103,8 @@ CREATE TABLE [dbo].[Users](
     [ModifiedBy] [nvarchar](max) NULL,
     [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
  CONSTRAINT [PK_Users] PRIMARY KEY CLUSTERED ([Id] ASC),
- CONSTRAINT [FK_Users_Schools_SchoolId] FOREIGN KEY([SchoolId]) REFERENCES [dbo].[Schools] ([Id])
+ CONSTRAINT [FK_Users_Schools_SchoolId] FOREIGN KEY([SchoolId]) REFERENCES [dbo].[Schools] ([Id]),
+ CONSTRAINT [FK_Users_Roles_RoleId] FOREIGN KEY([RoleId]) REFERENCES [dbo].[Roles] ([Id])
 )
 END
 GO

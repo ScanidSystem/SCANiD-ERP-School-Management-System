@@ -1,4 +1,4 @@
-export type Role = "superadmin" | "admin" | "teacher" | "parent" | "student";
+export type Role = string; // More flexible for dynamic roles from DB
 
 export interface User {
   id: string;

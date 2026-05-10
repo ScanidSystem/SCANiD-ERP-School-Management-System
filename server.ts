@@ -157,6 +157,14 @@ async function startServer() {
     { id: 3, name: "Transfer", isActive: true },
   ];
 
+  let roles = [
+    { id: 1, name: "Super Admin", description: "Full system access", isActive: true },
+    { id: 2, name: "Admin", description: "School-level administrative access", isActive: true },
+    { id: 3, name: "Teacher", description: "Academic and attendance access", isActive: true },
+    { id: 4, name: "Student", description: "Student-level access", isActive: true },
+    { id: 5, name: "Parent", description: "Parent-level access", isActive: true },
+  ];
+
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", message: "SCANID Backend is running." });
   });
@@ -413,6 +421,30 @@ async function startServer() {
   createMasterRoutes("blood-groups", bloodGroups);
   createMasterRoutes("houses", houses);
   createMasterRoutes("admission-types", admissionTypes);
+  createMasterRoutes("roles", roles);
+
+  // Users Management (for Role Assignment)
+  app.get("/api/users", (req, res) => {
+    res.json(mockUsers.map((u, i) => ({
+      id: i + 1,
+      fullName: u.name,
+      username: u.username,
+      role: u.role,
+      schoolName: u.schoolName
+    })));
+  });
+
+  app.put("/api/users/:id/role", (req, res) => {
+    const id = parseInt(req.params.id);
+    const { role } = req.body;
+    // In search by index since we just mapped them
+    if (mockUsers[id - 1]) {
+      mockUsers[id - 1].role = role;
+      res.json({ success: true, user: mockUsers[id - 1] });
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  });
 
   // Role-based access control simulation / session logic can go here
   // For now, we'll proxy everything to Vite in dev

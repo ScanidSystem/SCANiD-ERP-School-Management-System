@@ -80,6 +80,17 @@ const mockFallbacks: Record<string, any> = {
   "/masters/cities": [
     { id: 1, stateId: 1, name: "Mumbai", isActive: true },
   ],
+  "/masters/roles": [
+    { id: 1, name: "Super Admin", description: "Full system access", isActive: true },
+    { id: 2, name: "Admin", description: "School-level administrative access", isActive: true },
+    { id: 3, name: "Teacher", description: "Academic and attendance access", isActive: true },
+    { id: 4, name: "Student", description: "Student-level access", isActive: true },
+    { id: 5, name: "Parent", description: "Parent-level access", isActive: true },
+  ],
+  "/users": [
+    { id: 1, fullName: "Super Admin", username: "admin", role: "superadmin" },
+    { id: 2, fullName: "John Doe", username: "teacher1", role: "teacher" },
+  ],
   "/auth/login": {
     token: "demo-token",
     user: {
@@ -230,6 +241,16 @@ export const apiService = {
   createAdmissionType: (data: any) => api.post("/masters/admission-types", data),
   updateAdmissionType: (id: number, data: any) => api.put(`/masters/admission-types/${id}`, data),
   deleteAdmissionType: (id: number) => api.delete(`/masters/admission-types/${id}`),
+
+  // Roles
+  getRoles: () => api.get("/masters/roles"),
+  createRole: (data: any) => api.post("/masters/roles", data),
+  updateRole: (id: number, data: any) => api.put(`/masters/roles/${id}`, data),
+  deleteRole: (id: number) => api.delete(`/masters/roles/${id}`),
+
+  // Users (for Role Assignment)
+  getUsers: () => api.get("/users"),
+  updateUserRole: (userId: number, role: string) => api.put(`/users/${userId}/role`, { role }),
 };
 
 export default api;

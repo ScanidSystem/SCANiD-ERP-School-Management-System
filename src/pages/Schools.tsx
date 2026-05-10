@@ -61,6 +61,11 @@ import { cn } from "@/lib/utils";
 import { DeleteConfirmation } from "@/components/shared/DeleteConfirmation";
 
 export default function Schools({ user }: { user: UserType }) {
+  // INTERNAL RBAC CHECK: Secondary layer of protection for superadmin-only page
+  if (user.role !== "superadmin") {
+    return <Navigate to="/" replace />;
+  }
+
   const [schools, setSchools] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
