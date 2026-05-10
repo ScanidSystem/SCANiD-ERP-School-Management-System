@@ -75,6 +75,7 @@ import { Navigate } from "react-router-dom";
 import { User } from "@/types";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { SimpleTooltip } from "@/components/shared/SimpleTooltip";
 
 interface ConfigurationProps {
   user: User;
@@ -277,16 +278,18 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={fetchData}
-            disabled={isRefreshing}
-            className="rounded-full font-bold border-slate-200 h-10 hover:bg-slate-50"
-          >
-            <RefreshCw size={16} className={cn("mr-2", isRefreshing && "animate-spin")} />
-            Refresh
-          </Button>
+          <SimpleTooltip content="Reload data from server" side="bottom">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={fetchData}
+              disabled={isRefreshing}
+              className="rounded-full font-bold border-slate-200 h-10 hover:bg-slate-50"
+            >
+              <RefreshCw size={16} className={cn("mr-2", isRefreshing && "animate-spin")} />
+              Refresh
+            </Button>
+          </SimpleTooltip>
         </div>
       </div>
 
@@ -464,18 +467,20 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                         </TableCell>
                         <TableCell className="pr-8 text-right">
                           <DropdownMenu>
-                            <DropdownMenuTrigger render={
-                              <div className="h-8 w-8 flex items-center justify-center rounded-xl hover:bg-slate-100 cursor-pointer text-slate-500 transition-colors">
-                                <MoreHorizontal size={16} />
-                              </div>
-                            } />
+                            <SimpleTooltip content="Actions" side="left">
+                              <DropdownMenuTrigger render={
+                                <div className="h-8 w-8 flex items-center justify-center rounded-xl hover:bg-slate-100 cursor-pointer text-slate-500 transition-colors" aria-label="Open actions menu">
+                                  <MoreHorizontal size={16} />
+                                </div>
+                              } />
+                            </SimpleTooltip>
                             <DropdownMenuContent align="end" className="rounded-xl border-slate-100 shadow-xl p-1">
                               {activeTab !== "role-assignment" && (
                                 <DropdownMenuItem onClick={() => handleOpenDialog(item)} className="rounded-lg font-bold text-slate-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer">
-                                  <Edit3 size={14} className="mr-2" /> Edit
+                                  <Edit3 size={14} className="mr-2" /> <SimpleTooltip content="Edit this entry" side="left">Edit</SimpleTooltip>
                                 </DropdownMenuItem>
                               )}
-                              <DropdownMenuItem onClick={() => handleDelete(item.id)} className="rounded-lg font-bold text-red-600 focus:bg-red-50 focus:text-red-600 cursor-pointer">
+                              <DropdownMenuItem onClick={() => handleDelete(item.id)} className="rounded-lg font-bold text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer">
                                 <Trash2 size={14} className="mr-2" /> {activeTab === "role-assignment" ? "Deactivate User" : "Delete"}
                               </DropdownMenuItem>
                             </DropdownMenuContent>

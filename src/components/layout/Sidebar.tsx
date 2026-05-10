@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Role } from "@/types";
 import { motion, AnimatePresence } from "motion/react";
+import { SimpleTooltip } from "@/components/shared/SimpleTooltip";
 
 interface SidebarProps {
   user: {
@@ -114,13 +115,15 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
         "p-6 flex flex-col items-center relative min-h-[140px] justify-center transition-all duration-300",
         isCollapsed ? "px-2" : "p-6"
       )}>
-        <button 
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-10 bg-blue-600 text-white rounded-full p-1.5 shadow-xl hover:bg-blue-500 transition-all z-50 border-2 border-slate-950 scale-100 hover:scale-110 active:scale-95"
-          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-        >
-          {isCollapsed ? <ChevronRight size={14} strokeWidth={3} /> : <ChevronLeft size={14} strokeWidth={3} />}
-        </button>
+        <SimpleTooltip content={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"} side="right">
+          <button 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="absolute -right-3 top-10 bg-blue-600 text-white rounded-full p-1.5 shadow-xl hover:bg-blue-500 transition-all z-50 border-2 border-slate-950 scale-100 hover:scale-110 active:scale-95"
+            aria-label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {isCollapsed ? <ChevronRight size={14} strokeWidth={3} /> : <ChevronLeft size={14} strokeWidth={3} />}
+          </button>
+        </SimpleTooltip>
 
         <div className="flex items-center justify-center mb-4 h-12 w-full px-2">
           <motion.div layout className="flex items-center justify-center">
@@ -170,82 +173,86 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
 
           return (
             <div key={item.path} className="space-y-1">
-              {hasSubItems ? (
-                <button
-                  onClick={() => toggleExpand(item.name)}
-                  className={cn(
-                    "w-full flex items-center px-3 py-2.5 rounded-xl transition-all relative group h-11 text-left",
-                    isParentActive 
-                      ? "bg-blue-600/10 text-blue-400" 
-                      : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50",
-                    isCollapsed && "justify-center"
-                  )}
-                >
-                  {isParentActive && (
-                    <motion.div 
-                      layoutId="active-nav"
-                      className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full"
-                    />
-                  )}
-                  <div className={cn(
-                    "flex items-center justify-center shrink-0 transition-transform duration-200",
-                    isParentActive ? "text-blue-400" : "group-hover:scale-110"
-                  )}>
-                    <item.icon size={20} strokeWidth={isParentActive ? 2.5 : 2} />
-                  </div>
-                  
-                  {!isCollapsed && (
-                    <>
-                      <span className={cn(
-                        "ml-3 font-semibold whitespace-nowrap overflow-hidden text-sm tracking-tight flex-1",
-                        isParentActive ? "text-slate-100" : "text-slate-400"
+              <SimpleTooltip content={isCollapsed ? item.name : ""} side="right">
+                <div className="w-full">
+                  {hasSubItems ? (
+                    <button
+                      onClick={() => toggleExpand(item.name)}
+                      className={cn(
+                        "w-full flex items-center px-3 py-2.5 rounded-xl transition-all relative group h-11 text-left",
+                        isParentActive 
+                          ? "bg-blue-600/10 text-blue-400" 
+                          : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50",
+                        isCollapsed && "justify-center"
+                      )}
+                    >
+                      {isParentActive && (
+                        <motion.div 
+                          layoutId="active-nav"
+                          className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full"
+                        />
+                      )}
+                      <div className={cn(
+                        "flex items-center justify-center shrink-0 transition-transform duration-200",
+                        isParentActive ? "text-blue-400" : "group-hover:scale-110"
                       )}>
-                        {item.name}
-                      </span>
-                      <motion.div
-                        animate={{ rotate: isExpanded ? 90 : 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="text-slate-500"
-                      >
-                        <ChevronRight size={14} />
-                      </motion.div>
-                    </>
+                        <item.icon size={20} strokeWidth={isParentActive ? 2.5 : 2} />
+                      </div>
+                      
+                      {!isCollapsed && (
+                        <>
+                          <span className={cn(
+                            "ml-3 font-semibold whitespace-nowrap overflow-hidden text-sm tracking-tight flex-1",
+                            isParentActive ? "text-slate-100" : "text-slate-400"
+                          )}>
+                            {item.name}
+                          </span>
+                          <motion.div
+                            animate={{ rotate: isExpanded ? 90 : 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="text-slate-500"
+                          >
+                            <ChevronRight size={14} />
+                          </motion.div>
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <Link
+                      to={item.path}
+                      className={cn(
+                        "flex items-center px-3 py-2.5 rounded-xl transition-all relative group h-11",
+                        isActive 
+                          ? "bg-blue-600/10 text-blue-400" 
+                          : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50",
+                        isCollapsed && "justify-center"
+                      )}
+                    >
+                      {isActive && (
+                        <motion.div 
+                          layoutId="active-nav"
+                          className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full"
+                        />
+                      )}
+                      <div className={cn(
+                        "flex items-center justify-center shrink-0 transition-transform duration-200",
+                        isActive ? "text-blue-400" : "group-hover:scale-110"
+                      )}>
+                        <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                      </div>
+                      
+                      {!isCollapsed && (
+                        <span className={cn(
+                          "ml-3 font-semibold whitespace-nowrap overflow-hidden text-sm tracking-tight",
+                          isActive ? "text-slate-100" : "text-slate-400"
+                        )}>
+                          {item.name}
+                        </span>
+                      )}
+                    </Link>
                   )}
-                </button>
-              ) : (
-                <Link
-                  to={item.path}
-                  className={cn(
-                    "flex items-center px-3 py-2.5 rounded-xl transition-all relative group h-11",
-                    isActive 
-                      ? "bg-blue-600/10 text-blue-400" 
-                      : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50",
-                    isCollapsed && "justify-center"
-                  )}
-                >
-                  {isActive && (
-                    <motion.div 
-                      layoutId="active-nav"
-                      className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full"
-                    />
-                  )}
-                  <div className={cn(
-                    "flex items-center justify-center shrink-0 transition-transform duration-200",
-                    isActive ? "text-blue-400" : "group-hover:scale-110"
-                  )}>
-                    <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                  </div>
-                  
-                  {!isCollapsed && (
-                    <span className={cn(
-                      "ml-3 font-semibold whitespace-nowrap overflow-hidden text-sm tracking-tight",
-                      isActive ? "text-slate-100" : "text-slate-400"
-                    )}>
-                      {item.name}
-                    </span>
-                  )}
-                </Link>
-              )}
+                </div>
+              </SimpleTooltip>
 
               {/* Render Sub Items */}
               <AnimatePresence initial={false}>
@@ -260,30 +267,26 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
                     {item.subItems?.map((subItem) => {
                       const isSubActive = location.pathname === subItem.path;
                       return (
-                        <Link
-                          key={subItem.path}
-                          to={subItem.path}
-                          className={cn(
-                            "flex items-center py-2 px-3 rounded-lg text-xs font-bold transition-all",
-                            isSubActive 
-                              ? "text-blue-400 bg-blue-400/5" 
-                              : "text-slate-500 hover:text-slate-200 hover:bg-slate-800/30"
-                          )}
-                        >
-                          {subItem.name}
-                        </Link>
+                        <div key={subItem.path}>
+                          <SimpleTooltip content={subItem.name} side="right">
+                            <Link
+                              to={subItem.path}
+                              className={cn(
+                                "flex items-center py-2 px-3 rounded-lg text-xs font-bold transition-all",
+                                isSubActive 
+                                  ? "text-blue-400 bg-blue-400/5" 
+                                  : "text-slate-500 hover:text-slate-200 hover:bg-slate-800/30"
+                              )}
+                            >
+                              {subItem.name}
+                            </Link>
+                          </SimpleTooltip>
+                        </div>
                       );
                     })}
                   </motion.div>
                 )}
               </AnimatePresence>
-
-              {isCollapsed && (
-                <div className="fixed left-[88px] bg-slate-800 text-white px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all translate-x-2 group-hover:translate-x-0 z-[100] shadow-2xl border border-slate-700/50 backdrop-blur-md">
-                  {item.name}
-                  <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45 border-l border-b border-slate-700/50" />
-                </div>
-              )}
             </div>
           );
         })}
@@ -293,56 +296,49 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
         "p-3 border-t border-slate-800/50 space-y-1.5",
         isCollapsed && "px-3"
       )}>
-        <Link 
-          to="/settings"
-          className={cn(
-            "w-full flex items-center px-3 py-2.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-xl transition-all group relative h-11",
-            location.pathname === "/settings" && "bg-blue-600/10 text-blue-400",
-            isCollapsed && "justify-center"
-          )}
-        >
-          {location.pathname === "/settings" && (
-            <motion.div 
-              layoutId="active-nav-bottom"
-              className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full"
-            />
-          )}
-          <div className="flex items-center justify-center shrink-0 group-hover:rotate-45 transition-transform duration-300">
-            <Settings size={20} />
-          </div>
-          {!isCollapsed && (
-            <span className={cn(
-              "ml-3 font-semibold text-sm tracking-tight",
-              location.pathname === "/settings" ? "text-slate-100" : "text-slate-400"
-            )}>Settings</span>
-          )}
-          {isCollapsed && (
-            <div className="fixed left-[88px] bg-slate-800 text-white px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all translate-x-2 group-hover:translate-x-0 z-[100] shadow-2xl border border-slate-700/50 backdrop-blur-md">
-              Settings
-              <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45 border-l border-b border-slate-700/50" />
+        <SimpleTooltip content={isCollapsed ? "Settings" : ""} side="right">
+          <Link 
+            to="/settings"
+            className={cn(
+              "w-full flex items-center px-3 py-2.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-xl transition-all group relative h-11",
+              location.pathname === "/settings" && "bg-blue-600/10 text-blue-400",
+              isCollapsed && "justify-center"
+            )}
+          >
+            {location.pathname === "/settings" && (
+              <motion.div 
+                layoutId="active-nav-bottom"
+                className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full"
+              />
+            )}
+            <div className="flex items-center justify-center shrink-0 group-hover:rotate-45 transition-transform duration-300">
+              <Settings size={20} />
             </div>
-          )}
-        </Link>
-        <button 
-          onClick={onLogout}
-          className={cn(
-            "w-full flex items-center px-3 py-2.5 text-red-400/80 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all group relative h-11",
-            isCollapsed && "justify-center"
-          )}
-        >
-          <div className="flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-200">
-            <LogOut size={20} />
-          </div>
-          {!isCollapsed && (
-            <span className="ml-3 font-semibold text-sm tracking-tight text-red-400/80">Logout</span>
-          )}
-          {isCollapsed && (
-            <div className="fixed left-[88px] bg-red-600 text-white px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all translate-x-2 group-hover:translate-x-0 z-[100] shadow-2xl border border-red-500/50 backdrop-blur-md">
-              Logout
-              <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-red-600 rotate-45 border-l border-b border-red-500/50" />
+            {!isCollapsed && (
+              <span className={cn(
+                "ml-3 font-semibold text-sm tracking-tight",
+                location.pathname === "/settings" ? "text-slate-100" : "text-slate-400"
+              )}>Settings</span>
+            )}
+          </Link>
+        </SimpleTooltip>
+        
+        <SimpleTooltip content={isCollapsed ? "Logout" : ""} side="right">
+          <button 
+            onClick={onLogout}
+            className={cn(
+              "w-full flex items-center px-3 py-2.5 text-red-400/80 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all group relative h-11",
+              isCollapsed && "justify-center"
+            )}
+          >
+            <div className="flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-200">
+              <LogOut size={20} />
             </div>
-          )}
-        </button>
+            {!isCollapsed && (
+              <span className="ml-3 font-semibold text-sm tracking-tight text-red-400/80">Logout</span>
+            )}
+          </button>
+        </SimpleTooltip>
       </div>
     </motion.div>
   );

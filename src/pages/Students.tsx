@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { SimpleTooltip } from "@/components/shared/SimpleTooltip";
 
 import { 
   Select, 
@@ -416,13 +417,15 @@ export default function Students({ user }: { user: UserType }) {
         <div className="flex items-center gap-2">
           {canManage && (
             <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
-              <DialogTrigger
-                render={
-                  <div className="flex items-center justify-center gap-2 h-9 px-4 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 outline-none cursor-pointer text-sm font-medium">
-                    <Upload size={16} /> Bulk Upload
-                  </div>
-                }
-              />
+              <SimpleTooltip content="Import students from Excel" side="bottom">
+                <DialogTrigger
+                  render={
+                    <div className="flex items-center justify-center gap-2 h-9 px-4 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 outline-none cursor-pointer text-sm font-medium" aria-label="Bulk upload students">
+                      <Upload size={16} /> Bulk Upload
+                    </div>
+                  }
+                />
+              </SimpleTooltip>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Bulk Student Import</DialogTitle>
@@ -467,17 +470,22 @@ export default function Students({ user }: { user: UserType }) {
             </Dialog>
           )}
 
-          <Button variant="outline" className="gap-2" onClick={handleExport}>
-            <Download size={16} /> Export
-          </Button>
+          <SimpleTooltip content="Download student list as Excel" side="bottom">
+            <Button variant="outline" className="gap-2" onClick={handleExport} aria-label="Export students to Excel">
+              <Download size={16} /> Export
+            </Button>
+          </SimpleTooltip>
           
           {canManage && (
-            <Button 
-              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white border-none font-bold shadow-lg shadow-blue-600/20"
-              onClick={openAddDialog}
-            >
-              <Plus size={16} /> Add Student Record
-            </Button>
+            <SimpleTooltip content="Add a new student manually" side="bottom">
+              <Button 
+                className="gap-2 bg-blue-600 hover:bg-blue-700 text-white border-none font-bold shadow-lg shadow-blue-600/20"
+                onClick={openAddDialog}
+                aria-label="Register new student"
+              >
+                <Plus size={16} /> Add Student Record
+              </Button>
+            </SimpleTooltip>
           )}
           
           {canManage && (

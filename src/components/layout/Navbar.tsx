@@ -27,6 +27,7 @@ import { useNavigate } from "react-router-dom";
 import { searchItems, SearchItem } from "@/lib/search-data";
 import { useRef, useEffect } from "react";
 import { apiService } from "@/lib/api";
+import { SimpleTooltip } from "@/components/shared/SimpleTooltip";
 
 import { Role, User as UserType } from "@/types";
 
@@ -258,32 +259,37 @@ export default function Navbar({ user, onLogout, onUserUpdate }: NavbarProps) {
     </div>
 
     <div className="flex items-center gap-4">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="relative text-slate-600 hover:bg-slate-50"
-          onClick={showNotification}
-        >
-          <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-        </Button>
+        <SimpleTooltip content="Notifications" side="bottom">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="relative text-slate-600 hover:bg-slate-50"
+            onClick={showNotification}
+            aria-label="View notifications"
+          >
+            <Bell size={20} />
+            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+          </Button>
+        </SimpleTooltip>
 
         <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <div className={cn("flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-50 transition-colors text-slate-600 cursor-pointer border-none bg-transparent outline-none")}>
-                <div className="text-right hidden sm:block">
-                  <p className="text-sm font-medium text-slate-900 leading-tight">{user.name}</p>
-                  <p className="text-xs text-slate-500 capitalize">{user.role}</p>
+          <SimpleTooltip content="User Menu" side="bottom">
+            <DropdownMenuTrigger
+              render={
+                <div className={cn("flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-50 transition-colors text-slate-600 cursor-pointer border-none bg-transparent outline-none")}>
+                  <div className="text-right hidden sm:block">
+                    <p className="text-sm font-medium text-slate-900 leading-tight">{user.name}</p>
+                    <p className="text-xs text-slate-500 capitalize">{user.role}</p>
+                  </div>
+                  <Avatar className="h-8 w-8 border border-slate-200">
+                    <AvatarFallback className="bg-slate-900 text-white text-xs">
+                      {user.name ? user.name.split(" ").map(n => n[0]).join("") : "U"}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
-                <Avatar className="h-8 w-8 border border-slate-200">
-                  <AvatarFallback className="bg-slate-900 text-white text-xs">
-                    {user.name ? user.name.split(" ").map(n => n[0]).join("") : "U"}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-            }
-          />
+              }
+            />
+          </SimpleTooltip>
           <DropdownMenuContent align="end" className="w-64 p-0 overflow-hidden">
             <div className="flex items-center gap-3 p-4 bg-slate-50/50 border-b border-slate-100">
               <Avatar className="h-10 w-10 border border-white shadow-sm shrink-0">

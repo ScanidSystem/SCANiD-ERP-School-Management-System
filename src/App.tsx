@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
 
 // Layout components
@@ -63,54 +64,56 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="flex h-screen bg-slate-50">
-        <Sidebar user={user} onLogout={handleLogout} />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Navbar user={user} onLogout={handleLogout} onUserUpdate={handleUpdateUser} />
-          <Breadcrumbs />
-          <main className="flex-1 overflow-auto p-6 min-w-0">
-            <Routes>
-              <Route path="/" element={<Dashboard user={user} />} />
-              <Route path="/students" element={<Students user={user} />} />
-              <Route path="/marks" element={<Marks user={user} />} />
-              <Route path="/attendance" element={<Attendance user={user} />} />
-              <Route path="/fees" element={<Fees user={user} />} />
-              <Route path="/messages" element={<Messages user={user} />} />
-              <Route path="/teachers" element={<Teachers user={user} />} />
-              <Route path="/profile" element={<Profile user={user} />} />
-              <Route path="/settings" element={<Settings user={user} />} />
-              {/* 
-                RBAC (Role Based Access Control) check:
-                Only render routes that the current user has permission to view.
-                All superadmin-only routes are grouped together here.
-              */}
-              {user.role === "superadmin" && (
-                <>
-                  <Route path="/schools" element={<Navigate to="/configuration/schools" replace />} />
-                  <Route path="/configuration" element={<Configuration user={user} />} />
-                  <Route path="/configuration/schools" element={<Configuration user={user} defaultTab="schools" />} />
-                  <Route path="/configuration/role-master" element={<Configuration user={user} defaultTab="role-master" />} />
-                  <Route path="/configuration/role-assignment" element={<Configuration user={user} defaultTab="role-assignment" />} />
-                  <Route path="/configuration/standards" element={<Configuration user={user} defaultTab="standards" />} />
-                  <Route path="/configuration/sections" element={<Configuration user={user} defaultTab="sections" />} />
-                  <Route path="/configuration/academic-years" element={<Configuration user={user} defaultTab="academic-years" />} />
-                  <Route path="/configuration/castes" element={<Configuration user={user} defaultTab="castes" />} />
-                  <Route path="/configuration/sub-castes" element={<Configuration user={user} defaultTab="sub-castes" />} />
-                  <Route path="/configuration/religions" element={<Configuration user={user} defaultTab="religions" />} />
-                  <Route path="/configuration/states" element={<Configuration user={user} defaultTab="states" />} />
-                  <Route path="/configuration/cities" element={<Configuration user={user} defaultTab="cities" />} />
-                  <Route path="/configuration/blood-groups" element={<Configuration user={user} defaultTab="blood-groups" />} />
-                  <Route path="/configuration/houses" element={<Configuration user={user} defaultTab="houses" />} />
-                  <Route path="/configuration/admission-types" element={<Configuration user={user} defaultTab="admission-types" />} />
-                  <Route path="/system-logs" element={<SystemLogs user={user} />} />
-                </>
-              )}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
+      <TooltipProvider>
+        <div className="flex h-screen bg-slate-50">
+          <Sidebar user={user} onLogout={handleLogout} />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Navbar user={user} onLogout={handleLogout} onUserUpdate={handleUpdateUser} />
+            <Breadcrumbs />
+            <main className="flex-1 overflow-auto p-6 min-w-0">
+              <Routes>
+                <Route path="/" element={<Dashboard user={user} />} />
+                <Route path="/students" element={<Students user={user} />} />
+                <Route path="/marks" element={<Marks user={user} />} />
+                <Route path="/attendance" element={<Attendance user={user} />} />
+                <Route path="/fees" element={<Fees user={user} />} />
+                <Route path="/messages" element={<Messages user={user} />} />
+                <Route path="/teachers" element={<Teachers user={user} />} />
+                <Route path="/profile" element={<Profile user={user} />} />
+                <Route path="/settings" element={<Settings user={user} />} />
+                {/* 
+                  RBAC (Role Based Access Control) check:
+                  Only render routes that the current user has permission to view.
+                  All superadmin-only routes are grouped together here.
+                */}
+                {user.role === "superadmin" && (
+                  <>
+                    <Route path="/schools" element={<Navigate to="/configuration/schools" replace />} />
+                    <Route path="/configuration" element={<Configuration user={user} />} />
+                    <Route path="/configuration/schools" element={<Configuration user={user} defaultTab="schools" />} />
+                    <Route path="/configuration/role-master" element={<Configuration user={user} defaultTab="role-master" />} />
+                    <Route path="/configuration/role-assignment" element={<Configuration user={user} defaultTab="role-assignment" />} />
+                    <Route path="/configuration/standards" element={<Configuration user={user} defaultTab="standards" />} />
+                    <Route path="/configuration/sections" element={<Configuration user={user} defaultTab="sections" />} />
+                    <Route path="/configuration/academic-years" element={<Configuration user={user} defaultTab="academic-years" />} />
+                    <Route path="/configuration/castes" element={<Configuration user={user} defaultTab="castes" />} />
+                    <Route path="/configuration/sub-castes" element={<Configuration user={user} defaultTab="sub-castes" />} />
+                    <Route path="/configuration/religions" element={<Configuration user={user} defaultTab="religions" />} />
+                    <Route path="/configuration/states" element={<Configuration user={user} defaultTab="states" />} />
+                    <Route path="/configuration/cities" element={<Configuration user={user} defaultTab="cities" />} />
+                    <Route path="/configuration/blood-groups" element={<Configuration user={user} defaultTab="blood-groups" />} />
+                    <Route path="/configuration/houses" element={<Configuration user={user} defaultTab="houses" />} />
+                    <Route path="/configuration/admission-types" element={<Configuration user={user} defaultTab="admission-types" />} />
+                    <Route path="/system-logs" element={<SystemLogs user={user} />} />
+                  </>
+                )}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </main>
+          </div>
         </div>
-      </div>
-      <Toaster />
+        <Toaster />
+      </TooltipProvider>
     </BrowserRouter>
   );
 }
