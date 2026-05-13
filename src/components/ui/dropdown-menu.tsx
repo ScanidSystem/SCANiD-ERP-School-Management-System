@@ -14,14 +14,24 @@ function DropdownMenuPortal({ ...props }: MenuPrimitive.Portal.Props) {
   return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />
 }
 
-function DropdownMenuTrigger({ render, nativeButton, ...props }: MenuPrimitive.Trigger.Props) {
+function DropdownMenuTrigger({ 
+  render, 
+  nativeButton, 
+  children, 
+  ...props 
+}: MenuPrimitive.Trigger.Props & { asChild?: boolean }) {
+  const asChild = (props as any).asChild;
+  const { asChild: _, ...rest } = props as any;
+
   return (
     <MenuPrimitive.Trigger
       data-slot="dropdown-menu-trigger"
-      render={render}
-      nativeButton={nativeButton ?? (!render && !(props as any).asChild)}
-      {...props}
-    />
+      render={render ?? (asChild && React.isValidElement(children) ? children : undefined)}
+      nativeButton={nativeButton ?? (!render && !asChild)}
+      {...rest}
+    >
+      {asChild ? undefined : children}
+    </MenuPrimitive.Trigger>
   )
 }
 

@@ -1,38 +1,42 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
-  --color-primary: #1e293b;
+  --color-primary: #0f172a;
   --color-primary-foreground: #f8fafc;
   
   --color-accent: #3b82f6;
   --color-accent-foreground: #ffffff;
   
-  --radius-lg: 0.75rem;
-  --radius-md: calc(0.75rem - 2px);
-  --radius-sm: calc(0.75rem - 4px);
+  --radius-lg: 1rem;
+  --radius-md: 0.75rem;
+  --radius-sm: 0.5rem;
 }
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    @apply bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
   }
 }
 
 @layer components {
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl shadow-slate-200/50;
+  }
+
   .dashboard-card {
-    @apply bg-white border border-slate-200 shadow-sm transition-all hover:shadow-md;
+    @apply bg-white border border-slate-200/60 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1;
   }
   
   .sidebar-item {
-    @apply flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-slate-600 hover:text-slate-900 hover:bg-slate-100;
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 text-slate-400 hover:text-slate-100 hover:bg-white/10;
   }
   
   .sidebar-item.active {
-    @apply bg-slate-900 text-white hover:bg-slate-800;
+    @apply bg-blue-600 text-white shadow-lg shadow-blue-600/30;
   }
 
   .scrollbar-hide {
@@ -44,8 +48,8 @@
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
   }
 
   ::-webkit-scrollbar-track {
@@ -53,11 +57,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-slate-200 rounded-full;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-300;
+    @apply bg-slate-300 rounded-full transition-colors hover:bg-slate-400;
   }
 }
 @import "tw-animate-css";

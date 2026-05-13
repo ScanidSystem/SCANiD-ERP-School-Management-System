@@ -264,115 +264,134 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
   const Icon = activeConfig.icon;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-            <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-200">
-              <Icon size={24} />
-            </div>
-            {activeConfig.label}
-          </h1>
-          <p className="text-slate-500 font-medium mt-1">
-            {activeConfig.description}
-          </p>
+    <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-5">
+          <div className="bg-indigo-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-indigo-200 transition-transform hover:rotate-3">
+            <Icon size={28} />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
+              {activeConfig.label}
+            </h1>
+            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">
+              {activeConfig.description}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <SimpleTooltip content="Reload data from server" side="bottom">
             <Button 
               variant="outline" 
               size="sm" 
               onClick={fetchData}
               disabled={isRefreshing}
-              className="rounded-full font-bold border-slate-200 h-10 hover:bg-slate-50"
+              className="rounded-xl font-bold border-slate-200 h-10 px-5 text-slate-600 hover:bg-slate-50 transition-all active:scale-95"
             >
               <RefreshCw size={16} className={cn("mr-2", isRefreshing && "animate-spin")} />
-              Refresh
+              Sync Data
             </Button>
           </SimpleTooltip>
         </div>
       </div>
 
-      <Card className="border-none shadow-xl shadow-slate-200/50 overflow-hidden rounded-3xl bg-white">
+      <Card className="dashboard-card border-none overflow-hidden">
         <div className="w-full">
-          <div className="px-8 pt-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6">
+          <div className="px-6 sm:px-8 py-8 border-b border-slate-50 bg-white/50 backdrop-blur-sm flex flex-col xl:flex-row xl:items-center justify-between gap-6">
             <div>
-              <h3 className="text-xl font-black text-slate-800 tracking-tight">
-                {activeConfig.label} Master
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                System Master Registry
               </h3>
-              <p className="text-sm text-slate-500 font-bold">
-                Configure and manage lookup values for {activeConfig.label.toLowerCase()}
+              <p className="text-xs text-slate-400 font-black uppercase tracking-widest mt-1">
+                Foundational data management for {activeConfig.label}
               </p>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+              <div className="relative group w-full sm:w-72">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
                 <Input 
-                  placeholder="Search records..." 
-                  className="pl-10 h-11 w-full md:w-64 rounded-2xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                  placeholder="Filter masters..." 
+                  className="pl-11 h-11 bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm font-medium rounded-2xl"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               {activeTab !== "role-assignment" && (
-                <Button onClick={() => handleOpenDialog()} className="bg-blue-600 hover:bg-blue-700 rounded-2xl h-11 px-6 shadow-lg shadow-blue-200 font-bold">
-                  <Plus size={18} className="mr-2" /> Add {activeConfig.label.replace('Manage ', '').slice(0, -1)}
+                <Button 
+                  onClick={() => handleOpenDialog()} 
+                  className="bg-blue-600 hover:bg-blue-700 text-white border-none rounded-2xl h-11 px-8 shadow-xl shadow-blue-500/20 font-black text-xs uppercase tracking-widest transition-all hover:-translate-y-0.5 active:scale-95 w-full sm:w-auto"
+                >
+                  <Plus size={18} className="mr-2 stroke-[3]" /> Add New
                 </Button>
               )}
             </div>
           </div>
 
           <div className="p-0">
-            <div className="border-0 overflow-hidden">
+            <div className="border-0 overflow-x-auto custom-scrollbar">
               <Table>
-                <TableHeader className="bg-slate-50/50">
-                  <TableRow className="hover:bg-transparent border-slate-100">
-                    <TableHead className="w-20 pl-8 font-black uppercase text-[10px] tracking-wider text-slate-400">ID</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">
-                      {activeTab === "role-assignment" ? "User Full Name" : "Name"}
+                <TableHeader className="bg-slate-50/30">
+                  <TableRow className="hover:bg-transparent border-slate-50 h-16">
+                    <TableHead className="w-24 pl-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Index</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                      {activeTab === "role-assignment" ? "User Profile" : "Primary Label"}
                     </TableHead>
-                    {activeTab === "role-assignment" && <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Username</TableHead>}
-                    {activeTab === "role-assignment" && <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Assigned Role</TableHead>}
-                    {activeTab === "academic-years" && <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Current</TableHead>}
-                    {activeTab === "houses" && <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Color</TableHead>}
-                    {activeTab === "sub-castes" && <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Parent Caste</TableHead>}
-                    {activeTab === "cities" && <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">State</TableHead>}
+                    {activeTab === "role-assignment" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Username</TableHead>}
+                    {activeTab === "role-assignment" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">System Role</TableHead>}
+                    {activeTab === "academic-years" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Current Session</TableHead>}
+                    {activeTab === "houses" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Hex Code</TableHead>}
+                    {activeTab === "sub-castes" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Parent Category</TableHead>}
+                    {activeTab === "cities" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Administrative State</TableHead>}
                     {activeTab === "schools" && (
                       <>
-                        <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Location/Address</TableHead>
-                        <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Contact Email</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Location</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Contact</TableHead>
                       </>
                     )}
-                    {activeTab !== "role-assignment" && <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Description/Info</TableHead>}
-                    <TableHead className="font-black uppercase text-[10px] tracking-wider text-slate-400">Status</TableHead>
-                    <TableHead className="w-20 pr-8 text-right font-black uppercase text-[10px] tracking-wider text-slate-400">Actions</TableHead>
+                    {activeTab !== "role-assignment" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Description</TableHead>}
+                    <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Status</TableHead>
+                    <TableHead className="w-20 pr-8 text-right text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Manage</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
-                    [...Array(3)].map((_, i) => (
-                      <TableRow key={i} className="animate-pulse border-slate-50">
-                        <TableCell colSpan={activeTab === "schools" ? 10 : 8} className="h-16 bg-slate-50/20"></TableCell>
+                    [...Array(5)].map((_, i) => (
+                      <TableRow key={i} className="animate-pulse border-slate-50 h-20">
+                        <TableCell colSpan={10} className="px-8">
+                           <div className="flex items-center gap-4">
+                              <div className="h-10 w-10 bg-slate-100 rounded-xl" />
+                              <div className="h-4 w-32 bg-slate-100 rounded-lg" />
+                           </div>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : filteredData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={activeTab === "schools" ? 10 : 8} className="h-40 text-center text-slate-400 font-bold uppercase text-xs tracking-widest bg-slate-50/10">
-                        No records found
+                      <TableCell colSpan={10} className="h-64 text-center">
+                        <div className="flex flex-col items-center justify-center gap-3">
+                          <div className="p-4 bg-slate-50 rounded-full">
+                            <Database className="text-slate-300" size={32} />
+                          </div>
+                          <p className="text-lg font-black text-slate-300 italic tracking-tight">Empty Database Records</p>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredData.map((item) => (
-                      <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors border-slate-50">
-                        <TableCell className="pl-8 font-mono text-xs font-bold text-slate-400">#{item.id}</TableCell>
-                        <TableCell className="font-black text-slate-800 text-sm tracking-tight">
+                      <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors border-slate-50/50 h-20 group">
+                        <TableCell className="pl-8">
+                           <span className="font-mono text-[11px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
+                            #{item.id}
+                           </span>
+                        </TableCell>
+                        <TableCell className="font-black text-slate-900 text-sm tracking-tight truncate max-w-[200px]">
                           {item.name || item.fullName}
                         </TableCell>
 
                         {activeTab === "role-assignment" && (
                           <>
-                            <TableCell className="text-xs font-bold text-slate-500">{item.username}</TableCell>
+                            <TableCell className="text-xs font-bold text-slate-500 font-mono italic">{item.username}</TableCell>
                             <TableCell>
                               <Select 
                                 value={item.role} 
@@ -386,23 +405,22 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                                   }
                                 }}
                               >
-                                <SelectTrigger className="h-8 w-32 rounded-lg bg-blue-50 text-[11px] font-black uppercase border-blue-100 text-blue-700">
+                                <SelectTrigger className="h-9 w-36 rounded-xl bg-blue-50/50 border-blue-100 text-[10px] font-black uppercase tracking-widest text-blue-700 hover:bg-blue-100/50 transition-colors">
                                   <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="rounded-xl border-slate-200">
+                                <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
                                   {dependencies.roles?.map((role: any) => (
-                                    <SelectItem key={role.id} value={role.name.toLowerCase().replace(' ', '')} className="text-xs font-bold">
+                                    <SelectItem key={role.id} value={role.name.toLowerCase().replace(' ', '')} className="text-[10px] font-black py-2.5 rounded-xl uppercase tracking-widest">
                                       {role.name}
                                     </SelectItem>
                                   ))}
-                                  {/* Fallback roles if master is empty */}
                                   {(!dependencies.roles || dependencies.roles.length === 0) && (
                                     <>
-                                      <SelectItem value="superadmin" className="text-xs font-bold">Super Admin</SelectItem>
-                                      <SelectItem value="admin" className="text-xs font-bold">Admin</SelectItem>
-                                      <SelectItem value="teacher" className="text-xs font-bold">Teacher</SelectItem>
-                                      <SelectItem value="parent" className="text-xs font-bold">Parent</SelectItem>
-                                      <SelectItem value="student" className="text-xs font-bold">Student</SelectItem>
+                                      <SelectItem value="superadmin" className="text-[10px] font-black py-2.5 rounded-xl uppercase tracking-widest">Super Admin</SelectItem>
+                                      <SelectItem value="admin" className="text-[10px] font-black py-2.5 rounded-xl uppercase tracking-widest">Admin</SelectItem>
+                                      <SelectItem value="teacher" className="text-[10px] font-black py-2.5 rounded-xl uppercase tracking-widest">Teacher</SelectItem>
+                                      <SelectItem value="parent" className="text-[10px] font-black py-2.5 rounded-xl uppercase tracking-widest">Parent</SelectItem>
+                                      <SelectItem value="student" className="text-[10px] font-black py-2.5 rounded-xl uppercase tracking-widest">Student</SelectItem>
                                     </>
                                   )}
                                 </SelectContent>
@@ -414,74 +432,78 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                         {activeTab === "academic-years" && (
                           <TableCell>
                             {item.isCurrent ? (
-                              <Badge className="bg-blue-100 text-blue-700 rounded-full font-black text-[10px] uppercase">Current</Badge>
-                            ) : "-"}
+                              <Badge className="bg-blue-600 text-white rounded-lg font-black text-[9px] uppercase tracking-widest px-2.5 py-1">Current</Badge>
+                            ) : <span className="text-slate-300 text-[10px] font-bold">—</span>}
                           </TableCell>
                         )}
 
                         {activeTab === "houses" && (
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 rounded-full border border-slate-200" style={{ backgroundColor: item.color }}></div>
-                              <span className="text-xs font-bold font-mono uppercase">{item.color}</span>
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 rounded-lg border-2 border-white shadow-sm ring-1 ring-slate-100" style={{ backgroundColor: item.color }}></div>
+                              <span className="text-[10px] font-black font-mono uppercase text-slate-500 tracking-widest px-2 py-1 bg-slate-50 rounded-md">{item.color}</span>
                             </div>
                           </TableCell>
                         )}
 
                         {activeTab === "sub-castes" && (
                           <TableCell className="text-xs font-bold text-slate-600">
-                            {dependencies.castes?.find(c => c.id === item.casteId)?.name || "N/A"}
+                             <span className="px-3 py-1 bg-violet-50 text-violet-700 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                                {dependencies.castes?.find(c => c.id === item.casteId)?.name || "SYSTEM_ORPHAN"}
+                             </span>
                           </TableCell>
                         )}
 
                         {activeTab === "cities" && (
                           <TableCell className="text-xs font-bold text-slate-600">
-                            {dependencies.states?.find(s => s.id === item.stateId)?.name || "N/A"}
+                             <span className="px-3 py-1 bg-amber-50 text-amber-700 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                                {dependencies.states?.find(s => s.id === item.stateId)?.name || "LOC_UNSET"}
+                             </span>
                           </TableCell>
                         )}
 
                         {activeTab === "schools" && (
                           <>
-                            <TableCell className="text-xs font-bold text-slate-500 max-w-[150px] truncate">
+                            <TableCell className="text-xs font-bold text-slate-500 max-w-[150px] truncate leading-relaxed">
                               {item.address || "-"}
                             </TableCell>
-                            <TableCell className="text-xs font-bold text-slate-500">
+                            <TableCell className="text-xs font-bold text-slate-500 italic">
                               {item.email || "-"}
                             </TableCell>
                           </>
                         )}
 
                         {activeTab !== "role-assignment" && (
-                          <TableCell className="text-sm font-bold text-slate-500 max-w-[200px] truncate">
-                            {item.description || item.color || "-"}
+                          <TableCell className="text-xs font-bold text-slate-400 max-w-[200px] truncate leading-relaxed italic">
+                            {item.description || "No metadata found"}
                           </TableCell>
                         )}
 
                         <TableCell>
                           <Badge className={cn(
-                            "rounded-full px-3 py-0.5 text-[10px] font-black uppercase tracking-wider",
-                            item.isActive !== false ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
+                            "rounded-lg px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest border border-transparent",
+                            item.isActive !== false ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-100 text-slate-500"
                           )}>
-                            {item.isActive !== false ? "Active" : "Inactive"}
+                            {item.isActive !== false ? "Verified Active" : "Disabled State"}
                           </Badge>
                         </TableCell>
                         <TableCell className="pr-8 text-right">
                           <DropdownMenu>
-                            <SimpleTooltip content="Actions" side="left">
+                            <SimpleTooltip content="Administrative Actions" side="left">
                               <DropdownMenuTrigger render={
-                                <div className="h-8 w-8 flex items-center justify-center rounded-xl hover:bg-slate-100 cursor-pointer text-slate-500 transition-colors" aria-label="Open actions menu">
-                                  <MoreHorizontal size={16} />
+                                <div className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-white hover:shadow-sm cursor-pointer text-slate-400 hover:text-blue-600 transition-all active:scale-95 border-none outline-none focus:ring-0" aria-label="Open actions menu">
+                                  <MoreHorizontal size={18} />
                                 </div>
                               } />
                             </SimpleTooltip>
-                            <DropdownMenuContent align="end" className="rounded-xl border-slate-100 shadow-xl p-1">
+                            <DropdownMenuContent align="end" className="w-48 rounded-2xl border-slate-100 shadow-2xl p-2 animate-in slide-in-from-top-2 duration-300">
                               {activeTab !== "role-assignment" && (
-                                <DropdownMenuItem onClick={() => handleOpenDialog(item)} className="rounded-lg font-bold text-slate-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer">
-                                  <Edit3 size={14} className="mr-2" /> <SimpleTooltip content="Edit this entry" side="left">Edit</SimpleTooltip>
+                                <DropdownMenuItem onClick={() => handleOpenDialog(item)} className="rounded-xl py-3 px-4 font-black transition-all text-xs uppercase tracking-widest text-slate-600 focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
+                                  <Edit3 size={14} className="mr-3" /> Update Record
                                 </DropdownMenuItem>
                               )}
-                              <DropdownMenuItem onClick={() => handleDelete(item.id)} className="rounded-lg font-bold text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer">
-                                <Trash2 size={14} className="mr-2" /> {activeTab === "role-assignment" ? "Deactivate User" : "Delete"}
+                              <DropdownMenuItem onClick={() => handleDelete(item.id)} className="rounded-xl py-3 px-4 font-black transition-all text-xs uppercase tracking-widest text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer">
+                                <Trash2 size={14} className="mr-3" /> {activeTab === "role-assignment" ? "Deactivate User" : "Purge Entry"}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

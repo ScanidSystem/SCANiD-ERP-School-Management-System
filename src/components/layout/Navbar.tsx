@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Bell, Search, User, Settings as SettingsIcon, LogOut, School, Calendar } from "lucide-react";
+import { Bell, Search, User, Settings as SettingsIcon, LogOut, School, Calendar, Menu } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -35,9 +35,10 @@ interface NavbarProps {
   user: UserType;
   onLogout: () => void;
   onUserUpdate: (user: UserType) => void;
+  toggleSidebar?: () => void;
 }
 
-export default function Navbar({ user, onLogout, onUserUpdate }: NavbarProps) {
+export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: NavbarProps) {
   const [search, setSearch] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [filteredResults, setFilteredResults] = useState<SearchItem[]>([]);
@@ -154,32 +155,43 @@ export default function Navbar({ user, onLogout, onUserUpdate }: NavbarProps) {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-20 shrink-0 shadow-sm">
-      <div className="flex items-center flex-1 gap-4">
+    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-20 shrink-0 shadow-sm">
+      <div className="flex items-center flex-1 gap-2 sm:gap-4">
+        {/* Mobile Sidebar Toggle */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="lg:hidden text-slate-600"
+          onClick={toggleSidebar}
+        >
+          <Menu size={20} />
+        </Button>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {user.role === "superadmin" ? (
-            <Select value={user.schoolId?.toString() || "none"} onValueChange={handleSchoolChange}>
-              <SelectTrigger className="w-[180px] h-9 bg-slate-50 border-slate-200 text-xs font-bold rounded-lg focus:ring-2 focus:ring-blue-500/10">
-                <div className="flex items-center gap-2 truncate">
-                  <div className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0"></div>
-                  <SelectValue placeholder="Select School Branch">
-                    {user.schoolId && user.schoolId !== "none" && user.schoolId !== "all" 
-                      ? schools.find(s => s.id.toString() === user.schoolId.toString())?.name 
-                      : (user.schoolId === "all" ? "Global Admin View" : undefined)}
-                  </SelectValue>
-                </div>
-              </SelectTrigger>
-              <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                <SelectItem value="none" className="text-xs italic text-slate-400">Select School Branch</SelectItem>
-                <SelectItem value="all" className="text-xs font-black text-blue-600">Global Admin View</SelectItem>
-                {schools.map(s => (
-                  <SelectItem key={s.id} value={s.id.toString()} className="text-xs font-medium">{s.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="hidden md:block">
+              <Select value={user.schoolId?.toString() || "none"} onValueChange={handleSchoolChange}>
+                <SelectTrigger className="w-[180px] h-9 bg-slate-50 border-slate-200 text-xs font-bold rounded-lg focus:ring-2 focus:ring-blue-500/10">
+                  <div className="flex items-center gap-2 truncate">
+                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0"></div>
+                    <SelectValue placeholder="Select School Branch">
+                      {user.schoolId && user.schoolId !== "none" && user.schoolId !== "all" 
+                        ? schools.find(s => s.id.toString() === user.schoolId.toString())?.name 
+                        : (user.schoolId === "all" ? "Global Admin View" : undefined)}
+                    </SelectValue>
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                  <SelectItem value="none" className="text-xs italic text-slate-400">Select School Branch</SelectItem>
+                  <SelectItem value="all" className="text-xs font-black text-blue-600">Global Admin View</SelectItem>
+                  {schools.map(s => (
+                    <SelectItem key={s.id} value={s.id.toString()} className="text-xs font-medium">{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           ) : (
-            <div className="bg-slate-50 px-3 py-1.5 rounded-lg flex items-center gap-2 border border-slate-100">
+            <div className="bg-slate-50 px-3 py-1.5 rounded-lg hidden sm:flex items-center gap-2 border border-slate-100">
               <School size={14} className="text-slate-400" />
               <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider truncate max-w-[140px]">
                 {user.schoolName || "Institutional Access"}
@@ -187,39 +199,49 @@ export default function Navbar({ user, onLogout, onUserUpdate }: NavbarProps) {
             </div>
           )}
 
-          <Select value={user.academicYearId?.toString() || "none"} onValueChange={handleYearChange}>
-            <SelectTrigger className="w-[140px] h-9 bg-blue-50 border-blue-100 text-xs font-black text-blue-700 rounded-lg">
-              <div className="flex items-center gap-2">
-                <Calendar size={13} strokeWidth={3} />
-                <SelectValue placeholder="Select Academic Year">
-                  {user.academicYearId && user.academicYearId !== "none" && academicYears.length > 0 
-                    ? academicYears.find(y => y.id.toString() === user.academicYearId?.toString())?.name 
-                    : undefined}
-                </SelectValue>
-              </div>
-            </SelectTrigger>
-            <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-              <SelectItem value="none" className="text-xs italic text-slate-400">Select Academic Year</SelectItem>
-              {academicYears.map(y => (
-                <SelectItem key={y.id} value={y.id.toString()} className="text-xs font-bold">
-                  {y.name} {y.isCurrent ? "★" : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="hidden lg:block">
+            <Select value={user.academicYearId?.toString() || "none"} onValueChange={handleYearChange}>
+              <SelectTrigger className="w-[140px] h-9 bg-blue-50 border-blue-100 text-xs font-black text-blue-700 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Calendar size={13} strokeWidth={3} />
+                  <SelectValue placeholder="Select Academic Year">
+                    {user.academicYearId && user.academicYearId !== "none" && academicYears.length > 0 
+                      ? academicYears.find(y => y.id.toString() === user.academicYearId?.toString())?.name 
+                      : undefined}
+                  </SelectValue>
+                </div>
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                <SelectItem value="none" className="text-xs italic text-slate-400">Select Academic Year</SelectItem>
+                {academicYears.map(y => (
+                  <SelectItem key={y.id} value={y.id.toString()} className="text-xs font-bold">
+                    {y.name} {y.isCurrent ? "★" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <div className="relative flex-1 max-w-md ml-auto" ref={searchRef}>
-          <form onSubmit={handleSearch} className="flex items-center bg-slate-100 rounded-lg px-3 py-1 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-          <Search size={18} className="text-slate-400" />
+        <div className="relative flex-1 max-w-sm sm:max-w-md ml-auto" ref={searchRef}>
+          <form onSubmit={handleSearch} className="flex items-center bg-slate-100/80 rounded-xl px-2 sm:px-4 py-1.5 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:bg-white transition-all duration-300 border border-transparent focus-within:border-blue-500/20 group">
+          <Search size={16} className="text-slate-400 shrink-0 transition-colors group-focus-within:text-blue-500" />
           <Input 
-            placeholder="Search students, classes, reports..." 
-            className="border-none bg-transparent focus-visible:ring-0 shadow-none text-sm"
+            placeholder="Search students, classes..." 
+            className="border-none bg-transparent focus-visible:ring-0 shadow-none text-xs sm:text-sm h-8 font-medium placeholder:text-slate-400"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onFocus={() => search.trim() && setShowResults(true)}
           />
-        </form>
+          <div className="hidden sm:flex items-center gap-1">
+            <kbd className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-bold text-slate-400 shadow-sm">
+              ⌘
+            </kbd>
+            <kbd className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-bold text-slate-400 shadow-sm">
+              K
+            </kbd>
+          </div>
+          </form>
 
         {showResults && filteredResults.length > 0 && (
           <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">

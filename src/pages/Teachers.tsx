@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { apiService } from "@/lib/api";
+import { SimpleTooltip } from "@/components/shared/SimpleTooltip";
 import { 
   Plus, 
   Search, 
@@ -284,10 +285,16 @@ export default function Teachers({ user }: { user: any }) {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <p className="text-slate-500 mt-1">Manage teaching staff qualifications and classroom assignments.</p>
+    <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-5">
+           <div className="bg-blue-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:-rotate-3">
+            <Users size={28} />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">Faculty Management</h1>
+            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Administrative control for teaching staff & assignments</p>
+          </div>
         </div>
         {isAdmin && (
           <Dialog open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if(!open) resetForm(); else fetchSchools(); }}>
@@ -301,42 +308,42 @@ export default function Teachers({ user }: { user: any }) {
             />
             <DialogTrigger
               render={
-                <div className="flex items-center justify-center gap-2 h-10 px-6 rounded-md bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 text-white border-none outline-none cursor-pointer font-bold text-sm">
-                  <UserPlus size={18} /> Register Teacher
+                <div className="flex items-center justify-center gap-2 h-11 px-8 rounded-2xl bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-500/20 text-white border-none outline-none cursor-pointer font-black text-xs uppercase tracking-widest transition-all hover:-translate-y-0.5 active:scale-95">
+                  <UserPlus size={18} className="stroke-[3]" /> Register Faculty
                 </div>
               }
             />
-            <DialogContent className="sm:max-w-[850px] w-[95vw] max-h-[90vh] flex flex-col p-0 border-none shadow-3xl rounded-[2rem] overflow-hidden">
-                <div className="bg-slate-900 px-8 py-5 text-white relative shrink-0">
+            <DialogContent className="sm:max-w-[850px] w-[95vw] max-h-[90vh] flex flex-col p-0 border-none shadow-3xl rounded-[2.5rem] overflow-hidden">
+                <div className="bg-slate-900 px-10 py-8 text-white relative shrink-0">
                   <div className="relative z-10 flex items-center justify-between">
                     <DialogHeader>
-                      <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-3">
-                        <div className="p-2 bg-blue-500 rounded-xl shadow-xl shadow-blue-500/20">
-                          <UserPlus size={22} className="text-white" />
+                      <DialogTitle className="text-2xl font-black tracking-tight flex items-center gap-4">
+                        <div className="p-3 bg-blue-500 rounded-2xl shadow-2xl shadow-blue-500/20">
+                          <UserPlus size={24} className="text-white" />
                         </div>
-                        {isEditing ? "Modify Faculty Profile" : "Register Faculty"}
+                        {isEditing ? "Modify Profile" : "Onboard Faculty"}
                       </DialogTitle>
-                      <DialogDescription className="text-slate-400 text-[12px] mt-1 font-medium max-w-2xl leading-relaxed">
+                      <DialogDescription className="text-slate-400 text-sm mt-2 font-bold max-w-2xl leading-relaxed uppercase tracking-wider">
                         {isEditing 
                           ? "Update professional qualifications and work assignments." 
                           : "Enter credentials and department assignments for new staff."}
                       </DialogDescription>
                     </DialogHeader>
                   </div>
-                  <div className="absolute right-[-10%] top-[-10%] w-64 h-64 bg-blue-600/10 rounded-full blur-[80px] pointer-events-none"></div>
+                  <div className="absolute right-[-5%] top-[-5%] w-72 h-72 bg-blue-600/20 rounded-full blur-[100px] pointer-events-none"></div>
                 </div>
               
-                <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-6 bg-white scrollbar-thin scrollbar-thumb-slate-200">
-                  <div className="max-w-4xl mx-auto space-y-8">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-8 bg-white custom-scrollbar">
+                  <div className="max-w-4xl mx-auto space-y-10">
                     <section>
-                      <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
-                        <div className="w-1.5 h-5 bg-blue-600 rounded-full"></div>
-                        <h3 className="text-sm font-black text-slate-900 tracking-tight">Assignment & Identity</h3>
+                      <div className="flex items-center gap-4 mb-6 pb-2 border-b border-slate-50">
+                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Institutional Context</h3>
                       </div>
                       
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-                          <div className="md:col-span-6 space-y-1.5">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.schoolId ? "text-red-500" : "text-slate-500")}>Assigned School Branch {formErrors.schoolId && "*"}</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                          <div className="md:col-span-12 space-y-2">
+                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.schoolId ? "text-red-500" : "text-slate-400")}>Campus Branch {formErrors.schoolId && "*"}</Label>
                             <Select 
                               value={formData.schoolId.toString()} 
                               onValueChange={(v) => {
@@ -348,32 +355,32 @@ export default function Teachers({ user }: { user: any }) {
                               <SelectTrigger 
                                 ref={el => inputRefs.current["schoolId"] = el}
                                 className={cn(
-                                  "h-10 border-slate-200 bg-slate-50/50 font-bold text-slate-800 rounded-xl px-4 focus:ring-2 focus:ring-blue-500/5 transition-all text-sm",
+                                  "h-12 border-slate-100 bg-slate-50/50 font-black text-slate-800 rounded-2xl px-5 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm",
                                   formErrors.schoolId && "border-red-500 ring-2 ring-red-500/10",
                                   (user.role !== "superadmin" && !!user.schoolId) && "opacity-80 cursor-not-allowed bg-slate-100"
                                 )}
                               >
-                                <SelectValue placeholder="Select School Branch">
-                                  {formData.schoolId && formData.schoolId !== "none" ? schools.find(s => s.id.toString() === formData.schoolId.toString())?.name : "Select School Branch"}
+                                <SelectValue placeholder="Select Campus">
+                                  {formData.schoolId && formData.schoolId !== "none" ? schools.find(s => s.id.toString() === formData.schoolId.toString())?.name : "Select Campus"}
                                 </SelectValue>
                               </SelectTrigger>
-                              <SelectContent className="max-h-68 rounded-2xl shadow-2xl border-slate-200 p-2">
-                                <SelectItem value="none" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">
-                                  Select School Branch
+                              <SelectContent className="max-h-80 rounded-[2rem] shadow-2xl border-slate-100 p-3">
+                                <SelectItem value="none" className="font-bold py-3 px-4 rounded-xl focus:bg-slate-50 text-slate-400 italic">
+                                  Select Campus
                                 </SelectItem>
                                 {schools.length > 0 ? (
                                   schools.map(s => (
-                                    <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
-                                      <div className="flex flex-col gap-0.5">
-                                        <span className="text-sm font-bold">{s.name}</span>
-                                        <span className="text-[10px] text-slate-400 font-medium tracking-tight">ID: SCH-{s.id} • {s.address?.split(',')[0]}</span>
+                                    <SelectItem key={s.id} value={s.id.toString()} className="font-black py-4 px-4 rounded-2xl focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
+                                      <div className="flex flex-col gap-1">
+                                        <span className="text-sm uppercase tracking-tight">{s.name}</span>
+                                        <span className="text-[10px] text-slate-400 font-bold tracking-[0.1em]">ID: SCH-{s.id} • {s.address?.split(',')[0]}</span>
                                       </div>
                                     </SelectItem>
                                   ))
                                 ) : (
-                                  <div className="p-4 text-sm text-slate-500 text-center italic flex flex-col items-center gap-2">
-                                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
-                                    Loading registered branches...
+                                  <div className="p-6 text-xs font-black text-slate-400 text-center uppercase tracking-widest flex flex-col items-center gap-3 italic">
+                                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
+                                    Syncing branches...
                                   </div>
                                 )}
                               </SelectContent>
@@ -381,9 +388,9 @@ export default function Teachers({ user }: { user: any }) {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
-                          <div className="space-y-1.5">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.firstName ? "text-red-500" : "text-slate-500")}>First Name {formErrors.firstName && "*"}</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                          <div className="space-y-2">
+                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.firstName ? "text-red-500" : "text-slate-400")}>First Name {formErrors.firstName && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["firstName"] = el}
                               value={formData.firstName} 
@@ -391,19 +398,19 @@ export default function Teachers({ user }: { user: any }) {
                                 setFormData({...formData, firstName: e.target.value});
                                 if (formErrors.firstName) setFormErrors(prev => ({ ...prev, firstName: false }));
                               }} 
-                              placeholder="e.g. Robert" 
+                              placeholder="Robert" 
                               className={cn(
-                                "h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm",
+                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300",
                                 formErrors.firstName && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             />
                           </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Middle Name</Label>
-                            <Input value={formData.middleName} onChange={e => setFormData({...formData, middleName: e.target.value})} placeholder="Optional" className="h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm" />
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Middle Name</Label>
+                            <Input value={formData.middleName} onChange={e => setFormData({...formData, middleName: e.target.value})} placeholder="Optional" className="h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300" />
                           </div>
-                          <div className="space-y-1.5">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.lastName ? "text-red-500" : "text-slate-500")}>Last Name {formErrors.lastName && "*"}</Label>
+                          <div className="space-y-2">
+                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.lastName ? "text-red-500" : "text-slate-400")}>Last Name {formErrors.lastName && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["lastName"] = el}
                               value={formData.lastName} 
@@ -411,9 +418,9 @@ export default function Teachers({ user }: { user: any }) {
                                 setFormData({...formData, lastName: e.target.value});
                                 if (formErrors.lastName) setFormErrors(prev => ({ ...prev, lastName: false }));
                               }} 
-                              placeholder="e.g. Smith" 
+                              placeholder="Smith" 
                               className={cn(
-                                "h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm",
+                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300",
                                 formErrors.lastName && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             />
@@ -421,15 +428,15 @@ export default function Teachers({ user }: { user: any }) {
                         </div>
                     </section>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                       <section>
-                        <div className="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
+                        <div className="flex items-center gap-4 mb-6 pb-2 border-b border-slate-50">
                           <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
-                          <h3 className="text-base font-black text-slate-900 tracking-tight">Contact Info</h3>
+                          <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Connectability</h3>
                         </div>
-                        <div className="space-y-4">
+                        <div className="space-y-5">
                           <div className="space-y-2">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-widest", formErrors.email ? "text-red-500" : "text-slate-500")}>Professional Email {formErrors.email && "*"}</Label>
+                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.email ? "text-red-500" : "text-slate-400")}>Email Protocol {formErrors.email && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["email"] = el}
                               type="email" 
@@ -438,15 +445,15 @@ export default function Teachers({ user }: { user: any }) {
                                 setFormData({...formData, email: e.target.value});
                                 if (formErrors.email) setFormErrors(prev => ({ ...prev, email: false }));
                               }} 
-                              placeholder="faculty@school.edu" 
+                              placeholder="faculty@college.edu" 
                               className={cn(
-                                "h-12 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm",
+                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all",
                                 formErrors.email && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-widest", formErrors.phone ? "text-red-500" : "text-slate-500")}>Mobile Number {formErrors.phone && "*"}</Label>
+                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.phone ? "text-red-500" : "text-slate-400")}>Direct Line {formErrors.phone && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["phone"] = el}
                               value={formData.phone} 
@@ -456,9 +463,9 @@ export default function Teachers({ user }: { user: any }) {
                                 setFormData({...formData, phone: val});
                                 if (formErrors.phone) setFormErrors(prev => ({ ...prev, phone: false }));
                               }} 
-                              placeholder="10-digit mobile number" 
+                              placeholder="10-digit mobile" 
                               className={cn(
-                                "h-12 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm",
+                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all",
                                 formErrors.phone && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             />
@@ -467,13 +474,13 @@ export default function Teachers({ user }: { user: any }) {
                       </section>
 
                       <section>
-                        <div className="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
+                        <div className="flex items-center gap-4 mb-6 pb-2 border-b border-slate-50">
                           <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
-                          <h3 className="text-base font-black text-slate-900 tracking-tight">Credentials</h3>
+                          <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Professional Rank</h3>
                         </div>
-                        <div className="space-y-4">
+                        <div className="space-y-5">
                           <div className="space-y-2">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-widest", formErrors.qualification ? "text-red-500" : "text-slate-500")}>Highest Qualification {formErrors.qualification && "*"}</Label>
+                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.qualification ? "text-red-500" : "text-slate-400")}>Education Deck {formErrors.qualification && "*"}</Label>
                             <Input 
                               ref={el => inputRefs.current["qualification"] = el}
                               value={formData.qualification} 
@@ -481,29 +488,29 @@ export default function Teachers({ user }: { user: any }) {
                                 setFormData({...formData, qualification: e.target.value});
                                 if (formErrors.qualification) setFormErrors(prev => ({ ...prev, qualification: false }));
                               }} 
-                              placeholder="e.g. M.Ed, PhD" 
+                              placeholder="M.Ed, PhD" 
                               className={cn(
-                                "h-12 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm",
+                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all",
                                 formErrors.qualification && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Experience (Years)</Label>
-                            <Input value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} placeholder="e.g. 5 Years" className="h-12 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm" />
+                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Tenure (Years)</Label>
+                            <Input value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} placeholder="5 Years" className="h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all" />
                           </div>
                         </div>
                       </section>
                     </div>
 
-                    <section className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100">
-                      <div className="flex items-center gap-3 mb-4 pb-1">
-                        <div className="w-1.5 h-5 bg-red-500 rounded-full"></div>
-                        <h3 className="text-sm font-black text-slate-900 tracking-tight">Assignments</h3>
+                    <section className="bg-slate-50/80 p-8 rounded-[2rem] border border-slate-100 shadow-sm transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-100/50">
+                      <div className="flex items-center gap-4 mb-6 pt-1">
+                        <div className="w-1.5 h-6 bg-red-600 rounded-full"></div>
+                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Departmental Payload</h3>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        <div className="space-y-1.5">
-                          <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.subject ? "text-red-500" : "text-slate-500")}>Subject {formErrors.subject && "*"}</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-2">
+                          <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.subject ? "text-red-500" : "text-slate-400")}>Primary Domain {formErrors.subject && "*"}</Label>
                           <Input 
                             ref={el => inputRefs.current["subject"] = el}
                             value={formData.subject} 
@@ -511,30 +518,27 @@ export default function Teachers({ user }: { user: any }) {
                               setFormData({...formData, subject: e.target.value});
                               if (formErrors.subject) setFormErrors(prev => ({ ...prev, subject: false }));
                             }} 
-                            placeholder="Expertise" 
+                            placeholder="Mathematics" 
                             className={cn(
-                              "h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm",
+                              "h-12 border-slate-100 bg-white font-black rounded-[1.25rem] px-5 text-sm focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:italic",
                               formErrors.subject && "border-red-500 ring-2 ring-red-500/10"
                             )}
                           />
                         </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Grade</Label>
-                          <Input value={formData.standard} onChange={e => setFormData({...formData, standard: e.target.value})} placeholder="e.g. 10th" className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm" />
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Assigned Grade</Label>
+                          <Input value={formData.standard} onChange={e => setFormData({...formData, standard: e.target.value})} placeholder="10th" className="h-12 border-slate-100 bg-white font-black rounded-[1.25rem] px-5 text-sm focus:ring-4 focus:ring-blue-500/5 transition-all" />
                         </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Status</Label>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Access Status</Label>
                           <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
-                            <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
-                              <SelectValue placeholder="Select Employment Status">
-                               {formData.status && formData.status !== "none" ? formData.status : "Select Employment Status"}
-                             </SelectValue>
+                            <SelectTrigger className="h-12 border-slate-100 bg-white font-black rounded-[1.25rem] px-5 text-sm focus:ring-4 focus:ring-blue-500/5 transition-all">
+                              <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="rounded-xl border-slate-200">
-                              <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic font-bold">Select Employment Status</SelectItem>
-                              <SelectItem value="Active" className="font-semibold py-1.5 text-xs">Active</SelectItem>
-                              <SelectItem value="On Leave" className="font-semibold py-1.5 text-xs">On Leave</SelectItem>
-                              <SelectItem value="Resigned" className="font-semibold py-1.5 text-xs">Resigned</SelectItem>
+                            <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
+                              <SelectItem value="Active" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-blue-50 focus:text-blue-700">Active</SelectItem>
+                              <SelectItem value="On Leave" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-blue-50 focus:text-blue-700">On Leave</SelectItem>
+                              <SelectItem value="Resigned" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-blue-50 focus:text-blue-700">Resigned</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -543,15 +547,15 @@ export default function Teachers({ user }: { user: any }) {
                   </div>
                 </div>
 
-                <DialogFooter className="bg-slate-50 px-10 py-5 shrink-0 border-t border-slate-100 flex flex-row items-center justify-end gap-3">
-                  <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="h-9 px-5 font-bold text-slate-500 hover:text-slate-900 rounded-xl text-xs uppercase tracking-wider">
-                    Cancel
+                <DialogFooter className="bg-slate-50 px-10 py-6 shrink-0 border-t border-slate-100 flex flex-row items-center justify-end gap-4">
+                  <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="h-11 px-8 font-black text-slate-400 hover:text-slate-900 rounded-2xl text-[10px] uppercase tracking-[0.2em] transition-all">
+                    Dismiss
                   </Button>
                   <Button 
                     onClick={handleCreateOrUpdate} 
-                    className="h-10 px-8 bg-blue-600 hover:bg-blue-700 font-black shadow-lg shadow-blue-600/20 rounded-xl transition-all active:scale-[0.98] text-xs uppercase tracking-wider"
+                    className="h-12 px-10 bg-slate-900 hover:bg-blue-600 text-white font-black shadow-2xl shadow-slate-200/50 rounded-2xl transition-all active:scale-[0.98] text-[10px] uppercase tracking-[0.2em] border-none"
                   >
-                    {isEditing ? "Update Profile" : "Onboard Faculty"}
+                    {isEditing ? "Apply Updates" : "Commit Record"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -559,98 +563,126 @@ export default function Teachers({ user }: { user: any }) {
         )}
       </div>
 
-      <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
-        <CardHeader className="pb-6 border-b border-slate-100 bg-white px-8 pt-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+      <Card className="dashboard-card border-none overflow-hidden">
+        <CardHeader className="p-8 border-b border-slate-50 bg-white/50 backdrop-blur-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="relative group flex-1 max-w-sm">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
               <Input 
-                placeholder="Search name, ID or subject..." 
-                className="pl-10 border-slate-200 focus-visible:ring-blue-500"
+                placeholder="Query faculty index..." 
+                className="pl-12 h-12 bg-slate-50/50 border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm font-bold rounded-2xl"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
+            </div>
+            <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="h-10 px-4 rounded-xl border-slate-100 text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest">
+                  <Download size={16} className="mr-2" /> Export
+                </Button>
+                <div className="h-6 w-px bg-slate-100 mx-2" />
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Total Records: {filteredTeachers.length}</p>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-             <div className="flex items-center justify-center p-12">
-               <Loader2 size={32} className="animate-spin text-slate-400" />
+             <div className="flex flex-col items-center justify-center p-24 gap-4 animate-pulse">
+               <div className="p-4 bg-slate-50 rounded-full">
+                  <Loader2 size={32} className="animate-spin text-blue-600" />
+               </div>
+               <p className="font-black text-slate-300 uppercase tracking-widest text-[10px]">Syncing cloud data...</p>
              </div>
           ) : (
             <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50/50 h-14">
-                  <TableHead className="w-[120px] pl-8 text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleSort('employeeId')}>
-                    <div className="flex items-center gap-1.5">
-                      Employee ID <ChevronDown size={14} className={cn("transition-transform", sortConfig?.key === 'employeeId' && sortConfig.direction === 'desc' && "rotate-180")} />
+              <TableHeader className="bg-slate-50/30">
+                <TableRow className="h-16 border-slate-50">
+                  <TableHead className="w-[140px] pl-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('employeeId')}>
+                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
+                      Index ID <ChevronDown size={14} className={cn("transition-all opacity-0 group-hover:opacity-100", sortConfig?.key === 'employeeId' && sortConfig.direction === 'desc' && "rotate-180 opacity-100 text-blue-600")} />
                     </div>
                   </TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleSort('fullName')}>
-                    <div className="flex items-center gap-1.5">
-                      Faculty Profile <ChevronDown size={14} className={cn("transition-transform", sortConfig?.key === 'fullName' && sortConfig.direction === 'desc' && "rotate-180")} />
+                  <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('fullName')}>
+                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
+                      Faculty Entity <ChevronDown size={14} className={cn("transition-all opacity-0 group-hover:opacity-100", sortConfig?.key === 'fullName' && sortConfig.direction === 'desc' && "rotate-180 opacity-100 text-blue-600")} />
                     </div>
                   </TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleSort('subject')}>
-                    <div className="flex items-center gap-1.5">
-                      Expertise <ChevronDown size={14} className={cn("transition-transform", sortConfig?.key === 'subject' && sortConfig.direction === 'desc' && "rotate-180")} />
+                  <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('subject')}>
+                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
+                      Core Expertise <ChevronDown size={14} className={cn("transition-all opacity-0 group-hover:opacity-100", sortConfig?.key === 'subject' && sortConfig.direction === 'desc' && "rotate-180 opacity-100 text-blue-600")} />
                     </div>
                   </TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleSort('qualification')}>
-                    <div className="flex items-center gap-1.5">
-                      Credentials <ChevronDown size={14} className={cn("transition-transform", sortConfig?.key === 'qualification' && sortConfig.direction === 'desc' && "rotate-180")} />
+                  <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('qualification')}>
+                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
+                      Credentials <ChevronDown size={14} className={cn("transition-all opacity-0 group-hover:opacity-100", sortConfig?.key === 'qualification' && sortConfig.direction === 'desc' && "rotate-180 opacity-100 text-blue-600")} />
                     </div>
                   </TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Status</TableHead>
-                  <TableHead className="text-right pr-8 text-xs font-black text-slate-500 uppercase tracking-widest">Actions</TableHead>
+                  <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Operational Status</TableHead>
+                  <TableHead className="text-right pr-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Manage</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTeachers.map((teacher) => (
-                  <TableRow key={teacher.id} className="hover:bg-slate-50/80 transition-colors group border-b border-slate-50">
-                    <TableCell className="pl-8 font-mono text-xs font-black text-blue-600 italic">
-                      {teacher.employeeId || teacher.id}
+                {filteredTeachers.length === 0 ? (
+                  <TableRow>
+                     <TableCell colSpan={6} className="h-64 text-center">
+                        <div className="flex flex-col items-center justify-center gap-3">
+                           <div className="p-6 bg-slate-50 rounded-full text-slate-200">
+                             <Users size={48} />
+                           </div>
+                           <p className="text-lg font-black text-slate-300 italic tracking-tight uppercase">No Faculty Matches Found</p>
+                        </div>
+                     </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredTeachers.map((teacher) => (
+                  <TableRow key={teacher.id} className="hover:bg-slate-50/50 transition-all group border-b border-slate-50/80 h-20">
+                    <TableCell className="pl-8">
+                       <span className="font-mono text-[11px] font-black text-blue-600 bg-blue-50/50 px-2.5 py-1 rounded-lg border border-blue-100/50 italic tracking-tighter">
+                        {teacher.employeeId || teacher.id}
+                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10 ring-2 ring-white shadow-sm">
-                          <AvatarFallback className="bg-slate-100 text-slate-700 font-bold uppercase">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-11 w-11 ring-4 ring-white shadow-lg shadow-slate-200 transition-transform group-hover:scale-105">
+                          <AvatarFallback className="bg-indigo-600 text-white font-black uppercase text-sm">
                             {teacher.fullName[0]}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex flex-col">
-                          <span className="font-bold text-slate-900 leading-none">{teacher.fullName}</span>
-                          <span className="text-[10px] text-slate-400 mt-1">{teacher.email}</span>
+                        <div className="flex flex-col truncate max-w-[180px]">
+                          <span className="font-black text-slate-900 leading-none text-sm tracking-tight mb-1">{teacher.fullName}</span>
+                          <span className="text-[10px] text-slate-400 font-bold italic truncate">{teacher.email}</span>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100 font-bold">
+                      <span className="px-3 py-1 bg-slate-100/80 text-slate-700 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-200 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all">
                         {teacher.subject}
-                      </Badge>
+                      </span>
                     </TableCell>
-                    <TableCell className="text-xs text-slate-500 italic">{teacher.qualification}</TableCell>
+                    <TableCell className="text-[11px] font-black text-slate-400 italic tracking-tight overflow-hidden text-ellipsis max-w-[150px] whitespace-nowrap">
+                        {teacher.qualification}
+                    </TableCell>
                     <TableCell>
                       <Badge className={cn(
-                        "font-black text-[10px] uppercase tracking-wider",
-                        teacher.status === "Active" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                        "font-black text-[9px] uppercase tracking-[0.1em] px-2.5 py-0.5 rounded-lg border-transparent",
+                        teacher.status === "Active" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"
                       )} variant="outline">
                         {teacher.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right pr-8">
                        <DropdownMenu>
-                        <DropdownMenuTrigger
-                          render={
-                            <div className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-600 transition-colors cursor-pointer outline-none">
-                              <MoreHorizontal size={16} />
-                            </div>
-                          }
-                        />
-                        <DropdownMenuContent align="end" className="rounded-2xl border-slate-200 shadow-2xl p-2 min-w-[200px]">
+                         <SimpleTooltip content="System Controls" side="left">
+                            <DropdownMenuTrigger
+                              render={
+                                <div className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-300 hover:text-blue-600 hover:bg-white hover:shadow-sm transition-all cursor-pointer outline-none active:scale-90">
+                                  <MoreHorizontal size={18} />
+                                </div>
+                              }
+                            />
+                         </SimpleTooltip>
+                        <DropdownMenuContent align="end" className="rounded-2xl border-slate-100 shadow-2xl p-2 min-w-[220px] animate-in slide-in-from-top-2">
                           <DropdownMenuGroup>
-                            <DropdownMenuItem className="gap-3 py-2.5 rounded-xl cursor-pointer" onClick={() => {
+                            <DropdownMenuItem className="gap-4 py-3 px-4 rounded-xl cursor-pointer focus:bg-indigo-50 group/item" onClick={() => {
                               setSelectedTeacher(teacher);
                               setIsEditing(true);
                               const names = teacher.fullName.split(' ');
@@ -667,23 +699,30 @@ export default function Teachers({ user }: { user: any }) {
                               });
                               setIsAddDialogOpen(true);
                             }}>
-                              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                                <Edit size={14} />
+                              <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl group-hover/item:bg-indigo-600 group-hover/item:text-white transition-colors">
+                                <Edit size={16} />
                               </div>
-                              <span className="font-bold text-slate-700">Modify Profile</span>
+                              <div className="flex flex-col">
+                                 <span className="font-black text-slate-800 text-xs uppercase tracking-widest">Modify Master</span>
+                                 <span className="text-[9px] text-slate-400 font-bold uppercase italic">Update qualifications</span>
+                              </div>
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-3 py-2.5 rounded-xl cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50" onClick={() => handleDeleteTeacher(teacher.id, teacher.fullName)}>
-                              <div className="p-2 bg-red-50 text-red-600 rounded-lg">
-                                <Trash2 size={14} />
+                            <DropdownMenuItem className="gap-4 py-3 px-4 rounded-xl cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50 group/del" onClick={() => handleDeleteTeacher(teacher.id, teacher.fullName)}>
+                              <div className="p-2.5 bg-red-50 text-red-600 rounded-xl group-hover/del:bg-red-600 group-hover/del:text-white transition-colors">
+                                <Trash2 size={16} />
                               </div>
-                              <span className="font-bold text-red-600">Remove Faculty</span>
+                              <div className="flex flex-col">
+                                 <span className="font-black text-red-600 text-xs uppercase tracking-widest">Purge Profile</span>
+                                 <span className="text-[9px] text-red-400 font-bold uppercase italic">Permanent removal</span>
+                              </div>
                             </DropdownMenuItem>
                           </DropdownMenuGroup>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ))}
+                 ))
+                )}
               </TableBody>
             </Table>
           )}

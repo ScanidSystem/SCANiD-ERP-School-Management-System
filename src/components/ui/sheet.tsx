@@ -9,12 +9,46 @@ function Sheet({ ...props }: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
 }
 
-function SheetTrigger({ ...props }: SheetPrimitive.Trigger.Props) {
-  return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />
+function SheetTrigger({ 
+  render, 
+  nativeButton, 
+  children, 
+  ...props 
+}: SheetPrimitive.Trigger.Props & { asChild?: boolean }) {
+  const asChild = (props as any).asChild;
+  const { asChild: _, ...rest } = props as any;
+
+  return (
+    <SheetPrimitive.Trigger
+      data-slot="sheet-trigger"
+      render={render ?? (asChild && React.isValidElement(children) ? children : undefined)}
+      nativeButton={nativeButton ?? (!render && !asChild)}
+      {...rest}
+    >
+      {asChild ? undefined : children}
+    </SheetPrimitive.Trigger>
+  )
 }
 
-function SheetClose({ ...props }: SheetPrimitive.Close.Props) {
-  return <SheetPrimitive.Close data-slot="sheet-close" {...props} />
+function SheetClose({ 
+  render, 
+  nativeButton, 
+  children, 
+  ...props 
+}: SheetPrimitive.Close.Props & { asChild?: boolean }) {
+  const asChild = (props as any).asChild;
+  const { asChild: _, ...rest } = props as any;
+
+  return (
+    <SheetPrimitive.Close
+      data-slot="sheet-close"
+      render={render ?? (asChild && React.isValidElement(children) ? children : undefined)}
+      nativeButton={nativeButton ?? (!render && !asChild)}
+      {...rest}
+    >
+      {asChild ? undefined : children}
+    </SheetPrimitive.Close>
+  )
 }
 
 function SheetPortal({ ...props }: SheetPrimitive.Portal.Props) {

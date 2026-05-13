@@ -263,7 +263,20 @@ export default function Messages({ user }: { user: any }) {
   const currentMessages = selectedContact ? (messages[selectedContact.id] || []) : [];
 
   return (
-    <div className="h-[calc(100vh-180px)] flex bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-300">
+    <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-5">
+          <div className="bg-blue-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:rotate-3">
+             <Send size={28} />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">Communications</h1>
+            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Internal messaging and notification center.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="h-[calc(100vh-280px)] flex bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
       {/* Sidebar */}
       <div className="w-80 border-r border-slate-100 flex flex-col bg-slate-50/50">
         <div className="p-4 border-b border-slate-100 bg-white">
@@ -650,6 +663,7 @@ export default function Messages({ user }: { user: any }) {
           </Button>
         </div>
       )}
+    </div>
     </div>
   );
 }

@@ -127,17 +127,22 @@ export default function SystemLogs({ user }: SystemLogsProps) {
         <span className="text-slate-900">System Logs</span>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-black tracking-tight text-slate-900">System Logs</h1>
-          <p className="text-slate-500 mt-1">Monitor system activities, exceptions, and institutional data health.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-5">
+          <div className="bg-blue-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:rotate-3">
+             <Terminal size={28} />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">System Infrastructure</h1>
+            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Monitor system activities, exceptions, and institutional data health.</p>
+          </div>
         </div>
         <Button 
           variant="outline" 
           size="sm" 
           onClick={fetchData} 
           disabled={refreshing}
-          className="rounded-xl border-slate-200 font-bold bg-white shadow-sm hover:bg-slate-50"
+          className="rounded-xl border-slate-200 font-bold bg-white shadow-sm hover:bg-slate-50 h-11 px-6 text-xs uppercase tracking-widest"
         >
           <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
           Sync System Data
@@ -145,24 +150,24 @@ export default function SystemLogs({ user }: SystemLogsProps) {
       </div>
 
       <Tabs defaultValue="audit" orientation="horizontal" className="w-full">
-        <TabsList className="bg-slate-100/80 p-1.5 rounded-2xl h-12 w-fit flex-row">
-          <TabsTrigger value="audit" className="px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50">
+        <TabsList className="bg-slate-100/80 p-1.5 rounded-2xl h-auto overflow-x-auto max-w-full flex justify-start sm:justify-center no-scrollbar">
+          <TabsTrigger value="audit" className="px-4 sm:px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50 text-xs sm:text-sm whitespace-nowrap">
             <History className="mr-2 h-4 w-4" />
             Audit Trail
           </TabsTrigger>
-          <TabsTrigger value="errors" className="px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50">
+          <TabsTrigger value="errors" className="px-4 sm:px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50 text-xs sm:text-sm whitespace-nowrap">
             <AlertCircle className="mr-2 h-4 w-4" />
             Database Errors
           </TabsTrigger>
-          <TabsTrigger value="applogs" className="px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50">
+          <TabsTrigger value="applogs" className="px-4 sm:px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50 text-xs sm:text-sm whitespace-nowrap">
             <Terminal className="mr-2 h-4 w-4" />
             Application Logs
           </TabsTrigger>
-          <TabsTrigger value="database" className="px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50">
+          <TabsTrigger value="database" className="px-4 sm:px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50 text-xs sm:text-sm whitespace-nowrap">
             <Database className="mr-2 h-4 w-4" />
             DB Schema
           </TabsTrigger>
-          <TabsTrigger value="seed" className="px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50">
+          <TabsTrigger value="seed" className="px-4 sm:px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50 text-xs sm:text-sm whitespace-nowrap">
             <RefreshCw className="mr-2 h-4 w-4" />
             Dummy Data
           </TabsTrigger>
@@ -233,22 +238,22 @@ export default function SystemLogs({ user }: SystemLogsProps) {
 
         <TabsContent value="errors" className="mt-8">
           <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
-            <CardHeader className="bg-white px-8 pt-8 pb-4 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl font-black text-slate-900">Database Errors</CardTitle>
-                <CardDescription className="font-medium text-slate-400">Exceptions recorded during database operations.</CardDescription>
-              </div>
-              <Button 
-                variant="destructive" 
-                size="sm" 
-                onClick={clearErrorLogs} 
-                disabled={errorLogs.length === 0}
-                className="rounded-xl font-black px-5 h-9 text-[10px] uppercase tracking-widest shadow-lg shadow-red-100"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Flush Logs
-              </Button>
-            </CardHeader>
+        <CardHeader className="bg-white px-4 sm:px-8 pt-6 sm:pt-8 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <CardTitle className="text-xl sm:text-2xl font-black text-slate-900">Database Errors</CardTitle>
+            <CardDescription className="font-medium text-slate-400">Exceptions recorded during database operations.</CardDescription>
+          </div>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            onClick={clearErrorLogs} 
+            disabled={errorLogs.length === 0}
+            className="rounded-xl font-black px-5 h-9 text-[10px] uppercase tracking-widest shadow-lg shadow-red-100 w-full sm:w-auto"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Flush Logs
+          </Button>
+        </CardHeader>
             <CardContent className="px-0">
               <div className="overflow-x-auto">
                 <Table>

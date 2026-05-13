@@ -35,10 +35,17 @@ export default function Settings({ user }: SettingsProps) {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Settings</h1>
-        <p className="text-slate-500">Manage your system configurations and personal preferences</p>
+    <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-5">
+          <div className="bg-slate-900 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-slate-200 transition-transform hover:rotate-3">
+             <SettingsIcon size={28} />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">System Settings</h1>
+            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Manage your system configurations and personal preferences.</p>
+          </div>
+        </div>
       </div>
 
       <Tabs defaultValue="general" className="w-full flex flex-col md:flex-row gap-8">

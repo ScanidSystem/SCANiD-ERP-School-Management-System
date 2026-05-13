@@ -28,9 +28,11 @@ interface SidebarProps {
     role: Role;
   };
   onLogout: () => void;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
-export default function Sidebar({ user, onLogout }: SidebarProps) {
+export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }: SidebarProps) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -109,16 +111,31 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
       animate={isCollapsed ? "collapsed" : "expanded"}
       variants={sidebarVariants}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="bg-slate-950 text-white h-full flex flex-col relative z-40 border-r border-slate-800/50 shadow-2xl"
+      className={cn(
+        "bg-slate-950 text-white h-full flex flex-col relative z-50 border-r border-slate-800/50 shadow-2xl transition-all duration-300",
+        // Mobile styles
+        "fixed lg:relative inset-y-0 left-0 transform",
+        isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+      )}
     >
       <div className={cn(
         "p-6 flex flex-col items-center relative min-h-[140px] justify-center transition-all duration-300",
         isCollapsed ? "px-2" : "p-6"
       )}>
+        {/* Mobile close button */}
+        {isMobileOpen && (
+          <button 
+            onClick={onCloseMobile}
+            className="lg:hidden absolute right-4 top-4 text-slate-400 hover:text-white"
+          >
+            <ChevronLeft size={24} />
+          </button>
+        )}
+
         <SimpleTooltip content={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"} side="right">
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="absolute -right-3 top-10 bg-blue-600 text-white rounded-full p-1.5 shadow-xl hover:bg-blue-500 transition-all z-50 border-2 border-slate-950 scale-100 hover:scale-110 active:scale-95"
+            className="absolute -right-3 top-10 bg-blue-600 text-white rounded-full p-1.5 shadow-xl hover:bg-blue-500 transition-all z-50 border-2 border-slate-950 scale-100 hover:scale-110 active:scale-95 hidden lg:block"
             aria-label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
             {isCollapsed ? <ChevronRight size={14} strokeWidth={3} /> : <ChevronLeft size={14} strokeWidth={3} />}
@@ -164,7 +181,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
         </AnimatePresence>
       </div>
       
-      <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto overflow-x-visible custom-scrollbar scrollbar-hide">
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto overflow-x-visible custom-scrollbar scrollbar-hide">
         {filteredItems.map((item) => {
           const isParentActive = location.pathname.startsWith(item.path);
           const isActive = location.pathname === item.path;
@@ -179,40 +196,34 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
                     <button
                       onClick={() => toggleExpand(item.name)}
                       className={cn(
-                        "w-full flex items-center px-3 py-2.5 rounded-xl transition-all relative group h-11 text-left",
+                        "w-full flex items-center px-4 py-2.5 rounded-xl transition-all duration-300 relative group h-12 text-left",
                         isParentActive 
-                          ? "bg-blue-600/10 text-blue-400" 
-                          : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50",
-                        isCollapsed && "justify-center"
+                          ? "bg-white/10 text-white" 
+                          : "text-slate-400 hover:text-slate-100 hover:bg-white/5",
+                        isCollapsed && "justify-center px-0"
                       )}
                     >
-                      {isParentActive && (
-                        <motion.div 
-                          layoutId="active-nav"
-                          className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full"
-                        />
-                      )}
                       <div className={cn(
-                        "flex items-center justify-center shrink-0 transition-transform duration-200",
-                        isParentActive ? "text-blue-400" : "group-hover:scale-110"
+                        "flex items-center justify-center shrink-0 transition-all duration-300",
+                        isParentActive ? "text-blue-400 scale-110" : "group-hover:scale-110"
                       )}>
-                        <item.icon size={20} strokeWidth={isParentActive ? 2.5 : 2} />
+                        <item.icon size={22} strokeWidth={isParentActive ? 2.5 : 2} />
                       </div>
                       
                       {!isCollapsed && (
                         <>
                           <span className={cn(
-                            "ml-3 font-semibold whitespace-nowrap overflow-hidden text-sm tracking-tight flex-1",
-                            isParentActive ? "text-slate-100" : "text-slate-400"
+                            "ml-4 font-bold whitespace-nowrap overflow-hidden text-sm tracking-tight flex-1 transition-colors duration-300",
+                            isParentActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
                           )}>
                             {item.name}
                           </span>
                           <motion.div
                             animate={{ rotate: isExpanded ? 90 : 0 }}
                             transition={{ duration: 0.2 }}
-                            className="text-slate-500"
+                            className={cn("transition-colors", isParentActive ? "text-blue-400" : "text-slate-600")}
                           >
-                            <ChevronRight size={14} />
+                            <ChevronRight size={14} strokeWidth={3} />
                           </motion.div>
                         </>
                       )}
@@ -221,30 +232,24 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
                     <Link
                       to={item.path}
                       className={cn(
-                        "flex items-center px-3 py-2.5 rounded-xl transition-all relative group h-11",
+                        "flex items-center px-4 py-2.5 rounded-xl transition-all duration-300 relative group h-12",
                         isActive 
-                          ? "bg-blue-600/10 text-blue-400" 
-                          : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50",
-                        isCollapsed && "justify-center"
+                          ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
+                          : "text-slate-400 hover:text-slate-100 hover:bg-white/5",
+                        isCollapsed && "justify-center px-0"
                       )}
                     >
-                      {isActive && (
-                        <motion.div 
-                          layoutId="active-nav"
-                          className="absolute left-0 w-1 h-6 bg-blue-500 rounded-r-full"
-                        />
-                      )}
                       <div className={cn(
-                        "flex items-center justify-center shrink-0 transition-transform duration-200",
-                        isActive ? "text-blue-400" : "group-hover:scale-110"
+                        "flex items-center justify-center shrink-0 transition-all duration-300",
+                        isActive ? "text-white scale-110" : "group-hover:scale-110"
                       )}>
-                        <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                        <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
                       </div>
                       
                       {!isCollapsed && (
                         <span className={cn(
-                          "ml-3 font-semibold whitespace-nowrap overflow-hidden text-sm tracking-tight",
-                          isActive ? "text-slate-100" : "text-slate-400"
+                          "ml-4 font-bold whitespace-nowrap overflow-hidden text-sm tracking-tight",
+                          isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
                         )}>
                           {item.name}
                         </span>
@@ -254,15 +259,14 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
                 </div>
               </SimpleTooltip>
 
-              {/* Render Sub Items */}
               <AnimatePresence initial={false}>
                 {hasSubItems && isExpanded && !isCollapsed && (
                   <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
+                    initial={{ height: 0, opacity: 0, x: -10 }}
+                    animate={{ height: "auto", opacity: 1, x: 0 }}
+                    exit={{ height: 0, opacity: 0, x: -10 }}
                     transition={{ duration: 0.2 }}
-                    className="overflow-hidden pl-11 space-y-1"
+                    className="overflow-hidden pl-12 space-y-1 mt-1 border-l border-slate-800/50 ml-7"
                   >
                     {item.subItems?.map((subItem) => {
                       const isSubActive = location.pathname === subItem.path;
@@ -272,12 +276,16 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
                             <Link
                               to={subItem.path}
                               className={cn(
-                                "flex items-center py-2 px-3 rounded-lg text-xs font-bold transition-all",
+                                "flex items-center py-2 px-3 rounded-lg text-xs font-bold transition-all duration-200",
                                 isSubActive 
                                   ? "text-blue-400 bg-blue-400/5" 
-                                  : "text-slate-500 hover:text-slate-200 hover:bg-slate-800/30"
+                                  : "text-slate-500 hover:text-slate-200 hover:bg-white/5"
                               )}
                             >
+                              <div className={cn(
+                                "w-1 h-1 rounded-full mr-3 transition-all duration-300",
+                                isSubActive ? "bg-blue-400 scale-125" : "bg-slate-700 group-hover:bg-slate-500"
+                              )} />
                               {subItem.name}
                             </Link>
                           </SimpleTooltip>

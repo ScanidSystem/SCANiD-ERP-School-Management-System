@@ -9,14 +9,24 @@ function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
 }
 
-function DialogTrigger({ render, nativeButton, ...props }: DialogPrimitive.Trigger.Props) {
+function DialogTrigger({ 
+  render, 
+  nativeButton, 
+  children, 
+  ...props 
+}: DialogPrimitive.Trigger.Props & { asChild?: boolean }) {
+  const asChild = (props as any).asChild;
+  const { asChild: _, ...rest } = props as any;
+
   return (
     <DialogPrimitive.Trigger
       data-slot="dialog-trigger"
-      render={render}
-      nativeButton={nativeButton ?? (!render && !(props as any).asChild)}
-      {...props}
-    />
+      render={render ?? (asChild && React.isValidElement(children) ? children : undefined)}
+      nativeButton={nativeButton ?? (!render && !asChild)}
+      {...rest}
+    >
+      {asChild ? undefined : children}
+    </DialogPrimitive.Trigger>
   )
 }
 
@@ -24,14 +34,24 @@ function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
 }
 
-function DialogClose({ render, nativeButton, ...props }: DialogPrimitive.Close.Props) {
+function DialogClose({ 
+  render, 
+  nativeButton, 
+  children, 
+  ...props 
+}: DialogPrimitive.Close.Props & { asChild?: boolean }) {
+  const asChild = (props as any).asChild;
+  const { asChild: _, ...rest } = props as any;
+
   return (
     <DialogPrimitive.Close
       data-slot="dialog-close"
-      render={render}
-      nativeButton={nativeButton ?? (!render && !(props as any).asChild)}
-      {...props}
-    />
+      render={render ?? (asChild && React.isValidElement(children) ? children : undefined)}
+      nativeButton={nativeButton ?? (!render && !asChild)}
+      {...rest}
+    >
+      {asChild ? undefined : children}
+    </DialogPrimitive.Close>
   )
 }
 

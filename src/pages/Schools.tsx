@@ -255,15 +255,21 @@ export default function Schools({ user }: { user: UserType }) {
 
   return (
     <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-slate-500 mt-1">Configure and monitor all registered educational institutions.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-5">
+          <div className="bg-blue-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:rotate-3">
+             <Building2 size={28} />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">Institution Management</h1>
+            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Configure and monitor all registered educational institutions.</p>
+          </div>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger 
             nativeButton={true}
             render={
-              <Button className="bg-blue-600 hover:bg-blue-700 gap-2 shadow-lg shadow-blue-200">
+              <Button className="bg-blue-600 hover:bg-blue-700 h-11 px-6 font-black rounded-xl gap-2 shadow-lg shadow-blue-200 uppercase text-xs tracking-widest">
                 <Plus size={18} /> Register New School
               </Button>
             } 

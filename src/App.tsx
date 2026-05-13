@@ -27,6 +27,7 @@ import { Role, User } from "@/types";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Mock authentication for development
@@ -65,11 +66,29 @@ export default function App() {
   return (
     <BrowserRouter>
       <TooltipProvider>
-        <div className="flex h-screen bg-slate-50">
-          <Sidebar user={user} onLogout={handleLogout} />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <Navbar user={user} onLogout={handleLogout} onUserUpdate={handleUpdateUser} />
-            <Breadcrumbs />
+        <div className="flex h-screen bg-slate-50 relative">
+          {/* Mobile Overlay */}
+          {isSidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-slate-900/50 z-40 lg:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
+
+          <Sidebar 
+            user={user} 
+            onLogout={handleLogout} 
+            isMobileOpen={isSidebarOpen} 
+            onCloseMobile={() => setIsSidebarOpen(false)} 
+          />
+          
+          <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+            <Navbar 
+              user={user} 
+              onLogout={handleLogout} 
+              onUserUpdate={handleUpdateUser} 
+              toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            />
             <main className="flex-1 overflow-auto p-6 min-w-0">
               <Routes>
                 <Route path="/" element={<Dashboard user={user} />} />

@@ -74,41 +74,49 @@ export default function Fees({ user }: { user: any }) {
   }
 
   return (
-    <div className="space-y-6 animate-in slide-in-from-top-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <p className="text-slate-500 mt-1">Track payments, issue invoices and monitor financial health.</p>
-        </div>
-        {user.role === "superadmin" && (
-          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Branch:</span>
-            <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
-              <SelectTrigger className="h-9 w-[180px] border-none bg-slate-50 font-bold text-xs rounded-xl focus:ring-0">
-                <SelectValue placeholder="Select School Branch">
-                  {selectedSchoolId && selectedSchoolId !== "none" ? schools.find(s => s.id.toString() === selectedSchoolId)?.name : "Select School Branch"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl border-slate-200 shadow-2xl p-2">
-                <SelectItem value="none" className="font-semibold py-2 px-3 rounded-lg text-slate-400 italic">Select School Branch</SelectItem>
-                {schools.map(s => (
-                  <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2 px-3 rounded-lg">
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-5">
+          <div className="bg-blue-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:rotate-3">
+             <DollarSign size={28} />
           </div>
-        )}
-        <div className="flex items-center gap-2">
-            {isManagement && (
-              <>
-                <Button variant="outline" className="gap-2"><History size={16} /> History</Button>
-                <Button className="bg-slate-900 hover:bg-slate-800 gap-2"><Plus size={16} /> Collect Fees</Button>
-              </>
-            )}
-            {isParent && (
-              <Button className="bg-blue-600 hover:bg-blue-700 gap-2"><CreditCard size={16} /> Pay Online</Button>
-            )}
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">Fee Management</h1>
+            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Track payments, issue invoices and monitor financial health.</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          {user.role === "superadmin" && (
+            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Branch:</span>
+              <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
+                <SelectTrigger className="h-9 w-[180px] border-none bg-slate-50 font-bold text-xs rounded-xl focus:ring-0">
+                  <SelectValue placeholder="Select School Branch">
+                    {selectedSchoolId && selectedSchoolId !== "none" ? schools.find(s => s.id.toString() === selectedSchoolId)?.name : "Select School Branch"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-slate-200 shadow-2xl p-2">
+                  <SelectItem value="none" className="font-semibold py-2 px-3 rounded-lg text-slate-400 italic">Select School Branch</SelectItem>
+                  {schools.map(s => (
+                    <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2 px-3 rounded-lg">
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+              {isManagement && (
+                <>
+                  <Button variant="outline" className="gap-2"><History size={16} /> History</Button>
+                  <Button className="bg-slate-900 hover:bg-slate-800 gap-2"><Plus size={16} /> Collect Fees</Button>
+                </>
+              )}
+              {isParent && (
+                <Button className="bg-blue-600 hover:bg-blue-700 gap-2"><CreditCard size={16} /> Pay Online</Button>
+              )}
+          </div>
         </div>
       </div>
 

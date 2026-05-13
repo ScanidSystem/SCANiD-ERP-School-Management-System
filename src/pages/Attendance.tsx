@@ -18,7 +18,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Calendar as CalendarIcon, Check, X, Clock, Save, Loader2 } from "lucide-react";
+import { Calendar as CalendarIcon, Check, X, Clock, Save, Loader2, CalendarCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -112,10 +112,16 @@ export default function Attendance({ user }: { user: any }) {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <p className="text-slate-500 mt-1">Daily presence marking and reporting for all classes.</p>
+    <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-5">
+          <div className="bg-emerald-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-emerald-200 transition-transform hover:rotate-3">
+             <CalendarCheck size={28} />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">Daily Attendance</h1>
+            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Daily presence marking and reporting for all classes.</p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 bg-white px-3 py-2 border border-slate-200 rounded-lg shadow-sm">
@@ -136,12 +142,12 @@ export default function Attendance({ user }: { user: any }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Attendance Context</CardTitle>
-            <CardDescription>Select unit and date registry</CardDescription>
+        <Card className="lg:col-span-1 border-none shadow-sm rounded-[2rem] overflow-hidden bg-white">
+          <CardHeader className="border-b border-slate-50 px-8 py-6">
+            <CardTitle className="text-lg font-black text-slate-900 tracking-tight">Attendance Context</CardTitle>
+            <CardDescription className="text-xs font-bold uppercase tracking-widest text-slate-400">Select unit and date registry</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5 p-8">
             {user.role === "superadmin" && (
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase text-slate-500 tracking-widest ml-1">School Branch</label>
@@ -233,20 +239,20 @@ export default function Attendance({ user }: { user: any }) {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50/50 h-14">
-                  <TableHead className="w-[120px] pl-8 text-xs font-black text-slate-500 uppercase tracking-widest">Digital ID</TableHead>
-                  <TableHead className="w-16 text-xs font-black text-slate-500 uppercase tracking-widest">Roll</TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Student Identity</TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Presence</TableHead>
-                  {canManage && <TableHead className="text-right pr-8 text-xs font-black text-slate-500 uppercase tracking-widest">Actions</TableHead>}
-                </TableRow>
+                  <TableRow className="bg-slate-50/50 h-16 border-b border-slate-50">
+                    <TableHead className="w-[120px] pl-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Digital ID</TableHead>
+                    <TableHead className="w-16 hidden sm:table-cell text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Roll</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Student Identity</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Presence Status</TableHead>
+                    {canManage && <TableHead className="text-right pr-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Management</TableHead>}
+                  </TableRow>
               </TableHeader>
                 <TableBody>
                   {students.map((student) => (
-                    <TableRow key={student.id} className="hover:bg-slate-50/80 transition-colors group border-b border-slate-50">
-                      <TableCell className="pl-8 font-mono text-xs font-black text-blue-600 italic">{(student as any).grno || `GR-${student.id}`}</TableCell>
-                      <TableCell className="font-mono text-xs font-bold text-slate-400">{student.roll}</TableCell>
-                      <TableCell className="font-black text-slate-900">{student.name}</TableCell>
+                    <TableRow key={student.id} className="hover:bg-slate-50/50 transition-colors group border-b border-slate-50/50 h-20">
+                      <TableCell className="pl-8 font-mono text-xs font-black text-blue-600 bg-blue-50/50 px-2.5 py-1.5 rounded-lg border border-blue-100/50 mx-4 my-2 block sm:inline-block">{(student as any).grno || `GR-${student.id}`}</TableCell>
+                      <TableCell className="font-mono text-xs font-bold text-slate-400 hidden sm:table-cell">{student.roll}</TableCell>
+                      <TableCell className="font-black text-slate-900 tracking-tight">{student.name}</TableCell>
                       <TableCell>
                         <Badge 
                           className={cn(

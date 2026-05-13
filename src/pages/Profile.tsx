@@ -18,6 +18,7 @@ import {
   Key
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface ProfileProps {
   user: UserType;
@@ -38,7 +39,19 @@ export default function Profile({ user }: ProfileProps) {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-5">
+          <div className="bg-slate-900 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-slate-200 transition-transform hover:rotate-3">
+             <User size={28} />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">My Profile</h1>
+            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Manage your personal information and security settings.</p>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col md:flex-row gap-6 items-start">
         {/* Profile Card */}
         <Card className="w-full md:w-80 shrink-0 border-slate-200">
@@ -71,17 +84,16 @@ export default function Profile({ user }: ProfileProps) {
           </CardContent>
         </Card>
 
-        {/* Main Content */}
         <div className="flex-1 space-y-6 w-full">
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <Card className="border-slate-200 shadow-sm overflow-hidden">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0 pb-4">
               <div>
                 <CardTitle className="text-lg font-bold">Personal Information</CardTitle>
                 <CardDescription>Manage your profile details and preferences</CardDescription>
               </div>
               <Button 
                 variant={isEditing ? "default" : "outline"}
-                className={isEditing ? "bg-blue-600 hover:bg-blue-700" : ""}
+                className={cn("w-full sm:w-auto", isEditing ? "bg-blue-600 hover:bg-blue-700" : "")}
                 onClick={() => isEditing ? handleSave() : setIsEditing(true)}
               >
                 {isEditing ? "Save Changes" : "Edit Profile"}
