@@ -23,32 +23,71 @@ SET IDENTITY_INSERT [dbo].[Roles] OFF;
 GO
 
 -- 1.7 SEED MASTER DATA
-INSERT INTO [dbo].[Standards] ([Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
-VALUES ('UKG', 1, 0, 'system', GETDATE()), ('1st', 1, 0, 'system', GETDATE()), ('10th', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[Standards] ON;
+INSERT INTO [dbo].[Standards] ([Id], [Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES (1, 'UKG', 1, 0, 'system', GETDATE()), 
+       (2, '1st', 1, 0, 'system', GETDATE()), 
+       (3, '10th', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[Standards] OFF;
+GO
 
-INSERT INTO [dbo].[Sections] ([Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
-VALUES ('A', 1, 0, 'system', GETDATE()), ('B', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[Sections] ON;
+INSERT INTO [dbo].[Sections] ([Id], [Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES (1, 'A', 1, 0, 'system', GETDATE()), 
+       (2, 'B', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[Sections] OFF;
+GO
 
-INSERT INTO [dbo].[Religions] ([Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
-VALUES ('Hindu', 1, 0, 'system', GETDATE()), ('Muslim', 1, 0, 'system', GETDATE()), ('Christian', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[Religions] ON;
+INSERT INTO [dbo].[Religions] ([Id], [Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES (1, 'Hindu', 1, 0, 'system', GETDATE()), 
+       (2, 'Muslim', 1, 0, 'system', GETDATE()), 
+       (3, 'Christian', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[Religions] OFF;
+GO
 
-INSERT INTO [dbo].[Castes] ([Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
-VALUES ('General', 1, 0, 'system', GETDATE()), ('OBC', 1, 0, 'system', GETDATE()), ('SC', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[Castes] ON;
+INSERT INTO [dbo].[Castes] ([Id], [Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES (1, 'General', 1, 0, 'system', GETDATE()), 
+       (2, 'OBC', 1, 0, 'system', GETDATE()), 
+       (3, 'SC', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[Castes] OFF;
+GO
 
-INSERT INTO [dbo].[AcademicYears] ([Name], [IsCurrent], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
-VALUES ('2024-2025', 0, 1, 0, 'system', GETDATE()), ('2025-2026', 1, 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[AcademicYears] ON;
+INSERT INTO [dbo].[AcademicYears] ([Id], [Name], [IsCurrent], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES (1, '2024-2025', 0, 1, 0, 'system', GETDATE()), 
+       (2, '2025-2026', 1, 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[AcademicYears] OFF;
+GO
 
-INSERT INTO [dbo].[BloodGroups] ([Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
-VALUES ('A+', 1, 0, 'system', GETDATE()), ('O+', 1, 0, 'system', GETDATE()), ('B+', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[BloodGroups] ON;
+INSERT INTO [dbo].[BloodGroups] ([Id], [Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES (1, 'A+', 1, 0, 'system', GETDATE()), 
+       (2, 'O+', 1, 0, 'system', GETDATE()), 
+       (3, 'B+', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[BloodGroups] OFF;
+GO
 
-INSERT INTO [dbo].[Houses] ([Name], [Color], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
-VALUES ('Red', '#ef4444', 1, 0, 'system', GETDATE()), ('Blue', '#3b82f6', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[Houses] ON;
+INSERT INTO [dbo].[Houses] ([Id], [Name], [Color], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES (1, 'Red', '#ef4444', 1, 0, 'system', GETDATE()), 
+       (2, 'Blue', '#3b82f6', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[Houses] OFF;
+GO
 
-INSERT INTO [dbo].[AdmissionTypes] ([Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
-VALUES ('Regular', 1, 0, 'system', GETDATE()), ('RTE', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[AdmissionTypes] ON;
+INSERT INTO [dbo].[AdmissionTypes] ([Id], [Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES (1, 'Regular', 1, 0, 'system', GETDATE()), 
+       (2, 'RTE', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[AdmissionTypes] OFF;
+GO
 
-INSERT INTO [dbo].[Shifts] ([Name], [StartTime], [EndTime], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
-VALUES ('SHIFT-I-XII', '08:00', '14:00', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[Shifts] ON;
+INSERT INTO [dbo].[Shifts] ([Id], [Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES (1, 'SHIFT-I-XII', 1, 0, 'system', GETDATE());
+SET IDENTITY_INSERT [dbo].[Shifts] OFF;
+GO
 
 -- 2. SEED USERS (Plain text password "Password123" for demo compatibility)
 SET IDENTITY_INSERT [dbo].[Users] ON;
