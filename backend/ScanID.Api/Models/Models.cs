@@ -126,7 +126,7 @@ namespace ScanID.Api.Models
         public string? EMAIL { get; set; }
         public string? SHIFTNAME { get; set; }
         public string? DOA { get; set; }
-        public string? PHOTOPATH { get; set; }
+        public string? ProfilePicturePath { get; set; }
         public string? CARDID { get; set; }
         public string? VALIDFROM { get; set; }
         public string? VALIDTO { get; set; }
@@ -174,9 +174,33 @@ namespace ScanID.Api.Models
         public string? EntryDate { get; set; }
         public string? PEN_No { get; set; }
         public string? apaar_id { get; set; }
+        public string? RFID { get; set; }
+
+        // --- ID Mapping properties for master data ---
+        public int? StandardId { get; set; }
+        public int? SectionId { get; set; }
+        public int? AcademicYearId { get; set; }
+        public int? CasteId { get; set; }
+        public int? SubCasteId { get; set; }
+        public int? ReligionId { get; set; }
+        public int? BloodGroupId { get; set; }
+        public int? HouseId { get; set; }
+        public int? AdmissionTypeId { get; set; }
+        public int? CityId { get; set; }
+        public int? StateId { get; set; }
+        public int? ShiftId { get; set; }
 
         [ForeignKey("SchoolId")]
         public School? School { get; set; }
+
+        [ForeignKey("StandardId")]
+        public Standard? Standard { get; set; }
+
+        [ForeignKey("SectionId")]
+        public Section? Section { get; set; }
+
+        [ForeignKey("ShiftId")]
+        public Shift? Shift { get; set; }
     }
 
 

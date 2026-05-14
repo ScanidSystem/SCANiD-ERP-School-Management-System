@@ -150,6 +150,15 @@ export const apiService = {
   bulkCreateStudents: (data: any[]) => api.post("/students/bulk", data),
   updateStudent: (id: number, data: any) => api.put(`/students/${id}`, data),
   deleteStudent: (id: number) => api.delete(`/students/${id}`),
+  uploadStudentPhoto: (id: number, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post(`/students/${id}/photo`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
 
   // Marks
   getMarks: (schoolId?: number) => api.get("/marks", { params: { schoolId } }),

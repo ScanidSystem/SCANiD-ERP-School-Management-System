@@ -134,6 +134,104 @@ namespace ScanID.Api.Controllers
         }
 
 
+        /// <summary>
+        /// Updates a student's profile picture by saving it to the server filesystem.
+        /// </summary>
+        /// <param name="id">The student ID.</param>
+        /// <param name="file">The uploaded image file.</param>
+        /// <returns>JSON object containing the saved relative path.</returns>
+        [HttpPost("{id}/photo")]
+        public async Task<IActionResult> UploadPhoto(int id, IFormFile file)
+        {
+            if (file == null || file.Length == 0) 
+            {
+                // If no file is provided, we can't proceed
+                return BadRequest(new { message = "No image file provided for upload." });
+            }
+
+            // Fetch student with related master data to build hierarchical path
+            var student = await _context.Students
+                .Include(s => s.School)
+                .Include(s => s.Standard)
+                .Include(s => s.Section)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (student == null) 
+            {
+                return NotFound(new { message = "Student record not found." });
+            }
+
+            try 
+            {
+                // Retrieve names from masters or use standard industry fallbacks
+                var schoolName = SanitizeFolderName(student.School?.Name ?? "General");
+                var standardName = SanitizeFolderName(student.Standard?.Name ?? student.STD ?? "Unassigned");
+                var divisionName = SanitizeFolderName(student.Section?.Name ?? student.DIV ?? "General");
+
+                // Define the dynamic physical upload location: /uploads/[schoolname]/[standard]/[division]
+                var relativeFolder = Path.Combine("uploads", schoolName, standardName, divisionName);
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativeFolder);
+                
+                // Ensure the hierarchical directory structure exists on the physical machine
+                if (!Directory.Exists(uploadsFolder)) 
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                // Generate a unique filename using industry standard naming (prefix + id + timestamp)
+                var extension = Path.GetExtension(file.FileName);
+                var fileName = $"student_{id}_{DateTime.Now.Ticks}{extension}";
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                // Save the file physically on the computer
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                // Delete old photo if it exists to maintain filesystem cleanliness
+                if (!string.IsNullOrEmpty(student.ProfilePicturePath))
+                {
+                    var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", student.ProfilePicturePath.TrimStart('/'));
+                    if (System.IO.File.Exists(oldFilePath))
+                    {
+                        System.IO.File.Delete(oldFilePath);
+                    }
+                }
+
+                // Update database with the new structured path
+                student.ProfilePicturePath = $"/{relativeFolder.Replace("\\", "/")}/{fileName}";
+                student.ModifiedOn = DateTime.Now;
+                
+                await _context.SaveChangesAsync();
+
+                return Ok(new { 
+                    message = "Identity image updated successfully", 
+                    path = student.ProfilePicturePath 
+                });
+            }
+            catch (Exception ex)
+            {
+                // Return detailed error for troubleshooting during development
+                return StatusCode(500, new { message = "Physical storage failed: " + ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Sanitizes a string for use as a folder name by removing illegal characters.
+        /// </summary>
+        private string SanitizeFolderName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "Unassigned";
+            
+            // Remove illegal characters from path
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var sanitized = new string(name.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray());
+            
+            // Further cleaning to ensure it's a slick folder name
+            return sanitized.Replace(" ", "_").Trim('_');
+        }
+
         private async Task<bool> StudentExistsAsync(int id)
         {
             return await _context.Students.AnyAsync(e => e.Id == id);

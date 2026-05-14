@@ -145,7 +145,7 @@ CREATE TABLE [dbo].[Students](
 	[EMAIL] [nvarchar](50) NULL,
 	[SHIFTNAME] [nvarchar](200) NULL,
 	[DOA] [nvarchar](200) NULL,
-	[PHOTOPATH] [nvarchar](500) NULL,
+	[ProfilePicturePath] [nvarchar](500) NULL,
 	[CARDID] [nvarchar](500) NULL,
 	[VALIDFROM] [nvarchar](200) NULL,
 	[VALIDTO] [nvarchar](200) NULL,
@@ -193,6 +193,21 @@ CREATE TABLE [dbo].[Students](
 	[EntryDate] [nvarchar](500) NULL,
 	[PEN_No] [nvarchar](50) NULL,
 	[apaar_id] [varchar](100) NULL,
+	[RFID] [nvarchar](100) NULL,
+
+    -- ID Mapping columns for masters
+	[StandardId] [int] NULL,
+	[SectionId] [int] NULL,
+	[AcademicYearId] [int] NULL,
+	[CasteId] [int] NULL,
+	[SubCasteId] [int] NULL,
+	[ReligionId] [int] NULL,
+	[BloodGroupId] [int] NULL,
+	[HouseId] [int] NULL,
+	[AdmissionTypeId] [int] NULL,
+	[CityId] [int] NULL,
+	[StateId] [int] NULL,
+	[ShiftId] [int] NULL,
 
     [IsActive] [bit] NOT NULL DEFAULT (1),
     [IsDeleted] [bit] NOT NULL DEFAULT (0),
@@ -201,7 +216,18 @@ CREATE TABLE [dbo].[Students](
     [ModifiedBy] [nvarchar](max) NULL,
     [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
  CONSTRAINT [PK_Students] PRIMARY KEY CLUSTERED ([Id] ASC),
- CONSTRAINT [FK_Students_Schools_SchoolId] FOREIGN KEY([SchoolId]) REFERENCES [dbo].[Schools] ([Id]) ON DELETE CASCADE
+ CONSTRAINT [FK_Students_Schools_SchoolId] FOREIGN KEY([SchoolId]) REFERENCES [dbo].[Schools] ([Id]) ON DELETE CASCADE,
+ CONSTRAINT [FK_Students_Standards] FOREIGN KEY([StandardId]) REFERENCES [dbo].[Standards] ([Id]),
+ CONSTRAINT [FK_Students_Sections] FOREIGN KEY([SectionId]) REFERENCES [dbo].[Sections] ([Id]),
+ CONSTRAINT [FK_Students_AcademicYears] FOREIGN KEY([AcademicYearId]) REFERENCES [dbo].[AcademicYears] ([Id]),
+ CONSTRAINT [FK_Students_Castes] FOREIGN KEY([CasteId]) REFERENCES [dbo].[Castes] ([Id]),
+ CONSTRAINT [FK_Students_SubCastes] FOREIGN KEY([SubCasteId]) REFERENCES [dbo].[SubCastes] ([Id]),
+ CONSTRAINT [FK_Students_Religions] FOREIGN KEY([ReligionId]) REFERENCES [dbo].[Religions] ([Id]),
+ CONSTRAINT [FK_Students_BloodGroups] FOREIGN KEY([BloodGroupId]) REFERENCES [dbo].[BloodGroups] ([Id]),
+ CONSTRAINT [FK_Students_Houses] FOREIGN KEY([HouseId]) REFERENCES [dbo].[Houses] ([Id]),
+ CONSTRAINT [FK_Students_AdmissionTypes] FOREIGN KEY([AdmissionTypeId]) REFERENCES [dbo].[AdmissionTypes] ([Id]),
+ CONSTRAINT [FK_Students_Cities] FOREIGN KEY([CityId]) REFERENCES [dbo].[Cities] ([Id]),
+ CONSTRAINT [FK_Students_States] FOREIGN KEY([StateId]) REFERENCES [dbo].[States] ([Id])
 )
 END
 GO
@@ -492,6 +518,143 @@ CREATE TABLE [dbo].[AdmissionTypes](
     [ModifiedBy] [nvarchar](max) NULL,
     [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
  CONSTRAINT [PK_AdmissionTypes] PRIMARY KEY CLUSTERED ([Id] ASC)
+)
+END
+GO
+
+-- Categories table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Categories]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [dbo].[Categories](
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Name] [nvarchar](100) NOT NULL,
+    [IsActive] [bit] NOT NULL DEFAULT (1),
+    [IsDeleted] [bit] NOT NULL DEFAULT (0),
+    [CreatedBy] [nvarchar](max) NULL,
+    [CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+    [ModifiedBy] [nvarchar](max) NULL,
+    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+ CONSTRAINT [PK_Categories] PRIMARY KEY CLUSTERED ([Id] ASC)
+)
+END
+GO
+
+-- Sessions table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Sessions]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [dbo].[Sessions](
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Name] [nvarchar](100) NOT NULL,
+    [IsActive] [bit] NOT NULL DEFAULT (1),
+    [IsDeleted] [bit] NOT NULL DEFAULT (0),
+    [CreatedBy] [nvarchar](max) NULL,
+    [CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+    [ModifiedBy] [nvarchar](max) NULL,
+    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+ CONSTRAINT [PK_Sessions] PRIMARY KEY CLUSTERED ([Id] ASC)
+)
+END
+GO
+
+-- Batches table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Batches]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [dbo].[Batches](
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Name] [nvarchar](100) NOT NULL,
+    [IsActive] [bit] NOT NULL DEFAULT (1),
+    [IsDeleted] [bit] NOT NULL DEFAULT (0),
+    [CreatedBy] [nvarchar](max) NULL,
+    [CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+    [ModifiedBy] [nvarchar](max) NULL,
+    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+ CONSTRAINT [PK_Batches] PRIMARY KEY CLUSTERED ([Id] ASC)
+)
+END
+GO
+
+-- Shifts table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Shifts]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [dbo].[Shifts](
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Name] [nvarchar](100) NOT NULL,
+    [IsActive] [bit] NOT NULL DEFAULT (1),
+    [IsDeleted] [bit] NOT NULL DEFAULT (0),
+    [CreatedBy] [nvarchar](max) NULL,
+    [CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+    [ModifiedBy] [nvarchar](max) NULL,
+    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+ CONSTRAINT [PK_Shifts] PRIMARY KEY CLUSTERED ([Id] ASC)
+)
+END
+GO
+
+-- Subjects table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Subjects]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [dbo].[Subjects](
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Name] [nvarchar](100) NOT NULL,
+    [Description] [nvarchar](max) NULL,
+    [IsActive] [bit] NOT NULL DEFAULT (1),
+    [IsDeleted] [bit] NOT NULL DEFAULT (0),
+    [CreatedBy] [nvarchar](max) NULL,
+    [CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+    [ModifiedBy] [nvarchar](max) NULL,
+    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+ CONSTRAINT [PK_Subjects] PRIMARY KEY CLUSTERED ([Id] ASC)
+)
+END
+GO
+
+-- ExamTypes table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ExamTypes]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [dbo].[ExamTypes](
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Name] [nvarchar](100) NOT NULL,
+    [IsActive] [bit] NOT NULL DEFAULT (1),
+    [IsDeleted] [bit] NOT NULL DEFAULT (0),
+    [CreatedBy] [nvarchar](max) NULL,
+    [CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+    [ModifiedBy] [nvarchar](max) NULL,
+    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+ CONSTRAINT [PK_ExamTypes] PRIMARY KEY CLUSTERED ([Id] ASC)
+)
+END
+GO
+
+-- Designations table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Designations]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [dbo].[Designations](
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Name] [nvarchar](100) NOT NULL,
+    [IsActive] [bit] NOT NULL DEFAULT (1),
+    [IsDeleted] [bit] NOT NULL DEFAULT (0),
+    [CreatedBy] [nvarchar](max) NULL,
+    [CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+    [ModifiedBy] [nvarchar](max) NULL,
+    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+ CONSTRAINT [PK_Designations] PRIMARY KEY CLUSTERED ([Id] ASC)
+)
+END
+GO
+
+-- Occupations table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Occupations]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [dbo].[Occupations](
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Name] [nvarchar](100) NOT NULL,
+    [IsActive] [bit] NOT NULL DEFAULT (1),
+    [IsDeleted] [bit] NOT NULL DEFAULT (0),
+    [CreatedBy] [nvarchar](max) NULL,
+    [CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+    [ModifiedBy] [nvarchar](max) NULL,
+    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+ CONSTRAINT [PK_Occupations] PRIMARY KEY CLUSTERED ([Id] ASC)
 )
 END
 GO

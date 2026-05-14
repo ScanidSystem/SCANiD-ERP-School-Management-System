@@ -83,6 +83,7 @@ export default function Students({ user }: { user: UserType }) {
   const [castes, setCastes] = useState<any[]>([]);
   const [subCastes, setSubCastes] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
+  const [shifts, setShifts] = useState<any[]>([]);
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentStudentId, setCurrentStudentId] = useState<string | null>(null);
@@ -99,7 +100,8 @@ export default function Students({ user }: { user: UserType }) {
         religionsRes,
         castesRes,
         subCastesRes,
-        academicYearsRes
+        academicYearsRes,
+        shiftsRes
       ] = await Promise.all([
         apiService.getStandards(),
         apiService.getSections(),
@@ -110,7 +112,8 @@ export default function Students({ user }: { user: UserType }) {
         apiService.getReligions(),
         apiService.getCastes(),
         apiService.getSubCastes(),
-        apiService.getAcademicYears()
+        apiService.getAcademicYears(),
+        apiService.getShifts()
       ]);
       setStandardsMaster(standardsRes.data || []);
       setSectionsMaster(sectionsRes.data || []);
@@ -122,6 +125,7 @@ export default function Students({ user }: { user: UserType }) {
       setCastes(castesRes.data || []);
       setSubCastes(subCastesRes.data || []);
       setAcademicYears(academicYearsRes.data || []);
+      setShifts(shiftsRes.data || []);
     } catch (error) {
       console.error("Fetch masters error:", error);
     }
@@ -134,37 +138,41 @@ export default function Students({ user }: { user: UserType }) {
     const formatted = response.data.map((s: any) => {
       // Helper to fetch data by ensuring case-insensitive property access for specific schema fields
       const getVal = (prop: string, fallback?: any) => {
-        return s[prop] ?? s[prop.toLowerCase()] ?? s[prop.toUpperCase()] ?? fallback;
+        if (!s) return fallback;
+        const keys = Object.keys(s);
+        const match = keys.find(k => k.toLowerCase() === prop.toLowerCase());
+        return match ? s[match] : fallback;
       };
 
       return {
         id: s.id.toString(),
-        grno: getVal("GRNO") || s.registrationNumber || s.grno,
+        grno: getVal("GRNO") || s.registrationNumber || s.grno || getVal("registrationNumber"),
         schoolId: (s.schoolId || s.SchoolId)?.toString() || "",
         firstName: getVal("FNAME") || s.firstName || s.fullName?.split(" ")[0] || "",
         lastName: getVal("LNAME") || s.lastName || s.fullName?.split(" ").slice(-1)[0] || "",
         middleName: getVal("MNAME") || s.middleName || (s.fullName?.split(" ").length > 2 ? s.fullName?.split(" ").slice(1, -1).join(" ") : ""),
-        name: s.fullName || s.FullName,
-        standard: getVal("STD") || s.standard,
-        section: getVal("DIV") || s.section,
-        bloodGroupId: getVal("BLOODGROUP") || s.bloodGroupId,
-        houseId: getVal("house") || s.houseId,
-        admissionTypeId: getVal("admissiontype") || s.admissionTypeId,
-        religionId: getVal("RELIGION") || s.religionId,
-        casteId: getVal("CASTE") || s.casteId,
-        subCasteId: getVal("subcaste") || s.subCasteId,
-        joiningAcademicYearId: getVal("academicyear") || s.joiningAcademicYearId,
-        roll: getVal("ROLLNO") || s.rollNumber?.toString() || "0",
+        name: s.fullName || s.FullName || getVal("FullName"),
+        standard: getVal("STD") || s.standard || getVal("standard"),
+        section: getVal("DIV") || s.section || getVal("division") || getVal("section"),
+        bloodGroupId: getVal("BLOODGROUP") || s.bloodGroupId || getVal("bloodGroupId"),
+        houseId: getVal("house") || s.houseId || getVal("houseId"),
+        admissionTypeId: getVal("admissiontype") || s.admissionTypeId || getVal("admissionTypeId"),
+        religionId: getVal("RELIGION") || s.religionId || getVal("religionId"),
+        casteId: getVal("CASTE") || s.casteId || getVal("casteId"),
+        subCasteId: getVal("subcaste") || s.subCasteId || getVal("subCasteId"),
+        joiningAcademicYearId: getVal("academicyear") || s.joiningAcademicYearId || getVal("academicYearId"),
+        roll: getVal("ROLLNO") || s.rollNumber?.toString() || s.roll?.toString() || "0",
         address: getVal("ADDRESS") || s.address || "N/A",
         birthDate: getVal("DOB") || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
         gender: getVal("GENDER") || s.gender || "male",
-        contactNumber: getVal("MOBILE") || s.contactNumber || "",
+        contactNumber: getVal("MOBILE") || s.contactNumber || s.mobile || "",
         motherName: getVal("MOTHERNAME") || s.motherName || "",
         aadharCard: getVal("aadharcard") || s.aadharCard || "",
-        photo: s.photo || s.Photo || "", 
+        profilePicturePath: getVal("ProfilePicturePath") || "",
+        photo: getVal("ProfilePicturePath") || s.photo || s.Photo || "", 
         attendance: "100%", 
         performance: "Excellent", 
-        // Schema properties explicitly mapped
+        // Schema properties explicitly mapped for forms and legacy compat
         STUDENTID: getVal("STUDENTID") || s.registrationNumber,
         FNAME: getVal("FNAME") || s.firstName,
         MNAME: getVal("MNAME") || s.middleName,
@@ -181,11 +189,16 @@ export default function Students({ user }: { user: UserType }) {
         admissiontype: getVal("admissiontype") || s.admissionTypeId?.toString(),
         academicyear: getVal("academicyear") || s.joiningAcademicYearId?.toString(),
         DOB: getVal("DOB") || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
-        MOBILE: getVal("MOBILE") || s.contactNumber,
+        MOBILE: getVal("MOBILE") || s.contactNumber || s.mobile,
         EMAIL: getVal("EMAIL") || s.email,
         ADDRESS: getVal("ADDRESS") || s.address,
         MOTHERNAME: getVal("MOTHERNAME") || s.motherName,
-        aadharcard: getVal("aadharcard") || s.aadharCard
+        aadharcard: getVal("aadharcard") || s.aadharCard,
+        RFID: getVal("RFID") || s.rfid || s.CARDID || s.cardId,
+        SHIFTNAME: getVal("SHIFTNAME") || s.shiftName || shifts.find(sh => sh.id === s.shiftId)?.name || "",
+        uniformid: getVal("uniformid") || s.uniformid || "",
+        contact2: getVal("contact2") || s.contact2 || "",
+        sms: getVal("sms") || s.sms || ""
       };
     });
       setStudents(formatted);
@@ -238,7 +251,13 @@ export default function Students({ user }: { user: UserType }) {
     CASTE: "",
     subcaste: "",
     academicyear: "",
-    status: "Active"
+    status: "Active",
+    RFID: "",
+    SHIFTNAME: "",
+    uniformid: "",
+    contact2: "",
+    sms: "",
+    ProfilePicturePath: ""
   };
 
   const [newStudentFormData, setNewStudentFormData] = useState(initialFormState);
@@ -278,7 +297,13 @@ export default function Students({ user }: { user: UserType }) {
       CASTE: student.CASTE || student.casteId?.toString() || "",
       subcaste: student.subcaste || student.subCasteId?.toString() || "",
       academicyear: student.academicyear || student.joiningAcademicYearId?.toString() || "",
-      status: student.status || "Active"
+      status: student.status || "Active",
+      RFID: student.RFID || "",
+      SHIFTNAME: student.SHIFTNAME || "",
+      uniformid: student.uniformid || "",
+      contact2: student.contact2 || "",
+      sms: student.sms || "",
+      ProfilePicturePath: student.profilePicturePath || ""
     });
     setIsAddDialogOpen(true);
     fetchMasters();
@@ -301,17 +326,31 @@ export default function Students({ user }: { user: UserType }) {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (uploadingStudentId && e.target.files?.[0]) {
       const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setStudents(prev => prev.map(s => s.id === uploadingStudentId ? { ...s, photo: base64String } : s));
-        toast.success("Student photo updated!");
+      const studentId = parseInt(uploadingStudentId);
+      
+      const loadingToast = toast.loading("Storing identity image on server...");
+      try {
+        const response = await apiService.uploadStudentPhoto(studentId, file);
+        const newPath = response.data.path;
+        
+        // Update local state with the new physical path from server
+        // This ensures the image persists and uses the industry standard naming
+        setStudents(prev => prev.map(s => 
+          s.id === uploadingStudentId ? { ...s, photo: newPath, profilePicturePath: newPath } : s
+        ));
+        
+        toast.dismiss(loadingToast);
+        toast.success("Profile picture stored and path updated successfully.");
+      } catch (error) {
+        toast.dismiss(loadingToast);
+        console.error("Upload failed:", error);
+        toast.error("Cloud storage failure. Could not save physical image file.");
+      } finally {
         setUploadingStudentId(null);
-      };
-      reader.readAsDataURL(file);
+      }
     }
     e.target.value = '';
   };
@@ -319,30 +358,25 @@ export default function Students({ user }: { user: UserType }) {
   const downloadSampleExcel = () => {
     const sampleData = [
       {
-        registrationNumber: "REG001",
-        fullName: "James Alexander Brown",
-        FNAME: "James",
-        MNAME: "Alexander",
-        LNAME: "Brown",
-        STD: "10th",
-        DIV: "A",
+        FNAME: "SHIVANSH",
+        MNAME: "SANJAY",
+        LNAME: "KHOPKAR",
+        MOTHERNAME: "SANJANA",
+        SHIFTNAME: "SHIFT-I-XII",
+        STD: "UKG",
+        DIV: "B",
         ROLLNO: "1",
         GRNO: "1001",
-        GENDER: "Male",
-        DOB: "2008-05-15",
-        BLOODGROUP: "A+",
-        CASTE: "General",
-        RELIGION: "Hindu",
-        CATEGORY: "General",
-        ADDRESS: "123 Main St",
-        CITY: "Mumbai",
-        PIN: "400001",
-        STATE: "Maharashtra",
-        FATHERNAME: "Alexander Brown",
-        MOTHERNAME: "Mary Brown",
-        MOBILE: "9876543210",
-        EMAIL: "james@example.com",
-        aadharcard: "123456789012"
+        GENDER: "M",
+        DOB: "27/04/2020",
+        MOBILE: "9823674019",
+        contact2: "8888941563",
+        RFID: "0",
+        sms: "1",
+        ADDRESS: "AT POST KHOPI, ROHIDAS WADI, TAL-KHED, DIST-RATNAGIRI",
+        profilePicturePath: "",
+        academicyear: "2025-2026",
+        uniformid: ""
       }
     ];
 
@@ -373,17 +407,49 @@ export default function Students({ user }: { user: UserType }) {
           return;
         }
 
-        const studentsToUpload = data.map((item: any) => ({
-          ...item,
-          schoolId: parseInt(user.schoolId || "1"),
-          status: item.status || "Active",
-          rollNumber: parseInt(item.ROLLNO || item.rollNumber || "0"),
-          registrationNumber: item.registrationNumber || `REG-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-          fullName: item.fullName || `${item.FNAME || ""} ${item.MNAME || ""} ${item.LNAME || ""}`.trim(),
-          STD: item.STD?.toString() || "",
-          DIV: item.DIV?.toString() || "",
-          ROLLNO: item.ROLLNO?.toString() || ""
-        }));
+        const studentsToUpload = data.map((item: any) => {
+          // Internal ID mapping for master tables
+          // This makes the upload dynamic by linking text values to their database IDs
+          const stdMasterId = standardsMaster.find(s => 
+            s.name.toLowerCase() === item.STD?.toString().toLowerCase()
+          )?.id;
+          
+          const divMasterId = sectionsMaster.find(s => 
+            s.name.toLowerCase() === item.DIV?.toString().toLowerCase()
+          )?.id;
+          
+          const shiftMasterId = shifts.find(s => 
+            s.name.toLowerCase() === item.SHIFTNAME?.toString().toLowerCase()
+          )?.id;
+
+          const ayMasterId = academicYears.find(s => 
+            s.name.toLowerCase() === item.academicyear?.toString().toLowerCase()
+          )?.id;
+
+          return {
+            ...item,
+            schoolId: parseInt(user.schoolId || "1"),
+            status: item.status || "Active",
+            rollNumber: parseInt(item.ROLLNO || item.rollNumber || "0"),
+            registrationNumber: item.GRNO || item.registrationNumber || `REG-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            fullName: item.fullName || `${item.FNAME || ""} ${item.MNAME || ""} ${item.LNAME || ""}`.trim(),
+            
+            // Text values kept for schema compatibility
+            STD: item.STD?.toString() || "",
+            DIV: item.DIV?.toString() || "",
+            ROLLNO: item.ROLLNO?.toString() || "",
+            
+            // Map IDs from masters
+            StandardId: stdMasterId,
+            SectionId: divMasterId,
+            ShiftId: shiftMasterId,
+            AcademicYearId: ayMasterId,
+
+            // Audit fields
+            CreatedBy: user.name || user.email,
+            ModifiedBy: user.name || user.email
+          };
+        });
 
         await apiService.bulkCreateStudents(studentsToUpload as any[]);
         toast.success(`Successfully imported ${studentsToUpload.length} students.`);
@@ -462,6 +528,24 @@ export default function Students({ user }: { user: UserType }) {
         ADDRESS: newStudentFormData.ADDRESS,
         aadharcard: newStudentFormData.aadharcard,
         academicyear: newStudentFormData.academicyear,
+        RFID: newStudentFormData.RFID,
+        SHIFTNAME: newStudentFormData.SHIFTNAME,
+        uniformid: newStudentFormData.uniformid,
+        contact2: newStudentFormData.contact2,
+        sms: newStudentFormData.sms,
+
+        // Map IDs from masters for manual data persistence
+        StandardId: standardsMaster.find(s => s.name === newStudentFormData.STD)?.id,
+        SectionId: sectionsMaster.find(s => s.name === newStudentFormData.DIV)?.id,
+        AcademicYearId: parseInt(newStudentFormData.academicyear) || academicYears.find(ay => ay.name === newStudentFormData.academicyear)?.id,
+        ShiftId: shifts.find(s => s.name === newStudentFormData.SHIFTNAME)?.id,
+        BloodGroupId: parseInt(newStudentFormData.BLOODGROUP),
+        HouseId: parseInt(newStudentFormData.house),
+        AdmissionTypeId: parseInt(newStudentFormData.admissiontype),
+        ReligionId: parseInt(newStudentFormData.RELIGION),
+        CasteId: parseInt(newStudentFormData.CASTE),
+        SubCasteId: parseInt(newStudentFormData.subcaste),
+
         // Audit fields: Ensure CreatedBy and ModifiedBy are captured for backend audit logging
         // CreatedBy is only set for new records, ModifiedBy is updated for every modification
         CreatedBy: isEditMode ? undefined : (user.name || user.email),
@@ -783,6 +867,26 @@ export default function Students({ user }: { user: UserType }) {
                             </SelectContent>
                           </Select>
                         </div>
+
+                        <div className="md:col-span-4 space-y-1.5">
+                          <Label htmlFor="SHIFTNAME" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned Shift</Label>
+                          <Select 
+                            value={newStudentFormData.SHIFTNAME} 
+                            onValueChange={(v) => setNewStudentFormData({...newStudentFormData, SHIFTNAME: v})}
+                          >
+                            <SelectTrigger id="SHIFTNAME" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                              <SelectValue placeholder="Select Shift">
+                                {newStudentFormData.SHIFTNAME && newStudentFormData.SHIFTNAME !== "none" ? newStudentFormData.SHIFTNAME : "Select Shift"}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                              <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Shift</SelectItem>
+                              {shifts.map(s => (
+                                <SelectItem key={s.id} value={s.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{s.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </section>
 
@@ -874,6 +978,16 @@ export default function Students({ user }: { user: UserType }) {
                                 "h-10 border-slate-200 bg-slate-50/30 tracking-widest font-mono font-bold rounded-xl px-4 text-sm",
                                 formErrors.aadharcard && "border-red-500 ring-2 ring-red-500/10"
                               )}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label htmlFor="RFID" className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-500">RFID Card ID</Label>
+                            <Input 
+                              id="RFID" 
+                              value={newStudentFormData.RFID} 
+                              onChange={(e) => setNewStudentFormData({...newStudentFormData, RFID: e.target.value})} 
+                              placeholder="e.g. 1111111111" 
+                              className="h-10 border-slate-200 bg-slate-50/30 font-mono font-bold rounded-xl px-4 text-sm"
                             />
                           </div>
                         </div>
