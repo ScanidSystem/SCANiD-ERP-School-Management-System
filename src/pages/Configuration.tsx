@@ -21,7 +21,14 @@ import {
   School,
   Shield,
   ShieldCheck,
-  UserCheck
+  UserCheck,
+  LayoutGrid,
+  Clock,
+  BookOpen,
+  Award,
+  Briefcase,
+  UserRound,
+  Hammer
 } from "lucide-react";
 import { 
   Card, 
@@ -82,6 +89,11 @@ interface ConfigurationProps {
   defaultTab?: string;
 }
 
+/**
+ * GLOBAL MASTER CONFIGURATION MAP
+ * Defines metadata for each master type including its UI label, icon, 
+ * description for headers, and the API prefix used for dynamic method calling.
+ */
 const MASTER_TYPES: Record<string, { label: string, icon: any, description: string, apiPrefix: string }> = {
   "schools": { label: "Schools", icon: School, description: "Manage institutional branches", apiPrefix: "School" },
   "role-master": { label: "Role Master", icon: Shield, description: "Manage system access roles", apiPrefix: "Role" },
@@ -97,6 +109,14 @@ const MASTER_TYPES: Record<string, { label: string, icon: any, description: stri
   "blood-groups": { label: "Blood Groups", icon: Droplet, description: "Manage emergency blood types", apiPrefix: "BloodGroup" },
   "houses": { label: "Houses", icon: Home, description: "Manage school house systems", apiPrefix: "House" },
   "admission-types": { label: "Admission Types", icon: FileText, description: "Manage enrollment categories", apiPrefix: "AdmissionType" },
+  "categories": { label: "Categories", icon: LayoutGrid, description: "Manage social categories", apiPrefix: "Category" },
+  "sessions": { label: "Sessions", icon: Clock, description: "Manage school sessions", apiPrefix: "Session" },
+  "batches": { label: "Batches", icon: Users, description: "Manage student batches", apiPrefix: "Batch" },
+  "shifts": { label: "Shifts", icon: Clock, description: "Manage staff/student shifts", apiPrefix: "Shift" },
+  "subjects": { label: "Subjects", icon: BookOpen, description: "Manage academic subjects", apiPrefix: "Subject" },
+  "exam-types": { label: "Exam Types", icon: Award, description: "Manage examination categories", apiPrefix: "ExamType" },
+  "designations": { label: "Designations", icon: Briefcase, description: "Manage staff designations", apiPrefix: "Designation" },
+  "occupations": { label: "Occupations", icon: Hammer, description: "Manage parent occupations", apiPrefix: "Occupation" },
 };
 
 export default function Configuration({ user, defaultTab = "schools" }: ConfigurationProps) {
@@ -140,6 +160,11 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
     email: ""
   });
 
+  /**
+   * FETCH MASTER DATA
+   * Dynamically fetches data from the API based on the currently active tab.
+   * Also handles dependency loading for related master types (e.g. Sub-Caste needs Caste list).
+   */
   const fetchData = async () => {
     setIsRefreshing(true);
     setLoading(true);
@@ -198,6 +223,11 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
     setIsDialogOpen(true);
   };
 
+  /**
+   * PERSIST MASTER RECORD
+   * Handles both creation of new records and updates to existing ones.
+   * Dynamically constructs the payload based on the active master type.
+   */
   const handleSave = async () => {
     const newErrors: Record<string, boolean> = {};
     if (!formData.name.trim()) newErrors.name = true;

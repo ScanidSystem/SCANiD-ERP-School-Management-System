@@ -123,6 +123,14 @@ export default function App() {
                     <Route path="/configuration/blood-groups" element={<Configuration user={user} defaultTab="blood-groups" />} />
                     <Route path="/configuration/houses" element={<Configuration user={user} defaultTab="houses" />} />
                     <Route path="/configuration/admission-types" element={<Configuration user={user} defaultTab="admission-types" />} />
+                    <Route path="/configuration/categories" element={<Configuration user={user} defaultTab="categories" />} />
+                    <Route path="/configuration/sessions" element={<Configuration user={user} defaultTab="sessions" />} />
+                    <Route path="/configuration/batches" element={<Configuration user={user} defaultTab="batches" />} />
+                    <Route path="/configuration/shifts" element={<Configuration user={user} defaultTab="shifts" />} />
+                    <Route path="/configuration/subjects" element={<Configuration user={user} defaultTab="subjects" />} />
+                    <Route path="/configuration/exam-types" element={<Configuration user={user} defaultTab="exam-types" />} />
+                    <Route path="/configuration/designations" element={<Configuration user={user} defaultTab="designations" />} />
+                    <Route path="/configuration/occupations" element={<Configuration user={user} defaultTab="occupations" />} />
                     <Route path="/system-logs" element={<SystemLogs user={user} />} />
                   </>
                 )}

@@ -25,6 +25,28 @@ namespace ScanID.Api.Data
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<ErrorLog> ErrorLogs { get; set; }
 
+        // Master Data Sets
+        public DbSet<Standard> Standards { get; set; }
+        public DbSet<Section> Sections { get; set; }
+        public DbSet<AcademicYear> AcademicYears { get; set; }
+        public DbSet<Caste> Castes { get; set; }
+        public DbSet<SubCaste> SubCastes { get; set; }
+        public DbSet<Religion> Religions { get; set; }
+        public DbSet<State> States { get; set; }
+        public DbSet<City> Cities { get; set; }
+        public DbSet<BloodGroup> BloodGroups { get; set; }
+        public DbSet<House> Houses { get; set; }
+        public DbSet<AdmissionType> AdmissionTypes { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Session> Sessions { get; set; }
+        public DbSet<Batch> Batches { get; set; }
+        public DbSet<Shift> Shifts { get; set; }
+        public DbSet<Subject> Subjects { get; set; }
+        public DbSet<ExamType> ExamTypes { get; set; }
+        public DbSet<Designation> Designations { get; set; }
+        public DbSet<Occupation> Occupations { get; set; }
+        public DbSet<Role> Roles { get; set; }
+
         /// <summary>
         /// Configures the model, including global query filters for soft deletion.
         /// </summary>
@@ -42,6 +64,28 @@ namespace ScanID.Api.Data
             modelBuilder.Entity<Mark>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<Teacher>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<Message>().HasQueryFilter(x => !x.IsDeleted);
+
+            // Master Data Query Filters
+            modelBuilder.Entity<Standard>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Section>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<AcademicYear>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Caste>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<SubCaste>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Religion>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<State>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<City>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<BloodGroup>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<House>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<AdmissionType>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Category>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Session>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Batch>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Shift>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Subject>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<ExamType>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Designation>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Occupation>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Role>().HasQueryFilter(x => !x.IsDeleted);
         }
 
         /// <summary>

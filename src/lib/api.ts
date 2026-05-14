@@ -242,6 +242,46 @@ export const apiService = {
   updateAdmissionType: (id: number, data: any) => api.put(`/masters/admission-types/${id}`, data),
   deleteAdmissionType: (id: number) => api.delete(`/masters/admission-types/${id}`),
 
+  getCategories: () => api.get("/masters/categories"),
+  createCategory: (data: any) => api.post("/masters/categories", data),
+  updateCategory: (id: number, data: any) => api.put(`/masters/categories/${id}`, data),
+  deleteCategory: (id: number) => api.delete(`/masters/categories/${id}`),
+
+  getSessions: () => api.get("/masters/sessions"),
+  createSession: (data: any) => api.post("/masters/sessions", data),
+  updateSession: (id: number, data: any) => api.put(`/masters/sessions/${id}`, data),
+  deleteSession: (id: number) => api.delete(`/masters/sessions/${id}`),
+
+  getBatches: () => api.get("/masters/batches"),
+  createBatch: (data: any) => api.post("/masters/batches", data),
+  updateBatch: (id: number, data: any) => api.put(`/masters/batches/${id}`, data),
+  deleteBatch: (id: number) => api.delete(`/masters/batches/${id}`),
+
+  getShifts: () => api.get("/masters/shifts"),
+  createShift: (data: any) => api.post("/masters/shifts", data),
+  updateShift: (id: number, data: any) => api.put(`/masters/shifts/${id}`, data),
+  deleteShift: (id: number) => api.delete(`/masters/shifts/${id}`),
+
+  getSubjects: () => api.get("/masters/subjects"),
+  createSubject: (data: any) => api.post("/masters/subjects", data),
+  updateSubject: (id: number, data: any) => api.put(`/masters/subjects/${id}`, data),
+  deleteSubject: (id: number) => api.delete(`/masters/subjects/${id}`),
+
+  getExamTypes: () => api.get("/masters/exam-types"),
+  createExamType: (data: any) => api.post("/masters/exam-types", data),
+  updateExamType: (id: number, data: any) => api.put(`/masters/exam-types/${id}`, data),
+  deleteExamType: (id: number) => api.delete(`/masters/exam-types/${id}`),
+
+  getDesignations: () => api.get("/masters/designations"),
+  createDesignation: (data: any) => api.post("/masters/designations", data),
+  updateDesignation: (id: number, data: any) => api.put(`/masters/designations/${id}`, data),
+  deleteDesignation: (id: number) => api.delete(`/masters/designations/${id}`),
+
+  getOccupations: () => api.get("/masters/occupations"),
+  createOccupation: (data: any) => api.post("/masters/occupations", data),
+  updateOccupation: (id: number, data: any) => api.put(`/masters/occupations/${id}`, data),
+  deleteOccupation: (id: number) => api.delete(`/masters/occupations/${id}`),
+
   // Roles
   getRoles: () => api.get("/masters/roles"),
   createRole: (data: any) => api.post("/masters/roles", data),

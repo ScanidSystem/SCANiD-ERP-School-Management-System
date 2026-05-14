@@ -194,5 +194,178 @@ namespace ScanID.Api.Models
         public bool IsRead { get; set; }
         public string Type { get; set; } = "Alert";
     }
+
+    // --- Master Data Models ---
+    /// <summary> Master data representing school standards (e.g., 10th Standard). </summary>
+    public class Standard : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+    }
+
+    /// <summary> Master data representing class sections (e.g., Section A). </summary>
+    public class Section : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+    }
+
+    /// <summary> Master data for academic years (e.g., 2024-25). </summary>
+    public class AcademicYear : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+        public bool IsCurrent { get; set; }
+    }
+
+    /// <summary> Master data for social categories/castes. </summary>
+    public class Caste : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary> Master data for sub-categories/sub-castes related to a parent Caste. </summary>
+    public class SubCaste : BaseEntity
+    {
+        public int Id { get; set; }
+        public int CasteId { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+        [ForeignKey("CasteId")]
+        public Caste? Caste { get; set; }
+    }
+
+    /// <summary> Master data for religious affiliations. </summary>
+    public class Religion : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary> Master data for geographic states. </summary>
+    public class State : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary> Master data for geographic cities related to a parent State. </summary>
+    public class City : BaseEntity
+    {
+        public int Id { get; set; }
+        public int StateId { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+        [ForeignKey("StateId")]
+        public State? State { get; set; }
+    }
+
+    /// <summary> Master data for human blood groups. </summary>
+    public class BloodGroup : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary> Master data for school houses (colored organizational units). </summary>
+    public class House : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+        public string? Color { get; set; }
+    }
+
+    /// <summary> List of valid admission types (Regular, Transfer, etc.). </summary>
+    public class AdmissionType : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary> Social category classifications (General, OBC, SC, ST, EWS). </summary>
+    public class Category : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary> Master data for school sessions (Morning, Evening, etc.). </summary>
+    public class Session : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary> Master data for student batches. </summary>
+    public class Batch : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary> Master data for school shifts. </summary>
+    public class Shift : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary> Master data for academic subjects. </summary>
+    public class Subject : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+    }
+
+    /// <summary> Master data for examination types. </summary>
+    public class ExamType : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary> Master data for staff roles/designations. </summary>
+    public class Designation : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary> Master data for parent/guardian occupations. </summary>
+    public class Occupation : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary> System roles for user permissions mapping. </summary>
+    public class Role : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+    }
 }
 
