@@ -131,7 +131,6 @@ namespace ScanID.Api.Models
         public string? VALIDFROM { get; set; }
         public string? VALIDTO { get; set; }
         public string? sms { get; set; }
-        public string? fullname { get; set; }
         public string? subcaste { get; set; }
         public string? contact2 { get; set; }
         public byte[]? photo { get; set; } // image type in SQL
