@@ -223,19 +223,47 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       const createMethod = `create${prefix}`;
       const updateMethod = `update${prefix}`;
 
+      // Prepare payload based on the active master type to avoid sending irrelevant data
+      const payload: any = {
+        name: formData.name,
+        description: formData.description,
+        isActive: true // Default to active for new records
+      };
+
+      // Add type-specific fields with proper type conversion
+      if (activeTab === "academic-years") {
+        payload.isCurrent = formData.isCurrent;
+      } else if (activeTab === "houses") {
+        payload.color = formData.color;
+      } else if (activeTab === "sub-castes") {
+        payload.casteId = parseInt(formData.casteId);
+      } else if (activeTab === "cities") {
+        payload.stateId = parseInt(formData.stateId);
+      } else if (activeTab === "schools") {
+        payload.address = formData.address;
+        payload.phone = formData.phone;
+        payload.email = formData.email;
+      } else if (activeTab === "role-assignment") {
+        // Map common 'name' field back to 'fullName' for User API
+        payload.fullName = formData.name;
+        delete payload.name;
+        payload.email = formData.email;
+      }
+
       if (editingItem) {
         // @ts-ignore
-        await apiService[updateMethod](editingItem.id, formData);
+        await apiService[updateMethod](editingItem.id, payload);
         toast.success(`${typeConfig.label} updated successfully`);
       } else {
         // @ts-ignore
-        await apiService[createMethod](formData);
+        await apiService[createMethod](payload);
         toast.success(`${typeConfig.label} created successfully`);
       }
       
       setIsDialogOpen(false);
       fetchData();
     } catch (error) {
+      console.error("Save error:", error);
       toast.error("Failed to save changes");
     }
   };
@@ -534,12 +562,12 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
           <div className="p-8 space-y-5">
             <div className="space-y-2">
               <Label htmlFor="name" className={cn("text-xs font-black uppercase tracking-wider", formErrors.name ? "text-red-500" : "text-slate-400")}>
-                {activeTab === "schools" ? "School Name" : "Name / Label"} {formErrors.name && "*"}
+                {activeTab === "schools" ? "School Name" : activeTab === "role-assignment" ? "Full Name" : "Name / Label"} {formErrors.name && "*"}
               </Label>
               <Input 
                 ref={el => inputRefs.current["name"] = el}
                 id="name" 
-                placeholder={`Enter ${activeTab === "schools" ? "school name" : "name"}...`}
+                placeholder={`Enter ${activeTab === "schools" ? "school name" : activeTab === "role-assignment" ? "user's full name" : "name"}...`}
                 className={cn(
                   "h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold",
                   formErrors.name && "border-red-500 ring-2 ring-red-500/10"
@@ -551,6 +579,19 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                 }}
               />
             </div>
+
+            {(activeTab === "schools" || activeTab === "role-assignment") && (
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-xs font-black uppercase tracking-wider text-slate-400">Email Address</Label>
+                <Input 
+                  id="email" 
+                  placeholder="Enter email address..."
+                  className="h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                />
+              </div>
+            )}
 
             {activeTab === "schools" && (
               <>
@@ -570,27 +611,15 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                     }}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-xs font-black uppercase tracking-wider text-slate-400">Phone</Label>
-                    <Input 
-                      id="phone" 
-                      placeholder="Office Phone"
-                      className="h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-xs font-black uppercase tracking-wider text-slate-400">Email</Label>
-                    <Input 
-                      id="email" 
-                      placeholder="Official Email"
-                      className="h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-xs font-black uppercase tracking-wider text-slate-400">Phone Number</Label>
+                  <Input 
+                    id="phone" 
+                    placeholder="Office Phone"
+                    className="h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  />
                 </div>
               </>
             )}

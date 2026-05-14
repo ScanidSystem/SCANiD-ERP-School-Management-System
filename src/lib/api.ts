@@ -248,8 +248,11 @@ export const apiService = {
   updateRole: (id: number, data: any) => api.put(`/masters/roles/${id}`, data),
   deleteRole: (id: number) => api.delete(`/masters/roles/${id}`),
 
-  // Users (for Role Assignment)
+  // Users (for Role Assignment & Management)
   getUsers: () => api.get("/users"),
+  createUser: (data: any) => api.post("/users", data),
+  updateUser: (id: number, data: any) => api.put(`/users/${id}`, data),
+  deleteUser: (id: number) => api.delete(`/users/${id}`),
   updateUserRole: (userId: number, role: string) => api.put(`/users/${userId}/role`, { role }),
 };
 
