@@ -150,7 +150,6 @@ CREATE TABLE [dbo].[Students](
 	[VALIDFROM] [nvarchar](200) NULL,
 	[VALIDTO] [nvarchar](200) NULL,
 	[sms] [nvarchar](10) NULL,
-	[fullname] [nvarchar](500) NULL,
 	[subcaste] [nvarchar](255) NULL,
 	[contact2] [nvarchar](255) NULL,
 	[photo] [varbinary](max) NULL, -- Replaced [image] with [varbinary](max) which is industry standard now
