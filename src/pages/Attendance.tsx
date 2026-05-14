@@ -69,13 +69,18 @@ export default function Attendance({ user }: { user: any }) {
       try {
         const schoolIdToUse = user.role === "superadmin" ? (selectedSchoolId ? parseInt(selectedSchoolId) : undefined) : (user.schoolId ? parseInt(user.schoolId) : undefined);
         const res = await apiService.getStudents(schoolIdToUse);
-        setStudents(res.data.map((s: any) => ({
-          id: s.id,
-          grno: s.registrationNumber,
-          name: s.fullName,
-          roll: s.rollNumber || "0",
-          status: "present" // Default to present
-        })));
+        setStudents(res.data.map((s: any) => {
+          const getVal = (prop: string, fallback?: any) => {
+            return s[prop] ?? s[prop.toLowerCase()] ?? s[prop.toUpperCase()] ?? fallback;
+          };
+          return {
+            id: s.id,
+            grno: getVal("GRNO") || s.registrationNumber || s.grno,
+            name: s.fullName || s.FullName || `${getVal("FNAME", "")} ${getVal("LNAME", "")}`.trim() || `Student ${s.id}`,
+            roll: getVal("ROLLNO") || s.rollNumber?.toString() || "0",
+            status: "present" // Default to present
+          };
+        }));
       } catch (error) {
         toast.error("Failed to fetch students from API");
       } finally {
@@ -93,11 +98,15 @@ export default function Attendance({ user }: { user: any }) {
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      // Prepare records for submission with audit metadata
+      // The backend requires CreatedBy and ModifiedBy fields to properly track who recorded the attendance
       const records = students.map(s => ({
         studentId: s.id,
         date: date.toISOString(),
         status: s.status.charAt(0).toUpperCase() + s.status.slice(1),
-        markedByUserId: parseInt(user.id)
+        markedByUserId: parseInt(user.id),
+        CreatedBy: user.name || user.email,
+        ModifiedBy: user.name || user.email
       }));
       
       // In a real custom backend you'd have a bulk endpoint

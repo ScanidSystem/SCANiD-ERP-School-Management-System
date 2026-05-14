@@ -140,7 +140,12 @@ export default function Schools({ user }: { user: UserType }) {
 
     setIsProcessing(true);
     try {
-      await apiService.updateSchool(currentSchool.id, { ...formData, id: currentSchool.id });
+      // Audit fields: Ensure ModifiedBy is captured for backend audit logging
+      await apiService.updateSchool(currentSchool.id, { 
+        ...formData, 
+        id: currentSchool.id,
+        ModifiedBy: user.name || user.email
+      });
       toast.success("School details updated!");
       setIsEditDialogOpen(false);
       fetchSchools();
@@ -213,7 +218,12 @@ export default function Schools({ user }: { user: UserType }) {
 
     setIsProcessing(true);
     try {
-      await apiService.createSchool(formData);
+      // Audit fields: Ensure CreatedBy and ModifiedBy are captured for backend audit logging
+      await apiService.createSchool({
+        ...formData,
+        CreatedBy: user.name || user.email,
+        ModifiedBy: user.name || user.email
+      });
       toast.success("School registered successfully!");
       setIsAddDialogOpen(false);
       setFormData({ name: "", address: "", phone: "", email: "", status: "Active" });

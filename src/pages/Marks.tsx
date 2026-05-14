@@ -82,12 +82,17 @@ export default function Marks({ user }: { user: UserType }) {
     setSortConfig({ key, direction });
   };
 
-  const filteredMarks = marks.filter(m => 
-    m.student?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.student?.registrationNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.student?.rollNumber?.toString().includes(searchQuery) ||
-    m.examName?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredMarks = marks.filter(m => {
+    const s = m.student || {};
+    const studentName = s.fullName || s.FullName || `${s.FNAME || ''} ${s.LNAME || ''}`.trim() || "";
+    const regNo = s.registrationNumber || s.RegistrationNumber || s.GRNO || "";
+    const rollNo = s.rollNumber?.toString() || s.RollNumber?.toString() || s.ROLLNO?.toString() || "";
+    
+    return studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           regNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           rollNo.includes(searchQuery) ||
+           m.examName?.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   const sortedMarks = [...filteredMarks].sort((a, b) => {
     if (!sortConfig) return 0;
@@ -96,8 +101,8 @@ export default function Marks({ user }: { user: UserType }) {
     let aValue, bValue;
     
     if (key === 'studentName') {
-      aValue = a.student?.fullName || "";
-      bValue = b.student?.fullName || "";
+      aValue = a.student?.fullName || a.student?.FullName || `${a.student?.FNAME || ''} ${a.student?.LNAME || ''}`.trim() || "";
+      bValue = b.student?.fullName || b.student?.FullName || `${b.student?.FNAME || ''} ${b.student?.LNAME || ''}`.trim() || "";
     } else if (key === 'performance') {
       aValue = a.obtMarks / a.totalMarks;
       bValue = b.obtMarks / b.totalMarks;
@@ -257,8 +262,13 @@ export default function Marks({ user }: { user: UserType }) {
                         {sortedMarks.map((result) => (
                           <TableRow key={result.id} className="group hover:bg-slate-50/50 transition-all border-b border-slate-50/80 h-20">
                             <TableCell className="pl-8">
-                              <div className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors tracking-tight text-sm mb-1">{result.student?.fullName || "Student"}</div>
-                              <div className="font-mono text-[9px] font-black text-slate-400 bg-slate-100/50 px-2 py-0.5 rounded border border-slate-200/50 inline-block italic tracking-tighter uppercase">ROLL: {result.student?.rollNumber}</div>
+                              <div className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors tracking-tight text-sm mb-1">
+                                {result.student?.fullName || result.student?.FullName || 
+                                 (result.student?.FNAME ? `${result.student.FNAME} ${result.student.LNAME || ''}`.trim() : "Student")}
+                              </div>
+                              <div className="font-mono text-[9px] font-black text-slate-400 bg-slate-100/50 px-2 py-0.5 rounded border border-slate-200/50 inline-block italic tracking-tighter uppercase">
+                                ROLL: {result.student?.rollNumber || result.student?.RollNumber || result.student?.ROLLNO || "0"}
+                              </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-3">
@@ -447,11 +457,14 @@ function MarksheetView({ student }: { student: any }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-sm pt-4">
         <div className="space-y-1 col-span-2">
           <p className="text-[10px] uppercase font-bold text-slate-400">Student Name</p>
-          <p className="font-extrabold text-xl text-slate-900">{student.student?.fullName}</p>
+          <p className="font-extrabold text-xl text-slate-900">
+            {student.student?.fullName || student.student?.FullName || 
+             (student.student?.FNAME ? `${student.student.FNAME} ${student.student.LNAME || ''}`.trim() : "")}
+          </p>
         </div>
         <div className="space-y-1">
           <p className="text-[10px] uppercase font-bold text-slate-400">Roll Number</p>
-          <p className="font-bold text-slate-900">{student.student?.rollNumber}</p>
+          <p className="font-bold text-slate-900">{student.student?.rollNumber || student.student?.RollNumber || student.student?.ROLLNO || "0"}</p>
         </div>
         <div className="space-y-1">
           <p className="text-[10px] uppercase font-bold text-slate-400">Session</p>

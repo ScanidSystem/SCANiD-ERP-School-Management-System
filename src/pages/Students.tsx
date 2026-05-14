@@ -131,56 +131,63 @@ export default function Students({ user }: { user: UserType }) {
     setLoading(true);
     try {
       const response = await apiService.getStudents(user.schoolId ? parseInt(user.schoolId) : undefined);
-    const formatted = response.data.map((s: any) => ({
+    const formatted = response.data.map((s: any) => {
+      // Helper to fetch data by ensuring case-insensitive property access for specific schema fields
+      const getVal = (prop: string, fallback?: any) => {
+        return s[prop] ?? s[prop.toLowerCase()] ?? s[prop.toUpperCase()] ?? fallback;
+      };
+
+      return {
         id: s.id.toString(),
-        grno: s.GRNO || s.registrationNumber,
-        schoolId: s.schoolId?.toString() || "",
-        firstName: s.FNAME || s.firstName || s.fullName?.split(" ")[0] || "",
-        lastName: s.LNAME || s.lastName || s.fullName?.split(" ").slice(-1)[0] || "",
-        middleName: s.MNAME || s.middleName || (s.fullName?.split(" ").length > 2 ? s.fullName?.split(" ").slice(1, -1).join(" ") : ""),
-        name: s.fullName,
-        standard: s.STD || s.standard,
-        section: s.DIV || s.section,
-        bloodGroupId: s.BLOODGROUP || s.bloodGroupId,
-        houseId: s.house || s.houseId,
-        admissionTypeId: s.admissiontype || s.admissionTypeId,
-        religionId: s.RELIGION || s.religionId,
-        casteId: s.CASTE || s.casteId,
-        subCasteId: s.subcaste || s.subCasteId,
-        joiningAcademicYearId: s.academicyear || s.joiningAcademicYearId,
-        roll: s.ROLLNO || s.rollNumber?.toString() || "0",
-        address: s.ADDRESS || s.address || "N/A",
-        birthDate: s.DOB || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
-        gender: s.GENDER || s.gender || "male",
-        contactNumber: s.MOBILE || s.contactNumber || "",
-        motherName: s.MOTHERNAME || s.motherName || "",
-        aadharCard: s.aadharcard || s.aadharCard || "",
-        photo: s.photo || "", 
+        grno: getVal("GRNO") || s.registrationNumber || s.grno,
+        schoolId: (s.schoolId || s.SchoolId)?.toString() || "",
+        firstName: getVal("FNAME") || s.firstName || s.fullName?.split(" ")[0] || "",
+        lastName: getVal("LNAME") || s.lastName || s.fullName?.split(" ").slice(-1)[0] || "",
+        middleName: getVal("MNAME") || s.middleName || (s.fullName?.split(" ").length > 2 ? s.fullName?.split(" ").slice(1, -1).join(" ") : ""),
+        name: s.fullName || s.FullName,
+        standard: getVal("STD") || s.standard,
+        section: getVal("DIV") || s.section,
+        bloodGroupId: getVal("BLOODGROUP") || s.bloodGroupId,
+        houseId: getVal("house") || s.houseId,
+        admissionTypeId: getVal("admissiontype") || s.admissionTypeId,
+        religionId: getVal("RELIGION") || s.religionId,
+        casteId: getVal("CASTE") || s.casteId,
+        subCasteId: getVal("subcaste") || s.subCasteId,
+        joiningAcademicYearId: getVal("academicyear") || s.joiningAcademicYearId,
+        roll: getVal("ROLLNO") || s.rollNumber?.toString() || "0",
+        address: getVal("ADDRESS") || s.address || "N/A",
+        birthDate: getVal("DOB") || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
+        gender: getVal("GENDER") || s.gender || "male",
+        contactNumber: getVal("MOBILE") || s.contactNumber || "",
+        motherName: getVal("MOTHERNAME") || s.motherName || "",
+        aadharCard: getVal("aadharcard") || s.aadharCard || "",
+        photo: s.photo || s.Photo || "", 
         attendance: "100%", 
         performance: "Excellent", 
         // Schema properties explicitly mapped
-        STUDENTID: s.STUDENTID || s.registrationNumber,
-        FNAME: s.FNAME || s.firstName,
-        MNAME: s.MNAME || s.middleName,
-        LNAME: s.LNAME || s.lastName,
-        STD: s.STD || s.standard,
-        DIV: s.DIV || s.section,
-        ROLLNO: s.ROLLNO || s.rollNumber?.toString(),
-        GRNO: s.GRNO || s.registrationNumber,
-        RELIGION: s.RELIGION || s.religionId?.toString(),
-        CASTE: s.CASTE || s.casteId?.toString(),
-        subcaste: s.subcaste || s.subCasteId?.toString(),
-        BLOODGROUP: s.BLOODGROUP || s.bloodGroupId?.toString(),
-        house: s.house || s.houseId?.toString(),
-        admissiontype: s.admissiontype || s.admissionTypeId?.toString(),
-        academicyear: s.academicyear || s.joiningAcademicYearId?.toString(),
-        DOB: s.DOB || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
-        MOBILE: s.MOBILE || s.contactNumber,
-        EMAIL: s.EMAIL || s.email,
-        ADDRESS: s.ADDRESS || s.address,
-        MOTHERNAME: s.MOTHERNAME || s.motherName,
-        aadharcard: s.aadharcard || s.aadharCard
-    }));
+        STUDENTID: getVal("STUDENTID") || s.registrationNumber,
+        FNAME: getVal("FNAME") || s.firstName,
+        MNAME: getVal("MNAME") || s.middleName,
+        LNAME: getVal("LNAME") || s.lastName,
+        STD: getVal("STD") || s.standard,
+        DIV: getVal("DIV") || s.section,
+        ROLLNO: getVal("ROLLNO") || s.rollNumber?.toString(),
+        GRNO: getVal("GRNO") || s.registrationNumber,
+        RELIGION: getVal("RELIGION") || s.religionId?.toString(),
+        CASTE: getVal("CASTE") || s.casteId?.toString(),
+        subcaste: getVal("subcaste") || s.subCasteId?.toString(),
+        BLOODGROUP: getVal("BLOODGROUP") || s.bloodGroupId?.toString(),
+        house: getVal("house") || s.houseId?.toString(),
+        admissiontype: getVal("admissiontype") || s.admissionTypeId?.toString(),
+        academicyear: getVal("academicyear") || s.joiningAcademicYearId?.toString(),
+        DOB: getVal("DOB") || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
+        MOBILE: getVal("MOBILE") || s.contactNumber,
+        EMAIL: getVal("EMAIL") || s.email,
+        ADDRESS: getVal("ADDRESS") || s.address,
+        MOTHERNAME: getVal("MOTHERNAME") || s.motherName,
+        aadharcard: getVal("aadharcard") || s.aadharCard
+      };
+    });
       setStudents(formatted);
     } catch (error) {
       console.error("Fetch error:", error);
@@ -455,6 +462,10 @@ export default function Students({ user }: { user: UserType }) {
         ADDRESS: newStudentFormData.ADDRESS,
         aadharcard: newStudentFormData.aadharcard,
         academicyear: newStudentFormData.academicyear,
+        // Audit fields: Ensure CreatedBy and ModifiedBy are captured for backend audit logging
+        // CreatedBy is only set for new records, ModifiedBy is updated for every modification
+        CreatedBy: isEditMode ? undefined : (user.name || user.email),
+        ModifiedBy: user.name || user.email
       };
 
       if (isEditMode && currentStudentId) {

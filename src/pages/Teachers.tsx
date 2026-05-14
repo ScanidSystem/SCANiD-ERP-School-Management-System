@@ -244,7 +244,11 @@ export default function Teachers({ user }: { user: any }) {
            email: formData.email,
            role: "teacher",
            schoolId: parseInt(formData.schoolId)
-        }
+        },
+        // Audit fields: Ensure CreatedBy and ModifiedBy are captured for backend audit logging
+        // CreatedBy is only set for new records, ModifiedBy is updated for every modification
+        CreatedBy: isEditing ? undefined : (user.name || user.email),
+        ModifiedBy: user.name || user.email
       };
 
       if (isEditing && selectedTeacher) {
