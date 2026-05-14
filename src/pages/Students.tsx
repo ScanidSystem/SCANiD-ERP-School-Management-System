@@ -168,8 +168,8 @@ export default function Students({ user }: { user: UserType }) {
         contactNumber: getVal("MOBILE") || s.contactNumber || s.mobile || "",
         motherName: getVal("MOTHERNAME") || s.motherName || "",
         aadharCard: getVal("aadharcard") || s.aadharCard || "",
-        profilePicturePath: getVal("ProfilePicturePath") || "",
-        photo: getVal("ProfilePicturePath") || s.photo || s.Photo || "", 
+        profilePhotoPath: getVal("ProfilePhotoPath") || "",
+        photo: getVal("ProfilePhotoPath") || s.photo || s.Photo || "", 
         attendance: "100%", 
         performance: "Excellent", 
         // Schema properties explicitly mapped for forms and legacy compat
@@ -198,7 +198,8 @@ export default function Students({ user }: { user: UserType }) {
         SHIFTNAME: getVal("SHIFTNAME") || s.shiftName || shifts.find(sh => sh.id === s.shiftId)?.name || "",
         uniformid: getVal("uniformid") || s.uniformid || "",
         contact2: getVal("contact2") || s.contact2 || "",
-        sms: getVal("sms") || s.sms || ""
+        sms: getVal("sms") || s.sms || "",
+        ProfilePhotoPath: getVal("ProfilePhotoPath") || ""
       };
     });
       setStudents(formatted);
@@ -257,7 +258,7 @@ export default function Students({ user }: { user: UserType }) {
     uniformid: "",
     contact2: "",
     sms: "",
-    ProfilePicturePath: ""
+    ProfilePhotoPath: ""
   };
 
   const [newStudentFormData, setNewStudentFormData] = useState(initialFormState);
@@ -303,7 +304,7 @@ export default function Students({ user }: { user: UserType }) {
       uniformid: student.uniformid || "",
       contact2: student.contact2 || "",
       sms: student.sms || "",
-      ProfilePicturePath: student.profilePicturePath || ""
+      ProfilePhotoPath: student.profilePhotoPath || student.ProfilePhotoPath || ""
     });
     setIsAddDialogOpen(true);
     fetchMasters();
@@ -339,7 +340,7 @@ export default function Students({ user }: { user: UserType }) {
         // Update local state with the new physical path from server
         // This ensures the image persists and uses the industry standard naming
         setStudents(prev => prev.map(s => 
-          s.id === uploadingStudentId ? { ...s, photo: newPath, profilePicturePath: newPath } : s
+          s.id === uploadingStudentId ? { ...s, photo: newPath, profilePhotoPath: newPath, ProfilePhotoPath: newPath } : s
         ));
         
         toast.dismiss(loadingToast);
@@ -374,9 +375,13 @@ export default function Students({ user }: { user: UserType }) {
         RFID: "0",
         sms: "1",
         ADDRESS: "AT POST KHOPI, ROHIDAS WADI, TAL-KHED, DIST-RATNAGIRI",
-        profilePicturePath: "",
+        BLOODGROUP: "O+",
+        RELIGION: "Hindu",
+        CASTE: "General",
         academicyear: "2025-2026",
-        uniformid: ""
+        house: "Red",
+        admissiontype: "Regular",
+        aadharcard: "123456789012"
       }
     ];
 
@@ -426,6 +431,26 @@ export default function Students({ user }: { user: UserType }) {
             s.name.toLowerCase() === item.academicyear?.toString().toLowerCase()
           )?.id;
 
+          const bgMasterId = bloodGroups.find(bg => 
+            bg.name.toLowerCase() === item.BLOODGROUP?.toString().toLowerCase()
+          )?.id;
+
+          const religionMasterId = religions.find(r => 
+            r.name.toLowerCase() === item.RELIGION?.toString().toLowerCase()
+          )?.id;
+
+          const houseMasterId = houses.find(h => 
+            h.name.toLowerCase() === item.house?.toString().toLowerCase()
+          )?.id;
+
+          const admissionTypeMasterId = admissionTypes.find(at => 
+            at.name.toLowerCase() === item.admissiontype?.toString().toLowerCase()
+          )?.id;
+
+          const casteMasterId = castes.find(c => 
+            c.name.toLowerCase() === item.CASTE?.toString().toLowerCase()
+          )?.id;
+
           return {
             ...item,
             schoolId: parseInt(user.schoolId || "1"),
@@ -444,6 +469,11 @@ export default function Students({ user }: { user: UserType }) {
             SectionId: divMasterId,
             ShiftId: shiftMasterId,
             AcademicYearId: ayMasterId,
+            BloodGroupId: bgMasterId,
+            ReligionId: religionMasterId,
+            HouseId: houseMasterId,
+            AdmissionTypeId: admissionTypeMasterId,
+            CasteId: casteMasterId,
 
             // Audit fields
             CreatedBy: user.name || user.email,
@@ -533,6 +563,7 @@ export default function Students({ user }: { user: UserType }) {
         uniformid: newStudentFormData.uniformid,
         contact2: newStudentFormData.contact2,
         sms: newStudentFormData.sms,
+        ProfilePhotoPath: newStudentFormData.ProfilePhotoPath,
 
         // Map IDs from masters for manual data persistence
         StandardId: standardsMaster.find(s => s.name === newStudentFormData.STD)?.id,
@@ -761,12 +792,13 @@ export default function Students({ user }: { user: UserType }) {
                                   (user.role !== "superadmin" && !!user.schoolId) && "opacity-80 cursor-not-allowed bg-slate-100"
                                 )}
                               >
+                                {/* Mapping logic to show only school name in trigger */}
                                 <SelectValue placeholder="Select School Branch">
-                                  {newStudentFormData.schoolId && newStudentFormData.schoolId !== "none" ? schools.find(s => s.id.toString() === newStudentFormData.schoolId)?.name : "Select School Branch"}
+                                  {newStudentFormData.schoolId ? schools.find(s => s.id.toString() === newStudentFormData.schoolId.toString())?.name : undefined}
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="max-h-68 rounded-2xl shadow-2xl border-slate-200 p-2">
-                                <SelectItem value="none" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">
+                                <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">
                                   Select School Branch
                                 </SelectItem>
                                 {schools.length > 0 ? (
@@ -806,11 +838,11 @@ export default function Students({ user }: { user: UserType }) {
                               )}
                             >
                               <SelectValue placeholder="Select Academic Grade">
-                                {newStudentFormData.STD && newStudentFormData.STD !== "none" ? newStudentFormData.STD : "Select Academic Grade"}
+                                {newStudentFormData.STD || undefined}
                               </SelectValue>
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Grade</SelectItem>
+                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Grade</SelectItem>
                               {standardsMaster.map(std => (
                                 <SelectItem key={std.id} value={std.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{std.name}</SelectItem>
                               ))}
@@ -836,11 +868,11 @@ export default function Students({ user }: { user: UserType }) {
                               )}
                             >
                               <SelectValue placeholder="Select Section/Division">
-                                {newStudentFormData.DIV && newStudentFormData.DIV !== "none" ? `Section ${newStudentFormData.DIV}` : "Select Section/Division"}
+                                {newStudentFormData.DIV ? `Section ${newStudentFormData.DIV}` : undefined}
                               </SelectValue>
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Section/Division</SelectItem>
+                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Section/Division</SelectItem>
                               {sectionsMaster.map(sec => (
                                 <SelectItem key={sec.id} value={sec.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Section {sec.name}</SelectItem>
                               ))}
@@ -856,11 +888,11 @@ export default function Students({ user }: { user: UserType }) {
                           >
                             <SelectTrigger id="academicyear" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                               <SelectValue placeholder="Select Academic Year">
-                                {newStudentFormData.academicyear && newStudentFormData.academicyear !== "none" ? academicYears.find(y => y.id.toString() === newStudentFormData.academicyear)?.name : "Select Academic Year"}
+                                {newStudentFormData.academicyear ? academicYears.find(y => y.id.toString() === newStudentFormData.academicyear)?.name : undefined}
                               </SelectValue>
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Year</SelectItem>
+                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Year</SelectItem>
                               {academicYears.map(y => (
                                 <SelectItem key={y.id} value={y.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{y.name} {y.isCurrent ? "(Current)" : ""}</SelectItem>
                               ))}
@@ -875,12 +907,10 @@ export default function Students({ user }: { user: UserType }) {
                             onValueChange={(v) => setNewStudentFormData({...newStudentFormData, SHIFTNAME: v})}
                           >
                             <SelectTrigger id="SHIFTNAME" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                              <SelectValue placeholder="Select Shift">
-                                {newStudentFormData.SHIFTNAME && newStudentFormData.SHIFTNAME !== "none" ? newStudentFormData.SHIFTNAME : "Select Shift"}
-                              </SelectValue>
+                              <SelectValue placeholder="Select Shift" />
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Shift</SelectItem>
+                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Shift</SelectItem>
                               {shifts.map(s => (
                                 <SelectItem key={s.id} value={s.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{s.name}</SelectItem>
                               ))}
@@ -949,12 +979,10 @@ export default function Students({ user }: { user: UserType }) {
                                   formErrors.GENDER && "border-red-500 ring-2 ring-red-500/10"
                                 )}
                               >
-                                <SelectValue placeholder="Select Student Gender">
-                                  {newStudentFormData.GENDER && newStudentFormData.GENDER !== "none" ? newStudentFormData.GENDER.charAt(0).toUpperCase() + newStudentFormData.GENDER.slice(1) : "Select Student Gender"}
-                                </SelectValue>
+                                <SelectValue placeholder="Select Student Gender" />
                               </SelectTrigger>
                               <SelectContent className="rounded-xl border-slate-200">
-                                <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Gender</SelectItem>
+                                <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Gender</SelectItem>
                                 <SelectItem value="Male" className="font-semibold py-1.5 text-xs px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Male</SelectItem>
                                 <SelectItem value="Female" className="font-semibold py-1.5 text-xs px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Female</SelectItem>
                                 <SelectItem value="Other" className="font-semibold py-1.5 text-xs px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Other</SelectItem>
@@ -1063,12 +1091,10 @@ export default function Students({ user }: { user: UserType }) {
                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, RELIGION: v})}
                             >
                               <SelectTrigger id="RELIGION" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student Religion">
-                                  {newStudentFormData.RELIGION && newStudentFormData.RELIGION !== "none" ? (religions.find(r => r.id.toString() === newStudentFormData.RELIGION)?.name || newStudentFormData.RELIGION) : "Select Student Religion"}
-                                </SelectValue>
+                                <SelectValue placeholder="Select Student Religion" />
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                                <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Religion</SelectItem>
+                                <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Religion</SelectItem>
                                 {religions.map(r => (
                                   <SelectItem key={r.id} value={r.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{r.name}</SelectItem>
                                 ))}
@@ -1083,12 +1109,10 @@ export default function Students({ user }: { user: UserType }) {
                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, BLOODGROUP: v})}
                             >
                               <SelectTrigger id="BLOODGROUP" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student Blood Group">
-                                  {newStudentFormData.BLOODGROUP && newStudentFormData.BLOODGROUP !== "none" ? (bloodGroups.find(bg => bg.id.toString() === newStudentFormData.BLOODGROUP)?.name || newStudentFormData.BLOODGROUP) : "Select Student Blood Group"}
-                                </SelectValue>
+                                <SelectValue placeholder="Select Student Blood Group" />
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                                <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Blood Group</SelectItem>
+                                <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Blood Group</SelectItem>
                                 {bloodGroups.map(bg => (
                                   <SelectItem key={bg.id} value={bg.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{bg.name}</SelectItem>
                                 ))}
@@ -1103,12 +1127,10 @@ export default function Students({ user }: { user: UserType }) {
                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, CASTE: v})}
                             >
                               <SelectTrigger id="CASTE" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Caste Category">
-                                  {newStudentFormData.CASTE && newStudentFormData.CASTE !== "none" ? (castes.find(c => c.id.toString() === newStudentFormData.CASTE)?.name || newStudentFormData.CASTE) : "Select Caste Category"}
-                                </SelectValue>
+                                <SelectValue placeholder="Select Caste Category" />
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                                <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Caste Category</SelectItem>
+                                <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Caste Category</SelectItem>
                                 {castes.map(c => (
                                   <SelectItem key={c.id} value={c.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{c.name}</SelectItem>
                                 ))}
@@ -1124,12 +1146,10 @@ export default function Students({ user }: { user: UserType }) {
                               disabled={!newStudentFormData.CASTE}
                             >
                               <SelectTrigger id="subcaste" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student Sub-Caste">
-                                  {newStudentFormData.subcaste && newStudentFormData.subcaste !== "none" ? subCastes.find(sc => sc.id.toString() === newStudentFormData.subcaste)?.name || newStudentFormData.subcaste : "Select Student Sub-Caste"}
-                                </SelectValue>
+                                <SelectValue placeholder="Select Student Sub-Caste" />
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                                <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Sub-Caste</SelectItem>
+                                <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Sub-Caste</SelectItem>
                                 {subCastes
                                   .filter(sc => sc.casteId?.toString() === newStudentFormData.CASTE)
                                   .map(sc => (
@@ -1147,12 +1167,10 @@ export default function Students({ user }: { user: UserType }) {
                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, house: v})}
                             >
                               <SelectTrigger id="house" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student House Group">
-                                  {newStudentFormData.house && newStudentFormData.house !== "none" ? houses.find(h => h.id.toString() === newStudentFormData.house)?.name || newStudentFormData.house : "Select Student House Group"}
-                                </SelectValue>
+                                <SelectValue placeholder="Select Student House Group" />
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student House Group</SelectItem>
+                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student House Group</SelectItem>
                               {houses.map(h => (
                                 <SelectItem key={h.id} value={h.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
                                   <div className="flex items-center gap-2">
@@ -1172,12 +1190,10 @@ export default function Students({ user }: { user: UserType }) {
                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, admissiontype: v})}
                             >
                               <SelectTrigger id="admissiontype" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student Admission Type">
-                                  {newStudentFormData.admissiontype && newStudentFormData.admissiontype !== "none" ? admissionTypes.find(at => at.id.toString() === newStudentFormData.admissiontype)?.name || newStudentFormData.admissiontype : "Select Student Admission Type"}
-                                </SelectValue>
+                                <SelectValue placeholder="Select Student Admission Type" />
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Admission Type</SelectItem>
+                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Admission Type</SelectItem>
                               {admissionTypes.map(at => (
                                 <SelectItem key={at.id} value={at.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{at.name}</SelectItem>
                               ))}
@@ -1288,8 +1304,9 @@ export default function Students({ user }: { user: UserType }) {
               <div className="flex flex-wrap gap-3">
                 <Select value={standardFilter} onValueChange={setStandardFilter}>
                   <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-2xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
+                    {/* Explicit mapping to show "Grade X" or "All Grades" in trigger */}
                     <SelectValue placeholder="Standard">
-                      {standardFilter === "all" ? "All Grades" : `Grade ${standardFilter}`}
+                      {standardFilter === "all" ? "All Grades" : (standardFilter ? `Grade ${standardFilter}` : undefined)}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
@@ -1302,8 +1319,9 @@ export default function Students({ user }: { user: UserType }) {
 
                 <Select value={sectionFilter} onValueChange={setSectionFilter}>
                   <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-2xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
+                    {/* Explicit mapping to show "Section X" or "All Sections" in trigger */}
                     <SelectValue placeholder="Section">
-                      {sectionFilter === "all" ? "All Sections" : `Section ${sectionFilter}`}
+                      {sectionFilter === "all" ? "All Sections" : (sectionFilter ? `Section ${sectionFilter}` : undefined)}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">

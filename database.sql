@@ -365,7 +365,7 @@ CREATE TABLE [dbo].[Students](
 	[EMAIL] [nvarchar](50) NULL,
 	[SHIFTNAME] [nvarchar](200) NULL,
 	[DOA] [nvarchar](200) NULL,
-	[ProfilePicturePath] [nvarchar](500) NULL,
+	[ProfilePhotoPath] [nvarchar](500) NULL,
 	[CARDID] [nvarchar](500) NULL,
 	[VALIDFROM] [nvarchar](200) NULL,
 	[VALIDTO] [nvarchar](200) NULL,
@@ -434,20 +434,49 @@ CREATE TABLE [dbo].[Students](
 	[CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
     [ModifiedBy] [nvarchar](max) NULL,
     [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
- CONSTRAINT [PK_Students] PRIMARY KEY CLUSTERED ([Id] ASC),
- CONSTRAINT [FK_Students_Schools_SchoolId] FOREIGN KEY([SchoolId]) REFERENCES [dbo].[Schools] ([Id]) ON DELETE CASCADE,
- CONSTRAINT [FK_Students_Standards] FOREIGN KEY([StandardId]) REFERENCES [dbo].[Standards] ([Id]),
- CONSTRAINT [FK_Students_Sections] FOREIGN KEY([SectionId]) REFERENCES [dbo].[Sections] ([Id]),
- CONSTRAINT [FK_Students_AcademicYears] FOREIGN KEY([AcademicYearId]) REFERENCES [dbo].[AcademicYears] ([Id]),
- CONSTRAINT [FK_Students_Castes] FOREIGN KEY([CasteId]) REFERENCES [dbo].[Castes] ([Id]),
- CONSTRAINT [FK_Students_SubCastes] FOREIGN KEY([SubCasteId]) REFERENCES [dbo].[SubCastes] ([Id]),
- CONSTRAINT [FK_Students_Religions] FOREIGN KEY([ReligionId]) REFERENCES [dbo].[Religions] ([Id]),
- CONSTRAINT [FK_Students_BloodGroups] FOREIGN KEY([BloodGroupId]) REFERENCES [dbo].[BloodGroups] ([Id]),
- CONSTRAINT [FK_Students_Houses] FOREIGN KEY([HouseId]) REFERENCES [dbo].[Houses] ([Id]),
- CONSTRAINT [FK_Students_AdmissionTypes] FOREIGN KEY([AdmissionTypeId]) REFERENCES [dbo].[AdmissionTypes] ([Id]),
- CONSTRAINT [FK_Students_Cities] FOREIGN KEY([CityId]) REFERENCES [dbo].[Cities] ([Id]),
- CONSTRAINT [FK_Students_States] FOREIGN KEY([StateId]) REFERENCES [dbo].[States] ([Id])
+ CONSTRAINT [PK_Students] PRIMARY KEY CLUSTERED ([Id] ASC)
 )
+END
+GO
+
+-- Foreign Key Constraints for Students
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND type in (N'U'))
+BEGIN
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_Schools_SchoolId')
+        ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_Schools_SchoolId] FOREIGN KEY([SchoolId]) REFERENCES [dbo].[Schools] ([Id]) ON DELETE CASCADE;
+    
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_Standards')
+        ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_Standards] FOREIGN KEY([StandardId]) REFERENCES [dbo].[Standards] ([Id]);
+    
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_Sections')
+        ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_Sections] FOREIGN KEY([SectionId]) REFERENCES [dbo].[Sections] ([Id]);
+    
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_AcademicYears')
+        ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_AcademicYears] FOREIGN KEY([AcademicYearId]) REFERENCES [dbo].[AcademicYears] ([Id]);
+    
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_Castes')
+        ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_Castes] FOREIGN KEY([CasteId]) REFERENCES [dbo].[Castes] ([Id]);
+    
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_SubCastes')
+        ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_SubCastes] FOREIGN KEY([SubCasteId]) REFERENCES [dbo].[SubCastes] ([Id]);
+    
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_Religions')
+        ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_Religions] FOREIGN KEY([ReligionId]) REFERENCES [dbo].[Religions] ([Id]);
+    
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_BloodGroups')
+        ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_BloodGroups] FOREIGN KEY([BloodGroupId]) REFERENCES [dbo].[BloodGroups] ([Id]);
+    
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_Houses')
+        ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_Houses] FOREIGN KEY([HouseId]) REFERENCES [dbo].[Houses] ([Id]);
+    
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_AdmissionTypes')
+        ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_AdmissionTypes] FOREIGN KEY([AdmissionTypeId]) REFERENCES [dbo].[AdmissionTypes] ([Id]);
+    
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_Cities')
+        ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_Cities] FOREIGN KEY([CityId]) REFERENCES [dbo].[Cities] ([Id]);
+    
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_States')
+        ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_States] FOREIGN KEY([StateId]) REFERENCES [dbo].[States] ([Id]);
 END
 GO
 
@@ -466,9 +495,15 @@ CREATE TABLE [dbo].[Attendance](
 	[CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
     [ModifiedBy] [nvarchar](max) NULL,
     [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
- CONSTRAINT [PK_Attendance] PRIMARY KEY CLUSTERED ([Id] ASC),
- CONSTRAINT [FK_Attendance_Students_StudentId] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([Id]) ON DELETE CASCADE
+ CONSTRAINT [PK_Attendance] PRIMARY KEY CLUSTERED ([Id] ASC)
 )
+END
+GO
+
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Attendance]') AND type in (N'U'))
+BEGIN
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Attendance_Students_StudentId')
+        ALTER TABLE [dbo].[Attendance] ADD CONSTRAINT [FK_Attendance_Students_StudentId] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([Id]) ON DELETE CASCADE;
 END
 GO
 
@@ -490,9 +525,15 @@ CREATE TABLE [dbo].[Fees](
 	[CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
     [ModifiedBy] [nvarchar](max) NULL,
     [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
- CONSTRAINT [PK_Fees] PRIMARY KEY CLUSTERED ([Id] ASC),
- CONSTRAINT [FK_Fees_Students_StudentId] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([Id]) ON DELETE CASCADE
+ CONSTRAINT [PK_Fees] PRIMARY KEY CLUSTERED ([Id] ASC)
 )
+END
+GO
+
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Fees]') AND type in (N'U'))
+BEGIN
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Fees_Students_StudentId')
+        ALTER TABLE [dbo].[Fees] ADD CONSTRAINT [FK_Fees_Students_StudentId] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([Id]) ON DELETE CASCADE;
 END
 GO
 
@@ -512,9 +553,15 @@ CREATE TABLE [dbo].[Marks](
 	[CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
     [ModifiedBy] [nvarchar](max) NULL,
     [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
- CONSTRAINT [PK_Marks] PRIMARY KEY CLUSTERED ([Id] ASC),
- CONSTRAINT [FK_Marks_Students_StudentId] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([Id]) ON DELETE CASCADE
+ CONSTRAINT [PK_Marks] PRIMARY KEY CLUSTERED ([Id] ASC)
 )
+END
+GO
+
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Marks]') AND type in (N'U'))
+BEGIN
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Marks_Students_StudentId')
+        ALTER TABLE [dbo].[Marks] ADD CONSTRAINT [FK_Marks_Students_StudentId] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([Id]) ON DELETE CASCADE;
 END
 GO
 

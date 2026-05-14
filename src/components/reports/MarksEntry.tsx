@@ -674,12 +674,11 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
               <Label className="text-[10px] uppercase font-bold text-slate-400">Standard</Label>
               <Select value={standard} onValueChange={setStandard}>
                 <SelectTrigger className="bg-white border-slate-200">
-                  <SelectValue placeholder="Select Academic Standard">
-                    {standard && standard !== "none" ? standard : "Select Academic Standard"}
-                  </SelectValue>
+                  {/* Standard SelectValue without children to ensure correct label/placeholder display */}
+                  <SelectValue placeholder="Select Academic Standard" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select Academic Standard</SelectItem>
+                  <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select Academic Standard</SelectItem>
                   {standardsMaster.map(s => (
                     <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
                   ))}
@@ -690,12 +689,13 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
               <Label className="text-[10px] uppercase font-bold text-slate-400">Section</Label>
               <Select value={section} onValueChange={setSection}>
                 <SelectTrigger className="bg-white border-slate-200">
+                  {/* Explicit mapping to maintain 'Section X' format in the trigger display */}
                   <SelectValue placeholder="Select Class Section">
-                    {section && section !== "none" ? `Section ${section}` : "Select Class Section"}
+                    {section ? `Section ${section}` : undefined}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select Class Section</SelectItem>
+                  <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select Class Section</SelectItem>
                   {sectionsMaster.map(s => (
                     <SelectItem key={s.id} value={s.name}>Section {s.name}</SelectItem>
                   ))}
@@ -706,15 +706,18 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
               <Label className="text-[10px] uppercase font-bold text-slate-400">Exam Type</Label>
               <Select value={exam} onValueChange={setExam}>
                 <SelectTrigger className="bg-white border-slate-200">
+                  {/* Explicit mapping to show readable labels instead of logic keys like unit_1 */}
                   <SelectValue placeholder="Select Exam Type">
-                    {exam === "unit_1" ? "Unit Test 1" : 
-                     exam === "mid_term" ? "Mid-Term" : 
-                     exam === "unit_2" ? "Unit Test 2" : 
-                     exam === "final" ? "Final Examination" : (exam && exam !== "none" ? exam : "Select Exam Type")}
+                    {exam ? (
+                      exam === "unit_1" ? "Unit Test 1" : 
+                      exam === "mid_term" ? "Mid-Term" : 
+                      exam === "unit_2" ? "Unit Test 2" : 
+                      exam === "final" ? "Final Examination" : exam
+                    ) : undefined}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic font-bold">Select Exam Type</SelectItem>
+                  <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic font-bold">Select Exam Type</SelectItem>
                   <SelectItem value="unit_1">Unit Test 1</SelectItem>
                   <SelectItem value="mid_term">Mid-Term</SelectItem>
                   <SelectItem value="unit_2">Unit Test 2</SelectItem>
@@ -738,10 +741,9 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
                 <Select value={subject} onValueChange={setSubject}>
                   <SelectTrigger className="bg-white border-slate-200 flex-1">
                     <div className="flex items-center justify-between w-full pr-2">
-                      <SelectValue placeholder="Select Examination Subject">
-                        {subject && subject !== "none" ? subject : "Select Examination Subject"}
-                      </SelectValue>
-                      {subject && subject !== "none" && (
+                      {/* Standard SelectValue to handle dynamic subject labels and entry counts */}
+                      <SelectValue placeholder="Select Examination Subject" />
+                      {subject && subject !== "" && (
                         <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-md font-black ring-1 ring-blue-100">
                           {subjectEntryCounts[subject] || 0}
                         </span>
@@ -749,7 +751,7 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
                     </div>
                   </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
-                    <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select Examination Subject</SelectItem>
+                    <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select Examination Subject</SelectItem>
                     {sortedSubjects.map(s => {
                       const count = subjectEntryCounts[s] || 0;
                       const isSelected = subject === s;

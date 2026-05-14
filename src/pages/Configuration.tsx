@@ -466,7 +466,15 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                                 }}
                               >
                                 <SelectTrigger className="h-9 w-36 rounded-xl bg-blue-50/50 border-blue-100 text-[10px] font-black uppercase tracking-widest text-blue-700 hover:bg-blue-100/50 transition-colors">
-                                  <SelectValue />
+                                  {/* Explicit label mapping to ensure proper display names for roles */}
+                                  <SelectValue placeholder="Role">
+                                    {item.role ? (
+                                      dependencies.roles?.find((r: any) => r.name.toLowerCase().replace(' ', '') === item.role)?.name || 
+                                      (item.role === 'superadmin' ? 'Super Admin' : 
+                                       item.role === 'admin' ? 'Admin' : 
+                                       item.role === 'teacher' ? 'Teacher' : item.role)
+                                    ) : undefined}
+                                  </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
                                   {dependencies.roles?.map((role: any) => (
@@ -705,12 +713,13 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                       formErrors.casteId && "border-red-500 ring-2 ring-red-500/10"
                     )}
                   >
+                    {/* Explicitly show caste name to avoid ID display in trigger */}
                     <SelectValue placeholder="Select Parent Caste">
-                      {formData.casteId && formData.casteId !== "none" ? dependencies.castes?.find(c => c.id.toString() === formData.casteId)?.name : undefined}
+                      {formData.casteId ? dependencies.castes?.find(c => c.id.toString() === formData.casteId)?.name : undefined}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-200 shadow-xl">
-                    <SelectItem value="none" className="font-semibold py-2 text-slate-400 italic">Select Parent Caste</SelectItem>
+                    <SelectItem value="" className="font-semibold py-2 text-slate-400 italic">Select Parent Caste</SelectItem>
                     {dependencies.castes?.map(c => (
                       <SelectItem key={c.id} value={c.id.toString()} className="font-semibold py-2">
                         {c.name}
@@ -738,12 +747,13 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                       formErrors.stateId && "border-red-500 ring-2 ring-red-500/10"
                     )}
                   >
+                    {/* Explicitly show state name to avoid ID display in trigger */}
                     <SelectValue placeholder="Select State Name">
-                      {formData.stateId && formData.stateId !== "none" ? dependencies.states?.find(s => s.id.toString() === formData.stateId)?.name : undefined}
+                      {formData.stateId ? dependencies.states?.find(s => s.id.toString() === formData.stateId)?.name : undefined}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-200 shadow-xl">
-                    <SelectItem value="none" className="font-semibold py-2 text-slate-400 italic">Select State Name</SelectItem>
+                    <SelectItem value="" className="font-semibold py-2 text-slate-400 italic">Select State Name</SelectItem>
                     {dependencies.states?.map(s => (
                       <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2">
                         {s.name}

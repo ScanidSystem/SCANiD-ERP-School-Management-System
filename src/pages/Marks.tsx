@@ -172,12 +172,13 @@ export default function Marks({ user }: { user: UserType }) {
                 <div className="w-full max-w-sm">
                   <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
                     <SelectTrigger className="h-12 border-slate-100 bg-slate-50/50 rounded-2xl font-black text-slate-800 focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all text-sm px-5">
+                      {/* Explicitly show school name to avoid layout/ID issues in trigger */}
                       <SelectValue placeholder="Select Academic Branch">
-                        {selectedSchoolId && selectedSchoolId !== "none" ? schools.find(s => s.id.toString() === selectedSchoolId)?.name : "Select Academic Branch"}
+                        {selectedSchoolId ? schools.find(s => s.id.toString() === selectedSchoolId)?.name : undefined}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="rounded-[2rem] border-slate-100 shadow-3xl p-3 max-h-80">
-                      <SelectItem value="none" className="font-bold py-3 px-4 rounded-xl text-slate-400 italic">Select Academic Branch</SelectItem>
+                      <SelectItem value="" className="font-bold py-3 px-4 rounded-xl text-slate-400 italic">Select Academic Branch</SelectItem>
                       {schools.map(s => (
                         <SelectItem key={s.id} value={s.id.toString()} className="font-black py-4 px-4 rounded-2xl focus:bg-indigo-50 focus:text-indigo-700 cursor-pointer">
                           <div className="flex flex-col gap-1">

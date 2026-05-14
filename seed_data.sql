@@ -22,6 +22,34 @@ VALUES
 SET IDENTITY_INSERT [dbo].[Roles] OFF;
 GO
 
+-- 1.7 SEED MASTER DATA
+INSERT INTO [dbo].[Standards] ([Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES ('UKG', 1, 0, 'system', GETDATE()), ('1st', 1, 0, 'system', GETDATE()), ('10th', 1, 0, 'system', GETDATE());
+
+INSERT INTO [dbo].[Sections] ([Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES ('A', 1, 0, 'system', GETDATE()), ('B', 1, 0, 'system', GETDATE());
+
+INSERT INTO [dbo].[Religions] ([Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES ('Hindu', 1, 0, 'system', GETDATE()), ('Muslim', 1, 0, 'system', GETDATE()), ('Christian', 1, 0, 'system', GETDATE());
+
+INSERT INTO [dbo].[Castes] ([Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES ('General', 1, 0, 'system', GETDATE()), ('OBC', 1, 0, 'system', GETDATE()), ('SC', 1, 0, 'system', GETDATE());
+
+INSERT INTO [dbo].[AcademicYears] ([Name], [IsCurrent], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES ('2024-2025', 0, 1, 0, 'system', GETDATE()), ('2025-2026', 1, 1, 0, 'system', GETDATE());
+
+INSERT INTO [dbo].[BloodGroups] ([Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES ('A+', 1, 0, 'system', GETDATE()), ('O+', 1, 0, 'system', GETDATE()), ('B+', 1, 0, 'system', GETDATE());
+
+INSERT INTO [dbo].[Houses] ([Name], [Color], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES ('Red', '#ef4444', 1, 0, 'system', GETDATE()), ('Blue', '#3b82f6', 1, 0, 'system', GETDATE());
+
+INSERT INTO [dbo].[AdmissionTypes] ([Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES ('Regular', 1, 0, 'system', GETDATE()), ('RTE', 1, 0, 'system', GETDATE());
+
+INSERT INTO [dbo].[Shifts] ([Name], [StartTime], [EndTime], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
+VALUES ('SHIFT-I-XII', '08:00', '14:00', 1, 0, 'system', GETDATE());
+
 -- 2. SEED USERS (Plain text password "Password123" for demo compatibility)
 SET IDENTITY_INSERT [dbo].[Users] ON;
 INSERT INTO [dbo].[Users] ([Id], [Username], [PasswordHash], [FullName], [Email], [RoleId], [Role], [SchoolId], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn])
@@ -43,11 +71,11 @@ GO
 
 -- 4. SEED STUDENTS
 SET IDENTITY_INSERT [dbo].[Students] ON;
-INSERT INTO [dbo].[Students] ([Id], [RegistrationNumber], [FullName], [SchoolId], [Status], [RollNumber], [IsActive], [FNAME], [LNAME], [STD], [DIV], [ROLLNO], [GENDER], [DOB], [MOBILE])
+INSERT INTO [dbo].[Students] ([Id], [RegistrationNumber], [FullName], [SchoolId], [Status], [RollNumber], [IsActive], [FNAME], [LNAME], [STD], [DIV], [ROLLNO], [GENDER], [DOB], [MOBILE], [ProfilePhotoPath], [StandardId], [SectionId])
 VALUES 
-(1, 'REG/2024/001', 'James Brown', 1, 'Active', 1, 1, 'James', 'Brown', '10th', 'A', '1', 'Male', '2008-05-15', '555-1234'),
-(2, 'REG/2024/002', 'Emily Davis', 1, 'Active', 2, 1, 'Emily', 'Davis', '10th', 'A', '2,', 'Female', '2008-11-20', '555-5678'),
-(3, 'REG/2024/003', 'Liam Wilson', 2, 'Active', 1, 1, 'Liam', 'Wilson', '9th', 'B', '1', 'Male', '2009-02-10', '555-9012');
+(1, 'REG/2024/001', 'James Brown', 1, 'Active', 1, 1, 'James', 'Brown', '10th', 'A', '1', 'Male', '2008-05-15', '555-1234', '/uploads/Green Valley High/10th/A/james_brown.jpg', 3, 1),
+(2, 'REG/2024/002', 'Emily Davis', 1, 'Active', 2, 1, 'Emily', 'Davis', '10th', 'A', '2', 'Female', '2008-11-20', '555-5678', NULL, 3, 1),
+(3, 'REG/2024/003', 'Liam Wilson', 2, 'Active', 1, 1, 'Liam', 'Wilson', '9th', 'B', '1', 'Male', '2009-02-10', '555-9012', NULL, NULL, 2);
 SET IDENTITY_INSERT [dbo].[Students] OFF;
 GO
 

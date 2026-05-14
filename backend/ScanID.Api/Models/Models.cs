@@ -126,7 +126,7 @@ namespace ScanID.Api.Models
         public string? EMAIL { get; set; }
         public string? SHIFTNAME { get; set; }
         public string? DOA { get; set; }
-        public string? ProfilePicturePath { get; set; }
+        public string? ProfilePhotoPath { get; set; }
         public string? CARDID { get; set; }
         public string? VALIDFROM { get; set; }
         public string? VALIDTO { get; set; }

@@ -163,11 +163,11 @@ export default function Attendance({ user }: { user: any }) {
                 <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
                   <SelectTrigger className="border-slate-200 bg-blue-50/30 font-bold rounded-xl h-11">
                     <SelectValue placeholder="Select School Branch">
-                      {selectedSchoolId && selectedSchoolId !== "none" ? schools.find(s => s.id.toString() === selectedSchoolId)?.name : "Select School Branch"}
+                      {selectedSchoolId ? schools.find(s => s.id.toString() === selectedSchoolId)?.name : undefined}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="max-h-68 rounded-2xl shadow-2xl border-slate-200 p-2">
-                    <SelectItem value="none" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">
+                    <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">
                       Select School Branch
                     </SelectItem>
                     {schools.map(s => (
@@ -186,12 +186,13 @@ export default function Attendance({ user }: { user: any }) {
               <label className="text-xs font-bold uppercase text-slate-400 tracking-widest ml-1">Academic Grade</label>
               <Select value={selectedStandard} onValueChange={setSelectedStandard}>
                 <SelectTrigger className="border-slate-200 bg-slate-50/50 font-bold rounded-xl h-11">
+                  {/* Explicit mapping to ensure correct name display */}
                   <SelectValue placeholder="Select Academic Standard">
-                    {selectedStandard && selectedStandard !== "none" ? selectedStandard : "Select Academic Standard"}
+                    {selectedStandard || undefined}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="rounded-xl shadow-2xl border-slate-200 p-2">
-                  <SelectItem value="none" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Standard</SelectItem>
+                  <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Standard</SelectItem>
                   {standardsMaster.map(std => (
                     <SelectItem key={std.id} value={std.name} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{std.name}</SelectItem>
                   ))}
@@ -202,12 +203,13 @@ export default function Attendance({ user }: { user: any }) {
               <label className="text-xs font-bold uppercase text-slate-400 tracking-widest ml-1">Division/Section</label>
               <Select value={selectedSection} onValueChange={setSelectedSection}>
                 <SelectTrigger className="border-slate-200 bg-slate-50/50 font-bold rounded-xl h-11">
+                  {/* Explicit mapping to maintain 'Section X' format in trigger */}
                   <SelectValue placeholder="Select Class Section">
-                    {selectedSection && selectedSection !== "none" ? `Section ${selectedSection}` : "Select Class Section"}
+                    {selectedSection ? `Section ${selectedSection}` : undefined}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="rounded-xl shadow-2xl border-slate-200 p-2">
-                  <SelectItem value="none" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Class Section</SelectItem>
+                  <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Class Section</SelectItem>
                   {sectionsMaster.map(sec => (
                     <SelectItem key={sec.id} value={sec.name} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Section {sec.name}</SelectItem>
                   ))}

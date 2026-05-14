@@ -190,9 +190,9 @@ namespace ScanID.Api.Controllers
                 }
 
                 // Delete old photo if it exists to maintain filesystem cleanliness
-                if (!string.IsNullOrEmpty(student.ProfilePicturePath))
+                if (!string.IsNullOrEmpty(student.ProfilePhotoPath))
                 {
-                    var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", student.ProfilePicturePath.TrimStart('/'));
+                    var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", student.ProfilePhotoPath.TrimStart('/'));
                     if (System.IO.File.Exists(oldFilePath))
                     {
                         System.IO.File.Delete(oldFilePath);
@@ -200,7 +200,7 @@ namespace ScanID.Api.Controllers
                 }
 
                 // Update database with the new structured path
-                student.ProfilePicturePath = $"/{relativeFolder.Replace("\\", "/")}/{fileName}";
+                student.ProfilePhotoPath = $"/{relativeFolder.Replace("\\", "/")}/{fileName}";
                 student.ModifiedOn = DateTime.Now;
                 
                 await _context.SaveChangesAsync();

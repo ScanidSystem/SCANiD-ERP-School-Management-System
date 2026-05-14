@@ -79,7 +79,7 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
         schoolId: schoolId,
         schoolName: school.name
       });
-    } else if (schoolId === "none") {
+    } else if (schoolId === "") {
       onUserUpdate({
         ...user,
         schoolId: undefined,
@@ -96,7 +96,7 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
         academicYearId: yearId,
         academicYearName: year.name
       });
-    } else if (yearId === "none") {
+    } else if (yearId === "") {
       onUserUpdate({
         ...user,
         academicYearId: undefined,
@@ -170,19 +170,18 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
         <div className="flex items-center gap-2 sm:gap-3">
           {user.role === "superadmin" ? (
             <div className="hidden md:block">
-              <Select value={user.schoolId?.toString() || "none"} onValueChange={handleSchoolChange}>
-                <SelectTrigger className="w-[180px] h-9 bg-slate-50 border-slate-200 text-xs font-bold rounded-lg focus:ring-2 focus:ring-blue-500/10">
-                  <div className="flex items-center gap-2 truncate">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0"></div>
-                    <SelectValue placeholder="Select School Branch">
-                      {user.schoolId && user.schoolId !== "none" && user.schoolId !== "all" 
-                        ? schools.find(s => s.id.toString() === user.schoolId.toString())?.name 
-                        : (user.schoolId === "all" ? "Global Admin View" : undefined)}
-                    </SelectValue>
-                  </div>
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                  <SelectItem value="none" className="text-xs italic text-slate-400">Select School Branch</SelectItem>
+      <Select value={user.schoolId?.toString() || ""} onValueChange={handleSchoolChange}>
+        <SelectTrigger className="w-[180px] h-9 bg-slate-50 border-slate-200 text-xs font-bold rounded-lg focus:ring-2 focus:ring-blue-500/10">
+          <div className="flex items-center gap-2 truncate">
+            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0"></div>
+            {/* Explicitly mapping school name to avoid ID display in trigger */}
+            <SelectValue placeholder="Select School Branch">
+              {user.schoolId ? (user.schoolId === "all" ? "Global Admin View" : schools.find(s => s.id.toString() === user.schoolId.toString())?.name) : undefined}
+            </SelectValue>
+          </div>
+        </SelectTrigger>
+        <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+          <SelectItem value="" className="text-xs italic text-slate-400">Select School Branch</SelectItem>
                   <SelectItem value="all" className="text-xs font-black text-blue-600">Global Admin View</SelectItem>
                   {schools.map(s => (
                     <SelectItem key={s.id} value={s.id.toString()} className="text-xs font-medium">{s.name}</SelectItem>
@@ -200,19 +199,18 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
           )}
 
           <div className="hidden lg:block">
-            <Select value={user.academicYearId?.toString() || "none"} onValueChange={handleYearChange}>
-              <SelectTrigger className="w-[140px] h-9 bg-blue-50 border-blue-100 text-xs font-black text-blue-700 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Calendar size={13} strokeWidth={3} />
-                  <SelectValue placeholder="Select Academic Year">
-                    {user.academicYearId && user.academicYearId !== "none" && academicYears.length > 0 
-                      ? academicYears.find(y => y.id.toString() === user.academicYearId?.toString())?.name 
-                      : undefined}
-                  </SelectValue>
-                </div>
-              </SelectTrigger>
-              <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                <SelectItem value="none" className="text-xs italic text-slate-400">Select Academic Year</SelectItem>
+      <Select value={user.academicYearId?.toString() || ""} onValueChange={handleYearChange}>
+        <SelectTrigger className="w-[140px] h-9 bg-blue-50 border-blue-100 text-xs font-black text-blue-700 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Calendar size={13} strokeWidth={3} />
+            {/* Explicitly mapping year name to ensure correct display */}
+            <SelectValue placeholder="Select Academic Year">
+              {user.academicYearId ? academicYears.find(y => y.id.toString() === user.academicYearId.toString())?.name : undefined}
+            </SelectValue>
+          </div>
+        </SelectTrigger>
+        <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+          <SelectItem value="" className="text-xs italic text-slate-400">Select Academic Year</SelectItem>
                 {academicYears.map(y => (
                   <SelectItem key={y.id} value={y.id.toString()} className="text-xs font-bold">
                     {y.name} {y.isCurrent ? "★" : ""}

@@ -27,8 +27,8 @@ const AVAILABLE_FIELDS = [
 export default function ReportBuilder() {
   const [selectedFields, setSelectedFields] = useState<string[]>(["name", "roll", "total", "percentage"]);
   const [format, setFormat] = useState("pdf");
-  const [grouping, setGrouping] = useState("none");
-  const [attendanceFilter, setAttendanceFilter] = useState("none");
+  const [grouping, setGrouping] = useState("");
+  const [attendanceFilter, setAttendanceFilter] = useState("");
   const [includeCharts, setIncludeCharts] = useState(false);
 
   const toggleField = (id: string) => {
@@ -49,7 +49,7 @@ export default function ReportBuilder() {
       loading: `Generating custom ${format.toUpperCase()} report...`,
       success: `Report generated successfully!`,
       error: "Generation failed",
-      description: `Includes ${selectedFields.length} fields ${grouping !== 'none' ? `grouped by ${grouping}` : ''} ${attendanceFilter !== 'none' ? `filtered by attendance` : ''}`,
+      description: `Includes ${selectedFields.length} fields ${grouping !== '' ? `grouped by ${grouping}` : ''} ${attendanceFilter !== '' ? `filtered by attendance` : ''}`,
     });
   };
 
@@ -110,16 +110,17 @@ export default function ReportBuilder() {
                 <Label>Group Data By</Label>
                 <Select value={grouping} onValueChange={setGrouping}>
                   <SelectTrigger>
+                    {/* Explicit label mapping to ensure user-friendly terms are shown in trigger */}
                     <SelectValue placeholder="Select Grouping Mode">
-                      {grouping && grouping !== "none" ? (
+                      {grouping ? (
                         grouping === "standard" ? "Standard" : 
                         grouping === "section" ? "Section" : 
                         grouping === "grade" ? "Grade Level" : grouping
-                      ) : "Select Grouping Mode"}
+                      ) : undefined}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic font-bold">Select Grouping Mode</SelectItem>
+                    <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic font-bold">Select Grouping Mode</SelectItem>
                     <SelectItem value="standard">Standard</SelectItem>
                     <SelectItem value="section">Section</SelectItem>
                     <SelectItem value="grade">Grade Level</SelectItem>
@@ -130,17 +131,18 @@ export default function ReportBuilder() {
                 <Label>Minimum Attendance Filter</Label>
                 <Select value={attendanceFilter} onValueChange={setAttendanceFilter}>
                   <SelectTrigger>
+                    {/* Explicit label mapping for attendance filters */}
                     <SelectValue placeholder="Select Attendance Filter">
-                      {attendanceFilter && attendanceFilter !== "none" ? (
+                      {attendanceFilter ? (
                         attendanceFilter === "0" ? "All Students" :
                         attendanceFilter === "75" ? "75% and Above" :
                         attendanceFilter === "90" ? "90% and Above" : 
                         attendanceFilter === "below_75" ? "Below 75% (At Risk)" : attendanceFilter
-                      ) : "Select Attendance Filter"}
+                      ) : undefined}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic font-bold">Select Attendance Filter</SelectItem>
+                    <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic font-bold">Select Attendance Filter</SelectItem>
                     <SelectItem value="0">All Students</SelectItem>
                     <SelectItem value="75">75% and Above</SelectItem>
                     <SelectItem value="90">90% and Above</SelectItem>

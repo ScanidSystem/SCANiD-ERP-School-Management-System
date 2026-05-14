@@ -319,12 +319,13 @@ export default function Login({ onLogin }: LoginProps) {
                         "bg-slate-800/50 border-slate-700 text-white h-9 text-xs",
                         formErrors.school && "border-red-500/50 ring-1 ring-red-500/20"
                       )}>
+                        {/* Custom display logic to show correct names and handle placeholder via undefined children */}
                         <SelectValue placeholder="Select Current School">
-                          {selectedSchool && selectedSchool !== "none" ? (selectedSchool === "all" ? "All Schools (System-wide)" : schools.find(s => s.id.toString() === selectedSchool)?.name) : undefined}
+                          {selectedSchool ? (selectedSchool === "all" ? "All Schools (System-wide)" : schools.find(s => s.id.toString() === selectedSchool)?.name) : undefined}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="bg-slate-900 border-slate-800 text-white">
-                        <SelectItem value="none" className="text-xs italic text-slate-400">Select Current School</SelectItem>
+                        <SelectItem value="" className="text-xs italic text-slate-400">Select Current School</SelectItem>
                         <SelectItem value="all" className="text-xs font-bold text-blue-400">All Schools (System-wide)</SelectItem>
                         {schools.map(s => (
                           <SelectItem key={s.id} value={s.id.toString()} className="text-xs">{s.name}</SelectItem>
@@ -352,12 +353,13 @@ export default function Login({ onLogin }: LoginProps) {
                       "bg-slate-800/50 border-slate-700 text-white h-9 text-xs",
                       formErrors.year && "border-red-500/50 ring-1 ring-red-500/20"
                     )}>
+                      {/* Custom display logic to show correct year name and handle placeholder via undefined children */}
                       <SelectValue placeholder="Select Academic Year">
-                        {selectedYear && selectedYear !== "none" ? academicYears.find(y => y.id.toString() === selectedYear)?.name : undefined}
+                        {selectedYear ? academicYears.find(y => y.id.toString() === selectedYear)?.name : undefined}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-slate-800 text-white">
-                      <SelectItem value="none" className="text-xs italic text-slate-400">Select Academic Year</SelectItem>
+                      <SelectItem value="" className="text-xs italic text-slate-400">Select Academic Year</SelectItem>
                       {academicYears.map(y => (
                         <SelectItem key={y.id} value={y.id.toString()} className="text-xs">{y.name}</SelectItem>
                       ))}

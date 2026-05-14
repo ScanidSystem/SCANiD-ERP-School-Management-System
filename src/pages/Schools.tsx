@@ -393,12 +393,10 @@ export default function Schools({ user }: { user: UserType }) {
                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">System Status</Label>
                     <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
                       <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
-                        <SelectValue placeholder="Select System Status">
-                          {formData.status && formData.status !== "none" ? formData.status : "Select System Status"}
-                        </SelectValue>
+                        <SelectValue placeholder="Select System Status" />
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-slate-200">
-                        <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select System Status</SelectItem>
+                        <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select System Status</SelectItem>
                         <SelectItem value="Active" className="font-semibold py-1.5 text-xs">Active</SelectItem>
                         <SelectItem value="Suspended" className="font-semibold py-1.5 text-xs">Suspended</SelectItem>
                       </SelectContent>
@@ -542,12 +540,10 @@ export default function Schools({ user }: { user: UserType }) {
                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">System Status</Label>
                     <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
                       <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
-                        <SelectValue placeholder="Select System Status">
-                          {formData.status && formData.status !== "none" ? formData.status : "Select System Status"}
-                        </SelectValue>
+                        <SelectValue placeholder="Select System Status" />
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-slate-200">
-                        <SelectItem value="none" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select System Status</SelectItem>
+                        <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select System Status</SelectItem>
                         <SelectItem value="Active" className="font-semibold py-1.5 text-xs">Active</SelectItem>
                         <SelectItem value="Suspended" className="font-semibold py-1.5 text-xs">Suspended</SelectItem>
                       </SelectContent>

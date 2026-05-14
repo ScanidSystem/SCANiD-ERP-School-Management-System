@@ -364,12 +364,13 @@ export default function Teachers({ user }: { user: any }) {
                                   (user.role !== "superadmin" && !!user.schoolId) && "opacity-80 cursor-not-allowed bg-slate-100"
                                 )}
                               >
+                                {/* Custom label display to show only the name when a campus is selected, avoiding full ID/Address view in trigger */}
                                 <SelectValue placeholder="Select Campus">
-                                  {formData.schoolId && formData.schoolId !== "none" ? schools.find(s => s.id.toString() === formData.schoolId.toString())?.name : "Select Campus"}
+                                  {formData.schoolId ? schools.find(s => s.id.toString() === formData.schoolId.toString())?.name : undefined}
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="max-h-80 rounded-[2rem] shadow-2xl border-slate-100 p-3">
-                                <SelectItem value="none" className="font-bold py-3 px-4 rounded-xl focus:bg-slate-50 text-slate-400 italic">
+                                <SelectItem value="" className="font-bold py-3 px-4 rounded-xl focus:bg-slate-50 text-slate-400 italic">
                                   Select Campus
                                 </SelectItem>
                                 {schools.length > 0 ? (
@@ -537,7 +538,7 @@ export default function Teachers({ user }: { user: any }) {
                           <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Access Status</Label>
                           <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
                             <SelectTrigger className="h-12 border-slate-100 bg-white font-black rounded-[1.25rem] px-5 text-sm focus:ring-4 focus:ring-blue-500/5 transition-all">
-                              <SelectValue />
+                              <SelectValue placeholder="Access Status" />
                             </SelectTrigger>
                             <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
                               <SelectItem value="Active" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-blue-50 focus:text-blue-700">Active</SelectItem>
