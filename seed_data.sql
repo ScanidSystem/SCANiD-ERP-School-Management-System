@@ -43,11 +43,11 @@ GO
 
 -- 4. SEED STUDENTS
 SET IDENTITY_INSERT [dbo].[Students] ON;
-INSERT INTO [dbo].[Students] ([Id], [RegistrationNumber], [FirstName], [LastName], [FullName], [SchoolId], [Standard], [Section], [DateOfBirth], [Gender], [RollNumber], [Status], [IsActive])
+INSERT INTO [dbo].[Students] ([Id], [RegistrationNumber], [FullName], [SchoolId], [Status], [RollNumber], [IsActive], [FNAME], [LNAME], [STD], [DIV], [ROLLNO], [GENDER], [DOB], [MOBILE])
 VALUES 
-(1, 'REG/2024/001', 'James', 'Brown', 'James Brown', 1, '10th', 'A', '2008-05-15', 'Male', 1, 'Active', 1),
-(2, 'REG/2024/002', 'Emily', 'Davis', 'Emily Davis', 1, '10th', 'A', '2008-11-20', 'Female', 2, 'Active', 1),
-(3, 'REG/2024/003', 'Liam', 'Wilson', 'Liam Wilson', 2, '9th', 'B', '2009-02-10', 'Male', 1, 'Active', 1);
+(1, 'REG/2024/001', 'James Brown', 1, 'Active', 1, 1, 'James', 'Brown', '10th', 'A', '1', 'Male', '2008-05-15', '555-1234'),
+(2, 'REG/2024/002', 'Emily Davis', 1, 'Active', 2, 1, 'Emily', 'Davis', '10th', 'A', '2,', 'Female', '2008-11-20', '555-5678'),
+(3, 'REG/2024/003', 'Liam Wilson', 2, 'Active', 1, 1, 'Liam', 'Wilson', '9th', 'B', '1', 'Male', '2009-02-10', '555-9012');
 SET IDENTITY_INSERT [dbo].[Students] OFF;
 GO
 

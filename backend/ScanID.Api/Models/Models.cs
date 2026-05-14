@@ -78,31 +78,103 @@ namespace ScanID.Api.Models
     }
 
     /// <summary>
-    /// Represents a student record.
+    /// Represents a student record based on the studentmaster schema.
     /// </summary>
     public class Student : BaseEntity
     {
         public int Id { get; set; }
+        
         [Required]
         public string RegistrationNumber { get; set; } = string.Empty;
-        public string? FirstName { get; set; }
-        public string? MiddleName { get; set; }
-        public string? LastName { get; set; }
+        
         [Required]
         public string FullName { get; set; } = string.Empty;
+        
         public int SchoolId { get; set; }
-        public string? Standard { get; set; }
-        public string? Section { get; set; }
-        public DateTime? DateOfBirth { get; set; }
-        public string? Gender { get; set; }
-        public string? FatherName { get; set; }
-        public string? MotherName { get; set; }
-        public string? ContactNumber { get; set; }
-        public string? Address { get; set; }
-        public string? AadharCard { get; set; }
-        public string? Photo { get; set; }
         public string Status { get; set; } = "Active";
         public int RollNumber { get; set; }
+
+        // --- Columns from studentmaster schema ---
+        public string? STUDENTID { get; set; }
+        public string? FNAME { get; set; }
+        public string? MNAME { get; set; }
+        public string? LNAME { get; set; }
+        
+        [Required]
+        public string STD { get; set; } = string.Empty;
+        
+        [Required]
+        public string DIV { get; set; } = string.Empty;
+        
+        [Required]
+        public string ROLLNO { get; set; } = string.Empty;
+        
+        public string? GRNO { get; set; }
+        public string? GENDER { get; set; }
+        public string? DOB { get; set; }
+        public string? BLOODGROUP { get; set; }
+        public string? CASTE { get; set; }
+        public string? RELIGION { get; set; }
+        public string? CATEGORY { get; set; }
+        public string? ADDRESS { get; set; }
+        public string? CITY { get; set; }
+        public string? PIN { get; set; }
+        public string? STATE { get; set; }
+        public string? FATHERNAME { get; set; }
+        public string? MOTHERNAME { get; set; }
+        public string? MOBILE { get; set; }
+        public string? EMAIL { get; set; }
+        public string? SHIFTNAME { get; set; }
+        public string? DOA { get; set; }
+        public string? PHOTOPATH { get; set; }
+        public string? CARDID { get; set; }
+        public string? VALIDFROM { get; set; }
+        public string? VALIDTO { get; set; }
+        public string? sms { get; set; }
+        public string? fullname { get; set; }
+        public string? subcaste { get; set; }
+        public string? contact2 { get; set; }
+        public byte[]? photo { get; set; } // image type in SQL
+        public string? ispromoted { get; set; }
+        public string? saralid { get; set; }
+        public string? aadharcard { get; set; }
+        public string? bankname { get; set; }
+        public string? bankacc { get; set; }
+        public string? cid { get; set; }
+        public string? fingerid { get; set; }
+        public string? freeshiptype { get; set; }
+        public string? otp { get; set; }
+        public string? admissiontype { get; set; }
+        public string? subjects { get; set; }
+        public string? placeofbirth { get; set; }
+        public string? birthtaluka { get; set; }
+        public string? birthdistrict { get; set; }
+        public string? birthstate { get; set; }
+        public string? birthcountry { get; set; }
+        public string? mothertongue { get; set; }
+        public string? Nationality { get; set; }
+        public string? Lastschool { get; set; }
+        public string? Progress { get; set; }
+        public string? DateofLeaving { get; set; }
+        public string? Reasonforleaving { get; set; }
+        public string? LCNo { get; set; }
+        public string? conduct { get; set; }
+        public string? remark { get; set; }
+        public string? dobwords { get; set; }
+        public string? admissionstd { get; set; }
+        public string? accountname { get; set; }
+        public string? IQLD { get; set; }
+        public string? schoolsection { get; set; }
+        public string? leftstatus { get; set; }
+        public string? academicyear { get; set; }
+        public string? stdstudying { get; set; }
+        public string? house { get; set; }
+        public string? feesinstallment { get; set; }
+        public string? uniformid { get; set; }
+        public string? stdstudyingInWords { get; set; }
+        public string? EntryDate { get; set; }
+        public string? PEN_No { get; set; }
+        public string? apaar_id { get; set; }
 
         [ForeignKey("SchoolId")]
         public School? School { get; set; }

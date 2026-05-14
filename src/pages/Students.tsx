@@ -133,32 +133,54 @@ export default function Students({ user }: { user: UserType }) {
       const response = await apiService.getStudents(user.schoolId ? parseInt(user.schoolId) : undefined);
     const formatted = response.data.map((s: any) => ({
         id: s.id.toString(),
-        grno: s.registrationNumber,
+        grno: s.GRNO || s.registrationNumber,
         schoolId: s.schoolId?.toString() || "",
-        firstName: s.firstName || s.fullName?.split(" ")[0] || "",
-        lastName: s.lastName || s.fullName?.split(" ").slice(-1)[0] || "",
-        middleName: s.middleName || (s.fullName?.split(" ").length > 2 ? s.fullName?.split(" ").slice(1, -1).join(" ") : ""),
+        firstName: s.FNAME || s.firstName || s.fullName?.split(" ")[0] || "",
+        lastName: s.LNAME || s.lastName || s.fullName?.split(" ").slice(-1)[0] || "",
+        middleName: s.MNAME || s.middleName || (s.fullName?.split(" ").length > 2 ? s.fullName?.split(" ").slice(1, -1).join(" ") : ""),
         name: s.fullName,
-        standard: s.standard,
-        section: s.section,
-        bloodGroupId: s.bloodGroupId,
-        houseId: s.houseId,
-        admissionTypeId: s.admissionTypeId,
-        religionId: s.religionId,
-        casteId: s.casteId,
-        subCasteId: s.subCasteId,
-        joiningAcademicYearId: s.joiningAcademicYearId,
-        roll: s.rollNumber?.toString() || "0",
-        address: s.address || "N/A",
-        birthDate: s.dateOfBirth ? s.dateOfBirth.split('T')[0] : "",
-        gender: s.gender || "male",
-        contactNumber: s.contactNumber || "",
-        motherName: s.motherName || "",
-        aadharCard: s.aadharCard || "",
+        standard: s.STD || s.standard,
+        section: s.DIV || s.section,
+        bloodGroupId: s.BLOODGROUP || s.bloodGroupId,
+        houseId: s.house || s.houseId,
+        admissionTypeId: s.admissiontype || s.admissionTypeId,
+        religionId: s.RELIGION || s.religionId,
+        casteId: s.CASTE || s.casteId,
+        subCasteId: s.subcaste || s.subCasteId,
+        joiningAcademicYearId: s.academicyear || s.joiningAcademicYearId,
+        roll: s.ROLLNO || s.rollNumber?.toString() || "0",
+        address: s.ADDRESS || s.address || "N/A",
+        birthDate: s.DOB || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
+        gender: s.GENDER || s.gender || "male",
+        contactNumber: s.MOBILE || s.contactNumber || "",
+        motherName: s.MOTHERNAME || s.motherName || "",
+        aadharCard: s.aadharcard || s.aadharCard || "",
         photo: s.photo || "", 
         attendance: "100%", 
         performance: "Excellent", 
-      }));
+        // Schema properties explicitly mapped
+        STUDENTID: s.STUDENTID || s.registrationNumber,
+        FNAME: s.FNAME || s.firstName,
+        MNAME: s.MNAME || s.middleName,
+        LNAME: s.LNAME || s.lastName,
+        STD: s.STD || s.standard,
+        DIV: s.DIV || s.section,
+        ROLLNO: s.ROLLNO || s.rollNumber?.toString(),
+        GRNO: s.GRNO || s.registrationNumber,
+        RELIGION: s.RELIGION || s.religionId?.toString(),
+        CASTE: s.CASTE || s.casteId?.toString(),
+        subcaste: s.subcaste || s.subCasteId?.toString(),
+        BLOODGROUP: s.BLOODGROUP || s.bloodGroupId?.toString(),
+        house: s.house || s.houseId?.toString(),
+        admissiontype: s.admissiontype || s.admissionTypeId?.toString(),
+        academicyear: s.academicyear || s.joiningAcademicYearId?.toString(),
+        DOB: s.DOB || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
+        MOBILE: s.MOBILE || s.contactNumber,
+        EMAIL: s.EMAIL || s.email,
+        ADDRESS: s.ADDRESS || s.address,
+        MOTHERNAME: s.MOTHERNAME || s.motherName,
+        aadharcard: s.aadharcard || s.aadharCard
+    }));
       setStudents(formatted);
     } catch (error) {
       console.error("Fetch error:", error);
@@ -188,29 +210,28 @@ export default function Students({ user }: { user: UserType }) {
   const inputRefs = useRef<Record<string, any>>({});
   
   const initialFormState = {
-    grno: "",
+    registrationNumber: "",
     schoolId: user.schoolId?.toString() || "",
-    firstName: "",
-    middleName: "",
-    lastName: "",
-    gender: "male",
-    contactNumber: "",
-    motherName: "",
-    address: "",
-    aadharCard: "",
-    birthDate: "",
-    roll: "",
-    standard: "",
-    section: "",
-    bloodGroupId: "",
-    houseId: "",
-    admissionTypeId: "",
-    religionId: "",
-    casteId: "",
-    subCasteId: "",
-    joiningAcademicYearId: "",
-    attendance: "100%",
-    performance: "Excellent"
+    FNAME: "",
+    MNAME: "",
+    LNAME: "",
+    GENDER: "Male",
+    MOBILE: "",
+    MOTHERNAME: "",
+    ADDRESS: "",
+    aadharcard: "",
+    DOB: "",
+    ROLLNO: "",
+    STD: "",
+    DIV: "",
+    BLOODGROUP: "",
+    house: "",
+    admissiontype: "",
+    RELIGION: "",
+    CASTE: "",
+    subcaste: "",
+    academicyear: "",
+    status: "Active"
   };
 
   const [newStudentFormData, setNewStudentFormData] = useState(initialFormState);
@@ -229,29 +250,28 @@ export default function Students({ user }: { user: UserType }) {
     setCurrentStudentId(student.id);
     setFormErrors({});
     setNewStudentFormData({
-      grno: student.grno,
+      registrationNumber: student.grno || "",
       schoolId: (student.schoolId || user.schoolId || "").toString(),
-      firstName: student.firstName,
-      middleName: student.middleName,
-      lastName: student.lastName,
-      gender: student.gender || "male",
-      contactNumber: student.contactNumber || "",
-      motherName: student.motherName,
-      address: student.address,
-      aadharCard: student.aadharCard,
-      birthDate: student.birthDate,
-      roll: student.roll,
-      standard: student.standard,
-      section: student.section,
-      bloodGroupId: student.bloodGroupId?.toString() || "",
-      houseId: student.houseId?.toString() || "",
-      admissionTypeId: student.admissionTypeId?.toString() || "",
-      religionId: student.religionId?.toString() || "",
-      casteId: student.casteId?.toString() || "",
-      subCasteId: student.subCasteId?.toString() || "",
-      joiningAcademicYearId: student.joiningAcademicYearId?.toString() || "",
-      attendance: student.attendance,
-      performance: student.performance
+      FNAME: student.FNAME || student.firstName || "",
+      MNAME: student.MNAME || student.middleName || "",
+      LNAME: student.LNAME || student.lastName || "",
+      GENDER: student.GENDER || student.gender || "Male",
+      MOBILE: student.MOBILE || student.contactNumber || "",
+      MOTHERNAME: student.MOTHERNAME || student.motherName || "",
+      ADDRESS: student.ADDRESS || student.address || "",
+      aadharcard: student.aadharcard || student.aadharCard || "",
+      DOB: student.DOB || student.birthDate || "",
+      ROLLNO: student.ROLLNO || student.roll || "",
+      STD: student.STD || student.standard || "",
+      DIV: student.DIV || student.section || "",
+      BLOODGROUP: student.BLOODGROUP || student.bloodGroupId?.toString() || "",
+      house: student.house || student.houseId?.toString() || "",
+      admissiontype: student.admissiontype || student.admissionTypeId?.toString() || "",
+      RELIGION: student.RELIGION || student.religionId?.toString() || "",
+      CASTE: student.CASTE || student.casteId?.toString() || "",
+      subcaste: student.subcaste || student.subCasteId?.toString() || "",
+      academicyear: student.academicyear || student.joiningAcademicYearId?.toString() || "",
+      status: student.status || "Active"
     });
     setIsAddDialogOpen(true);
     fetchMasters();
@@ -289,6 +309,90 @@ export default function Students({ user }: { user: UserType }) {
     e.target.value = '';
   };
 
+  const downloadSampleExcel = () => {
+    const sampleData = [
+      {
+        registrationNumber: "REG001",
+        fullName: "James Alexander Brown",
+        FNAME: "James",
+        MNAME: "Alexander",
+        LNAME: "Brown",
+        STD: "10th",
+        DIV: "A",
+        ROLLNO: "1",
+        GRNO: "1001",
+        GENDER: "Male",
+        DOB: "2008-05-15",
+        BLOODGROUP: "A+",
+        CASTE: "General",
+        RELIGION: "Hindu",
+        CATEGORY: "General",
+        ADDRESS: "123 Main St",
+        CITY: "Mumbai",
+        PIN: "400001",
+        STATE: "Maharashtra",
+        FATHERNAME: "Alexander Brown",
+        MOTHERNAME: "Mary Brown",
+        MOBILE: "9876543210",
+        EMAIL: "james@example.com",
+        aadharcard: "123456789012"
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(sampleData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Students");
+    XLSX.writeFile(wb, "Student_Import_Sample.xlsx");
+    toast.success("Sample template downloaded successfully.");
+  };
+
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessing(true);
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: "binary" });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+
+        if (data.length === 0) {
+          toast.error("The uploaded file is empty.");
+          setIsProcessing(false);
+          return;
+        }
+
+        const studentsToUpload = data.map((item: any) => ({
+          ...item,
+          schoolId: parseInt(user.schoolId || "1"),
+          status: item.status || "Active",
+          rollNumber: parseInt(item.ROLLNO || item.rollNumber || "0"),
+          registrationNumber: item.registrationNumber || `REG-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          fullName: item.fullName || `${item.FNAME || ""} ${item.MNAME || ""} ${item.LNAME || ""}`.trim(),
+          STD: item.STD?.toString() || "",
+          DIV: item.DIV?.toString() || "",
+          ROLLNO: item.ROLLNO?.toString() || ""
+        }));
+
+        await apiService.bulkCreateStudents(studentsToUpload as any[]);
+        toast.success(`Successfully imported ${studentsToUpload.length} students.`);
+        setIsBulkUploadOpen(false);
+        fetchStudents();
+      } catch (error) {
+        console.error("Bulk upload error:", error);
+        toast.error("Failed to process Excel file. Please ensure it follows the sample template.");
+      } finally {
+        setIsProcessing(false);
+        if (bulkFileInputRef.current) bulkFileInputRef.current.value = "";
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   const handleAddStudent = async () => {
     const newErrors: Record<string, boolean> = {};
     let firstErrorField = "";
@@ -301,18 +405,17 @@ export default function Students({ user }: { user: UserType }) {
     };
 
     checkField("schoolId", !newStudentFormData.schoolId);
-    checkField("standard", !newStudentFormData.standard);
-    checkField("section", !newStudentFormData.section);
-    checkField("grno", !newStudentFormData.grno.trim());
-    checkField("roll", !newStudentFormData.roll.trim());
-    checkField("gender", !newStudentFormData.gender);
-    checkField("aadharCard", !newStudentFormData.aadharCard.trim() || !/^\d{12}$/.test(newStudentFormData.aadharCard.replace(/\s/g, "")));
-    checkField("firstName", !newStudentFormData.firstName.trim());
-    checkField("lastName", !newStudentFormData.lastName.trim());
-    checkField("birthDate", !newStudentFormData.birthDate);
-    checkField("motherName", !newStudentFormData.motherName.trim());
-    checkField("contactNumber", !newStudentFormData.contactNumber.trim() || !/^\d{10}$/.test(newStudentFormData.contactNumber.replace(/\D/g, "")));
-    checkField("address", !newStudentFormData.address.trim());
+    checkField("STD", !newStudentFormData.STD);
+    checkField("DIV", !newStudentFormData.DIV);
+    checkField("ROLLNO", !newStudentFormData.ROLLNO?.trim());
+    checkField("GENDER", !newStudentFormData.GENDER);
+    checkField("aadharcard", !newStudentFormData.aadharcard?.trim() || !/^\d{12}$/.test(newStudentFormData.aadharcard.replace(/\s/g, "")));
+    checkField("FNAME", !newStudentFormData.FNAME?.trim());
+    checkField("LNAME", !newStudentFormData.LNAME?.trim());
+    checkField("DOB", !newStudentFormData.DOB);
+    checkField("MOTHERNAME", !newStudentFormData.MOTHERNAME?.trim());
+    checkField("MOBILE", !newStudentFormData.MOBILE?.trim() || !/^\d{10}$/.test(newStudentFormData.MOBILE.replace(/\D/g, "")));
+    checkField("ADDRESS", !newStudentFormData.ADDRESS?.trim());
 
     setFormErrors(newErrors);
 
@@ -331,28 +434,27 @@ export default function Students({ user }: { user: UserType }) {
     setIsProcessing(true);
     try {
       const payload = {
-        registrationNumber: newStudentFormData.grno,
-        firstName: newStudentFormData.firstName,
-        middleName: newStudentFormData.middleName,
-        lastName: newStudentFormData.lastName,
-        fullName: `${newStudentFormData.firstName} ${newStudentFormData.middleName} ${newStudentFormData.lastName}`.trim(),
+        ...newStudentFormData,
         schoolId: parseInt(newStudentFormData.schoolId),
-        standard: newStudentFormData.standard,
-        section: newStudentFormData.section,
-        bloodGroupId: newStudentFormData.bloodGroupId ? parseInt(newStudentFormData.bloodGroupId) : null,
-        houseId: newStudentFormData.houseId ? parseInt(newStudentFormData.houseId) : null,
-        admissionTypeId: newStudentFormData.admissionTypeId ? parseInt(newStudentFormData.admissionTypeId) : null,
-        religionId: newStudentFormData.religionId ? parseInt(newStudentFormData.religionId) : null,
-        casteId: newStudentFormData.casteId ? parseInt(newStudentFormData.casteId) : null,
-        subCasteId: newStudentFormData.subCasteId ? parseInt(newStudentFormData.subCasteId) : null,
-        joiningAcademicYearId: newStudentFormData.joiningAcademicYearId ? parseInt(newStudentFormData.joiningAcademicYearId) : null,
-        dateOfBirth: newStudentFormData.birthDate,
-        rollNumber: parseInt(newStudentFormData.roll),
-        address: newStudentFormData.address,
-        gender: newStudentFormData.gender,
-        contactNumber: newStudentFormData.contactNumber,
-        motherName: newStudentFormData.motherName,
-        aadharCard: newStudentFormData.aadharCard,
+        rollNumber: parseInt(newStudentFormData.ROLLNO),
+        registrationNumber: newStudentFormData.registrationNumber || `REG/${new Date().getFullYear()}/${Math.floor(Math.random() * 900) + 100}`,
+        fullName: `${newStudentFormData.FNAME} ${newStudentFormData.MNAME} ${newStudentFormData.LNAME}`.trim(),
+        // Schema fields mapping
+        STUDENTID: newStudentFormData.registrationNumber,
+        FNAME: newStudentFormData.FNAME,
+        MNAME: newStudentFormData.MNAME,
+        LNAME: newStudentFormData.LNAME,
+        STD: newStudentFormData.STD,
+        DIV: newStudentFormData.DIV,
+        ROLLNO: newStudentFormData.ROLLNO,
+        GRNO: newStudentFormData.registrationNumber,
+        GENDER: newStudentFormData.GENDER,
+        DOB: newStudentFormData.DOB,
+        MOBILE: newStudentFormData.MOBILE,
+        MOTHERNAME: newStudentFormData.MOTHERNAME,
+        ADDRESS: newStudentFormData.ADDRESS,
+        aadharcard: newStudentFormData.aadharcard,
+        academicyear: newStudentFormData.academicyear,
       };
 
       if (isEditMode && currentStudentId) {
@@ -396,7 +498,11 @@ export default function Students({ user }: { user: UserType }) {
   };
 
   const filteredStudents = students.filter(s => {
-    const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.roll.includes(search);
+    const matchesSearch = 
+      s.name.toLowerCase().includes(search.toLowerCase()) || 
+      s.roll.toLowerCase().includes(search.toLowerCase()) || 
+      (s.grno && s.grno.toLowerCase().includes(search.toLowerCase())) ||
+      (s.registrationNumber && s.registrationNumber.toLowerCase().includes(search.toLowerCase()));
     const matchesStandard = standardFilter === "all" || s.standard === standardFilter;
     const matchesSection = sectionFilter === "all" || s.section === sectionFilter;
     return matchesSearch && matchesStandard && matchesSection;
@@ -448,23 +554,28 @@ export default function Students({ user }: { user: UserType }) {
                     <p className="text-sm font-bold text-slate-900">Upload your student registry</p>
                     <p className="text-xs text-slate-500 mt-1">Supports XLSX and XLS formats</p>
                   </div>
-                  <Button 
-                    className="bg-blue-600 hover:bg-blue-700 font-bold px-8 rounded-xl h-10 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
-                    onClick={() => bulkFileInputRef.current?.click()}
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? "Processing..." : "Choose File"}
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-3 w-full">
+                    <Button 
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 font-bold rounded-xl h-10 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
+                      onClick={() => bulkFileInputRef.current?.click()}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? "Processing..." : "Choose File"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-slate-200 hover:bg-slate-50 font-bold rounded-xl h-10 transition-all gap-2"
+                      onClick={downloadSampleExcel}
+                    >
+                      <Download size={16} /> Sample Template
+                    </Button>
+                  </div>
                   <input
                     type="file"
                     ref={bulkFileInputRef}
                     className="hidden"
                     accept=".xlsx, .xls"
-                    onChange={(e) => {
-                      if (e.target.files?.[0]) {
-                        toast.info("Import feature under maintenance, please add students individually for now.");
-                      }
-                    }}
+                    onChange={handleBulkUpload}
                   />
                 </div>
                 <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex gap-3">
@@ -583,24 +694,24 @@ export default function Students({ user }: { user: UserType }) {
                         </div>
 
                         <div className="md:col-span-4 space-y-1.5">
-                          <Label htmlFor="standard" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.standard ? "text-red-500" : "text-slate-500")}>Academic Grade {formErrors.standard && "*"}</Label>
+                          <Label htmlFor="STD" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.STD ? "text-red-500" : "text-slate-500")}>Academic Grade {formErrors.STD && "*"}</Label>
                           <Select 
-                            value={newStudentFormData.standard} 
+                            value={newStudentFormData.STD} 
                             onValueChange={(v) => {
-                              setNewStudentFormData({...newStudentFormData, standard: v});
-                              setFormErrors(prev => ({ ...prev, standard: false }));
+                              setNewStudentFormData({...newStudentFormData, STD: v});
+                              setFormErrors(prev => ({ ...prev, STD: false }));
                             }}
                           >
                             <SelectTrigger 
-                              ref={el => inputRefs.current["standard"] = el}
-                              id="standard" 
+                              ref={el => inputRefs.current["STD"] = el}
+                              id="STD" 
                               className={cn(
                                 "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                                formErrors.standard && "border-red-500 ring-2 ring-red-500/10"
+                                formErrors.STD && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             >
                               <SelectValue placeholder="Select Academic Grade">
-                                {newStudentFormData.standard && newStudentFormData.standard !== "none" ? newStudentFormData.standard : "Select Academic Grade"}
+                                {newStudentFormData.STD && newStudentFormData.STD !== "none" ? newStudentFormData.STD : "Select Academic Grade"}
                               </SelectValue>
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
@@ -613,24 +724,24 @@ export default function Students({ user }: { user: UserType }) {
                         </div>
 
                         <div className="md:col-span-4 space-y-1.5">
-                          <Label htmlFor="section" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.section ? "text-red-500" : "text-slate-500")}>Division/Section {formErrors.section && "*"}</Label>
+                          <Label htmlFor="DIV" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.DIV ? "text-red-500" : "text-slate-500")}>Division/Section {formErrors.DIV && "*"}</Label>
                           <Select 
-                            value={newStudentFormData.section} 
+                            value={newStudentFormData.DIV} 
                             onValueChange={(v) => {
-                              setNewStudentFormData({...newStudentFormData, section: v});
-                              setFormErrors(prev => ({ ...prev, section: false }));
+                              setNewStudentFormData({...newStudentFormData, DIV: v});
+                              setFormErrors(prev => ({ ...prev, DIV: false }));
                             }}
                           >
                             <SelectTrigger 
-                              ref={el => inputRefs.current["section"] = el}
-                              id="section" 
+                              ref={el => inputRefs.current["DIV"] = el}
+                              id="DIV" 
                               className={cn(
                                 "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                                formErrors.section && "border-red-500 ring-2 ring-red-500/10"
+                                formErrors.DIV && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             >
                               <SelectValue placeholder="Select Section/Division">
-                                {newStudentFormData.section && newStudentFormData.section !== "none" ? `Section ${newStudentFormData.section}` : "Select Section/Division"}
+                                {newStudentFormData.DIV && newStudentFormData.DIV !== "none" ? `Section ${newStudentFormData.DIV}` : "Select Section/Division"}
                               </SelectValue>
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
@@ -643,14 +754,14 @@ export default function Students({ user }: { user: UserType }) {
                         </div>
 
                         <div className="md:col-span-4 space-y-1.5">
-                          <Label htmlFor="academicYear" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Joining Year</Label>
+                          <Label htmlFor="academicyear" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Joining Year</Label>
                           <Select 
-                            value={newStudentFormData.joiningAcademicYearId} 
-                            onValueChange={(v) => setNewStudentFormData({...newStudentFormData, joiningAcademicYearId: v})}
+                            value={newStudentFormData.academicyear} 
+                            onValueChange={(v) => setNewStudentFormData({...newStudentFormData, academicyear: v})}
                           >
-                            <SelectTrigger id="academicYear" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                            <SelectTrigger id="academicyear" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                               <SelectValue placeholder="Select Academic Year">
-                                {newStudentFormData.joiningAcademicYearId && newStudentFormData.joiningAcademicYearId !== "none" ? academicYears.find(y => y.id.toString() === newStudentFormData.joiningAcademicYearId)?.name : "Select Academic Year"}
+                                {newStudentFormData.academicyear && newStudentFormData.academicyear !== "none" ? academicYears.find(y => y.id.toString() === newStudentFormData.academicyear)?.name : "Select Academic Year"}
                               </SelectValue>
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
@@ -673,85 +784,84 @@ export default function Students({ user }: { user: UserType }) {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <Label htmlFor="grno" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.grno ? "text-red-500" : "text-slate-500")}>Registration (GRNO) {formErrors.grno && "*"}</Label>
+                            <Label htmlFor="registrationNumber" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.registrationNumber ? "text-red-500" : "text-slate-500")}>Registration (GRNO) {formErrors.registrationNumber && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["grno"] = el}
-                              id="grno" 
-                              value={newStudentFormData.grno} 
+                              ref={el => inputRefs.current["registrationNumber"] = el}
+                              id="registrationNumber" 
+                              value={newStudentFormData.registrationNumber} 
                               onChange={(e) => {
-                                setNewStudentFormData({...newStudentFormData, grno: e.target.value});
-                                if (formErrors.grno) setFormErrors(prev => ({ ...prev, grno: false }));
+                                setNewStudentFormData({...newStudentFormData, registrationNumber: e.target.value});
+                                if (formErrors.registrationNumber) setFormErrors(prev => ({ ...prev, registrationNumber: false }));
                               }} 
                               placeholder="e.g. REG-001"
                               className={cn(
                                 "h-10 border-slate-200 bg-slate-50/30 font-mono font-black text-blue-600 rounded-xl px-4 text-sm",
-                                formErrors.grno && "border-red-500 ring-2 ring-red-500/10"
+                                formErrors.registrationNumber && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <Label htmlFor="roll" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.roll ? "text-red-500" : "text-slate-500")}>Roll Number {formErrors.roll && "*"}</Label>
+                            <Label htmlFor="ROLLNO" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.ROLLNO ? "text-red-500" : "text-slate-500")}>Roll Number {formErrors.ROLLNO && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["roll"] = el}
-                              id="roll" 
-                              type="number" 
-                              value={newStudentFormData.roll} 
+                              ref={el => inputRefs.current["ROLLNO"] = el}
+                              id="ROLLNO" 
+                              value={newStudentFormData.ROLLNO} 
                               onChange={(e) => {
-                                setNewStudentFormData({...newStudentFormData, roll: e.target.value});
-                                if (formErrors.roll) setFormErrors(prev => ({ ...prev, roll: false }));
+                                setNewStudentFormData({...newStudentFormData, ROLLNO: e.target.value});
+                                if (formErrors.ROLLNO) setFormErrors(prev => ({ ...prev, ROLLNO: false }));
                               }} 
                               placeholder="e.g. 24"
                               className={cn(
                                 "h-10 border-slate-200 bg-slate-50/30 font-black text-slate-800 rounded-xl px-4 text-sm",
-                                formErrors.roll && "border-red-500 ring-2 ring-red-500/10"
+                                formErrors.ROLLNO && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <Label htmlFor="gender" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.gender ? "text-red-500" : "text-slate-500")}>Gender {formErrors.gender && "*"}</Label>
+                            <Label htmlFor="GENDER" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.GENDER ? "text-red-500" : "text-slate-500")}>Gender {formErrors.GENDER && "*"}</Label>
                             <Select 
-                              value={newStudentFormData.gender} 
+                              value={newStudentFormData.GENDER} 
                               onValueChange={(v) => {
-                                setNewStudentFormData({...newStudentFormData, gender: v});
-                                setFormErrors(prev => ({ ...prev, gender: false }));
+                                setNewStudentFormData({...newStudentFormData, GENDER: v});
+                                setFormErrors(prev => ({ ...prev, GENDER: false }));
                               }}
                             >
                               <SelectTrigger 
-                                ref={el => inputRefs.current["gender"] = el}
-                                id="gender" 
+                                ref={el => inputRefs.current["GENDER"] = el}
+                                id="GENDER" 
                                 className={cn(
                                   "h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm",
-                                  formErrors.gender && "border-red-500 ring-2 ring-red-500/10"
+                                  formErrors.GENDER && "border-red-500 ring-2 ring-red-500/10"
                                 )}
                               >
                                 <SelectValue placeholder="Select Student Gender">
-                                  {newStudentFormData.gender && newStudentFormData.gender !== "none" ? newStudentFormData.gender.charAt(0).toUpperCase() + newStudentFormData.gender.slice(1) : "Select Student Gender"}
+                                  {newStudentFormData.GENDER && newStudentFormData.GENDER !== "none" ? newStudentFormData.GENDER.charAt(0).toUpperCase() + newStudentFormData.GENDER.slice(1) : "Select Student Gender"}
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl border-slate-200">
                                 <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Gender</SelectItem>
-                                <SelectItem value="male" className="font-semibold py-1.5 text-xs px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Male</SelectItem>
-                                <SelectItem value="female" className="font-semibold py-1.5 text-xs px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Female</SelectItem>
-                                <SelectItem value="other" className="font-semibold py-1.5 text-xs px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Other</SelectItem>
+                                <SelectItem value="Male" className="font-semibold py-1.5 text-xs px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Male</SelectItem>
+                                <SelectItem value="Female" className="font-semibold py-1.5 text-xs px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Female</SelectItem>
+                                <SelectItem value="Other" className="font-semibold py-1.5 text-xs px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Other</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
                           <div className="space-y-1.5">
-                            <Label htmlFor="aadharCard" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.aadharCard ? "text-red-500" : "text-slate-500")}>Aadhar ID {formErrors.aadharCard && "*"}</Label>
+                            <Label htmlFor="aadharcard" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.aadharcard ? "text-red-500" : "text-slate-500")}>Aadhar ID {formErrors.aadharcard && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["aadharCard"] = el}
-                              id="aadharCard" 
-                              value={newStudentFormData.aadharCard} 
+                              ref={el => inputRefs.current["aadharcard"] = el}
+                              id="aadharcard" 
+                              value={newStudentFormData.aadharcard} 
                               maxLength={12}
                               onChange={(e) => {
                                 const val = e.target.value.replace(/\D/g, "").slice(0, 12);
-                                setNewStudentFormData({...newStudentFormData, aadharCard: val});
-                                if (formErrors.aadharCard) setFormErrors(prev => ({ ...prev, aadharCard: false }));
+                                setNewStudentFormData({...newStudentFormData, aadharcard: val});
+                                if (formErrors.aadharcard) setFormErrors(prev => ({ ...prev, aadharcard: false }));
                               }} 
                               placeholder="12-digit number" 
                               className={cn(
                                 "h-10 border-slate-200 bg-slate-50/30 tracking-widest font-mono font-bold rounded-xl px-4 text-sm",
-                                formErrors.aadharCard && "border-red-500 ring-2 ring-red-500/10"
+                                formErrors.aadharcard && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             />
                           </div>
@@ -766,70 +876,70 @@ export default function Students({ user }: { user: UserType }) {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <Label htmlFor="firstName" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.firstName ? "text-red-500" : "text-slate-500")}>First Name {formErrors.firstName && "*"}</Label>
+                            <Label htmlFor="FNAME" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.FNAME ? "text-red-500" : "text-slate-500")}>First Name {formErrors.FNAME && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["firstName"] = el}
-                              id="firstName" 
-                              value={newStudentFormData.firstName} 
+                              ref={el => inputRefs.current["FNAME"] = el}
+                              id="FNAME" 
+                              value={newStudentFormData.FNAME} 
                               onChange={(e) => {
-                                setNewStudentFormData({...newStudentFormData, firstName: e.target.value});
-                                if (formErrors.firstName) setFormErrors(prev => ({ ...prev, firstName: false }));
+                                setNewStudentFormData({...newStudentFormData, FNAME: e.target.value});
+                                if (formErrors.FNAME) setFormErrors(prev => ({ ...prev, FNAME: false }));
                               }} 
                               placeholder="First name" 
                               className={cn(
                                 "h-10 border-slate-200 font-bold rounded-xl px-4 text-sm",
-                                formErrors.firstName && "border-red-500 ring-2 ring-red-500/10"
+                                formErrors.FNAME && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <Label htmlFor="middleName" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Middle Name</Label>
-                            <Input id="middleName" value={newStudentFormData.middleName} onChange={(e) => setNewStudentFormData({...newStudentFormData, middleName: e.target.value})} placeholder="Middle name" className="h-10 border-slate-200 font-bold rounded-xl px-4 text-sm" />
+                            <Label htmlFor="MNAME" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Middle Name</Label>
+                            <Input id="MNAME" value={newStudentFormData.MNAME} onChange={(e) => setNewStudentFormData({...newStudentFormData, MNAME: e.target.value})} placeholder="Middle name" className="h-10 border-slate-200 font-bold rounded-xl px-4 text-sm" />
                           </div>
                           <div className="md:col-span-2 space-y-1.5">
-                            <Label htmlFor="lastName" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.lastName ? "text-red-500" : "text-slate-500")}>Last Name {formErrors.lastName && "*"}</Label>
+                            <Label htmlFor="LNAME" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.LNAME ? "text-red-500" : "text-slate-500")}>Last Name {formErrors.LNAME && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["lastName"] = el}
-                              id="lastName" 
-                              value={newStudentFormData.lastName} 
+                              ref={el => inputRefs.current["LNAME"] = el}
+                              id="LNAME" 
+                              value={newStudentFormData.LNAME} 
                               onChange={(e) => {
-                                setNewStudentFormData({...newStudentFormData, lastName: e.target.value});
-                                if (formErrors.lastName) setFormErrors(prev => ({ ...prev, lastName: false }));
+                                setNewStudentFormData({...newStudentFormData, LNAME: e.target.value});
+                                if (formErrors.LNAME) setFormErrors(prev => ({ ...prev, LNAME: false }));
                               }} 
                               placeholder="Last name" 
                               className={cn(
                                 "h-10 border-slate-200 font-bold rounded-xl px-4 text-sm",
-                                formErrors.lastName && "border-red-500 ring-2 ring-red-500/10"
+                                formErrors.LNAME && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             />
                           </div>
                           <div className="md:col-span-2 space-y-1.5">
-                            <Label htmlFor="birthDate" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.birthDate ? "text-red-500" : "text-slate-500")}>Date of Birth {formErrors.birthDate && "*"}</Label>
+                            <Label htmlFor="DOB" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.DOB ? "text-red-500" : "text-slate-500")}>Date of Birth {formErrors.DOB && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["birthDate"] = el}
-                              id="birthDate" 
+                              ref={el => inputRefs.current["DOB"] = el}
+                              id="DOB" 
                               type="date" 
-                              value={newStudentFormData.birthDate} 
+                              value={newStudentFormData.DOB} 
                               onChange={(e) => {
-                                setNewStudentFormData({...newStudentFormData, birthDate: e.target.value});
-                                if (formErrors.birthDate) setFormErrors(prev => ({ ...prev, birthDate: false }));
+                                setNewStudentFormData({...newStudentFormData, DOB: e.target.value});
+                                if (formErrors.DOB) setFormErrors(prev => ({ ...prev, DOB: false }));
                               }} 
                               className={cn(
                                 "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                                formErrors.birthDate && "border-red-500 ring-2 ring-red-500/10"
+                                formErrors.DOB && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             />
                           </div>
                           
                           <div className="space-y-1.5">
-                            <Label htmlFor="religion" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Religion</Label>
+                            <Label htmlFor="RELIGION" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Religion</Label>
                             <Select 
-                              value={newStudentFormData.religionId} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, religionId: v})}
+                              value={newStudentFormData.RELIGION} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, RELIGION: v})}
                             >
-                              <SelectTrigger id="religion" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                              <SelectTrigger id="RELIGION" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                 <SelectValue placeholder="Select Student Religion">
-                                  {newStudentFormData.religionId && newStudentFormData.religionId !== "none" ? religions.find(r => r.id.toString() === newStudentFormData.religionId)?.name : "Select Student Religion"}
+                                  {newStudentFormData.RELIGION && newStudentFormData.RELIGION !== "none" ? (religions.find(r => r.id.toString() === newStudentFormData.RELIGION)?.name || newStudentFormData.RELIGION) : "Select Student Religion"}
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
@@ -842,14 +952,14 @@ export default function Students({ user }: { user: UserType }) {
                           </div>
 
                           <div className="space-y-1.5">
-                            <Label htmlFor="bloodGroup" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Blood Group</Label>
+                            <Label htmlFor="BLOODGROUP" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Blood Group</Label>
                             <Select 
-                              value={newStudentFormData.bloodGroupId} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, bloodGroupId: v})}
+                              value={newStudentFormData.BLOODGROUP} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, BLOODGROUP: v})}
                             >
-                              <SelectTrigger id="bloodGroup" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                              <SelectTrigger id="BLOODGROUP" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                 <SelectValue placeholder="Select Student Blood Group">
-                                  {newStudentFormData.bloodGroupId && newStudentFormData.bloodGroupId !== "none" ? bloodGroups.find(bg => bg.id.toString() === newStudentFormData.bloodGroupId)?.name : "Select Student Blood Group"}
+                                  {newStudentFormData.BLOODGROUP && newStudentFormData.BLOODGROUP !== "none" ? (bloodGroups.find(bg => bg.id.toString() === newStudentFormData.BLOODGROUP)?.name || newStudentFormData.BLOODGROUP) : "Select Student Blood Group"}
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
@@ -862,14 +972,14 @@ export default function Students({ user }: { user: UserType }) {
                           </div>
 
                           <div className="space-y-1.5">
-                            <Label htmlFor="caste" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Caste</Label>
+                            <Label htmlFor="CASTE" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Caste</Label>
                             <Select 
-                              value={newStudentFormData.casteId} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, casteId: v})}
+                              value={newStudentFormData.CASTE} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, CASTE: v})}
                             >
-                              <SelectTrigger id="caste" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                              <SelectTrigger id="CASTE" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                 <SelectValue placeholder="Select Caste Category">
-                                  {newStudentFormData.casteId && newStudentFormData.casteId !== "none" ? castes.find(c => c.id.toString() === newStudentFormData.casteId)?.name : "Select Caste Category"}
+                                  {newStudentFormData.CASTE && newStudentFormData.CASTE !== "none" ? (castes.find(c => c.id.toString() === newStudentFormData.CASTE)?.name || newStudentFormData.CASTE) : "Select Caste Category"}
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
@@ -882,21 +992,21 @@ export default function Students({ user }: { user: UserType }) {
                           </div>
 
                           <div className="space-y-1.5">
-                            <Label htmlFor="subCaste" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Sub-Caste</Label>
+                            <Label htmlFor="subcaste" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Sub-Caste</Label>
                             <Select 
-                              value={newStudentFormData.subCasteId} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, subCasteId: v})}
-                              disabled={!newStudentFormData.casteId}
+                              value={newStudentFormData.subcaste} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, subcaste: v})}
+                              disabled={!newStudentFormData.CASTE}
                             >
-                              <SelectTrigger id="subCaste" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                              <SelectTrigger id="subcaste" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                 <SelectValue placeholder="Select Student Sub-Caste">
-                                  {newStudentFormData.subCasteId && newStudentFormData.subCasteId !== "none" ? subCastes.find(sc => sc.id.toString() === newStudentFormData.subCasteId)?.name : "Select Student Sub-Caste"}
+                                  {newStudentFormData.subcaste && newStudentFormData.subcaste !== "none" ? subCastes.find(sc => sc.id.toString() === newStudentFormData.subcaste)?.name || newStudentFormData.subcaste : "Select Student Sub-Caste"}
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                                 <SelectItem value="none" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Sub-Caste</SelectItem>
                                 {subCastes
-                                  .filter(sc => sc.casteId?.toString() === newStudentFormData.casteId)
+                                  .filter(sc => sc.casteId?.toString() === newStudentFormData.CASTE)
                                   .map(sc => (
                                     <SelectItem key={sc.id} value={sc.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{sc.name}</SelectItem>
                                   ))
@@ -908,12 +1018,12 @@ export default function Students({ user }: { user: UserType }) {
                           <div className="space-y-1.5">
                             <Label htmlFor="house" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">School House</Label>
                             <Select 
-                              value={newStudentFormData.houseId} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, houseId: v})}
+                              value={newStudentFormData.house} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, house: v})}
                             >
                               <SelectTrigger id="house" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                 <SelectValue placeholder="Select Student House Group">
-                                  {newStudentFormData.houseId && newStudentFormData.houseId !== "none" ? houses.find(h => h.id.toString() === newStudentFormData.houseId)?.name : "Select Student House Group"}
+                                  {newStudentFormData.house && newStudentFormData.house !== "none" ? houses.find(h => h.id.toString() === newStudentFormData.house)?.name || newStudentFormData.house : "Select Student House Group"}
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
@@ -931,14 +1041,14 @@ export default function Students({ user }: { user: UserType }) {
                           </div>
 
                           <div className="space-y-1.5">
-                            <Label htmlFor="admissionType" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Admission Type</Label>
+                            <Label htmlFor="admissiontype" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Admission Type</Label>
                             <Select 
-                              value={newStudentFormData.admissionTypeId} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, admissionTypeId: v})}
+                              value={newStudentFormData.admissiontype} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, admissiontype: v})}
                             >
-                              <SelectTrigger id="admissionType" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                              <SelectTrigger id="admissiontype" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                 <SelectValue placeholder="Select Student Admission Type">
-                                  {newStudentFormData.admissionTypeId && newStudentFormData.admissionTypeId !== "none" ? admissionTypes.find(at => at.id.toString() === newStudentFormData.admissionTypeId)?.name : "Select Student Admission Type"}
+                                  {newStudentFormData.admissiontype && newStudentFormData.admissiontype !== "none" ? admissionTypes.find(at => at.id.toString() === newStudentFormData.admissiontype)?.name || newStudentFormData.admissiontype : "Select Student Admission Type"}
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
@@ -961,56 +1071,56 @@ export default function Students({ user }: { user: UserType }) {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="space-y-1.5">
-                          <Label htmlFor="motherName" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.motherName ? "text-red-500" : "text-slate-500")}>Mother's Name {formErrors.motherName && "*"}</Label>
+                          <Label htmlFor="MOTHERNAME" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.MOTHERNAME ? "text-red-500" : "text-slate-500")}>Mother's Name {formErrors.MOTHERNAME && "*"}</Label>
                           <Input 
-                            ref={el => inputRefs.current["motherName"] = el}
-                            id="motherName" 
-                            value={newStudentFormData.motherName} 
+                            ref={el => inputRefs.current["MOTHERNAME"] = el}
+                            id="MOTHERNAME" 
+                            value={newStudentFormData.MOTHERNAME} 
                             onChange={(e) => {
-                              setNewStudentFormData({...newStudentFormData, motherName: e.target.value});
-                              if (formErrors.motherName) setFormErrors(prev => ({ ...prev, motherName: false }));
+                              setNewStudentFormData({...newStudentFormData, MOTHERNAME: e.target.value});
+                              if (formErrors.MOTHERNAME) setFormErrors(prev => ({ ...prev, MOTHERNAME: false }));
                             }} 
                             placeholder="e.g. Mary Wilson" 
                             className={cn(
                               "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                              formErrors.motherName && "border-red-500 ring-2 ring-red-500/10"
+                              formErrors.MOTHERNAME && "border-red-500 ring-2 ring-red-500/10"
                             )}
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <Label htmlFor="contactNumber" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.contactNumber ? "text-red-500" : "text-slate-500")}>Mobile No. {formErrors.contactNumber && "*"}</Label>
+                          <Label htmlFor="MOBILE" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.MOBILE ? "text-red-500" : "text-slate-500")}>Mobile No. {formErrors.MOBILE && "*"}</Label>
                           <Input 
-                            ref={el => inputRefs.current["contactNumber"] = el}
-                            id="contactNumber" 
+                            ref={el => inputRefs.current["MOBILE"] = el}
+                            id="MOBILE" 
                             type="tel" 
-                            value={newStudentFormData.contactNumber} 
+                            value={newStudentFormData.MOBILE} 
                             maxLength={10}
                             onChange={(e) => {
                               const val = e.target.value.replace(/\D/g, "").slice(0, 10);
-                              setNewStudentFormData({...newStudentFormData, contactNumber: val});
-                              if (formErrors.contactNumber) setFormErrors(prev => ({ ...prev, contactNumber: false }));
+                              setNewStudentFormData({...newStudentFormData, MOBILE: val});
+                              if (formErrors.MOBILE) setFormErrors(prev => ({ ...prev, MOBILE: false }));
                             }} 
                             placeholder="10-digit number" 
                             className={cn(
                               "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                              formErrors.contactNumber && "border-red-500 ring-2 ring-red-500/10"
+                              formErrors.MOBILE && "border-red-500 ring-2 ring-red-500/10"
                             )}
                           />
                         </div>
                         <div className="md:col-span-2 space-y-1.5">
-                          <Label htmlFor="address" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.address ? "text-red-500" : "text-slate-500")}>Residential Address {formErrors.address && "*"}</Label>
+                          <Label htmlFor="ADDRESS" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.ADDRESS ? "text-red-500" : "text-slate-500")}>Residential Address {formErrors.ADDRESS && "*"}</Label>
                           <Input 
-                            ref={el => inputRefs.current["address"] = el}
-                            id="address" 
-                            value={newStudentFormData.address} 
+                            ref={el => inputRefs.current["ADDRESS"] = el}
+                            id="ADDRESS" 
+                            value={newStudentFormData.ADDRESS} 
                             onChange={(e) => {
-                              setNewStudentFormData({...newStudentFormData, address: e.target.value});
-                              if (formErrors.address) setFormErrors(prev => ({ ...prev, address: false }));
+                              setNewStudentFormData({...newStudentFormData, ADDRESS: e.target.value});
+                              if (formErrors.ADDRESS) setFormErrors(prev => ({ ...prev, ADDRESS: false }));
                             }} 
                             placeholder="Enter complete residential address" 
                             className={cn(
                               "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                              formErrors.address && "border-red-500 ring-2 ring-red-500/10"
+                              formErrors.ADDRESS && "border-red-500 ring-2 ring-red-500/10"
                             )}
                           />
                         </div>

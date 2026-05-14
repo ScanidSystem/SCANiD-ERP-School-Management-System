@@ -147,6 +147,7 @@ export const apiService = {
     api.get("/students", { params: { schoolId } }),
   getStudentById: (id: number) => api.get(`/students/${id}`),
   createStudent: (data: any) => api.post("/students", data),
+  bulkCreateStudents: (data: any[]) => api.post("/students/bulk", data),
   updateStudent: (id: number, data: any) => api.put(`/students/${id}`, data),
   deleteStudent: (id: number) => api.delete(`/students/${id}`),
 

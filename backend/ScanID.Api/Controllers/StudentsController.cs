@@ -80,36 +80,39 @@ namespace ScanID.Api.Controllers
         {
             if (id != student.Id) return BadRequest();
 
-            var existingStudent = await _context.Students.FindAsync(id);
-            if (existingStudent == null) return NotFound();
-
-            existingStudent.RegistrationNumber = student.RegistrationNumber;
-            existingStudent.FirstName = student.FirstName;
-            existingStudent.MiddleName = student.MiddleName;
-            existingStudent.LastName = student.LastName;
-            existingStudent.FullName = student.FullName;
-            existingStudent.DateOfBirth = student.DateOfBirth;
-            existingStudent.Standard = student.Standard;
-            existingStudent.Section = student.Section;
-            existingStudent.RollNumber = student.RollNumber;
-            existingStudent.Address = student.Address;
-            existingStudent.Gender = student.Gender;
-            existingStudent.ContactNumber = student.ContactNumber;
-            existingStudent.MotherName = student.MotherName;
-            existingStudent.AadharCard = student.AadharCard;
-            existingStudent.Photo = student.Photo;
-            existingStudent.SchoolId = student.SchoolId;
-
+            _context.Entry(student).State = EntityState.Modified;
+            
+            // Ensure auditing and non-schema fields are preserved if not sent
+            // or just let EF handle it. Here we use Entry(student).State = Modified.
+            // But we should ensure we don't accidentally overwrite IsDeleted etc if not in payload.
+            
             try
             {
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
+                if (!await StudentExistsAsync(id)) return NotFound();
                 throw;
             }
 
             return NoContent();
+        }
+
+        /// <summary>
+        /// Bulk registers multiple students.
+        /// </summary>
+        /// <param name="students">List of students.</param>
+        /// <returns>Count of registered students.</returns>
+        [HttpPost("bulk")]
+        public async Task<ActionResult<object>> PostBulkStudents(IEnumerable<Student> students)
+        {
+            if (students == null || !students.Any()) return BadRequest("No student data provided.");
+
+            _context.Students.AddRange(students);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { count = students.Count(), message = "Bulk upload successful" });
         }
 
         /// <summary>
