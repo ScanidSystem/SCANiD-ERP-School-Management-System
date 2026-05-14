@@ -211,7 +211,7 @@ async function startServer() {
     }
   });
 
-  const mockUsers = [
+  let mockUsers = [
     {
       username: "superadmin",
       password: "Password123",
@@ -296,6 +296,17 @@ async function startServer() {
     if (index !== -1) {
       schools[index] = { ...schools[index], ...req.body };
       res.json(schools[index]);
+    } else {
+      res.status(404).json({ message: "School not found" });
+    }
+  });
+
+  app.delete("/api/schools/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    const index = schools.findIndex((s) => s.id === id);
+    if (index !== -1) {
+      schools.splice(index, 1);
+      res.status(204).send();
     } else {
       res.status(404).json({ message: "School not found" });
     }
@@ -430,17 +441,55 @@ async function startServer() {
       fullName: u.name,
       username: u.username,
       role: u.role,
+      email: u.email,
       schoolName: u.schoolName
     })));
+  });
+
+  app.post("/api/users", (req, res) => {
+    const { fullName, username, email, role } = req.body;
+    const newUser = {
+      name: fullName,
+      username: username || `user_${Date.now()}`,
+      password: "Password123",
+      email,
+      role: role || "student",
+      schoolId: null,
+      schoolName: "System-wide"
+    };
+    mockUsers.push(newUser);
+    res.status(201).json({ id: mockUsers.length, ...newUser });
+  });
+
+  app.put("/api/users/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    const { fullName, email, role } = req.body;
+    if (mockUsers[id - 1]) {
+      if (fullName) mockUsers[id - 1].name = fullName;
+      if (email) mockUsers[id - 1].email = email;
+      if (role) mockUsers[id - 1].role = role;
+      res.json({ id, ...mockUsers[id - 1] });
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
   });
 
   app.put("/api/users/:id/role", (req, res) => {
     const id = parseInt(req.params.id);
     const { role } = req.body;
-    // In search by index since we just mapped them
     if (mockUsers[id - 1]) {
       mockUsers[id - 1].role = role;
       res.json({ success: true, user: mockUsers[id - 1] });
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  });
+
+  app.delete("/api/users/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    if (mockUsers[id - 1]) {
+      mockUsers.splice(id - 1, 1);
+      res.status(204).send();
     } else {
       res.status(404).json({ message: "User not found" });
     }

@@ -131,6 +131,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
     name: "",
     description: "",
     isCurrent: false,
+    isActive: true,
     color: "",
     casteId: "",
     stateId: "",
@@ -186,6 +187,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       name: item?.name || item?.fullName || "",
       description: item?.description || "",
       isCurrent: item?.isCurrent || false,
+      isActive: item?.isActive !== false, // Default to true if undefined
       color: item?.color || "#3b82f6",
       casteId: item?.casteId?.toString() || "",
       stateId: item?.stateId?.toString() || "",
@@ -227,7 +229,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       const payload: any = {
         name: formData.name,
         description: formData.description,
-        isActive: true // Default to active for new records
+        isActive: formData.isActive
       };
 
       // Add type-specific fields with proper type conversion
@@ -248,6 +250,8 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
         payload.fullName = formData.name;
         delete payload.name;
         payload.email = formData.email;
+        // For new users, we could allow setting a default role if needed, 
+        // but table select handles it afterwards
       }
 
       if (editingItem) {
@@ -345,14 +349,12 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              {activeTab !== "role-assignment" && (
-                <Button 
-                  onClick={() => handleOpenDialog()} 
-                  className="bg-blue-600 hover:bg-blue-700 text-white border-none rounded-2xl h-11 px-8 shadow-xl shadow-blue-500/20 font-black text-xs uppercase tracking-widest transition-all hover:-translate-y-0.5 active:scale-95 w-full sm:w-auto"
-                >
-                  <Plus size={18} className="mr-2 stroke-[3]" /> Add New
-                </Button>
-              )}
+              <Button 
+                onClick={() => handleOpenDialog()} 
+                className="bg-blue-600 hover:bg-blue-700 text-white border-none rounded-2xl h-11 px-8 shadow-xl shadow-blue-500/20 font-black text-xs uppercase tracking-widest transition-all hover:-translate-y-0.5 active:scale-95 w-full sm:w-auto"
+              >
+                <Plus size={18} className="mr-2 stroke-[3]" /> Add New
+              </Button>
             </div>
           </div>
 
@@ -525,11 +527,9 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                               } />
                             </SimpleTooltip>
                             <DropdownMenuContent align="end" className="w-48 rounded-2xl border-slate-100 shadow-2xl p-2 animate-in slide-in-from-top-2 duration-300">
-                              {activeTab !== "role-assignment" && (
-                                <DropdownMenuItem onClick={() => handleOpenDialog(item)} className="rounded-xl py-3 px-4 font-black transition-all text-xs uppercase tracking-widest text-slate-600 focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
-                                  <Edit3 size={14} className="mr-3" /> Update Record
-                                </DropdownMenuItem>
-                              )}
+                              <DropdownMenuItem onClick={() => handleOpenDialog(item)} className="rounded-xl py-3 px-4 font-black transition-all text-xs uppercase tracking-widest text-slate-600 focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
+                                <Edit3 size={14} className="mr-3" /> Update Record
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleDelete(item.id)} className="rounded-xl py-3 px-4 font-black transition-all text-xs uppercase tracking-widest text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer">
                                 <Trash2 size={14} className="mr-3" /> {activeTab === "role-assignment" ? "Deactivate User" : "Purge Entry"}
                               </DropdownMenuItem>
@@ -733,6 +733,17 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
               />
+            </div>
+
+            <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+              <input 
+                type="checkbox" 
+                id="isActive"
+                className="w-5 h-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+              />
+              <Label htmlFor="isActive" className="font-bold text-slate-700 cursor-pointer select-none">Active Status</Label>
             </div>
           </div>
 
