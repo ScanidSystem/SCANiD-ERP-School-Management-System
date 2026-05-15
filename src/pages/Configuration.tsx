@@ -176,30 +176,38 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       if (activeTab === "role-assignment") {
         const usersRes = await apiService.getUsers();
         const rolesRes = await apiService.getRoles();
-        setMasterData(usersRes.data || []);
-        setDependencies(prev => ({ ...prev, roles: rolesRes.data || [] }));
+        const usersData = usersRes.data?.data || usersRes.data || [];
+        const rolesData = rolesRes.data?.data || rolesRes.data || [];
+        setMasterData(Array.isArray(usersData) ? usersData : []);
+        setDependencies(prev => ({ ...prev, roles: Array.isArray(rolesData) ? rolesData : [] }));
       } else {
         const getMethodName = `get${typeConfig.apiPrefix}s`;
         // @ts-ignore
         const response = await apiService[getMethodName]();
-        setMasterData(response.data || []);
+        // Handle potential { data: [...] } wrapper from interceptor or raw array
+        const extractedData = response.data?.data || response.data || [];
+        setMasterData(Array.isArray(extractedData) ? extractedData : []);
 
         // Fetch dependencies if needed
         if (activeTab === "sub-castes") {
           const castesRes = await apiService.getCastes();
-          setDependencies(prev => ({ ...prev, castes: castesRes.data || [] }));
+          const castesData = castesRes.data?.data || castesRes.data || [];
+          setDependencies(prev => ({ ...prev, castes: Array.isArray(castesData) ? castesData : [] }));
         }
         if (activeTab === "cities") {
           const statesRes = await apiService.getStates();
-          setDependencies(prev => ({ ...prev, states: statesRes.data || [] }));
+          const statesData = statesRes.data?.data || statesRes.data || [];
+          setDependencies(prev => ({ ...prev, states: Array.isArray(statesData) ? statesData : [] }));
         }
         if (activeTab === "navigation") {
           const rolesRes = await apiService.getRoles();
           const navsRes = await apiService.getNavigations();
+          const rolesData = rolesRes.data?.data || rolesRes.data || [];
+          const navsData = navsRes.data?.data || navsRes.data || [];
           setDependencies(prev => ({ 
             ...prev, 
-            roles: rolesRes.data || [],
-            parentNavs: navsRes.data?.filter((n: any) => !n.parentId) || []
+            roles: Array.isArray(rolesData) ? rolesData : [],
+            parentNavs: (Array.isArray(navsData) ? navsData : []).filter((n: any) => !n.parentId)
           }));
         }
       }

@@ -34,25 +34,35 @@ namespace ScanID.Api.Controllers
 
                 var items = await query.ToListAsync();
 
+                // Map to a format the frontend expects (including roles as a string array)
+                var result = items.Select(i => new {
+                    i.Id,
+                    i.Title,
+                    i.Icon,
+                    i.Path,
+                    i.ParentId,
+                    i.SortOrder,
+                    roles = i.NavigationRoles?.Select(nr => nr.Role?.Name.ToLower().Replace(" ", "")).ToArray() ?? new string[] { "superadmin" }
+                }).OrderBy(i => i.SortOrder).ToList();
+
                 // Filter by role if provided
                 if (!string.IsNullOrEmpty(role) && role != "all")
                 {
                     // SuperAdmin gets everything
                     if (role.ToLower() == "superadmin")
                     {
-                        return Ok(new { data = items.OrderBy(i => i.SortOrder).ToList() });
+                        return Ok(new { data = result });
                     }
 
-                    // For other roles, filter based on NavigationRoles
-                    var filtered = items.Where(i => 
-                        i.NavigationRoles != null && 
-                        i.NavigationRoles.Any(nr => nr.Role != null && nr.Role.Name.Equals(role, StringComparison.OrdinalIgnoreCase))
-                    ).OrderBy(i => i.SortOrder).ToList();
+                    // For other roles, filter based on roles array
+                    var filtered = result.Where(i => 
+                        i.roles.Contains(role.ToLower()) || i.roles.Contains("all")
+                    ).ToList();
 
                     return Ok(new { data = filtered });
                 }
 
-                return Ok(new { data = items.OrderBy(i => i.SortOrder).ToList() });
+                return Ok(new { data = result });
             }
             catch (Exception ex)
             {

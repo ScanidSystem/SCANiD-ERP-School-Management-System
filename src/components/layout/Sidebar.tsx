@@ -64,41 +64,110 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
     const fetchNavigation = async () => {
       try {
         setIsLoading(true);
-        // Using apiService for consistent error handling and interceptors
-        const response = await apiService.getNavigations();
-        const data = response.data?.data || response.data || [];
+        // Normalize role to lowercase for consistency
+        const currentRole = user.role.toLowerCase().replace(/\s+/g, "");
         
-        if (data) {
-          // Build hierarchical structure
-          const items: NavItem[] = data;
-          
-          // Filter by role if not superadmin (superadmin sees everything)
-          const roleFiltered = user.role === "superadmin" 
-            ? items 
-            : items.filter(item => item.roles?.includes(user.role));
+        // Pass user role to backend for efficient filtering
+        const response = await apiService.getNavigations(currentRole);
+        let rawData = response.data?.data || response.data || [];
+        
+        // Ensure rawData is an array
+        if (!Array.isArray(rawData)) {
+          console.warn("API did not return an array for navigation, using hardcoded fallback");
+          rawData = [];
+        }
 
-          const rootItems = roleFiltered.filter(item => !item.parentId);
-          const buildHierarchy = (parentId: number): NavItem[] => {
-            return roleFiltered
-              .filter(item => item.parentId === parentId)
-              .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-              .map(item => ({
-                ...item,
-                subItems: buildHierarchy(item.id)
-              }));
+        // Fallback to hardcoded defaults if API returns nothing
+        if (rawData.length === 0) {
+          console.warn("API returned empty navigation data, using hardcoded fallback");
+          rawData = [
+            { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
+            { id: 1000, title: "Academic Operations", icon: "BookOpen", path: "/academic", parentId: null, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
+            { id: 11, title: "Student Registry", icon: "GraduationCap", path: "/students", parentId: 1000, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
+            { id: 12, title: "Attendance Tracking", icon: "CalendarCheck", path: "/attendance", parentId: 1000, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
+            { id: 13, title: "Examination & Marks", icon: "BarChart3", path: "/marks", parentId: 1000, sortOrder: 3, roles: ["superadmin", "admin", "teacher"] },
+            { id: 2000, title: "Staff & HR", icon: "Users", path: "/staff", parentId: null, sortOrder: 3, roles: ["superadmin", "admin", "teacher"] },
+            { id: 21, title: "Teacher Catalog", icon: "UserCheck", path: "/teachers", parentId: 2000, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
+            { id: 3000, title: "Administrative", icon: "ShieldCheck", path: "/admin", parentId: null, sortOrder: 4, roles: ["superadmin", "admin", "teacher"] },
+            { id: 31, title: "Fee Management", icon: "CreditCard", path: "/fees", parentId: 3000, sortOrder: 1, roles: ["superadmin", "admin"] },
+            { id: 32, title: "Communication Hub", icon: "MessageSquare", path: "/messages", parentId: 3000, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
+            
+            { id: 4000, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 5, roles: ["superadmin", "admin"] },
+            { id: 41, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 4000, sortOrder: 1, roles: ["superadmin"] },
+            
+            { id: 42, title: "Access Control (RBAC)", icon: "ShieldCheck", path: null, parentId: 4000, sortOrder: 2, roles: ["superadmin"] },
+            { id: 421, title: "Role Master", icon: "Shield", path: "/configuration/role-master", parentId: 42, sortOrder: 1, roles: ["superadmin"] },
+            { id: 422, title: "Role Assignment", icon: "UserCheck", path: "/configuration/role-assignment", parentId: 42, sortOrder: 2, roles: ["superadmin"] },
+            
+            { id: 43, title: "Menu Designer", icon: "Layout", path: null, parentId: 4000, sortOrder: 3, roles: ["superadmin"] },
+            { id: 431, title: "Navigation Builder", icon: "LayoutGrid", path: "/configuration/navigation", parentId: 43, sortOrder: 1, roles: ["superadmin"] },
+            
+            { id: 44, title: "Academic Masters", icon: "BookOpen", path: null, parentId: 4000, sortOrder: 4, roles: ["superadmin", "admin"] },
+            { id: 441, title: "Standards & Grades", icon: "Layers", path: "/configuration/standards", parentId: 44, sortOrder: 1, roles: ["superadmin", "admin"] },
+            { id: 442, title: "Divisions/Sections", icon: "Hash", path: "/configuration/sections", parentId: 44, sortOrder: 2, roles: ["superadmin", "admin"] },
+            { id: 443, title: "Academic Years", icon: "Calendar", path: "/configuration/academic-years", parentId: 44, sortOrder: 3, roles: ["superadmin", "admin"] },
+            { id: 444, title: "Subject Registry", icon: "BookOpen", path: "/configuration/subjects", parentId: 44, sortOrder: 4, roles: ["superadmin", "admin"] },
+            
+            { id: 5000, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roles: ["superadmin"] }
+          ];
+        }
+
+        // 1. Map to consistent NavItem format and normalize values
+        const flatItems: NavItem[] = rawData.map((item: any) => {
+          // Normalize roles: handle both 'roles' string array and 'navigationRoles' objects
+          let roles: string[] = [];
+          if (Array.isArray(item.roles)) {
+            roles = item.roles.map((r: any) => String(r).toLowerCase().replace(/\s+/g, ""));
+          } else if (item.navigationRoles && Array.isArray(item.navigationRoles)) {
+            roles = item.navigationRoles
+              .map((nr: any) => nr.role?.name?.toLowerCase()?.replace(/\s+/g, ""))
+              .filter(Boolean);
+          } else {
+            // Default roles if none specified
+            roles = ["superadmin", "admin", "teacher"];
+          }
+
+          return {
+            id: Number(item.id),
+            title: item.title,
+            icon: item.icon,
+            path: item.path || "#",
+            parentId: item.parentId ? Number(item.parentId) : null,
+            sortOrder: Number(item.sortOrder || 0),
+            roles
           };
+        });
 
-          const hierarchicalMenu = rootItems
-            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+        // 2. Filter by role
+        // Superadmin bypasses filtering to see everything
+        const roleFiltered = currentRole === "superadmin" 
+          ? flatItems 
+          : flatItems.filter(item => 
+              item.roles.includes(currentRole) || 
+              item.roles.includes("all")
+            );
+
+        // 3. Recursive hierarchy builder with safety for circular refs or null parents
+        const buildMenu = (pId: number | null): NavItem[] => {
+          return roleFiltered
+            .filter(item => item.parentId === pId)
+            .sort((a, b) => a.sortOrder - b.sortOrder)
             .map(item => ({
               ...item,
-              subItems: buildHierarchy(item.id)
+              subItems: buildMenu(item.id)
             }));
+        };
 
-          setMenuItems(hierarchicalMenu);
-        }
+        const hierarchicalMenu = buildMenu(null);
+        setMenuItems(hierarchicalMenu);
+
       } catch (error) {
         console.error("Failed to fetch navigation:", error);
+        // On error, show at least the dashboard and configuration as safety fallback
+        setMenuItems([
+          { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roles: ["superadmin"] },
+          { id: 4000, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 2, roles: ["superadmin"] }
+        ]);
       } finally {
         setIsLoading(false);
       }

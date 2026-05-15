@@ -122,9 +122,18 @@ const mockFallbacks: Record<string, any> = {
     
     { id: 4000, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 5, roles: ["superadmin", "admin"] },
     { id: 41, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 4000, sortOrder: 1, roles: ["superadmin"] },
-    { id: 42, title: "Access Control (RBAC)", icon: "Key", path: "/role-assignment", parentId: 4000, sortOrder: 2, roles: ["superadmin"] },
-    { id: 43, title: "Menu Designer", icon: "Layout", path: "/navigation-management", parentId: 4000, sortOrder: 3, roles: ["superadmin"] },
-    { id: 44, title: "Academic Masters", icon: "BookOpen", path: "/configuration/masters", parentId: 4000, sortOrder: 4, roles: ["superadmin", "admin"] },
+    { id: 42, title: "Access Control (RBAC)", icon: "ShieldCheck", path: null, parentId: 4000, sortOrder: 2, roles: ["superadmin"] },
+    { id: 421, title: "Role Master", icon: "Shield", path: "/configuration/role-master", parentId: 42, sortOrder: 1, roles: ["superadmin"] },
+    { id: 422, title: "Role Assignment", icon: "UserCheck", path: "/configuration/role-assignment", parentId: 42, sortOrder: 2, roles: ["superadmin"] },
+    
+    { id: 43, title: "Menu Designer", icon: "Layout", path: null, parentId: 4000, sortOrder: 3, roles: ["superadmin"] },
+    { id: 431, title: "Navigation Builder", icon: "LayoutGrid", path: "/configuration/navigation", parentId: 43, sortOrder: 1, roles: ["superadmin"] },
+    
+    { id: 44, title: "Academic Masters", icon: "BookOpen", path: null, parentId: 4000, sortOrder: 4, roles: ["superadmin", "admin"] },
+    { id: 441, title: "Standards & Grades", icon: "Layers", path: "/configuration/standards", parentId: 44, sortOrder: 1, roles: ["superadmin", "admin"] },
+    { id: 442, title: "Divisions/Sections", icon: "Hash", path: "/configuration/sections", parentId: 44, sortOrder: 2, roles: ["superadmin", "admin"] },
+    { id: 443, title: "Academic Years", icon: "Calendar", path: "/configuration/academic-years", parentId: 44, sortOrder: 3, roles: ["superadmin", "admin"] },
+    { id: 444, title: "Subject Registry", icon: "BookOpen", path: "/configuration/subjects", parentId: 44, sortOrder: 4, roles: ["superadmin", "admin"] },
     
     { id: 5000, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roles: ["superadmin"] },
   ],
@@ -354,7 +363,7 @@ export const apiService = {
   deleteRole: (id: number) => api.delete(`/masters/roles/${id}`),
 
   // Navigation (Sidebar)
-  getNavigations: () => api.get("/navigation"),
+  getNavigations: (role?: string) => api.get("/navigation", { params: { role } }),
   createNavigation: (data: any) => api.post("/navigation", data),
   updateNavigation: (id: number, data: any) => api.put(`/navigation/${id}`, data),
   deleteNavigation: (id: number) => api.delete(`/navigation/${id}`),
