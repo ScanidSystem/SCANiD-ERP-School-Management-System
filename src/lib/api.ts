@@ -108,8 +108,25 @@ const mockFallbacks: Record<string, any> = {
   ],
   "/navigation": [
     { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
-    { id: 2, title: "Students", icon: "Users", path: "/students", parentId: null, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
-    { id: 8, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 8, roles: ["superadmin"] },
+    { id: 1000, title: "Academic Operations", icon: "BookOpen", path: null, parentId: null, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
+    { id: 11, title: "Student Registry", icon: "GraduationCap", path: "/students", parentId: 1000, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
+    { id: 12, title: "Attendance Tracking", icon: "CalendarCheck", path: "/attendance", parentId: 1000, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
+    { id: 13, title: "Examination & Marks", icon: "BarChart3", path: "/marks", parentId: 1000, sortOrder: 3, roles: ["superadmin", "admin", "teacher"] },
+    
+    { id: 2000, title: "Staff & HR", icon: "Users", path: null, parentId: null, sortOrder: 3, roles: ["superadmin", "admin", "teacher"] },
+    { id: 21, title: "Teacher Catalog", icon: "UserCheck", path: "/teachers", parentId: 2000, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
+    
+    { id: 3000, title: "Administrative", icon: "ShieldCheck", path: null, parentId: null, sortOrder: 4, roles: ["superadmin", "admin", "teacher"] },
+    { id: 31, title: "Fee Management", icon: "CreditCard", path: "/fees", parentId: 3000, sortOrder: 1, roles: ["superadmin", "admin"] },
+    { id: 32, title: "Communication Hub", icon: "MessageSquare", path: "/messages", parentId: 3000, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
+    
+    { id: 4000, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 5, roles: ["superadmin", "admin"] },
+    { id: 41, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 4000, sortOrder: 1, roles: ["superadmin"] },
+    { id: 42, title: "Access Control (RBAC)", icon: "Key", path: "/role-assignment", parentId: 4000, sortOrder: 2, roles: ["superadmin"] },
+    { id: 43, title: "Menu Designer", icon: "Layout", path: "/navigation-management", parentId: 4000, sortOrder: 3, roles: ["superadmin"] },
+    { id: 44, title: "Academic Masters", icon: "BookOpen", path: "/configuration/masters", parentId: 4000, sortOrder: 4, roles: ["superadmin", "admin"] },
+    
+    { id: 5000, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roles: ["superadmin"] },
   ],
   "/masters/roles": [
     { id: 1, name: "Super Admin", description: "Full system access", isActive: true },

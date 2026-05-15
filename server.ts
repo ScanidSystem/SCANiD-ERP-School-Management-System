@@ -147,10 +147,11 @@ async function startServer() {
     { id: 31, title: "Fee Management", icon: "CreditCard", path: "/fees", parentId: 3000, sortOrder: 1, roles: ["superadmin", "admin"] },
     { id: 32, title: "Communication Hub", icon: "MessageSquare", path: "/messages", parentId: 3000, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
     
-    { id: 4000, title: "Configuration", icon: "Database", path: "/configuration", parentId: null, sortOrder: 5, roles: ["superadmin", "admin"] },
+    { id: 4000, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 5, roles: ["superadmin", "admin"] },
     { id: 41, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 4000, sortOrder: 1, roles: ["superadmin"] },
-    { id: 42, title: "Access Control (RBAC)", icon: "Key", path: "/configuration/role-assignment", parentId: 4000, sortOrder: 2, roles: ["superadmin"] },
-    { id: 43, title: "Menu Designer", icon: "Layout", path: "/configuration/navigation", parentId: 4000, sortOrder: 3, roles: ["superadmin"] },
+    { id: 42, title: "Access Control (RBAC)", icon: "Key", path: "/role-assignment", parentId: 4000, sortOrder: 2, roles: ["superadmin"] },
+    { id: 43, title: "Menu Designer", icon: "Layout", path: "/navigation-management", parentId: 4000, sortOrder: 3, roles: ["superadmin"] },
+    { id: 44, title: "Academic Masters", icon: "BookOpen", path: "/configuration/masters", parentId: 4000, sortOrder: 4, roles: ["superadmin", "admin"] },
     
     { id: 5000, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roles: ["superadmin"] },
   ];

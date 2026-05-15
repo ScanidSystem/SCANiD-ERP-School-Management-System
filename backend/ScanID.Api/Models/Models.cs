@@ -78,6 +78,32 @@ namespace ScanID.Api.Models
     }
 
     /// <summary>
+    /// Represents a dynamic navigation menu item.
+    /// </summary>
+    public class NavigationItem
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string? Icon { get; set; }
+        public string? Path { get; set; }
+        public int? ParentId { get; set; }
+        public int SortOrder { get; set; }
+        public bool IsActive { get; set; } = true;
+        public ICollection<NavigationRole>? NavigationRoles { get; set; }
+    }
+
+    /// <summary>
+    /// Junction table for role-based navigation access.
+    /// </summary>
+    public class NavigationRole
+    {
+        public int NavigationItemId { get; set; }
+        public NavigationItem? NavigationItem { get; set; }
+        public int RoleId { get; set; }
+        public Role? Role { get; set; }
+    }
+
+    /// <summary>
     /// Represents a student record based on the studentmaster schema.
     /// </summary>
     public class Student : BaseEntity

@@ -53,7 +53,7 @@ INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], 
 (1000, N'Academic Operations', N'BookOpen', NULL, NULL, 2),
 (2000, N'Staff & HR', N'Users', NULL, NULL, 3),
 (3000, N'Administrative', N'ShieldCheck', NULL, NULL, 4),
-(4000, N'Configuration', N'Database', N'/configuration', NULL, 5),
+(4000, N'Masters & Config', N'Database', N'/configuration', NULL, 5),
 (5000, N'System Audit', N'Terminal', N'/system-logs', NULL, 6);
 
 -- Level 1: Sub-items for Academic Operations (1000)
@@ -74,14 +74,16 @@ INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], 
 -- Level 1: Sub-items for Configuration (4000) - Deep links
 INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder]) VALUES 
 (41, N'Global Schools', N'School', N'/configuration/schools', 4000, 1),
-(42, N'Access Control (RBAC)', N'Key', N'/configuration/role-assignment', 4000, 2),
-(43, N'Menu Designer', N'Layout', N'/configuration/navigation', 4000, 3);
+(42, N'Access Control (RBAC)', N'Key', N'/role-assignment', 4000, 2),
+(43, N'Menu Designer', N'Layout', N'/navigation-management', 4000, 3),
+(44, N'Academic Masters', N'BookOpen', N'/configuration/masters', 4000, 4);
 
 SET IDENTITY_INSERT [dbo].[NavigationItems] OFF;
 GO
 
 -- 4. Map Roles to Navigation Items using dynamic Lookup
-DECLARE @SRoleId INT = (SELECT Id FROM [dbo].[Roles] WHERE [Name] = 'SuperAdmin');
+-- Note: Roles table should exist with names SuperAdmin, Admin, Teacher, etc.
+DECLARE @SRoleId INT = (SELECT Id FROM [dbo].[Roles] WHERE [Name] = 'SuperAdmin' OR [Name] = 'Super Admin');
 DECLARE @ARoleId INT = (SELECT Id FROM [dbo].[Roles] WHERE [Name] = 'Admin');
 DECLARE @TRoleId INT = (SELECT Id FROM [dbo].[Roles] WHERE [Name] = 'Teacher');
 
