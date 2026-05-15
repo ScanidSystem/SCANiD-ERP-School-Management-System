@@ -7,10 +7,10 @@
 -- 1. SCHOOLS
 SET IDENTITY_INSERT [dbo].[Schools] ON;
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Schools] WHERE [Id] = 1)
-    INSERT [dbo].[Schools] ([Id], [Name], [Address], [ContactNumber], [Email], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
+    INSERT [dbo].[Schools] ([Id], [Name], [Address], [Phone], [Email], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
     VALUES (1, N'SCANID PRIMARY SCHOOL', N'MUMBAI, MAHARASHTRA', N'9876543210', N'pri@scanid.com', 1, 0, N'SYSTEM', GETUTCDATE());
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Schools] WHERE [Id] = 2)
-    INSERT [dbo].[Schools] ([Id], [Name], [Address], [ContactNumber], [Email], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
+    INSERT [dbo].[Schools] ([Id], [Name], [Address], [Phone], [Email], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
     VALUES (2, N'SCANID SECONDARY HIGH SCHOOL', N'PUNE, MAHARASHTRA', N'9876543211', N'sec@scanid.com', 1, 0, N'SYSTEM', GETUTCDATE());
 SET IDENTITY_INSERT [dbo].[Schools] OFF;
 GO
@@ -130,18 +130,70 @@ GO
 -- 13. TEACHERS
 SET IDENTITY_INSERT [dbo].[Teachers] ON;
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Teachers] WHERE [Id] = 1)
-    INSERT [dbo].[Teachers] ([Id], [UserId], [EmployeeId], [Qualification], [Experience], [Subject], [StandardId], [SectionId], [CreatedBy], [CreatedOn]) 
-    VALUES (1, 3, N'EMP001', N'MA B.Ed', N'10 Years', N'Mathematics', 1, 1, N'SYSTEM', GETUTCDATE());
+    INSERT [dbo].[Teachers] ([Id], [UserId], [SchoolId], [EmployeeId], [Qualification], [Experience], [Subject], [StandardId], [SectionId], [ContactNumber], [CreatedBy], [CreatedOn]) 
+    VALUES (1, 3, 1, N'EMP001', N'MA B.Ed', N'5+ Years', N'Mathematics', 1, 1, N'9876543210', N'SYSTEM', GETUTCDATE());
 SET IDENTITY_INSERT [dbo].[Teachers] OFF;
 GO
 
 -- 14. STUDENTS
 SET IDENTITY_INSERT [dbo].[Students] ON;
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Students] WHERE [Id] = 1)
-    INSERT [dbo].[Students] ([Id], [RegistrationNumber], [FullName], [FirstName], [MiddleName], [LastName], [DateOfBirth], [Gender], [StandardId], [SectionId], [RollNumber], [BloodGroupId], [ReligionId], [CasteId], [SchoolId], [JoiningAcademicYearId], [AdmissionTypeId], [HouseId], [IsActive], [IsDeleted], [CreatedOn]) 
-    VALUES (1, N'REG1001', N'Shivansh Sanjay Khopkar', N'Shivansh', N'Sanjay', N'Khopkar', '2018-05-15', N'Male', 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 0, GETUTCDATE());
+    INSERT [dbo].[Students] ([Id], [RegistrationNumber], [FullName], [FirstName], [LastName], [DateOfBirth], [Gender], [StandardId], [SectionId], [RollNumber], [BloodGroupId], [ReligionId], [CasteId], [SchoolId], [AdmissionTypeId], [HouseId], [IsActive], [IsDeleted], [CreatedOn], [STD], [DIV], [ROLLNO]) 
+    VALUES (1, N'REG1001', N'Shivansh Sanjay Khopkar', N'Shivansh', N'Khopkar', N'2015-05-20', N'Male', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, GETUTCDATE(), N'1st', N'A', N'1');
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Students] WHERE [Id] = 2)
-    INSERT [dbo].[Students] ([Id], [RegistrationNumber], [FullName], [FirstName], [MiddleName], [LastName], [DateOfBirth], [Gender], [StandardId], [SectionId], [RollNumber], [BloodGroupId], [ReligionId], [CasteId], [SchoolId], [JoiningAcademicYearId], [AdmissionTypeId], [HouseId], [IsActive], [IsDeleted], [CreatedOn]) 
-    VALUES (2, N'REG1002', N'Aavya Amit Patil', N'Aavya', N'Amit', N'Patil', '2018-08-20', N'Female', 1, 1, 2, 2, 1, 2, 1, 2, 1, 2, 1, 0, GETUTCDATE());
+    INSERT [dbo].[Students] ([Id], [RegistrationNumber], [FullName], [FirstName], [LastName], [DateOfBirth], [Gender], [StandardId], [SectionId], [RollNumber], [BloodGroupId], [ReligionId], [CasteId], [SchoolId], [AdmissionTypeId], [HouseId], [IsActive], [IsDeleted], [CreatedOn], [STD], [DIV], [ROLLNO]) 
+    VALUES (2, N'REG1002', N'Aavya Amit Patil', N'Aavya', N'Patil', N'2015-08-15', N'Female', 1, 1, 2, 2, 1, 2, 1, 1, 2, 1, 0, GETUTCDATE(), N'1st', N'A', N'2');
 SET IDENTITY_INSERT [dbo].[Students] OFF;
+GO
+
+-- 15. NAVIGATION (Hierarchical structure)
+SET IDENTITY_INSERT [dbo].[NavigationItems] ON;
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 1)
+BEGIN
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder]) VALUES 
+    (1, N'Dashboard', N'LayoutDashboard', N'/', NULL, 1),
+    (1000, N'Academic Operations', N'BookOpen', NULL, NULL, 2),
+    (2000, N'Staff & HR', N'Users', NULL, NULL, 3),
+    (3000, N'Administrative', N'ShieldCheck', NULL, NULL, 4),
+    (4000, N'Configuration', N'Database', N'/configuration', NULL, 5),
+    (5000, N'System Audit', N'Terminal', N'/system-logs', NULL, 6);
+
+    -- Sub-items for Academic Operations (1000)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder]) VALUES 
+    (11, N'Student Registry', N'GraduationCap', N'/students', 1000, 1),
+    (12, N'Attendance Tracking', N'CalendarCheck', N'/attendance', 1000, 2),
+    (13, N'Examination & Marks', N'BarChart3', N'/marks', 1000, 3);
+
+    -- Sub-items for Staff & HR (2000)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder]) VALUES 
+    (21, N'Teacher Catalog', N'UserCheck', N'/teachers', 2000, 1);
+
+    -- Sub-items for Administrative (3000)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder]) VALUES 
+    (31, N'Fee Management', N'CreditCard', N'/fees', 3000, 1),
+    (32, N'Communication Hub', N'MessageSquare', N'/messages', 3000, 2);
+
+    -- Sub-items for Configuration (4000)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder]) VALUES 
+    (41, N'Global Schools', N'School', N'/configuration/schools', 4000, 1),
+    (42, N'Access Control (RBAC)', N'Key', N'/configuration/role-assignment', 4000, 2),
+    (43, N'Menu Designer', N'Layout', N'/configuration/navigation', 4000, 3);
+END
+SET IDENTITY_INSERT [dbo].[NavigationItems] OFF;
+
+-- Mapping Roles (1:SuperAdmin, 2:Admin, 3:Teacher)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationRoles])
+BEGIN
+    -- SuperAdmin (1) gets everything
+    INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId])
+    SELECT Id, 1 FROM [dbo].[NavigationItems];
+
+    -- Admin (2) gets most except System Audit and deep config
+    INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId])
+    SELECT Id, 2 FROM [dbo].[NavigationItems] WHERE Id NOT IN (5000, 42, 43);
+
+    -- Teacher (3) gets critical operational items
+    INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId]) VALUES 
+    (1, 3), (1000, 3), (11, 3), (12, 3), (13, 3), (2000, 3), (21, 3), (3000, 3), (32, 3);
+END
 GO

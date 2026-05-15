@@ -54,8 +54,12 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
         apiService.getSchools(),
         apiService.getAcademicYears()
       ]);
-      setSchools(schoolsRes.data || []);
-      setAcademicYears(yearsRes.data || []);
+      
+      const schoolData = Array.isArray(schoolsRes.data) ? schoolsRes.data : (schoolsRes.data?.data || []);
+      const yearData = Array.isArray(yearsRes.data) ? yearsRes.data : (yearsRes.data?.data || []);
+      
+      setSchools(schoolData);
+      setAcademicYears(yearData);
     } catch (error) {
       console.error("Navbar lookups error:", error);
     }

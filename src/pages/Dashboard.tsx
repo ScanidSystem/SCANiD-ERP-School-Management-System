@@ -57,7 +57,8 @@ export default function Dashboard({ user }: DashboardProps) {
     const fetchStats = async () => {
       try {
         const res = await apiService.getStats(user.schoolId ? parseInt(user.schoolId) : undefined);
-        setStats(res.data);
+        const statsData = res.data?.data || res.data;
+        setStats(statsData);
       } catch (error) {
         console.error("Dashboard error:", error);
       }

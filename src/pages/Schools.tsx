@@ -91,7 +91,8 @@ export default function Schools({ user }: { user: UserType }) {
     setLoading(true);
     try {
       const res = await apiService.getSchools();
-      setSchools(res.data);
+      const schoolData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+      setSchools(schoolData);
     } catch (error) {
       console.error("Schools error:", error);
     } finally {
@@ -393,7 +394,9 @@ export default function Schools({ user }: { user: UserType }) {
                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">System Status</Label>
                     <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
                       <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
-                        <SelectValue placeholder="Select System Status" />
+                        <SelectValue placeholder="Select System Status">
+                          {formData.status || undefined}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-slate-200">
                         <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select System Status</SelectItem>
@@ -540,7 +543,9 @@ export default function Schools({ user }: { user: UserType }) {
                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">System Status</Label>
                     <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
                       <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
-                        <SelectValue placeholder="Select System Status" />
+                        <SelectValue placeholder="Select System Status">
+                          {formData.status || undefined}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-slate-200">
                         <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select System Status</SelectItem>

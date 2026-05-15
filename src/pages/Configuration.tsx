@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import * as LucideIcons from "lucide-react";
 import { 
   Database, 
   Layers, 
@@ -117,6 +118,7 @@ const MASTER_TYPES: Record<string, { label: string, icon: any, description: stri
   "exam-types": { label: "Exam Types", icon: Award, description: "Manage examination categories", apiPrefix: "ExamType" },
   "designations": { label: "Designations", icon: Briefcase, description: "Manage staff designations", apiPrefix: "Designation" },
   "occupations": { label: "Occupations", icon: Hammer, description: "Manage parent occupations", apiPrefix: "Occupation" },
+  "navigation": { label: "Navigation Master", icon: LayoutGrid, description: "Manage hierarchical sidebar menu", apiPrefix: "Navigation" },
 };
 
 export default function Configuration({ user, defaultTab = "schools" }: ConfigurationProps) {
@@ -191,6 +193,15 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
           const statesRes = await apiService.getStates();
           setDependencies(prev => ({ ...prev, states: statesRes.data || [] }));
         }
+        if (activeTab === "navigation") {
+          const rolesRes = await apiService.getRoles();
+          const navsRes = await apiService.getNavigations();
+          setDependencies(prev => ({ 
+            ...prev, 
+            roles: rolesRes.data || [],
+            parentNavs: navsRes.data?.filter((n: any) => !n.parentId) || []
+          }));
+        }
       }
     } catch (error) {
       console.error("Error fetching master data:", error);
@@ -218,7 +229,13 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       stateId: item?.stateId?.toString() || "",
       address: item?.address || "",
       phone: item?.phone || "",
-      email: item?.email || ""
+      email: item?.email || "",
+      title: item?.title || "",
+      path: item?.path || "",
+      icon: item?.icon || "",
+      parentId: item?.parentId?.toString() || "",
+      sortOrder: item?.sortOrder || 0,
+      roles: item?.roles || ["superadmin"]
     });
     setIsDialogOpen(true);
   };
@@ -230,7 +247,12 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
    */
   const handleSave = async () => {
     const newErrors: Record<string, boolean> = {};
-    if (!formData.name.trim()) newErrors.name = true;
+    if (activeTab === "navigation") {
+      if (!formData.title.trim()) newErrors.title = true;
+      if (!formData.path.trim()) newErrors.path = true;
+    } else {
+      if (!formData.name.trim()) newErrors.name = true;
+    }
     
     if (activeTab === "sub-castes" && !formData.casteId) newErrors.casteId = true;
     if (activeTab === "cities" && !formData.stateId) newErrors.stateId = true;
@@ -256,11 +278,24 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       const updateMethod = `update${prefix}`;
 
       // Prepare payload based on the active master type to avoid sending irrelevant data
-      const payload: any = {
-        name: formData.name,
-        description: formData.description,
+      let payload: any = {
         isActive: formData.isActive
       };
+
+      if (activeTab === "navigation") {
+        payload = {
+          ...payload,
+          title: formData.title,
+          path: formData.path,
+          icon: formData.icon,
+          parentId: formData.parentId ? parseInt(formData.parentId) : null,
+          sortOrder: parseInt(formData.sortOrder),
+          roles: formData.roles
+        };
+      } else {
+        payload.name = formData.name;
+        payload.description = formData.description;
+      }
 
       // Add type-specific fields with proper type conversion
       if (activeTab === "academic-years") {
@@ -318,8 +353,8 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
   };
 
   const filteredData = masterData.filter(item => 
-    item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    (item.name || item.title || item.fullName)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.description || item.path)?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const activeConfig = MASTER_TYPES[activeTab];
@@ -409,7 +444,15 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                         <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Contact</TableHead>
                       </>
                     )}
-                    {activeTab !== "role-assignment" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Description</TableHead>}
+                    {activeTab === "navigation" && (
+                      <>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Path</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Parent</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Roles</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Order</TableHead>
+                      </>
+                    )}
+                    {activeTab !== "role-assignment" && activeTab !== "navigation" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Description</TableHead>}
                     <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Status</TableHead>
                     <TableHead className="w-20 pr-8 text-right text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Manage</TableHead>
                   </TableRow>
@@ -446,7 +489,15 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                            </span>
                         </TableCell>
                         <TableCell className="font-black text-slate-900 text-sm tracking-tight truncate max-w-[200px]">
-                          {item.name || item.fullName}
+                          {activeTab === "navigation" && item.icon && (
+                            <span className="mr-2 inline-flex items-center">
+                              {(() => {
+                                const IconComp = (LucideIcons as any)[item.icon];
+                                return IconComp ? <IconComp size={16} className="text-blue-500" /> : null;
+                              })()}
+                            </span>
+                          )}
+                          {item.name || item.title || item.fullName}
                         </TableCell>
 
                         {activeTab === "role-assignment" && (
@@ -541,7 +592,30 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                           </>
                         )}
 
-                        {activeTab !== "role-assignment" && (
+                        {activeTab === "navigation" && (
+                          <>
+                            <TableCell className="text-xs font-mono font-bold text-slate-500">{item.path}</TableCell>
+                            <TableCell className="text-xs font-bold text-slate-600">
+                              {item.parentId ? (
+                                <Badge variant="outline" className="text-[10px] font-black uppercase text-slate-400">
+                                  {masterData.find(m => m.id === parseInt(item.parentId))?.title || "Parent Hidden"}
+                                </Badge>
+                              ) : <span className="text-slate-300">—</span>}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1 max-w-[150px]">
+                                {item.roles?.map((r: string) => (
+                                  <Badge key={r} className="bg-slate-100 text-slate-500 rounded-md text-[9px] font-black uppercase px-1.5 py-0.5">
+                                    {r}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-xs font-black text-slate-400">{item.sortOrder}</TableCell>
+                          </>
+                        )}
+
+                        {activeTab !== "role-assignment" && activeTab !== "navigation" && (
                           <TableCell className="text-xs font-bold text-slate-400 max-w-[200px] truncate leading-relaxed italic">
                             {item.description || "No metadata found"}
                           </TableCell>
@@ -599,24 +673,128 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
           
           <div className="p-8 space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="name" className={cn("text-xs font-black uppercase tracking-wider", formErrors.name ? "text-red-500" : "text-slate-400")}>
-                {activeTab === "schools" ? "School Name" : activeTab === "role-assignment" ? "Full Name" : "Name / Label"} {formErrors.name && "*"}
+              <Label htmlFor="name" className={cn("text-xs font-black uppercase tracking-wider", (formErrors.name || formErrors.title) ? "text-red-500" : "text-slate-400")}>
+                {activeTab === "schools" ? "School Name" : activeTab === "role-assignment" ? "Full Name" : activeTab === "navigation" ? "Navigation Title" : "Name / Label"} {(formErrors.name || formErrors.title) && "*"}
               </Label>
               <Input 
-                ref={el => inputRefs.current["name"] = el}
+                ref={el => inputRefs.current[activeTab === "navigation" ? "title" : "name"] = el}
                 id="name" 
-                placeholder={`Enter ${activeTab === "schools" ? "school name" : activeTab === "role-assignment" ? "user's full name" : "name"}...`}
+                placeholder={`Enter ${activeTab === "schools" ? "school name" : activeTab === "role-assignment" ? "user's full name" : activeTab === "navigation" ? "menu title" : "name"}...`}
                 className={cn(
                   "h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold",
-                  formErrors.name && "border-red-500 ring-2 ring-red-500/10"
+                  (formErrors.name || formErrors.title) && "border-red-500 ring-2 ring-red-500/10"
                 )}
-                value={formData.name}
+                value={activeTab === "navigation" ? formData.title : formData.name}
                 onChange={(e) => {
-                  setFormData({...formData, name: e.target.value});
-                  if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                  if (activeTab === "navigation") {
+                    setFormData({...formData, title: e.target.value});
+                    if (formErrors.title) setFormErrors(prev => ({ ...prev, title: false }));
+                  } else {
+                    setFormData({...formData, name: e.target.value});
+                    if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                  }
                 }}
               />
             </div>
+
+            {activeTab === "navigation" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="path" className={cn("text-xs font-black uppercase tracking-wider", formErrors.path ? "text-red-500" : "text-slate-400")}>Navigation Path {formErrors.path && "*"}</Label>
+                  <Input 
+                    id="path" 
+                    placeholder="e.g. /students or /configuration/schools"
+                    className={cn(
+                      "h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold",
+                      formErrors.path && "border-red-500 ring-2 ring-red-500/10"
+                    )}
+                    value={formData.path}
+                    onChange={(e) => {
+                      setFormData({...formData, path: e.target.value});
+                      if (formErrors.path) setFormErrors(prev => ({ ...prev, path: false }));
+                    }}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-black uppercase tracking-wider text-slate-400">Lucide Icon</Label>
+                    <Select 
+                      value={formData.icon} 
+                      onValueChange={(v) => setFormData({...formData, icon: v})}
+                    >
+                      <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white font-bold px-4">
+                        <SelectValue placeholder="No Icon" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-200 shadow-xl max-h-60">
+                        <SelectItem value="" className="font-semibold py-2">None</SelectItem>
+                        {["LayoutDashboard", "Users", "GraduationCap", "CalendarCheck", "CreditCard", "MessageSquare", "UserCheck", "Terminal", "Database", "School", "Bell", "Settings", "Award", "Briefcase", "BookOpen", "Hammer"].map(icon => (
+                          <SelectItem key={icon} value={icon} className="font-semibold py-2 flex items-center gap-2">
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                const IconComp = (LucideIcons as any)[icon];
+                                return IconComp ? <IconComp size={14} className="text-slate-400" /> : null;
+                              })()}
+                              {icon}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-black uppercase tracking-wider text-slate-400">Parent Menu</Label>
+                    <Select 
+                      value={formData.parentId} 
+                      onValueChange={(v) => setFormData({...formData, parentId: v})}
+                    >
+                      <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white font-bold px-4">
+                        <SelectValue placeholder="Root" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-200 shadow-xl max-h-60">
+                        <SelectItem value="" className="font-semibold py-2">None (Root)</SelectItem>
+                        {dependencies.parentNavs?.filter((n: any) => n.id !== editingItem?.id).map(n => (
+                          <SelectItem key={n.id} value={n.id.toString()} className="font-semibold py-2">
+                            {n.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sortOrder" className="text-xs font-black uppercase tracking-wider text-slate-400">Sort Order</Label>
+                  <Input 
+                    id="sortOrder" 
+                    type="number"
+                    className="h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
+                    value={formData.sortOrder}
+                    onChange={(e) => setFormData({...formData, sortOrder: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-black uppercase tracking-wider text-slate-400">Visible for Roles</Label>
+                  <div className="grid grid-cols-2 gap-2 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    {["superadmin", "admin", "teacher", "parent", "student"].map(role => (
+                      <div key={role} className="flex items-center gap-2">
+                        <input 
+                          type="checkbox" 
+                          id={`role-${role}`}
+                          checked={formData.roles?.includes(role)}
+                          onChange={(e) => {
+                            const newRoles = e.target.checked 
+                              ? [...(formData.roles || []), role]
+                              : (formData.roles || []).filter((r: string) => r !== role);
+                            setFormData({...formData, roles: newRoles});
+                          }}
+                          className="w-4 h-4 rounded border-slate-300 text-blue-600"
+                        />
+                        <label htmlFor={`role-${role}`} className="text-xs font-bold text-slate-600 capitalize">{role}</label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
 
             {(activeTab === "schools" || activeTab === "role-assignment") && (
               <div className="space-y-2">

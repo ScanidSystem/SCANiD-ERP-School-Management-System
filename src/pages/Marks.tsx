@@ -49,7 +49,8 @@ export default function Marks({ user }: { user: UserType }) {
       if (user.role === "superadmin") {
         try {
           const res = await apiService.getSchools();
-          setSchools(res.data);
+          const schoolData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+          setSchools(schoolData);
         } catch (error) {
           console.error("Failed to fetch schools", error);
         }
@@ -64,7 +65,8 @@ export default function Marks({ user }: { user: UserType }) {
       try {
         const schoolIdToUse = user.role === "superadmin" ? (selectedSchoolId ? parseInt(selectedSchoolId) : undefined) : (user.schoolId ? parseInt(user.schoolId) : undefined);
         const res = await apiService.getMarks(schoolIdToUse);
-        setMarks(res.data);
+        const marksData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        setMarks(marksData);
       } catch (error) {
         console.error("Marks error:", error);
       } finally {

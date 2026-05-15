@@ -115,17 +115,20 @@ export default function Students({ user }: { user: UserType }) {
         apiService.getAcademicYears(),
         apiService.getShifts()
       ]);
-      setStandardsMaster(standardsRes.data || []);
-      setSectionsMaster(sectionsRes.data || []);
-      setSchools(schoolsRes.data || []);
-      setBloodGroups(bloodGroupsRes.data || []);
-      setHouses(housesRes.data || []);
-      setAdmissionTypes(admissionTypesRes.data || []);
-      setReligions(religionsRes.data || []);
-      setCastes(castesRes.data || []);
-      setSubCastes(subCastesRes.data || []);
-      setAcademicYears(academicYearsRes.data || []);
-      setShifts(shiftsRes.data || []);
+      
+      const normalize = (res: any) => Array.isArray(res.data) ? res.data : (res.data?.data || []);
+      
+      setStandardsMaster(normalize(standardsRes));
+      setSectionsMaster(normalize(sectionsRes));
+      setSchools(normalize(schoolsRes));
+      setBloodGroups(normalize(bloodGroupsRes));
+      setHouses(normalize(housesRes));
+      setAdmissionTypes(normalize(admissionTypesRes));
+      setReligions(normalize(religionsRes));
+      setCastes(normalize(castesRes));
+      setSubCastes(normalize(subCastesRes));
+      setAcademicYears(normalize(academicYearsRes));
+      setShifts(normalize(shiftsRes));
     } catch (error) {
       console.error("Fetch masters error:", error);
     }
@@ -135,7 +138,8 @@ export default function Students({ user }: { user: UserType }) {
     setLoading(true);
     try {
       const response = await apiService.getStudents(user.schoolId ? parseInt(user.schoolId) : undefined);
-    const formatted = response.data.map((s: any) => {
+    const studentData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+    const formatted = studentData.map((s: any) => {
       // Helper to fetch data by ensuring case-insensitive property access for specific schema fields
       const getVal = (prop: string, fallback?: any) => {
         if (!s) return fallback;

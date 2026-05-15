@@ -46,8 +46,12 @@ export default function Login({ onLogin }: LoginProps) {
         apiService.getSchools(),
         apiService.getAcademicYears()
       ]);
-      setSchools(schoolsRes.data || []);
-      setAcademicYears(yearsRes.data || []);
+      
+      const schoolData = Array.isArray(schoolsRes.data) ? schoolsRes.data : (schoolsRes.data?.data || []);
+      const yearData = Array.isArray(yearsRes.data) ? yearsRes.data : (yearsRes.data?.data || []);
+      
+      setSchools(schoolData);
+      setAcademicYears(yearData);
       
       // We don't default to current year anymore as per user request "show Select by default"
       setSelectedYear("");

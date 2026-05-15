@@ -115,7 +115,8 @@ export default function Teachers({ user }: { user: any }) {
   const fetchSchools = async () => {
     try {
       const res = await apiService.getSchools();
-      setSchools(res.data);
+      const schoolData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+      setSchools(schoolData);
     } catch (error) {
       console.error("Failed to fetch schools", error);
     }
@@ -125,19 +126,40 @@ export default function Teachers({ user }: { user: any }) {
     setLoading(true);
     try {
       const res = await apiService.getTeachers(user?.schoolId ? parseInt(user.schoolId) : undefined);
-      setTeachers(res.data.map((t: any) => ({
-        id: t.id.toString(),
-        fullName: t.user?.fullName || "Unnamed",
-        email: t.user?.email || "N/A",
-        phone: t.phone || "N/A",
-        qualification: t.qualification || "N/A",
-        experience: "5+ Years",
-        subject: t.department || "General",
-        standard: "Mixed",
-        section: "Mixed",
-        status: t.status || "Active",
-        employeeId: t.employeeId
-      })));
+      
+      const teacherData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+      
+      setTeachers(teacherData.map((t: any) => {
+        const getVal = (prop: string, fallback?: any) => {
+          if (!t) return fallback;
+          const userObj = t.user || {};
+          // Search in both teacher object and nested user object
+          const tKeys = Object.keys(t);
+          const uKeys = Object.keys(userObj);
+          
+          const tMatch = tKeys.find(k => k.toLowerCase() === prop.toLowerCase());
+          if (tMatch) return t[tMatch];
+          
+          const uMatch = uKeys.find(k => k.toLowerCase() === prop.toLowerCase());
+          if (uMatch) return userObj[uMatch];
+          
+          return fallback;
+        };
+
+        return {
+          id: t.id?.toString() || "",
+          fullName: getVal("fullName") || "Unnamed Teacher",
+          email: getVal("email") || "N/A",
+          phone: getVal("contactNumber") || getVal("phone") || "N/A",
+          qualification: getVal("qualification") || "N/A",
+          experience: getVal("experience") || "N/A",
+          subject: getVal("subject") || getVal("department") || "N/A",
+          standard: getVal("standard") || getVal("standardId")?.toString() || "N/A",
+          section: getVal("section") || getVal("sectionId")?.toString() || "N/A",
+          status: getVal("status") || "Active",
+          employeeId: getVal("employeeId") || "N/A"
+        };
+      }));
     } catch (error) {
       toast.error("Could not connect to database");
     } finally {

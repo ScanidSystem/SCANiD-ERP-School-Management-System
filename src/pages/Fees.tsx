@@ -44,7 +44,8 @@ export default function Fees({ user }: { user: any }) {
       if (user.role === "superadmin") {
         try {
           const res = await apiService.getSchools();
-          setSchools(res.data);
+          const schoolData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+          setSchools(schoolData);
         } catch (error) {
           console.error("Failed to fetch schools", error);
         }

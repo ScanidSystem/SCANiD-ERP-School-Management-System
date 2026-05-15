@@ -315,6 +315,10 @@ CREATE TABLE [dbo].[Teachers](
 	[EmployeeId] [nvarchar](max) NOT NULL,
 	[Department] [nvarchar](max) NULL,
 	[Qualification] [nvarchar](max) NULL,
+	[Experience] [nvarchar](100) NULL,
+	[Subject] [nvarchar](200) NULL,
+	[StandardId] [int] NULL,
+	[SectionId] [int] NULL,
 	[ContactNumber] [nvarchar](max) NULL,
 	[Status] [nvarchar](max) NOT NULL DEFAULT (N'Active'),
     [IsActive] [bit] NOT NULL DEFAULT (1),
@@ -345,12 +349,16 @@ CREATE TABLE [dbo].[Students](
 	[FNAME] [nvarchar](200) NULL,
 	[MNAME] [nvarchar](200) NULL,
 	[LNAME] [nvarchar](200) NULL,
+	[FirstName] [nvarchar](200) NULL,
+	[MiddleName] [nvarchar](200) NULL,
+	[LastName] [nvarchar](200) NULL,
 	[STD] [nvarchar](200) NOT NULL,
 	[DIV] [nvarchar](200) NOT NULL,
 	[ROLLNO] [nvarchar](200) NOT NULL,
 	[GRNO] [nvarchar](100) NULL,
 	[GENDER] [nvarchar](10) NULL,
 	[DOB] [nvarchar](200) NULL,
+	[DateOfBirth] [nvarchar](200) NULL,
 	[BLOODGROUP] [nvarchar](100) NULL,
 	[CASTE] [nvarchar](50) NULL,
 	[RELIGION] [nvarchar](50) NULL,
@@ -477,6 +485,38 @@ BEGIN
     
     IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_States')
         ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_States] FOREIGN KEY([StateId]) REFERENCES [dbo].[States] ([Id]);
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[NavigationItems]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [dbo].[NavigationItems](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Title] [nvarchar](100) NOT NULL,
+	[Icon] [nvarchar](100) NULL,
+	[Path] [nvarchar](255) NULL,
+	[ParentId] [int] NULL,
+	[SortOrder] [int] NOT NULL DEFAULT ((0)),
+	[IsActive] [bit] NOT NULL DEFAULT ((1)),
+    [CreatedBy] [nvarchar](max) NULL,
+	[CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+    [ModifiedBy] [nvarchar](max) NULL,
+	[ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+ CONSTRAINT [PK_NavigationItems] PRIMARY KEY CLUSTERED ([Id] ASC),
+ CONSTRAINT [FK_NavigationItems_NavigationItems] FOREIGN KEY([ParentId]) REFERENCES [dbo].[NavigationItems] ([Id])
+)
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[NavigationRoles]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [dbo].[NavigationRoles](
+    [NavigationItemId] [int] NOT NULL,
+    [RoleId] [int] NOT NULL,
+ CONSTRAINT [PK_NavigationRoles] PRIMARY KEY CLUSTERED ([NavigationItemId] ASC, [RoleId] ASC),
+ CONSTRAINT [FK_NavigationRoles_NavigationItems] FOREIGN KEY([NavigationItemId]) REFERENCES [dbo].[NavigationItems] ([Id]) ON DELETE CASCADE,
+ CONSTRAINT [FK_NavigationRoles_Roles] FOREIGN KEY([RoleId]) REFERENCES [dbo].[Roles] ([Id]) ON DELETE CASCADE
+)
 END
 GO
 

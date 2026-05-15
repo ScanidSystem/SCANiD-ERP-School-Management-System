@@ -49,12 +49,18 @@ export default function Attendance({ user }: { user: any }) {
           apiService.getStandards(),
           apiService.getSections()
         ]);
-        setSchools(schoolsRes.data || []);
-        setStandardsMaster(standardsRes.data || []);
-        setSectionsMaster(sectionsRes.data || []);
         
-        if (user.role === "superadmin" && !selectedSchoolId && schoolsRes.data.length > 0) {
-          setSelectedSchoolId(schoolsRes.data[0].id.toString());
+        const normalize = (res: any) => Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        const schoolData = normalize(schoolsRes);
+        const standardData = normalize(standardsRes);
+        const sectionData = normalize(sectionsRes);
+        
+        setSchools(schoolData);
+        setStandardsMaster(standardData);
+        setSectionsMaster(sectionData);
+        
+        if (user.role === "superadmin" && !selectedSchoolId && schoolData.length > 0) {
+          setSelectedSchoolId(schoolData[0].id.toString());
         }
       } catch (error) {
         console.error("Failed to fetch masters", error);
@@ -69,7 +75,8 @@ export default function Attendance({ user }: { user: any }) {
       try {
         const schoolIdToUse = user.role === "superadmin" ? (selectedSchoolId ? parseInt(selectedSchoolId) : undefined) : (user.schoolId ? parseInt(user.schoolId) : undefined);
         const res = await apiService.getStudents(schoolIdToUse);
-        setStudents(res.data.map((s: any) => {
+        const studentData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        setStudents(studentData.map((s: any) => {
           const getVal = (prop: string, fallback?: any) => {
             return s[prop] ?? s[prop.toLowerCase()] ?? s[prop.toUpperCase()] ?? fallback;
           };

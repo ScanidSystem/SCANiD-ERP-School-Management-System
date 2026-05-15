@@ -80,6 +80,37 @@ const mockFallbacks: Record<string, any> = {
   "/masters/cities": [
     { id: 1, stateId: 1, name: "Mumbai", isActive: true },
   ],
+  "/masters/shifts": [
+    { id: 1, name: "MORNING", isActive: true },
+    { id: 2, name: "AFTERNOON", isActive: true },
+  ],
+  "/masters/subjects": [
+    { id: 1, name: "Mathematics", isActive: true },
+    { id: 2, name: "Science", isActive: true },
+  ],
+  "/masters/exam-types": [
+    { id: 1, name: "Unit Test 1", isActive: true },
+  ],
+  "/masters/designations": [
+    { id: 1, name: "Principal", isActive: true },
+  ],
+  "/masters/occupations": [
+    { id: 1, name: "Service", isActive: true },
+  ],
+  "/masters/sessions": [
+    { id: 1, name: "Session A", isActive: true },
+  ],
+  "/masters/batches": [
+    { id: 1, name: "Batch 2024", isActive: true },
+  ],
+  "/masters/categories": [
+    { id: 1, name: "General", isActive: true },
+  ],
+  "/navigation": [
+    { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
+    { id: 2, title: "Students", icon: "Users", path: "/students", parentId: null, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
+    { id: 8, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 8, roles: ["superadmin"] },
+  ],
   "/masters/roles": [
     { id: 1, name: "Super Admin", description: "Full system access", isActive: true },
     { id: 2, name: "Admin", description: "School-level administrative access", isActive: true },
@@ -122,13 +153,20 @@ api.interceptors.response.use(
       );
 
       // Try exact match then startsWith for reliability
-      const mockData = mockFallbacks[url] || 
-                       Object.keys(mockFallbacks).find(key => url.startsWith(key)) ? 
-                       mockFallbacks[Object.keys(mockFallbacks).find(key => url.startsWith(key))!] : 
-                       null;
+      let mockKey = Object.keys(mockFallbacks).find(key => url === key || url === key + "/" || url === "/" + key);
+      
+      if (!mockKey) {
+        mockKey = Object.keys(mockFallbacks).find(key => url.startsWith(key));
+      }
 
-      if (mockData) {
-        return Promise.resolve({ data: mockData });
+      if (mockKey) {
+        const mockData = mockFallbacks[mockKey];
+        // Wrap in { data: [...] } for masters if the URL contains /masters/
+        const finalResponseData = url.includes("/masters/") || url === "/schools" || url === "/users" || url === "/navigation" || url === "/teachers" || url === "/students"
+          ? { data: mockData }
+          : mockData;
+          
+        return Promise.resolve({ data: finalResponseData });
       }
     }
     return Promise.reject(error);
@@ -297,6 +335,12 @@ export const apiService = {
   createRole: (data: any) => api.post("/masters/roles", data),
   updateRole: (id: number, data: any) => api.put(`/masters/roles/${id}`, data),
   deleteRole: (id: number) => api.delete(`/masters/roles/${id}`),
+
+  // Navigation (Sidebar)
+  getNavigations: () => api.get("/navigation"),
+  createNavigation: (data: any) => api.post("/navigation", data),
+  updateNavigation: (id: number, data: any) => api.put(`/navigation/${id}`, data),
+  deleteNavigation: (id: number) => api.delete(`/navigation/${id}`),
 
   // Users (for Role Assignment & Management)
   getUsers: () => api.get("/users"),

@@ -1,26 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import * as LucideIcons from "lucide-react";
 import { 
-  LayoutDashboard, 
-  Users, 
-  GraduationCap, 
-  CalendarCheck, 
-  CreditCard, 
+  ChevronLeft, 
+  ChevronRight, 
+  Settings, 
   LogOut,
-  Settings,
-  Bell,
+  LayoutDashboard,
+  Users,
+  GraduationCap,
+  CalendarCheck,
+  CreditCard,
   MessageSquare,
   UserCheck,
-  ChevronLeft,
-  ChevronRight,
-  School,
   Terminal,
   Database,
+  School,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Role } from "@/types";
+import { apiService } from "@/lib/api";
 import { motion, AnimatePresence } from "motion/react";
 import { SimpleTooltip } from "@/components/shared/SimpleTooltip";
+
+interface NavItem {
+  id: number;
+  title: string;
+  icon: string | null;
+  path: string;
+  parentId: number | null;
+  sortOrder: number;
+  roles: string[];
+  subItems?: NavItem[];
+}
 
 interface SidebarProps {
   user: {
@@ -32,64 +45,183 @@ interface SidebarProps {
   onCloseMobile?: () => void;
 }
 
+// Icon mapping helper
+const getIcon = (iconName: string | null) => {
+  if (!iconName) return null;
+  // @ts-ignore
+  const Icon = LucideIcons[iconName];
+  return Icon || null;
+};
+
 export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }: SidebarProps) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-
-  const menuItems = [
-    { name: "Dashboard", path: "/", icon: LayoutDashboard, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
-    { name: "Students", path: "/students", icon: GraduationCap, roles: ["superadmin", "admin", "teacher"] },
-    { name: "Teachers", path: "/teachers", icon: UserCheck, roles: ["superadmin", "admin"] },
-    { name: "Academic Reports", path: "/marks", icon: Users, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
-    { name: "Attendance", path: "/attendance", icon: CalendarCheck, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
-    { name: "Fees", path: "/fees", icon: CreditCard, roles: ["superadmin", "admin", "parent"] },
-    { name: "Messages", path: "/messages", icon: MessageSquare, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
-    { 
-      name: "Masters & Config", 
-      path: "/configuration", 
-      icon: Database, 
-      roles: ["superadmin"],
-      subItems: [
-        { name: "Schools", path: "/configuration/schools", roles: ["superadmin"] },
-        { name: "Role Master", path: "/configuration/role-master", roles: ["superadmin"] },
-        { name: "Role Assignment", path: "/configuration/role-assignment", roles: ["superadmin"] },
-        { name: "Manage Standards", path: "/configuration/standards", roles: ["superadmin"] },
-        { name: "Manage Divisions/Sections", path: "/configuration/sections", roles: ["superadmin"] },
-        { name: "Academic Years", path: "/configuration/academic-years", roles: ["superadmin"] },
-        { name: "Castes", path: "/configuration/castes", roles: ["superadmin"] },
-        { name: "Sub-Castes", path: "/configuration/sub-castes", roles: ["superadmin"] },
-        { name: "Religions", path: "/configuration/religions", roles: ["superadmin"] },
-        { name: "States", path: "/configuration/states", roles: ["superadmin"] },
-        { name: "Cities", path: "/configuration/cities", roles: ["superadmin"] },
-        { name: "Blood Groups", path: "/configuration/blood-groups", roles: ["superadmin"] },
-        { name: "Houses", path: "/configuration/houses", roles: ["superadmin"] },
-        { name: "Admission Types", path: "/configuration/admission-types", roles: ["superadmin"] },
-        { name: "Categories", path: "/configuration/categories", roles: ["superadmin"] },
-        { name: "Sessions", path: "/configuration/sessions", roles: ["superadmin"] },
-        { name: "Batches", path: "/configuration/batches", roles: ["superadmin"] },
-        { name: "Shifts", path: "/configuration/shifts", roles: ["superadmin"] },
-        { name: "Subjects", path: "/configuration/subjects", roles: ["superadmin"] },
-        { name: "Exam Types", path: "/configuration/exam-types", roles: ["superadmin"] },
-        { name: "Designations", path: "/configuration/designations", roles: ["superadmin"] },
-        { name: "Occupations", path: "/configuration/occupations", roles: ["superadmin"] },
-      ]
-    },
-    { name: "System Logs", path: "/system-logs", icon: Terminal, roles: ["superadmin"] },
-  ];
-
-  // RBAC (Role Based Access Control) filtering:
-  // We only show navigation items that match the user's current role.
-  // Superadmin-only items (Schools, configuration, logs) are restricted via the 'roles' array.
-  const filteredItems = menuItems.filter(item => {
-    if (!user || !user.role) return false;
-    return item.roles.includes(user.role);
-  });
-
+  const [menuItems, setMenuItems] = useState<NavItem[]>([]);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNavigation = async () => {
+      try {
+        setIsLoading(true);
+        // Using apiService for consistent error handling and interceptors
+        const response = await apiService.getNavigations();
+        const data = response.data?.data || response.data || [];
+        
+        if (data) {
+          // Build hierarchical structure
+          const items: NavItem[] = data;
+          
+          // Filter by role if not superadmin (superadmin sees everything)
+          const roleFiltered = user.role === "superadmin" 
+            ? items 
+            : items.filter(item => item.roles?.includes(user.role));
+
+          const rootItems = roleFiltered.filter(item => !item.parentId);
+          const buildHierarchy = (parentId: number): NavItem[] => {
+            return roleFiltered
+              .filter(item => item.parentId === parentId)
+              .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+              .map(item => ({
+                ...item,
+                subItems: buildHierarchy(item.id)
+              }));
+          };
+
+          const hierarchicalMenu = rootItems
+            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+            .map(item => ({
+              ...item,
+              subItems: buildHierarchy(item.id)
+            }));
+
+          setMenuItems(hierarchicalMenu);
+        }
+      } catch (error) {
+        console.error("Failed to fetch navigation:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNavigation();
+  }, [user.role]);
 
   const toggleExpand = (name: string) => {
     setExpandedItems(prev => 
       prev.includes(name) ? prev.filter(i => i !== name) : [...prev, name]
+    );
+  };
+
+  const renderNavItem = (item: NavItem, level: number = 0) => {
+    const hasSubItems = item.subItems && item.subItems.length > 0;
+    const isParentActive = location.pathname.startsWith(item.path) && item.path !== "/";
+    const isActive = location.pathname === item.path;
+    const isExpanded = expandedItems.includes(item.title) || (isParentActive && hasSubItems);
+    const Icon = getIcon(item.icon);
+
+    return (
+      <div key={item.id} className="space-y-1">
+        <SimpleTooltip content={isCollapsed && level === 0 ? item.title : ""} side="right">
+          <div className="w-full">
+            {hasSubItems ? (
+              <button
+                onClick={() => toggleExpand(item.title)}
+                className={cn(
+                  "w-full flex items-center px-4 py-2.5 rounded-xl transition-all duration-300 relative group h-12 text-left",
+                  isParentActive 
+                    ? "bg-white/10 text-white" 
+                    : "text-slate-400 hover:text-slate-100 hover:bg-white/5",
+                  isCollapsed && level === 0 && "justify-center px-0",
+                  level > 0 && "px-3 h-10"
+                )}
+              >
+                <div className={cn(
+                  "flex items-center justify-center shrink-0 transition-all duration-300",
+                  isParentActive ? "text-blue-400 scale-110" : "group-hover:scale-110"
+                )}>
+                  {Icon ? <Icon size={level === 0 ? 22 : 18} strokeWidth={isParentActive ? 2.5 : 2} /> : (
+                    <div className={cn(
+                      "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                      isParentActive ? "bg-blue-400 scale-125 shadow-[0_0_8px_rgba(96,165,250,0.5)]" : "bg-slate-700"
+                    )} />
+                  )}
+                </div>
+                
+                {!isCollapsed && (
+                  <>
+                    <span className={cn(
+                      "ml-4 font-bold whitespace-nowrap overflow-hidden tracking-tight flex-1 transition-colors duration-300",
+                      level === 0 ? "text-sm" : "text-xs",
+                      isParentActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
+                    )}>
+                      {item.title}
+                    </span>
+                    <motion.div
+                      animate={{ rotate: isExpanded ? 90 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      className={cn("transition-colors", isParentActive ? "text-blue-400" : "text-slate-600")}
+                    >
+                      <ChevronRight size={14} strokeWidth={3} />
+                    </motion.div>
+                  </>
+                )}
+              </button>
+            ) : (
+              <Link
+                to={item.path}
+                className={cn(
+                  "flex items-center px-4 py-2.5 rounded-xl transition-all duration-300 relative group h-12",
+                  isActive 
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
+                    : "text-slate-400 hover:text-slate-100 hover:bg-white/5",
+                  isCollapsed && level === 0 && "justify-center px-0",
+                  level > 0 && "px-3 h-10"
+                )}
+              >
+                <div className={cn(
+                  "flex items-center justify-center shrink-0 transition-all duration-300",
+                  isActive ? "text-white scale-110" : "group-hover:scale-110"
+                )}>
+                  {Icon ? <Icon size={level === 0 ? 22 : 18} strokeWidth={isActive ? 2.5 : 2} /> : (
+                    <div className={cn(
+                      "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                      isActive ? "bg-blue-400 scale-125 shadow-[0_0_8px_rgba(96,165,250,0.5)]" : "bg-slate-700"
+                    )} />
+                  )}
+                </div>
+                
+                {!isCollapsed && (
+                  <span className={cn(
+                    "ml-4 font-bold whitespace-nowrap overflow-hidden tracking-tight",
+                    level === 0 ? "text-sm" : "text-xs",
+                    isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
+                  )}>
+                    {item.title}
+                  </span>
+                )}
+              </Link>
+            )}
+          </div>
+        </SimpleTooltip>
+
+        <AnimatePresence initial={false}>
+          {hasSubItems && isExpanded && !isCollapsed && (
+            <motion.div
+              initial={{ height: 0, opacity: 0, x: -10 }}
+              animate={{ height: "auto", opacity: 1, x: 0 }}
+              exit={{ height: 0, opacity: 0, x: -10 }}
+              transition={{ duration: 0.2 }}
+              className={cn(
+                "overflow-hidden space-y-1 mt-1 border-l border-slate-800/50",
+                level === 0 ? "pl-12 ml-7" : "pl-4 ml-6"
+              )}
+            >
+              {item.subItems?.map((subItem) => renderNavItem(subItem, level + 1))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     );
   };
 
@@ -190,122 +322,13 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
       </div>
       
       <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto overflow-x-visible custom-scrollbar scrollbar-hide">
-        {filteredItems.map((item) => {
-          const isParentActive = location.pathname.startsWith(item.path);
-          const isActive = location.pathname === item.path;
-          const hasSubItems = item.subItems && item.subItems.length > 0;
-          const isExpanded = expandedItems.includes(item.name) || (isParentActive && hasSubItems);
-
-          return (
-            <div key={item.path} className="space-y-1">
-              <SimpleTooltip content={isCollapsed ? item.name : ""} side="right">
-                <div className="w-full">
-                  {hasSubItems ? (
-                    <button
-                      onClick={() => toggleExpand(item.name)}
-                      className={cn(
-                        "w-full flex items-center px-4 py-2.5 rounded-xl transition-all duration-300 relative group h-12 text-left",
-                        isParentActive 
-                          ? "bg-white/10 text-white" 
-                          : "text-slate-400 hover:text-slate-100 hover:bg-white/5",
-                        isCollapsed && "justify-center px-0"
-                      )}
-                    >
-                      <div className={cn(
-                        "flex items-center justify-center shrink-0 transition-all duration-300",
-                        isParentActive ? "text-blue-400 scale-110" : "group-hover:scale-110"
-                      )}>
-                        <item.icon size={22} strokeWidth={isParentActive ? 2.5 : 2} />
-                      </div>
-                      
-                      {!isCollapsed && (
-                        <>
-                          <span className={cn(
-                            "ml-4 font-bold whitespace-nowrap overflow-hidden text-sm tracking-tight flex-1 transition-colors duration-300",
-                            isParentActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
-                          )}>
-                            {item.name}
-                          </span>
-                          <motion.div
-                            animate={{ rotate: isExpanded ? 90 : 0 }}
-                            transition={{ duration: 0.2 }}
-                            className={cn("transition-colors", isParentActive ? "text-blue-400" : "text-slate-600")}
-                          >
-                            <ChevronRight size={14} strokeWidth={3} />
-                          </motion.div>
-                        </>
-                      )}
-                    </button>
-                  ) : (
-                    <Link
-                      to={item.path}
-                      className={cn(
-                        "flex items-center px-4 py-2.5 rounded-xl transition-all duration-300 relative group h-12",
-                        isActive 
-                          ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
-                          : "text-slate-400 hover:text-slate-100 hover:bg-white/5",
-                        isCollapsed && "justify-center px-0"
-                      )}
-                    >
-                      <div className={cn(
-                        "flex items-center justify-center shrink-0 transition-all duration-300",
-                        isActive ? "text-white scale-110" : "group-hover:scale-110"
-                      )}>
-                        <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-                      </div>
-                      
-                      {!isCollapsed && (
-                        <span className={cn(
-                          "ml-4 font-bold whitespace-nowrap overflow-hidden text-sm tracking-tight",
-                          isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
-                        )}>
-                          {item.name}
-                        </span>
-                      )}
-                    </Link>
-                  )}
-                </div>
-              </SimpleTooltip>
-
-              <AnimatePresence initial={false}>
-                {hasSubItems && isExpanded && !isCollapsed && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0, x: -10 }}
-                    animate={{ height: "auto", opacity: 1, x: 0 }}
-                    exit={{ height: 0, opacity: 0, x: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden pl-12 space-y-1 mt-1 border-l border-slate-800/50 ml-7"
-                  >
-                    {item.subItems?.map((subItem) => {
-                      const isSubActive = location.pathname === subItem.path;
-                      return (
-                        <div key={subItem.path}>
-                          <SimpleTooltip content={subItem.name} side="right">
-                            <Link
-                              to={subItem.path}
-                              className={cn(
-                                "flex items-center py-2 px-3 rounded-lg text-xs font-bold transition-all duration-200",
-                                isSubActive 
-                                  ? "text-blue-400 bg-blue-400/5" 
-                                  : "text-slate-500 hover:text-slate-200 hover:bg-white/5"
-                              )}
-                            >
-                              <div className={cn(
-                                "w-1 h-1 rounded-full mr-3 transition-all duration-300",
-                                isSubActive ? "bg-blue-400 scale-125" : "bg-slate-700 group-hover:bg-slate-500"
-                              )} />
-                              {subItem.name}
-                            </Link>
-                          </SimpleTooltip>
-                        </div>
-                      );
-                    })}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          );
-        })}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-20 space-y-2">
+            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          menuItems.map((item) => renderNavItem(item))
+        )}
       </nav>
 
       <div className={cn(
