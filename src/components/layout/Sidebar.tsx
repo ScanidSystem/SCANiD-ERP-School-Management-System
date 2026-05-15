@@ -57,7 +57,7 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [menuItems, setMenuItems] = useState<NavItem[]>([]);
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [expandedItems, setExpandedItems] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -176,17 +176,88 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
     fetchNavigation();
   }, [user.role]);
 
-  const toggleExpand = (name: string) => {
-    setExpandedItems(prev => 
-      prev.includes(name) ? prev.filter(i => i !== name) : [...prev, name]
-    );
+  // Sync expanded items when path changes - Accordion behavior for navigation
+  useEffect(() => {
+    if (menuItems.length > 0) {
+      const getActiveParents = (items: NavItem[], path: string): number[] => {
+        for (const item of items) {
+          // Check if this item is a parent of the active path
+          if (item.subItems && item.subItems.length > 0) {
+            const hasChildMatch = (sub: NavItem): boolean => {
+              if (sub.path !== "#" && sub.path !== "/" && path.startsWith(sub.path)) return true;
+              if (sub.subItems) return sub.subItems.some(hasChildMatch);
+              return false;
+            };
+
+            if (hasChildMatch(item)) {
+              return [item.id, ...getActiveParents(item.subItems, path)];
+            }
+          }
+        }
+        return [];
+      };
+
+      const activeParents = getActiveParents(menuItems, location.pathname);
+      
+      // If we found active parents, we update the expanded state.
+      // To enforce accordion, we can replace the expanded state with the active branch.
+      // But we only want to do this if the path has actually changed to a new branch.
+      if (activeParents.length > 0) {
+        setExpandedItems(activeParents);
+      }
+    }
+  }, [location.pathname, menuItems]);
+
+  const toggleExpand = (id: number, pId: number | null) => {
+    setExpandedItems(prev => {
+      // If already expanded, just collapse it
+      if (prev.includes(id)) {
+        return prev.filter(i => i !== id);
+      }
+
+      // Accordion logic: Find all items at the same level (sharing the same parent)
+      // and remove them from the expanded state before adding the new ID.
+      const getSiblingIds = (items: NavItem[]): number[] => {
+        let siblings: number[] = [];
+        
+        // Search for items that have parentId === pId
+        const itemsAtLevel = items.filter(item => item.parentId === pId);
+        if (itemsAtLevel.length > 0) {
+          siblings = itemsAtLevel.map(i => i.id);
+        } else {
+          // If not found at this level, search deeper
+          for (const item of items) {
+            if (item.subItems) {
+              const result = getSiblingIds(item.subItems);
+              if (result.length > 0) {
+                siblings = result;
+                break;
+              }
+            }
+          }
+        }
+        return siblings;
+      };
+
+      const siblingIds = getSiblingIds(menuItems);
+      const filtered = prev.filter(itemId => !siblingIds.includes(itemId));
+      return [...filtered, id];
+    });
+  };
+
+  const isItemActive = (item: NavItem): boolean => {
+    if (item.path !== "#" && item.path !== "/" && location.pathname.startsWith(item.path)) return true;
+    if (item.subItems) {
+      return item.subItems.some(sub => isItemActive(sub));
+    }
+    return false;
   };
 
   const renderNavItem = (item: NavItem, level: number = 0) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
-    const isParentActive = location.pathname.startsWith(item.path) && item.path !== "/";
     const isActive = location.pathname === item.path;
-    const isExpanded = expandedItems.includes(item.title) || (isParentActive && hasSubItems);
+    const isParentActive = isItemActive(item);
+    const isExpanded = expandedItems.includes(item.id);
     const Icon = getIcon(item.icon);
 
     return (
@@ -195,7 +266,7 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
           <div className="w-full">
             {hasSubItems ? (
               <button
-                onClick={() => toggleExpand(item.title)}
+                onClick={() => toggleExpand(item.id, item.parentId)}
                 className={cn(
                   "w-full flex items-center px-4 py-2.5 rounded-xl transition-all duration-300 relative group h-12 text-left",
                   isParentActive 
@@ -274,22 +345,22 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
           </div>
         </SimpleTooltip>
 
-        <AnimatePresence initial={false}>
-          {hasSubItems && isExpanded && !isCollapsed && (
-            <motion.div
-              initial={{ height: 0, opacity: 0, x: -10 }}
-              animate={{ height: "auto", opacity: 1, x: 0 }}
-              exit={{ height: 0, opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-              className={cn(
-                "overflow-hidden space-y-1 mt-1 border-l border-slate-800/50",
-                level === 0 ? "pl-12 ml-7" : "pl-4 ml-6"
-              )}
-            >
-              {item.subItems?.map((subItem) => renderNavItem(subItem, level + 1))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <AnimatePresence initial={false}>
+                {hasSubItems && isExpanded && !isCollapsed && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className={cn(
+                      "overflow-hidden space-y-1 relative",
+                      level === 0 ? "ml-9 pl-4 border-l border-white/5 mt-1" : "ml-4 pl-3 border-l border-white/5 mt-1"
+                    )}
+                  >
+                    {item.subItems?.map((subItem) => renderNavItem(subItem, level + 1))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
       </div>
     );
   };
