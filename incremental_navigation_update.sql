@@ -39,8 +39,7 @@ BEGIN
 END
 GO
 
--- 2. Clear existing navigation to rebuild hierarchy (or skip if you want to keep custom changes)
--- We'll use a safer approach: check and update/insert
+-- 2. Clear existing navigation to rebuild hierarchy
 DELETE FROM [dbo].[NavigationRoles];
 DELETE FROM [dbo].[NavigationItems];
 GO
@@ -81,22 +80,23 @@ INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], 
 SET IDENTITY_INSERT [dbo].[NavigationItems] OFF;
 GO
 
--- 4. Map Roles to Navigation Items
--- Roles: 1:SuperAdmin, 2:Admin, 3:Teacher
+-- 4. Map Roles to Navigation Items using dynamic Lookup
+DECLARE @SRoleId INT = (SELECT Id FROM [dbo].[Roles] WHERE [Name] = 'SuperAdmin');
+DECLARE @ARoleId INT = (SELECT Id FROM [dbo].[Roles] WHERE [Name] = 'Admin');
+DECLARE @TRoleId INT = (SELECT Id FROM [dbo].[Roles] WHERE [Name] = 'Teacher');
 
--- SuperAdmin (1) gets everything
-INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId])
-SELECT Id, 1 FROM [dbo].[NavigationItems];
+-- SuperAdmin gets everything
+IF @SRoleId IS NOT NULL
+    INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId]) SELECT Id, @SRoleId FROM [dbo].[NavigationItems];
 
--- Admin (2) gets most except System Audit and deep config
-INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId])
-SELECT Id, 2 FROM [dbo].[NavigationItems] WHERE Id NOT IN (5000, 42, 43);
+-- Admin gets most except System Audit and deep config
+IF @ARoleId IS NOT NULL
+    INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId]) SELECT Id, @ARoleId FROM [dbo].[NavigationItems] WHERE Id NOT IN (5000, 42, 43);
 
--- Teacher (3) gets Dashboard, Academics (Registry, Attendance, Marks), and Staff (read-only likely handled by FE)
-INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId]) VALUES 
-(1, 3), 
-(1000, 3), (11, 3), (12, 3), (13, 3),
-(2000, 3), (21, 3),
-(3000, 3), (32, 3);
-
+-- Teacher gets critical operational items
+IF @TRoleId IS NOT NULL
+BEGIN
+    INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId]) VALUES 
+    (1, @TRoleId), (1000, @TRoleId), (11, @TRoleId), (12, @TRoleId), (13, @TRoleId), (2000, @TRoleId), (21, @TRoleId), (3000, @TRoleId), (32, @TRoleId);
+END
 GO

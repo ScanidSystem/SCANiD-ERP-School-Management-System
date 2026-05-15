@@ -181,19 +181,24 @@ BEGIN
 END
 SET IDENTITY_INSERT [dbo].[NavigationItems] OFF;
 
--- Mapping Roles (1:SuperAdmin, 2:Admin, 3:Teacher)
+-- Mapping Roles (Dynamic Lookup)
 IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationRoles])
 BEGIN
-    -- SuperAdmin (1) gets everything
-    INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId])
-    SELECT Id, 1 FROM [dbo].[NavigationItems];
+    DECLARE @SRoleId INT = (SELECT Id FROM [dbo].[Roles] WHERE [Name] = 'SuperAdmin');
+    DECLARE @ARoleId INT = (SELECT Id FROM [dbo].[Roles] WHERE [Name] = 'Admin');
+    DECLARE @TRoleId INT = (SELECT Id FROM [dbo].[Roles] WHERE [Name] = 'Teacher');
 
-    -- Admin (2) gets most except System Audit and deep config
-    INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId])
-    SELECT Id, 2 FROM [dbo].[NavigationItems] WHERE Id NOT IN (5000, 42, 43);
+    -- SuperAdmin gets everything
+    IF @SRoleId IS NOT NULL
+        INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId]) SELECT Id, @SRoleId FROM [dbo].[NavigationItems];
 
-    -- Teacher (3) gets critical operational items
-    INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId]) VALUES 
-    (1, 3), (1000, 3), (11, 3), (12, 3), (13, 3), (2000, 3), (21, 3), (3000, 3), (32, 3);
+    -- Admin gets most except System Audit and deep config
+    IF @ARoleId IS NOT NULL
+        INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId]) SELECT Id, @ARoleId FROM [dbo].[NavigationItems] WHERE Id NOT IN (5000, 42, 43);
+
+    -- Teacher gets critical operational items
+    IF @TRoleId IS NOT NULL
+        INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId]) VALUES 
+        (1, @TRoleId), (1000, @TRoleId), (11, @TRoleId), (12, @TRoleId), (13, @TRoleId), (2000, @TRoleId), (21, @TRoleId), (3000, @TRoleId), (32, @TRoleId);
 END
 GO
