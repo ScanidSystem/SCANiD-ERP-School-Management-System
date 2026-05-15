@@ -116,20 +116,20 @@ GO
 -- 12. USERS (Core Identities)
 SET IDENTITY_INSERT [dbo].[Users] ON;
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Users] WHERE [Id] = 1)
-    INSERT [dbo].[Users] ([Id], [FullName], [Email], [Username], [PasswordHash], [RoleId], [SchoolId], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
-    VALUES (1, N'Super Admin', N'superadmin@scanid.com', N'superadmin', N'AQAAAAEAACcQAAAAE...', 1, 1, 1, 0, N'SYSTEM', GETUTCDATE());
+    INSERT [dbo].[Users] ([Id], [FullName], [Email], [Username], [PasswordHash], [RoleId], [Role], [SchoolId], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
+    VALUES (1, N'Super Admin', N'superadmin@scanid.com', N'superadmin', N'AQAAAAEAACcQAAAAE...', 1, 'superadmin', 1, 1, 0, N'SYSTEM', GETUTCDATE());
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Users] WHERE [Id] = 2)
-    INSERT [dbo].[Users] ([Id], [FullName], [Email], [Username], [PasswordHash], [RoleId], [SchoolId], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
-    VALUES (2, N'Admin', N'admin@scanid.com', N'adminuser', N'AQAAAAEAACcQAAAAE...', 2, 1, 1, 0, N'SYSTEM', GETUTCDATE());
+    INSERT [dbo].[Users] ([Id], [FullName], [Email], [Username], [PasswordHash], [RoleId], [Role], [SchoolId], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
+    VALUES (2, N'Admin', N'admin@scanid.com', N'adminuser', N'AQAAAAEAACcQAAAAE...', 2, 'admin', 1, 1, 0, N'SYSTEM', GETUTCDATE());
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Users] WHERE [Id] = 3)
-    INSERT [dbo].[Users] ([Id], [FullName], [Email], [Username], [PasswordHash], [RoleId], [SchoolId], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
-    VALUES (3, N'Teacher', N'teacher@scanid.com', N'teacher', N'AQAAAAEAACcQAAAAE...', 3, 1, 1, 0, N'SYSTEM', GETUTCDATE());
+    INSERT [dbo].[Users] ([Id], [FullName], [Email], [Username], [PasswordHash], [RoleId], [Role], [SchoolId], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
+    VALUES (3, N'Teacher', N'teacher@scanid.com', N'teacher', N'AQAAAAEAACcQAAAAE...', 3, 'teacher', 1, 1, 0, N'SYSTEM', GETUTCDATE());
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Users] WHERE [Id] = 6)
-    INSERT [dbo].[Users] ([Id], [FullName], [Email], [Username], [PasswordHash], [RoleId], [SchoolId], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
-    VALUES (6, N'Parent', N'parent@scanid.com', N'parent', N'AQAAAAEAACcQAAAAE...', 5, 1, 1, 0, N'SYSTEM', GETUTCDATE());
+    INSERT [dbo].[Users] ([Id], [FullName], [Email], [Username], [PasswordHash], [RoleId], [Role], [SchoolId], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
+    VALUES (6, N'Parent', N'parent@scanid.com', N'parent', N'AQAAAAEAACcQAAAAE...', 5, 'parent', 1, 1, 0, N'SYSTEM', GETUTCDATE());
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Users] WHERE [Id] = 7)
-    INSERT [dbo].[Users] ([Id], [FullName], [Email], [Username], [PasswordHash], [RoleId], [SchoolId], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
-    VALUES (7, N'Student', N'student@scanid.com', N'student', N'AQAAAAEAACcQAAAAE...', 4, 1, 1, 0, N'SYSTEM', GETUTCDATE());
+    INSERT [dbo].[Users] ([Id], [FullName], [Email], [Username], [PasswordHash], [RoleId], [Role], [SchoolId], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
+    VALUES (7, N'Student', N'student@scanid.com', N'student', N'AQAAAAEAACcQAAAAE...', 4, 'student', 1, 1, 0, N'SYSTEM', GETUTCDATE());
 SET IDENTITY_INSERT [dbo].[Users] OFF;
 GO
 
