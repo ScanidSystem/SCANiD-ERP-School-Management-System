@@ -907,7 +907,9 @@ export default function Students({ user }: { user: UserType }) {
                             onValueChange={(v) => setNewStudentFormData({...newStudentFormData, SHIFTNAME: v})}
                           >
                             <SelectTrigger id="SHIFTNAME" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                              <SelectValue placeholder="Select Shift" />
+                              <SelectValue placeholder="Select Shift">
+                                {newStudentFormData.SHIFTNAME || undefined}
+                              </SelectValue>
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                               <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Shift</SelectItem>
@@ -979,7 +981,9 @@ export default function Students({ user }: { user: UserType }) {
                                   formErrors.GENDER && "border-red-500 ring-2 ring-red-500/10"
                                 )}
                               >
-                                <SelectValue placeholder="Select Student Gender" />
+                                <SelectValue placeholder="Select Student Gender">
+                                  {newStudentFormData.GENDER || undefined}
+                                </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl border-slate-200">
                                 <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Gender</SelectItem>
@@ -1091,7 +1095,9 @@ export default function Students({ user }: { user: UserType }) {
                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, RELIGION: v})}
                             >
                               <SelectTrigger id="RELIGION" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student Religion" />
+                                <SelectValue placeholder="Select Student Religion">
+                                  {newStudentFormData.RELIGION ? religions.find(r => r.id.toString() === newStudentFormData.RELIGION)?.name : undefined}
+                                </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                                 <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Religion</SelectItem>
@@ -1109,7 +1115,9 @@ export default function Students({ user }: { user: UserType }) {
                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, BLOODGROUP: v})}
                             >
                               <SelectTrigger id="BLOODGROUP" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student Blood Group" />
+                                <SelectValue placeholder="Select Student Blood Group">
+                                  {newStudentFormData.BLOODGROUP ? bloodGroups.find(bg => bg.id.toString() === newStudentFormData.BLOODGROUP)?.name : undefined}
+                                </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                                 <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Blood Group</SelectItem>
@@ -1127,7 +1135,9 @@ export default function Students({ user }: { user: UserType }) {
                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, CASTE: v})}
                             >
                               <SelectTrigger id="CASTE" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Caste Category" />
+                                <SelectValue placeholder="Select Caste Category">
+                                  {newStudentFormData.CASTE ? castes.find(c => c.id.toString() === newStudentFormData.CASTE)?.name : undefined}
+                                </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                                 <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Caste Category</SelectItem>
@@ -1146,7 +1156,9 @@ export default function Students({ user }: { user: UserType }) {
                               disabled={!newStudentFormData.CASTE}
                             >
                               <SelectTrigger id="subcaste" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student Sub-Caste" />
+                                <SelectValue placeholder="Select Student Sub-Caste">
+                                  {newStudentFormData.subcaste ? subCastes.find(sc => sc.id.toString() === newStudentFormData.subcaste)?.name : undefined}
+                                </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                                 <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Sub-Caste</SelectItem>
@@ -1167,7 +1179,14 @@ export default function Students({ user }: { user: UserType }) {
                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, house: v})}
                             >
                               <SelectTrigger id="house" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student House Group" />
+                                <SelectValue placeholder="Select Student House Group">
+                                  {newStudentFormData.house ? (
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: houses.find(h => h.id.toString() === newStudentFormData.house)?.color }}></div>
+                                      {houses.find(h => h.id.toString() === newStudentFormData.house)?.name}
+                                    </div>
+                                  ) : undefined}
+                                </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                               <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student House Group</SelectItem>
@@ -1190,7 +1209,9 @@ export default function Students({ user }: { user: UserType }) {
                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, admissiontype: v})}
                             >
                               <SelectTrigger id="admissiontype" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student Admission Type" />
+                                <SelectValue placeholder="Select Student Admission Type">
+                                  {newStudentFormData.admissiontype ? admissionTypes.find(at => at.id.toString() === newStudentFormData.admissiontype)?.name : undefined}
+                                </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                               <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Admission Type</SelectItem>

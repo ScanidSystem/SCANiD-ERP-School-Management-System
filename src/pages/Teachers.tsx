@@ -538,7 +538,9 @@ export default function Teachers({ user }: { user: any }) {
                           <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Access Status</Label>
                           <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
                             <SelectTrigger className="h-12 border-slate-100 bg-white font-black rounded-[1.25rem] px-5 text-sm focus:ring-4 focus:ring-blue-500/5 transition-all">
-                              <SelectValue placeholder="Access Status" />
+                              <SelectValue placeholder="Access Status">
+                              {formData.status || undefined}
+                            </SelectValue>
                             </SelectTrigger>
                             <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
                               <SelectItem value="Active" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-blue-50 focus:text-blue-700">Active</SelectItem>

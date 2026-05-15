@@ -674,8 +674,9 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
               <Label className="text-[10px] uppercase font-bold text-slate-400">Standard</Label>
               <Select value={standard} onValueChange={setStandard}>
                 <SelectTrigger className="bg-white border-slate-200">
-                  {/* Standard SelectValue without children to ensure correct label/placeholder display */}
-                  <SelectValue placeholder="Select Academic Standard" />
+                  <SelectValue placeholder="Select Academic Standard">
+                    {standard || undefined}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select Academic Standard</SelectItem>
@@ -742,7 +743,9 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
                   <SelectTrigger className="bg-white border-slate-200 flex-1">
                     <div className="flex items-center justify-between w-full pr-2">
                       {/* Standard SelectValue to handle dynamic subject labels and entry counts */}
-                      <SelectValue placeholder="Select Examination Subject" />
+                      <SelectValue placeholder="Select Examination Subject">
+                        {subject || undefined}
+                      </SelectValue>
                       {subject && subject !== "" && (
                         <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-md font-black ring-1 ring-blue-100">
                           {subjectEntryCounts[subject] || 0}

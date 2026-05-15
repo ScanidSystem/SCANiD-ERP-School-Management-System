@@ -207,7 +207,7 @@ namespace ScanID.Api.Controllers
 
                 return Ok(new { 
                     message = "Identity image updated successfully", 
-                    path = student.ProfilePicturePath 
+                    path = student.ProfilePhotoPath 
                 });
             }
             catch (Exception ex)
