@@ -67,7 +67,7 @@ namespace ScanID.Api.Controllers
 
             if (teacher.User != null && existingTeacher.User != null)
             {
-                existingTeacher.User.FullName = teacher.User.FullName;
+                existingTeacher.User.Name = teacher.User.Name;
                 existingTeacher.User.Email = teacher.User.Email;
             }
 

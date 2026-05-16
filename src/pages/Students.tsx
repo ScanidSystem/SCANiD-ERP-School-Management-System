@@ -152,10 +152,10 @@ export default function Students({ user }: { user: UserType }) {
         id: s.id.toString(),
         grno: getVal("GRNO") || s.registrationNumber || s.grno || getVal("registrationNumber"),
         schoolId: (s.schoolId || s.SchoolId)?.toString() || "",
-        firstName: getVal("FNAME") || s.firstName || s.fullName?.split(" ")[0] || "",
-        lastName: getVal("LNAME") || s.lastName || s.fullName?.split(" ").slice(-1)[0] || "",
-        middleName: getVal("MNAME") || s.middleName || (s.fullName?.split(" ").length > 2 ? s.fullName?.split(" ").slice(1, -1).join(" ") : ""),
-        name: s.fullName || s.FullName || getVal("FullName"),
+        firstName: getVal("FNAME") || s.firstName || (s.name || s.fullName)?.split(" ")[0] || "",
+        lastName: getVal("LNAME") || s.lastName || (s.name || s.fullName)?.split(" ").slice(-1)[0] || "",
+        middleName: getVal("MNAME") || s.middleName || ((s.name || s.fullName)?.split(" ").length > 2 ? (s.name || s.fullName)?.split(" ").slice(1, -1).join(" ") : ""),
+        name: s.name || s.fullName || s.FullName || getVal("FullName") || getVal("Name"),
         standard: getVal("STD") || s.standard || getVal("standard"),
         section: getVal("DIV") || s.section || getVal("division") || getVal("section"),
         bloodGroupId: getVal("BLOODGROUP") || s.bloodGroupId || getVal("bloodGroupId"),
@@ -461,7 +461,7 @@ export default function Students({ user }: { user: UserType }) {
             status: item.status || "Active",
             rollNumber: parseInt(item.ROLLNO || item.rollNumber || "0"),
             registrationNumber: item.GRNO || item.registrationNumber || `REG-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-            fullName: item.fullName || `${item.FNAME || ""} ${item.MNAME || ""} ${item.LNAME || ""}`.trim(),
+            name: item.name || item.fullName || `${item.FNAME || ""} ${item.MNAME || ""} ${item.LNAME || ""}`.trim(),
             
             // Text values kept for schema compatibility
             STD: item.STD?.toString() || "",
@@ -545,7 +545,7 @@ export default function Students({ user }: { user: UserType }) {
         schoolId: parseInt(newStudentFormData.schoolId),
         rollNumber: parseInt(newStudentFormData.ROLLNO),
         registrationNumber: newStudentFormData.registrationNumber || `REG/${new Date().getFullYear()}/${Math.floor(Math.random() * 900) + 100}`,
-        fullName: `${newStudentFormData.FNAME} ${newStudentFormData.MNAME} ${newStudentFormData.LNAME}`.trim(),
+        name: `${newStudentFormData.FNAME} ${newStudentFormData.MNAME} ${newStudentFormData.LNAME}`.trim(),
         // Schema fields mapping
         STUDENTID: newStudentFormData.registrationNumber,
         FNAME: newStudentFormData.FNAME,

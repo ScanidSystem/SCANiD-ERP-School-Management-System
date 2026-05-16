@@ -28,7 +28,7 @@ namespace ScanID.Api.Controllers
                 }
 
                 var query = _context.NavigationItems
-                    .Include(n => n.NavigationRoles)
+                    .Include(n => n.NavigationRoles!)
                     .ThenInclude(nr => nr.Role)
                     .Where(n => n.IsActive);
 

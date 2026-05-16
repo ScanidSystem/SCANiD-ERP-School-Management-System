@@ -83,7 +83,7 @@ export default function Attendance({ user }: { user: any }) {
           return {
             id: s.id,
             grno: getVal("GRNO") || s.registrationNumber || s.grno,
-            name: s.fullName || s.FullName || `${getVal("FNAME", "")} ${getVal("LNAME", "")}`.trim() || `Student ${s.id}`,
+            name: s.name || s.fullName || s.FullName || `${getVal("FNAME", "")} ${getVal("LNAME", "")}`.trim() || `Student ${s.id}`,
             roll: getVal("ROLLNO") || s.rollNumber?.toString() || "0",
             status: "present" // Default to present
           };
