@@ -123,8 +123,8 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
               .map((nr: any) => nr.role?.name?.toLowerCase()?.replace(/\s+/g, ""))
               .filter(Boolean);
           } else {
-            // Default roles if none specified
-            roles = ["superadmin", "admin", "teacher"];
+            // Default roles if none specified - ensuring all standard roles are included
+            roles = ["superadmin", "admin", "teacher", "parent", "student"];
           }
 
           return {

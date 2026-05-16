@@ -21,12 +21,6 @@ namespace ScanID.Api.Controllers
         {
             try
             {
-                // If the NavigationItems table is empty, return a default set to ensure the app works
-                if (!await _context.NavigationItems.AnyAsync())
-                {
-                    return Ok(new { data = GetDefaultNavigationItems() });
-                }
-
                 var query = _context.NavigationItems
                     .Include(n => n.NavigationRoles)
                     .ThenInclude(nr => nr.Role)
@@ -34,7 +28,13 @@ namespace ScanID.Api.Controllers
 
                 var items = await query.ToListAsync();
 
-                // Map to a format the frontend expects (including roles as a string array)
+                // If the NavigationItems table is empty, return a default set
+                if (items.Count == 0)
+                {
+                    return Ok(new { data = GetDefaultNavigationItems() });
+                }
+
+                // Map to a format the frontend expects
                 var result = items.Select(i => new {
                     i.Id,
                     i.Title,
@@ -46,18 +46,35 @@ namespace ScanID.Api.Controllers
                 }).OrderBy(i => i.SortOrder).ToList();
 
                 // Filter by role if provided
-                if (!string.IsNullOrEmpty(role) && role != "all")
+                if (!string.IsNullOrEmpty(role) && role.ToLower() != "all")
                 {
+                    var lowerRole = role.ToLower().Replace(" ", "");
+                    
                     // SuperAdmin gets everything
-                    if (role.ToLower() == "superadmin")
+                    if (lowerRole == "superadmin")
                     {
                         return Ok(new { data = result });
                     }
 
                     // For other roles, filter based on roles array
                     var filtered = result.Where(i => 
-                        i.roles.Contains(role.ToLower()) || i.roles.Contains("all")
+                        i.roles.Contains(lowerRole) || i.roles.Contains("all")
                     ).ToList();
+
+                    // If filtered results are empty, it might mean the role mapping in DB is missing.
+                    // Fallback to default mock items for that role to ensure UI doesn't break.
+                    if (filtered.Count == 0)
+                    {
+                        var defaults = GetDefaultNavigationItems()
+                            .Cast<dynamic>()
+                            .Where(x => ((string[])x.roles).Contains(lowerRole) || ((string[])x.roles).Contains("all"))
+                            .ToList();
+                        
+                        if (defaults.Count > 0)
+                        {
+                            return Ok(new { data = defaults });
+                        }
+                    }
 
                     return Ok(new { data = filtered });
                 }
@@ -66,6 +83,7 @@ namespace ScanID.Api.Controllers
             }
             catch (Exception ex)
             {
+                // Absolute fallback on error
                 return Ok(new { data = GetDefaultNavigationItems(), error = ex.Message });
             }
         }
@@ -74,7 +92,7 @@ namespace ScanID.Api.Controllers
         {
             return new List<object>
             {
-                new { id = 1, title = "Dashboard", icon = "LayoutDashboard", path = "/", parentId = (int?)null, sortOrder = 1, roles = new[] { "superadmin", "admin", "teacher", "parent" } },
+                new { id = 1, title = "Dashboard", icon = "LayoutDashboard", path = "/", parentId = (int?)null, sortOrder = 1, roles = new[] { "superadmin", "admin", "teacher", "parent", "student" } },
                 
                 // Academic Operations Group
                 new { id = 1000, title = "Academic Operations", icon = "BookOpen", path = (string?)null, parentId = (int?)null, sortOrder = 2, roles = new[] { "superadmin", "admin", "teacher" } },
