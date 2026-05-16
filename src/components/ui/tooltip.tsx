@@ -23,6 +23,7 @@ function Tooltip({ ...props }: TooltipPrimitive.Root.Props) {
 function TooltipTrigger({ 
   asChild, 
   children, 
+  nativeButton,
   ...props 
 }: TooltipPrimitive.Trigger.Props & { asChild?: boolean }) {
   if (asChild && React.isValidElement(children)) {
@@ -30,12 +31,13 @@ function TooltipTrigger({
       <TooltipPrimitive.Trigger 
         data-slot="tooltip-trigger" 
         render={children}
+        nativeButton={nativeButton}
         {...props} 
       />
     )
   }
   return (
-    <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props}>
+    <TooltipPrimitive.Trigger data-slot="tooltip-trigger" nativeButton={nativeButton} {...props}>
       {children}
     </TooltipPrimitive.Trigger>
   )

@@ -22,6 +22,8 @@ import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
 import SystemLogs from "@/pages/SystemLogs";
 import Configuration from "@/pages/Configuration";
+import Notifications from "@/pages/Notifications";
+import UsersPage from "@/pages/Users";
 
 import { Role, User } from "@/types";
 
@@ -134,6 +136,8 @@ export default function App() {
                     <Route path="/configuration/designations" element={<Configuration user={user} defaultTab="designations" />} />
                     <Route path="/configuration/occupations" element={<Configuration user={user} defaultTab="occupations" />} />
                     <Route path="/configuration/navigation" element={<Configuration user={user} defaultTab="navigation" />} />
+                    <Route path="/configuration/users" element={<UsersPage />} />
+                    <Route path="/notifications" element={<Notifications />} />
                     <Route path="/system-logs" element={<SystemLogs user={user} />} />
                   </>
                 )}

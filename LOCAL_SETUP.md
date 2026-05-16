@@ -59,6 +59,7 @@ I have added a `.vscode` folder with `launch.json` and `tasks.json` to make debu
    - If you already ran `dotnet run`, use the **.NET Core Attach** configuration.
 
 ## Troubleshooting
+- **DirectoryNotFoundException (wwwroot)**: If you get an error saying `wwwroot` is missing, create an empty folder named `wwwroot` in the `/backend/ScanID.Api/` directory. ASP.NET Core expects this folder for static assets even if you aren't serving any yet.
 - **CORS Errors**: If you see CORS errors in the browser, ensure your current React URL (e.g., `http://localhost:4173`) is listed in `Program.cs` under `.WithOrigins(...)`.
 - **Database Connection**: Ensure you have updated the `DefaultConnection` in `appsettings.json` and that your SQL Server is running.
 - **Backend Port**: The project is configured to run on `http://localhost:5000` via `Properties/launchSettings.json`. Ensure this matches your `VITE_API_BASE_URL` in the frontend `.env`.

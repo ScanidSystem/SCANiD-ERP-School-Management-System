@@ -156,6 +156,7 @@ async function startServer() {
     // Staff & HR Group
     { id: 2000, title: "Staff & HR", icon: "Users", path: null, parentId: null, sortOrder: 3, roles: ["superadmin", "admin"] },
     { id: 21, title: "Teacher Catalog", icon: "UserCheck", path: "/teachers", parentId: 2000, sortOrder: 1, roles: ["superadmin", "admin"] },
+    { id: 22, title: "Manage Users", icon: "UserPlus", path: "/configuration/users", parentId: 2000, sortOrder: 2, roles: ["superadmin", "admin"] },
     
     // Administrative Group
     { id: 3000, title: "Administrative", icon: "ShieldCheck", path: null, parentId: null, sortOrder: 4, roles: ["superadmin", "admin", "teacher", "parent"] },
@@ -216,6 +217,12 @@ async function startServer() {
     "subcastes": subCastes,
     "admissiontypes": admissionTypes
   };
+
+  // Users
+  let users = [
+    { id: 1, fullName: "Global Admin", username: "superadmin", email: "admin@scanid.com", role: "superadmin", status: "Active" },
+    { id: 2, fullName: "Teacher One", username: "teacher01", email: "teacher01@scanid.com", role: "teacher", status: "Active" }
+  ];
 
   // API Routes
   app.get("/api/health", (req, res) => {
@@ -445,8 +452,37 @@ async function startServer() {
   });
 
   // Users
-  app.get("/api/users", (req, res) => res.json({ data: [{ id: "1", fullName: "Global Admin", username: "superadmin", role: "superadmin" }] }));
-  app.put("/api/users/:id/role", (req, res) => res.json({ success: true }));
+  app.get("/api/users", (req, res) => res.json({ data: users }));
+  app.post("/api/users", (req, res) => {
+    const newItem = { id: users.length + 1, ...req.body, status: "Active" };
+    users.push(newItem);
+    res.status(201).json({ data: newItem });
+  });
+  app.put("/api/users/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    const index = users.findIndex(u => u.id === id);
+    if (index !== -1) {
+      users[index] = { ...users[index], ...req.body };
+      res.json({ data: users[index] });
+    } else {
+      res.status(404).json({ message: "Not found" });
+    }
+  });
+  app.delete("/api/users/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    users = users.filter(u => u.id !== id);
+    res.status(204).send();
+  });
+  app.put("/api/users/:id/role", (req, res) => {
+    const id = parseInt(req.params.id);
+    const index = users.findIndex(u => u.id === id);
+    if (index !== -1) {
+      users[index].role = req.body.role;
+      res.json({ success: true, data: users[index] });
+    } else {
+      res.status(404).json({ message: "Not found" });
+    }
+  });
 
   // Notifications
   app.get("/api/notifications", (req, res) => res.json({ data: notifications }));

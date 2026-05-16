@@ -310,8 +310,8 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
 
     <div className="flex items-center gap-4">
         <DropdownMenu>
-          <SimpleTooltip content="Notifications" side="bottom">
-            <DropdownMenuTrigger asChild>
+          <SimpleTooltip content="Notifications" side="bottom" nativeButton={true}>
+            <DropdownMenuTrigger asChild nativeButton={true}>
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -415,8 +415,9 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
         </DropdownMenu>
 
         <DropdownMenu>
-            <SimpleTooltip content="User Menu" side="bottom">
+            <SimpleTooltip content="User Menu" side="bottom" nativeButton={false}>
             <DropdownMenuTrigger
+              nativeButton={false}
               render={
                 <div className={cn("flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-50 transition-colors text-slate-600 cursor-pointer border-none bg-transparent outline-none")}>
                   <div className="text-right hidden sm:block">

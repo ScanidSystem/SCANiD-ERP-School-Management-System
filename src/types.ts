@@ -5,11 +5,24 @@ export interface User {
   name: string;
   email: string;
   role: Role;
+  username?: string;
+  isActive?: boolean;
   schoolId?: string;
   schoolName?: string;
   academicYearId?: string;
   academicYearName?: string;
   academicYear?: string;
+}
+
+export interface Notification {
+  id: number;
+  userId?: number;
+  roleId?: number;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  isRead: boolean;
+  createdAt: string;
 }
 
 export interface AuditLog {

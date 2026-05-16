@@ -107,7 +107,7 @@ const mockFallbacks: Record<string, any> = {
     { id: 1, name: "General", isActive: true },
   ],
   "/navigation": [
-    { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
+    { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roles: ["superadmin", "admin", "teacher", "parent"] },
     { id: 1000, title: "Academic Operations", icon: "BookOpen", path: null, parentId: null, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
     { id: 11, title: "Student Registry", icon: "GraduationCap", path: "/students", parentId: 1000, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
     { id: 12, title: "Attendance Tracking", icon: "CalendarCheck", path: "/attendance", parentId: 1000, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
@@ -116,18 +116,18 @@ const mockFallbacks: Record<string, any> = {
     { id: 2000, title: "Staff & HR", icon: "Users", path: null, parentId: null, sortOrder: 3, roles: ["superadmin", "admin", "teacher"] },
     { id: 21, title: "Teacher Catalog", icon: "UserCheck", path: "/teachers", parentId: 2000, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
     
-    { id: 3000, title: "Administrative", icon: "ShieldCheck", path: null, parentId: null, sortOrder: 4, roles: ["superadmin", "admin", "teacher"] },
+    { id: 3000, title: "Administrative", icon: "ShieldCheck", path: null, parentId: null, sortOrder: 4, roles: ["superadmin", "admin", "teacher", "parent"] },
     { id: 31, title: "Fee Management", icon: "CreditCard", path: "/fees", parentId: 3000, sortOrder: 1, roles: ["superadmin", "admin"] },
-    { id: 32, title: "Communication Hub", icon: "MessageSquare", path: "/messages", parentId: 3000, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
+    { id: 32, title: "Communication Hub", icon: "MessageSquare", path: "/messages", parentId: 3000, sortOrder: 2, roles: ["superadmin", "admin", "teacher", "parent"] },
     
     { id: 4000, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 5, roles: ["superadmin", "admin"] },
-    { id: 41, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 4000, sortOrder: 1, roles: ["superadmin"] },
-    { id: 42, title: "Access Control (RBAC)", icon: "ShieldCheck", path: null, parentId: 4000, sortOrder: 2, roles: ["superadmin"] },
-    { id: 421, title: "Role Master", icon: "Shield", path: "/configuration/role-master", parentId: 42, sortOrder: 1, roles: ["superadmin"] },
-    { id: 422, title: "Role Assignment", icon: "UserCheck", path: "/configuration/role-assignment", parentId: 42, sortOrder: 2, roles: ["superadmin"] },
+    { id: 41, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 4000, sortOrder: 1, roles: ["superadmin", "admin"] },
+    { id: 42, title: "Access Control (RBAC)", icon: "ShieldCheck", path: null, parentId: 4000, sortOrder: 2, roles: ["superadmin", "admin"] },
+    { id: 421, title: "Role Master", icon: "Shield", path: "/configuration/role-master", parentId: 42, sortOrder: 1, roles: ["superadmin", "admin"] },
+    { id: 422, title: "Role Assignment", icon: "UserCheck", path: "/configuration/role-assignment", parentId: 42, sortOrder: 2, roles: ["superadmin", "admin"] },
     
-    { id: 43, title: "Menu Designer", icon: "Layout", path: null, parentId: 4000, sortOrder: 3, roles: ["superadmin"] },
-    { id: 431, title: "Navigation Builder", icon: "LayoutGrid", path: "/configuration/navigation", parentId: 43, sortOrder: 1, roles: ["superadmin"] },
+    { id: 43, title: "Menu Designer", icon: "Layout", path: null, parentId: 4000, sortOrder: 3, roles: ["superadmin", "admin"] },
+    { id: 431, title: "Navigation Builder", icon: "LayoutGrid", path: "/configuration/navigation", parentId: 43, sortOrder: 1, roles: ["superadmin", "admin"] },
     
     { id: 44, title: "Academic Masters", icon: "BookOpen", path: null, parentId: 4000, sortOrder: 4, roles: ["superadmin", "admin"] },
     { id: 441, title: "Standards & Grades", icon: "Layers", path: "/configuration/standards", parentId: 44, sortOrder: 1, roles: ["superadmin", "admin"] },
@@ -136,6 +136,20 @@ const mockFallbacks: Record<string, any> = {
     { id: 444, title: "Subject Registry", icon: "BookOpen", path: "/configuration/subjects", parentId: 44, sortOrder: 4, roles: ["superadmin", "admin"] },
     
     { id: 5000, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roles: ["superadmin"] },
+  ],
+  "/notifications": [
+    { id: 1, title: "System Update", message: "New academic module is live.", type: "info", isRead: false, createdAt: new Date().toISOString() },
+    { id: 2, title: "Fee Reminder", message: "Late fee applies after 30th May.", type: "warning", isRead: true, createdAt: new Date().toISOString() }
+  ],
+  "/messages": [
+    { id: 1, senderId: 1, receiverId: 2, subject: "Meeting Invitation", content: "Let's discuss the new curriculum.", isRead: false, type: "Direct", createdAt: new Date().toISOString() },
+    { id: 2, senderId: 2, receiverId: 1, subject: "Re: Meeting Invitation", content: "Sure, let's meet tomorrow.", isRead: true, type: "Direct", createdAt: new Date().toISOString() }
+  ],
+  "/auditlogs": [
+    { id: 1, userId: "1", type: "Update", tableName: "Students", dateTime: new Date().toISOString(), primaryKey: "1" },
+  ],
+  "/errorlogs": [
+    { id: 1, message: "Demo Error Log", level: "Error", timestamp: new Date().toISOString(), exception: null, properties: "" },
   ],
   "/masters/roles": [
     { id: 1, name: "Super Admin", description: "Full system access", isActive: true },
@@ -188,7 +202,7 @@ api.interceptors.response.use(
       if (mockKey) {
         const mockData = mockFallbacks[mockKey];
         // Wrap in { data: [...] } for masters if the URL contains /masters/
-        const finalResponseData = url.includes("/masters/") || url === "/schools" || url === "/users" || url === "/navigation" || url === "/teachers" || url === "/students"
+        const finalResponseData = url.includes("/masters/") || url === "/schools" || url === "/users" || url === "/navigation" || url === "/teachers" || url === "/students" || url === "/notifications" || url === "/messages" || url === "/auditlogs" || url === "/errorlogs" || url === "/errorlogs/filesystem"
           ? { data: mockData }
           : mockData;
           

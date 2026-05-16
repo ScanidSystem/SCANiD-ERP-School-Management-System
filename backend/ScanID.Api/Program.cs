@@ -5,7 +5,6 @@ using ScanID.Api.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseContentRoot(Directory.GetCurrentDirectory());
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

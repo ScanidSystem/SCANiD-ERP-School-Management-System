@@ -262,7 +262,7 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
 
     return (
       <div key={item.id} className="space-y-1">
-        <SimpleTooltip content={isCollapsed && level === 0 ? item.title : ""} side="right">
+        <SimpleTooltip content={isCollapsed && level === 0 ? item.title : ""} side="right" nativeButton={false}>
           <div className="w-full">
             {hasSubItems ? (
               <button
@@ -421,7 +421,7 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
           </button>
         )}
 
-        <SimpleTooltip content={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"} side="right">
+        <SimpleTooltip content={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"} side="right" nativeButton={true}>
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="absolute -right-3 top-10 bg-blue-600 text-white rounded-full p-1.5 shadow-xl hover:bg-blue-500 transition-all z-50 border-2 border-slate-950 scale-100 hover:scale-110 active:scale-95 hidden lg:block"
@@ -484,7 +484,7 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
         "p-3 border-t border-slate-800/50 space-y-1.5",
         isCollapsed && "px-3"
       )}>
-        <SimpleTooltip content={isCollapsed ? "Settings" : ""} side="right">
+        <SimpleTooltip content={isCollapsed ? "Settings" : ""} side="right" nativeButton={false}>
           <Link 
             to="/settings"
             className={cn(
@@ -511,7 +511,7 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
           </Link>
         </SimpleTooltip>
         
-        <SimpleTooltip content={isCollapsed ? "Logout" : ""} side="right">
+        <SimpleTooltip content={isCollapsed ? "Logout" : ""} side="right" nativeButton={true}>
           <button 
             onClick={onLogout}
             className={cn(
