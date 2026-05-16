@@ -35,14 +35,21 @@ namespace ScanID.Api.Controllers
                 }
 
                 // Map to a format the frontend expects
-                var result = items.Select(i => new {
-                    i.Id,
-                    i.Title,
-                    i.Icon,
-                    i.Path,
-                    i.ParentId,
-                    i.SortOrder,
-                    roles = i.NavigationRoles.Select(nr => nr.Role?.Name.ToLower().Replace(" ", "") ?? "all").ToArray()
+                var result = items.Select(i => {
+                    var roleList = i.NavigationRoles?
+                        .Select(nr => nr.Role?.Name?.ToLower()?.Replace(" ", ""))
+                        .Where(r => !string.IsNullOrEmpty(r))
+                        .ToArray() ?? new string[0];
+                        
+                    return new {
+                        i.Id,
+                        i.Title,
+                        i.Icon,
+                        i.Path,
+                        i.ParentId,
+                        i.SortOrder,
+                        roles = roleList.Length > 0 ? roleList : new string[] { "all" }
+                    };
                 }).OrderBy(i => i.SortOrder).ToList();
 
                 // Filter by role if provided
@@ -60,6 +67,21 @@ namespace ScanID.Api.Controllers
                     var filtered = result.Where(i => 
                         i.roles.Contains(lowerRole) || i.roles.Contains("all")
                     ).ToList();
+
+                    // Ensure parent items are included if their children are visible
+                    if (filtered.Count > 0)
+                    {
+                        var parentIds = filtered.Select(f => f.ParentId).Where(p => p != null).Distinct().ToList();
+                        foreach (var pId in parentIds)
+                        {
+                            if (!filtered.Any(f => f.Id == pId))
+                            {
+                                var parentItem = result.FirstOrDefault(r => r.Id == pId);
+                                if (parentItem != null) filtered.Add(parentItem);
+                            }
+                        }
+                        filtered = filtered.OrderBy(f => f.SortOrder).ToList();
+                    }
 
                     // If filtered results are empty, it might mean the role mapping in DB is missing.
                     // Fallback to default mock items for that role to ensure UI doesn't break.
@@ -95,20 +117,19 @@ namespace ScanID.Api.Controllers
                 new { id = 1, title = "Dashboard", icon = "LayoutDashboard", path = "/", parentId = (int?)null, sortOrder = 1, roles = new[] { "superadmin", "admin", "teacher", "parent", "student" } },
                 
                 // Academic Operations Group
-                new { id = 1000, title = "Academic Operations", icon = "BookOpen", path = (string?)null, parentId = (int?)null, sortOrder = 2, roles = new[] { "superadmin", "admin", "teacher" } },
-                new { id = 11, title = "Student Registry", icon = "GraduationCap", path = "/students", parentId = 1000, sortOrder = 1, roles = new[] { "superadmin", "admin", "teacher" } },
-                new { id = 12, title = "Attendance Tracking", icon = "CalendarCheck", path = "/attendance", parentId = 1000, sortOrder = 2, roles = new[] { "superadmin", "admin", "teacher" } },
-                new { id = 13, title = "Examination & Marks", icon = "BarChart3", path = "/marks", parentId = 1000, sortOrder = 3, roles = new[] { "superadmin", "admin", "teacher" } },
+                new { id = 1000, title = "Academic Operations", icon = "BookOpen", path = (string?)null, parentId = (int?)null, sortOrder = 2, roles = new[] { "superadmin", "admin", "teacher", "parent", "student" } },
+                new { id = 11, title = "Student Registry", icon = "GraduationCap", path = "/students", parentId = 1000, sortOrder = 1, roles = new[] { "superadmin", "admin", "teacher", "parent" } },
+                new { id = 12, title = "Attendance Tracking", icon = "CalendarCheck", path = "/attendance", parentId = 1000, sortOrder = 2, roles = new[] { "superadmin", "admin", "teacher", "parent", "student" } },
+                new { id = 13, title = "Examination & Marks", icon = "BarChart3", path = "/marks", parentId = 1000, sortOrder = 3, roles = new[] { "superadmin", "admin", "teacher", "parent", "student" } },
                 
                 // Staff & HR Group
                 new { id = 2000, title = "Staff & HR", icon = "Users", path = (string?)null, parentId = (int?)null, sortOrder = 3, roles = new[] { "superadmin", "admin" } },
                 new { id = 21, title = "Teacher Catalog", icon = "UserCheck", path = "/teachers", parentId = 2000, sortOrder = 1, roles = new[] { "superadmin", "admin" } },
-                new { id = 22, title = "Manage Users", icon = "UserPlus", path = "/configuration/users", parentId = 2000, sortOrder = 2, roles = new[] { "superadmin", "admin" } },
                 
                 // Administrative Group
-                new { id = 3000, title = "Administrative", icon = "ShieldCheck", path = (string?)null, parentId = (int?)null, sortOrder = 4, roles = new[] { "superadmin", "admin", "teacher", "parent" } },
-                new { id = 31, title = "Fee Management", icon = "CreditCard", path = "/fees", parentId = 3000, sortOrder = 1, roles = new[] { "superadmin", "admin" } },
-                new { id = 32, title = "Communication Hub", icon = "MessageSquare", path = "/messages", parentId = 3000, sortOrder = 2, roles = new[] { "superadmin", "admin", "teacher", "parent" } },
+                new { id = 3000, title = "Administrative", icon = "ShieldCheck", path = (string?)null, parentId = (int?)null, sortOrder = 4, roles = new[] { "superadmin", "admin", "teacher", "parent", "student" } },
+                new { id = 31, title = "Fee Management", icon = "CreditCard", path = "/fees", parentId = 3000, sortOrder = 1, roles = new[] { "superadmin", "admin", "parent" } },
+                new { id = 32, title = "Communication Hub", icon = "MessageSquare", path = "/messages", parentId = 3000, sortOrder = 2, roles = new[] { "superadmin", "admin", "teacher", "parent", "student" } },
                 
                 // Masters & Config Group
                 new { id = 4000, title = "Masters & Config", icon = "Database", path = "/configuration", parentId = (int?)null, sortOrder = 5, roles = new[] { "superadmin", "admin" } },
