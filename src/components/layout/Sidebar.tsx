@@ -81,34 +81,34 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
         if (rawData.length === 0) {
           console.warn("API returned empty navigation data, using hardcoded fallback");
           rawData = [
-            { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
-            { id: 1000, title: "Academic Operations", icon: "BookOpen", path: "/academic", parentId: null, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
-            { id: 11, title: "Student Registry", icon: "GraduationCap", path: "/students", parentId: 1000, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
-            { id: 12, title: "Attendance Tracking", icon: "CalendarCheck", path: "/attendance", parentId: 1000, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
-            { id: 13, title: "Examination & Marks", icon: "BarChart3", path: "/marks", parentId: 1000, sortOrder: 3, roles: ["superadmin", "admin", "teacher"] },
-            { id: 2000, title: "Staff & HR", icon: "Users", path: "/staff", parentId: null, sortOrder: 3, roles: ["superadmin", "admin", "teacher"] },
-            { id: 21, title: "Teacher Catalog", icon: "UserCheck", path: "/teachers", parentId: 2000, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
-            { id: 3000, title: "Administrative", icon: "ShieldCheck", path: "/admin", parentId: null, sortOrder: 4, roles: ["superadmin", "admin", "teacher"] },
-            { id: 31, title: "Fee Management", icon: "CreditCard", path: "/fees", parentId: 3000, sortOrder: 1, roles: ["superadmin", "admin"] },
-            { id: 32, title: "Communication Hub", icon: "MessageSquare", path: "/messages", parentId: 3000, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
+            { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roles: ["superadmin", "admin", "teacher", "parent"] },
+            { id: 2, title: "Academic Operations", icon: "BookOpen", path: null, parentId: null, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
+            { id: 7, title: "Student Registry", icon: "GraduationCap", path: "/students", parentId: 2, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
+            { id: 8, title: "Attendance Tracking", icon: "CalendarCheck", path: "/attendance", parentId: 2, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
+            { id: 9, title: "Examination & Marks", icon: "BarChart3", path: "/marks", parentId: 2, sortOrder: 3, roles: ["superadmin", "admin", "teacher"] },
+            { id: 3, title: "Staff & HR", icon: "Users", path: null, parentId: null, sortOrder: 3, roles: ["superadmin", "admin"] },
+            { id: 10, title: "Teacher Catalog", icon: "UserCheck", path: "/teachers", parentId: 3, sortOrder: 1, roles: ["superadmin", "admin"] },
+            { id: 4, title: "Administrative", icon: "ShieldCheck", path: null, parentId: null, sortOrder: 4, roles: ["superadmin", "admin", "teacher", "parent"] },
+            { id: 11, title: "Fee Management", icon: "CreditCard", path: "/fees", parentId: 4, sortOrder: 1, roles: ["superadmin", "admin"] },
+            { id: 12, title: "Communication Hub", icon: "MessageSquare", path: "/messages", parentId: 4, sortOrder: 2, roles: ["superadmin", "admin", "teacher", "parent"] },
             
-            { id: 4000, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 5, roles: ["superadmin", "admin"] },
-            { id: 41, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 4000, sortOrder: 1, roles: ["superadmin"] },
+            { id: 5, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 5, roles: ["superadmin", "admin"] },
+            { id: 13, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 5, sortOrder: 1, roles: ["superadmin", "admin"] },
             
-            { id: 42, title: "Access Control (RBAC)", icon: "ShieldCheck", path: null, parentId: 4000, sortOrder: 2, roles: ["superadmin"] },
-            { id: 421, title: "Role Master", icon: "Shield", path: "/configuration/role-master", parentId: 42, sortOrder: 1, roles: ["superadmin"] },
-            { id: 422, title: "Role Assignment", icon: "UserCheck", path: "/configuration/role-assignment", parentId: 42, sortOrder: 2, roles: ["superadmin"] },
+            { id: 14, title: "Access Control (RBAC)", icon: "ShieldCheck", path: null, parentId: 5, sortOrder: 2, roles: ["superadmin", "admin"] },
+            { id: 17, title: "Role Master", icon: "Shield", path: "/configuration/role-master", parentId: 14, sortOrder: 1, roles: ["superadmin", "admin"] },
+            { id: 18, title: "Role Assignment", icon: "UserCheck", path: "/configuration/role-assignment", parentId: 14, sortOrder: 2, roles: ["superadmin", "admin"] },
             
-            { id: 43, title: "Menu Designer", icon: "Layout", path: null, parentId: 4000, sortOrder: 3, roles: ["superadmin"] },
-            { id: 431, title: "Navigation Builder", icon: "LayoutGrid", path: "/configuration/navigation", parentId: 43, sortOrder: 1, roles: ["superadmin"] },
+            { id: 15, title: "Menu Designer", icon: "Layout", path: null, parentId: 5, sortOrder: 3, roles: ["superadmin", "admin"] },
+            { id: 19, title: "Navigation Builder", icon: "LayoutGrid", path: "/configuration/navigation", parentId: 15, sortOrder: 1, roles: ["superadmin", "admin"] },
             
-            { id: 44, title: "Academic Masters", icon: "BookOpen", path: null, parentId: 4000, sortOrder: 4, roles: ["superadmin", "admin"] },
-            { id: 441, title: "Standards & Grades", icon: "Layers", path: "/configuration/standards", parentId: 44, sortOrder: 1, roles: ["superadmin", "admin"] },
-            { id: 442, title: "Divisions/Sections", icon: "Hash", path: "/configuration/sections", parentId: 44, sortOrder: 2, roles: ["superadmin", "admin"] },
-            { id: 443, title: "Academic Years", icon: "Calendar", path: "/configuration/academic-years", parentId: 44, sortOrder: 3, roles: ["superadmin", "admin"] },
-            { id: 444, title: "Subject Registry", icon: "BookOpen", path: "/configuration/subjects", parentId: 44, sortOrder: 4, roles: ["superadmin", "admin"] },
+            { id: 16, title: "Academic Masters", icon: "BookOpen", path: null, parentId: 5, sortOrder: 4, roles: ["superadmin", "admin"] },
+            { id: 20, title: "Standards & Grades", icon: "Layers", path: "/configuration/standards", parentId: 16, sortOrder: 1, roles: ["superadmin", "admin"] },
+            { id: 21, title: "Divisions/Sections", icon: "Hash", path: "/configuration/sections", parentId: 16, sortOrder: 2, roles: ["superadmin", "admin"] },
+            { id: 22, title: "Academic Years", icon: "Calendar", path: "/configuration/academic-years", parentId: 16, sortOrder: 3, roles: ["superadmin", "admin"] },
+            { id: 23, title: "Subject Registry", icon: "BookOpen", path: "/configuration/subjects", parentId: 16, sortOrder: 4, roles: ["superadmin", "admin"] },
             
-            { id: 5000, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roles: ["superadmin"] }
+            { id: 6, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roles: ["superadmin", "admin"] }
           ];
         }
 
@@ -209,6 +209,11 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
   }, [location.pathname, menuItems]);
 
   const toggleExpand = (id: number, pId: number | null) => {
+    // If sidebar is collapsed, expand it first so the sub-items are visible
+    if (isCollapsed) {
+      setIsCollapsed(false);
+    }
+
     setExpandedItems(prev => {
       // If already expanded, just collapse it
       if (prev.includes(id)) {
@@ -217,29 +222,24 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
 
       // Accordion logic: Find all items at the same level (sharing the same parent)
       // and remove them from the expanded state before adding the new ID.
-      const getSiblingIds = (items: NavItem[]): number[] => {
-        let siblings: number[] = [];
-        
-        // Search for items that have parentId === pId
+      const findSiblings = (items: NavItem[]): number[] => {
+        // Try to find if the pId parent exists in this list
         const itemsAtLevel = items.filter(item => item.parentId === pId);
         if (itemsAtLevel.length > 0) {
-          siblings = itemsAtLevel.map(i => i.id);
-        } else {
-          // If not found at this level, search deeper
-          for (const item of items) {
-            if (item.subItems) {
-              const result = getSiblingIds(item.subItems);
-              if (result.length > 0) {
-                siblings = result;
-                break;
-              }
-            }
+          return itemsAtLevel.map(i => i.id);
+        }
+        
+        // If not found, search in subItems
+        for (const item of items) {
+          if (item.subItems && item.subItems.length > 0) {
+            const result = findSiblings(item.subItems);
+            if (result.length > 0) return result;
           }
         }
-        return siblings;
+        return [];
       };
 
-      const siblingIds = getSiblingIds(menuItems);
+      const siblingIds = findSiblings(menuItems);
       const filtered = prev.filter(itemId => !siblingIds.includes(itemId));
       return [...filtered, id];
     });
@@ -270,7 +270,7 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
                 className={cn(
                   "w-full flex items-center px-4 py-2.5 rounded-xl transition-all duration-300 relative group h-12 text-left",
                   isParentActive 
-                    ? "bg-white/10 text-white" 
+                    ? "bg-white/10 text-white shadow-sm shadow-black/20" 
                     : "text-slate-400 hover:text-slate-100 hover:bg-white/5",
                   isCollapsed && level === 0 && "justify-center px-0",
                   level > 0 && "px-3 h-10"
@@ -278,9 +278,12 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
               >
                 <div className={cn(
                   "flex items-center justify-center shrink-0 transition-all duration-300",
-                  isParentActive ? "text-blue-400 scale-110" : "group-hover:scale-110"
+                  isParentActive ? "text-blue-400 scale-110" : "group-hover:scale-110",
+                  isCollapsed && level === 0 && "w-full"
                 )}>
-                  {Icon ? <Icon size={level === 0 ? 22 : 18} strokeWidth={isParentActive ? 2.5 : 2} /> : (
+                  {Icon ? (
+                    <Icon size={level === 0 ? 22 : 18} strokeWidth={isParentActive ? 2.5 : 2} />
+                  ) : (
                     <div className={cn(
                       "w-1.5 h-1.5 rounded-full transition-all duration-300",
                       isParentActive ? "bg-blue-400 scale-125 shadow-[0_0_8px_rgba(96,165,250,0.5)]" : "bg-slate-700"
@@ -310,6 +313,9 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
             ) : (
               <Link
                 to={item.path}
+                onClick={() => {
+                  if (isCollapsed) setIsCollapsed(false);
+                }}
                 className={cn(
                   "flex items-center px-4 py-2.5 rounded-xl transition-all duration-300 relative group h-12",
                   isActive 
@@ -321,9 +327,12 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
               >
                 <div className={cn(
                   "flex items-center justify-center shrink-0 transition-all duration-300",
-                  isActive ? "text-white scale-110" : "group-hover:scale-110"
+                  isActive ? "text-white scale-110" : "group-hover:scale-110",
+                  isCollapsed && level === 0 && "w-full"
                 )}>
-                  {Icon ? <Icon size={level === 0 ? 22 : 18} strokeWidth={isActive ? 2.5 : 2} /> : (
+                  {Icon ? (
+                    <Icon size={level === 0 ? 22 : 18} strokeWidth={isActive ? 2.5 : 2} />
+                  ) : (
                     <div className={cn(
                       "w-1.5 h-1.5 rounded-full transition-all duration-300",
                       isActive ? "bg-blue-400 scale-125 shadow-[0_0_8px_rgba(96,165,250,0.5)]" : "bg-slate-700"
@@ -345,28 +354,28 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
           </div>
         </SimpleTooltip>
 
-              <AnimatePresence initial={false}>
-                {hasSubItems && isExpanded && !isCollapsed && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className={cn(
-                      "overflow-hidden space-y-1 relative",
-                      level === 0 ? "ml-9 pl-4 border-l border-white/5 mt-1" : "ml-4 pl-3 border-l border-white/5 mt-1"
-                    )}
-                  >
-                    {item.subItems?.map((subItem) => renderNavItem(subItem, level + 1))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+        <AnimatePresence initial={false}>
+          {hasSubItems && isExpanded && !isCollapsed && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className={cn(
+                "overflow-hidden space-y-1 relative",
+                level === 0 ? "ml-9 pl-4 border-l border-white/5 mt-1" : "ml-4 pl-3 border-l border-white/5 mt-1"
+              )}
+            >
+              {item.subItems?.map((subItem) => renderNavItem(subItem, level + 1))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   };
 
   const sidebarVariants = {
-    expanded: { width: 256 },
+    expanded: { width: 288 }, // Width increased to 72 (288px)
     collapsed: { width: 80 }
   };
 

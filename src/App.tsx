@@ -103,11 +103,13 @@ export default function App() {
                 {/* 
                   RBAC (Role Based Access Control) check:
                   Only render routes that the current user has permission to view.
-                  All superadmin-only routes are grouped together here.
+                  Superadmin and Admin can access configuration.
                 */}
-                {user.role === "superadmin" && (
+                {(user.role === "superadmin" || user.role === "admin") && (
                   <>
                     <Route path="/schools" element={<Navigate to="/configuration/schools" replace />} />
+                    <Route path="/role-assignment" element={<Navigate to="/configuration/role-assignment" replace />} />
+                    <Route path="/navigation-management" element={<Navigate to="/configuration/navigation" replace />} />
                     <Route path="/configuration" element={<Configuration user={user} />} />
                     <Route path="/configuration/schools" element={<Configuration user={user} defaultTab="schools" />} />
                     <Route path="/configuration/role-master" element={<Configuration user={user} defaultTab="role-master" />} />

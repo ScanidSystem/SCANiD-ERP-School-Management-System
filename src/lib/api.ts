@@ -368,6 +368,18 @@ export const apiService = {
   updateNavigation: (id: number, data: any) => api.put(`/navigation/${id}`, data),
   deleteNavigation: (id: number) => api.delete(`/navigation/${id}`),
 
+  // Notifications
+  getNotifications: (params?: { userId?: number; role?: string }) => api.get("/notifications", { params }),
+  markNotificationRead: (id: number) => api.put(`/notifications/${id}/read`),
+  deleteNotification: (id: number) => api.delete(`/notifications/${id}`),
+
+  // Communications
+  getMessages: (params?: { userId?: number; type?: string }) => api.get("/messages", { params }),
+  getMessageById: (id: number) => api.get(`/messages/${id}`),
+  sendMessage: (data: any) => api.post("/messages", data),
+  deleteMessage: (id: number) => api.delete(`/messages/${id}`),
+  markMessageRead: (id: number) => api.put(`/messages/${id}/read`),
+
   // Users (for Role Assignment & Management)
   getUsers: () => api.get("/users"),
   createUser: (data: any) => api.post("/users", data),

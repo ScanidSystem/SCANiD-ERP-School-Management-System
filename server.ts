@@ -133,26 +133,56 @@ async function startServer() {
     { id: 2, studentId: 2, date: new Date().toISOString().split('T')[0], status: "Absent" }
   ];
 
+  let notifications = [
+    { id: 1, title: "System Update", message: "New academic module is live.", type: "info", isRead: false, createdAt: new Date().toISOString() },
+    { id: 2, title: "Fee Reminder", message: "Late fee applies after 30th May.", type: "warning", isRead: true, createdAt: new Date().toISOString() }
+  ];
+
+  let messages = [
+    { id: 1, senderId: 1, receiverId: 2, subject: "Meeting Invitation", content: "Let's discuss the new curriculum.", isRead: false, type: "Direct", createdAt: new Date().toISOString() },
+    { id: 2, senderId: 2, receiverId: 1, subject: "Re: Meeting Invitation", content: "Sure, let's meet tomorrow.", isRead: true, type: "Direct", createdAt: new Date().toISOString() }
+  ];
+
   let navigationItems = [
-    { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
+    // Root level items
+    { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roles: ["superadmin", "admin", "teacher", "parent"] },
+    
+    // Academic Operations Group
     { id: 1000, title: "Academic Operations", icon: "BookOpen", path: null, parentId: null, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
     { id: 11, title: "Student Registry", icon: "GraduationCap", path: "/students", parentId: 1000, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
     { id: 12, title: "Attendance Tracking", icon: "CalendarCheck", path: "/attendance", parentId: 1000, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
     { id: 13, title: "Examination & Marks", icon: "BarChart3", path: "/marks", parentId: 1000, sortOrder: 3, roles: ["superadmin", "admin", "teacher"] },
     
-    { id: 2000, title: "Staff & HR", icon: "Users", path: null, parentId: null, sortOrder: 3, roles: ["superadmin", "admin", "teacher"] },
-    { id: 21, title: "Teacher Catalog", icon: "UserCheck", path: "/teachers", parentId: 2000, sortOrder: 1, roles: ["superadmin", "admin", "teacher"] },
+    // Staff & HR Group
+    { id: 2000, title: "Staff & HR", icon: "Users", path: null, parentId: null, sortOrder: 3, roles: ["superadmin", "admin"] },
+    { id: 21, title: "Teacher Catalog", icon: "UserCheck", path: "/teachers", parentId: 2000, sortOrder: 1, roles: ["superadmin", "admin"] },
     
-    { id: 3000, title: "Administrative", icon: "ShieldCheck", path: null, parentId: null, sortOrder: 4, roles: ["superadmin", "admin", "teacher"] },
+    // Administrative Group
+    { id: 3000, title: "Administrative", icon: "ShieldCheck", path: null, parentId: null, sortOrder: 4, roles: ["superadmin", "admin", "teacher", "parent"] },
     { id: 31, title: "Fee Management", icon: "CreditCard", path: "/fees", parentId: 3000, sortOrder: 1, roles: ["superadmin", "admin"] },
-    { id: 32, title: "Communication Hub", icon: "MessageSquare", path: "/messages", parentId: 3000, sortOrder: 2, roles: ["superadmin", "admin", "teacher"] },
+    { id: 32, title: "Communication Hub", icon: "MessageSquare", path: "/messages", parentId: 3000, sortOrder: 2, roles: ["superadmin", "admin", "teacher", "parent"] },
     
+    // Masters & Config Group (The big one)
     { id: 4000, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 5, roles: ["superadmin", "admin"] },
-    { id: 41, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 4000, sortOrder: 1, roles: ["superadmin"] },
-    { id: 42, title: "Access Control (RBAC)", icon: "Key", path: "/role-assignment", parentId: 4000, sortOrder: 2, roles: ["superadmin"] },
-    { id: 43, title: "Menu Designer", icon: "Layout", path: "/navigation-management", parentId: 4000, sortOrder: 3, roles: ["superadmin"] },
-    { id: 44, title: "Academic Masters", icon: "BookOpen", path: "/configuration/masters", parentId: 4000, sortOrder: 4, roles: ["superadmin", "admin"] },
+    { id: 41, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 4000, sortOrder: 1, roles: ["superadmin", "admin"] },
     
+    // RBAC Sub-group
+    { id: 42, title: "Access Control (RBAC)", icon: "Key", path: null, parentId: 4000, sortOrder: 2, roles: ["superadmin", "admin"] },
+    { id: 421, title: "Role Master", icon: "Shield", path: "/configuration/role-master", parentId: 42, sortOrder: 1, roles: ["superadmin", "admin"] },
+    { id: 422, title: "Role Assignment", icon: "UserCheck", path: "/configuration/role-assignment", parentId: 42, sortOrder: 2, roles: ["superadmin", "admin"] },
+    
+    // Menu Designer Sub-group
+    { id: 43, title: "Menu Designer", icon: "Layout", path: null, parentId: 4000, sortOrder: 3, roles: ["superadmin", "admin"] },
+    { id: 431, title: "Navigation Builder", icon: "LayoutGrid", path: "/configuration/navigation", parentId: 43, sortOrder: 1, roles: ["superadmin", "admin"] },
+    
+    // Academic Masters Sub-group
+    { id: 44, title: "Academic Masters", icon: "BookOpen", path: null, parentId: 4000, sortOrder: 4, roles: ["superadmin", "admin"] },
+    { id: 441, title: "Standards & Grades", icon: "Layers", path: "/configuration/standards", parentId: 44, sortOrder: 1, roles: ["superadmin", "admin"] },
+    { id: 442, title: "Divisions/Sections", icon: "Hash", path: "/configuration/sections", parentId: 44, sortOrder: 2, roles: ["superadmin", "admin"] },
+    { id: 443, title: "Academic Years", icon: "Calendar", path: "/configuration/academic-years", parentId: 44, sortOrder: 3, roles: ["superadmin", "admin"] },
+    { id: 444, title: "Subject Registry", icon: "BookOpen", path: "/configuration/subjects", parentId: 44, sortOrder: 4, roles: ["superadmin", "admin"] },
+    
+    // System Audit
     { id: 5000, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roles: ["superadmin"] },
   ];
 
@@ -417,6 +447,48 @@ async function startServer() {
   // Users
   app.get("/api/users", (req, res) => res.json({ data: [{ id: "1", fullName: "Global Admin", username: "superadmin", role: "superadmin" }] }));
   app.put("/api/users/:id/role", (req, res) => res.json({ success: true }));
+
+  // Notifications
+  app.get("/api/notifications", (req, res) => res.json({ data: notifications }));
+  app.put("/api/notifications/:id/read", (req, res) => {
+    const id = parseInt(req.params.id);
+    const index = notifications.findIndex(n => n.id === id);
+    if (index !== -1) {
+      notifications[index].isRead = true;
+      res.json({ data: notifications[index] });
+    } else {
+      res.status(404).json({ message: "Not found" });
+    }
+  });
+  app.delete("/api/notifications/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    notifications = notifications.filter(n => n.id !== id);
+    res.status(204).send();
+  });
+
+  // Messages (Communication Hub)
+  app.get("/api/messages", (req, res) => res.json({ data: messages }));
+  app.post("/api/messages", (req, res) => {
+    const newMessage = {
+      id: messages.length + 1,
+      senderId: req.body.senderId || 1,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+      ...req.body
+    };
+    messages.push(newMessage);
+    res.status(201).json({ data: newMessage });
+  });
+  app.put("/api/messages/:id/read", (req, res) => {
+    const id = parseInt(req.params.id);
+    const index = messages.findIndex(m => m.id === id);
+    if (index !== -1) {
+      messages[index].isRead = true;
+      res.json({ data: messages[index] });
+    } else {
+      res.status(404).json({ message: "Not found" });
+    }
+  });
 
   // Navigation Items
   app.get("/api/navigation", (req, res) => {

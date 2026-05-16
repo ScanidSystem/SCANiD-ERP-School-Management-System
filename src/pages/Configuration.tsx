@@ -122,8 +122,8 @@ const MASTER_TYPES: Record<string, { label: string, icon: any, description: stri
 };
 
 export default function Configuration({ user, defaultTab = "schools" }: ConfigurationProps) {
-  // INTERNAL RBAC CHECK: Secondary layer of protection for superadmin-only page
-  if (user.role !== "superadmin") {
+  // INTERNAL RBAC CHECK: Secondary layer of protection for superadmin and admin roles
+  if (user.role !== "superadmin" && user.role !== "admin") {
     return <Navigate to="/" replace />;
   }
 
@@ -256,10 +256,11 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
   const handleSave = async () => {
     const newErrors: Record<string, boolean> = {};
     if (activeTab === "navigation") {
-      if (!formData.title.trim()) newErrors.title = true;
-      if (!formData.path.trim()) newErrors.path = true;
+      if (!formData.title?.trim()) newErrors.title = true;
+      // Path is only required for leaf nodes (items without children in common use, 
+      // but here we allow empty path for parent items which act as containers)
     } else {
-      if (!formData.name.trim()) newErrors.name = true;
+      if (!formData.name?.trim()) newErrors.name = true;
     }
     
     if (activeTab === "sub-castes" && !formData.casteId) newErrors.casteId = true;
@@ -668,7 +669,10 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
 
       {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="rounded-3xl border-none shadow-2xl max-w-md p-0 overflow-hidden">
+        <DialogContent className={cn(
+          "rounded-3xl border-none shadow-2xl p-0 overflow-hidden transition-all duration-300",
+          activeTab === "navigation" ? "max-w-2xl" : "max-w-md"
+        )}>
           <div className="bg-blue-600 p-8 text-white">
             <DialogTitle className="text-2xl font-black tracking-tight flex items-center gap-2">
               {editingItem ? <Edit3 size={24} /> : <Plus size={24} />}
