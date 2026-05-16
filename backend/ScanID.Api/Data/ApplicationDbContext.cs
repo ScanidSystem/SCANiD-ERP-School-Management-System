@@ -24,6 +24,7 @@ namespace ScanID.Api.Data
         public DbSet<Message> Messages { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<ErrorLog> ErrorLogs { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
         public DbSet<NavigationItem> NavigationItems { get; set; }
         public DbSet<NavigationRole> NavigationRoles { get; set; }
 
@@ -66,6 +67,7 @@ namespace ScanID.Api.Data
             modelBuilder.Entity<Mark>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<Teacher>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<Message>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Notification>().HasQueryFilter(x => !x.IsDeleted);
 
             // Configure NavigationRole composite key
             modelBuilder.Entity<NavigationRole>()

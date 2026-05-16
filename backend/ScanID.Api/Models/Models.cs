@@ -69,7 +69,7 @@ namespace ScanID.Api.Models
         public int Id { get; set; }
         public string Username { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
-        public string? FullName { get; set; }
+        public string? Name { get; set; }
         public string? Email { get; set; }
         public string? Role { get; set; } = "student";
         public int? SchoolId { get; set; }
@@ -314,6 +314,21 @@ namespace ScanID.Api.Models
         public string Content { get; set; } = string.Empty;
         public bool IsRead { get; set; }
         public string Type { get; set; } = "Alert";
+    }
+
+    /// <summary>
+    /// Represnets a system notification for a specific user or role.
+    /// </summary>
+    public class Notification : BaseEntity
+    {
+        public int Id { get; set; }
+        public int? UserId { get; set; }
+        public int? RoleId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public string Type { get; set; } = "info"; // info, success, warning, error
+        public bool IsRead { get; set; } = false;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 
     // --- Master Data Models ---

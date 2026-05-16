@@ -287,7 +287,7 @@ CREATE TABLE [dbo].[Users](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[Username] [nvarchar](100) NOT NULL,
 	[PasswordHash] [nvarchar](max) NOT NULL,
-	[FullName] [nvarchar](255) NULL,
+	[Name] [nvarchar](255) NULL,
 	[Email] [nvarchar](100) NULL,
 	[RoleId] [int] NULL,
 	[Role] [nvarchar](max) NULL,

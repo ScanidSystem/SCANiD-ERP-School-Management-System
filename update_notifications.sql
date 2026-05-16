@@ -1,3 +1,10 @@
+-- Incremental update: Rename FullName to Name in Users table
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND name = 'FullName')
+BEGIN
+    EXEC sp_rename 'dbo.Users.FullName', 'Name', 'COLUMN';
+END
+GO
+
 -- Incremental update: Add Notifications table
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Notifications]') AND type in (N'U'))
 BEGIN

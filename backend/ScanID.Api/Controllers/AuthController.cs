@@ -38,7 +38,7 @@ namespace ScanID.Api.Controllers
 
             return Ok(new {
                 id = user.Id.ToString(),
-                name = user.FullName,
+                name = user.Name,
                 role = user.Role ?? "student",
                 schoolId = user.SchoolId?.ToString(),
                 schoolName = user.School?.Name
