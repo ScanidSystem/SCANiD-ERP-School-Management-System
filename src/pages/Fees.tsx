@@ -29,7 +29,7 @@ import {
   Loader2
 } from "lucide-react";
 import { Navigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { cn, parseSafeInt } from "@/lib/utils";
 
 export default function Fees({ user }: { user: any }) {
   const [fees, setFees] = useState<any[]>([]);
@@ -58,7 +58,7 @@ export default function Fees({ user }: { user: any }) {
     const fetchFees = async () => {
       setLoading(true);
       try {
-        const schoolIdToUse = user.role === "superadmin" ? (selectedSchoolId ? parseInt(selectedSchoolId) : undefined) : (user.schoolId ? parseInt(user.schoolId) : undefined);
+        const schoolIdToUse = user.role === "superadmin" ? parseSafeInt(selectedSchoolId) : parseSafeInt(user.schoolId);
         const res = await apiService.getFees(schoolIdToUse);
         setFees(res.data);
       } catch (error) {

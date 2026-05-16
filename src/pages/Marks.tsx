@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, parseSafeInt } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import ReportBuilder from "@/components/reports/ReportBuilder";
@@ -63,7 +63,7 @@ export default function Marks({ user }: { user: UserType }) {
     const fetchMarks = async () => {
       setLoading(true);
       try {
-        const schoolIdToUse = user.role === "superadmin" ? (selectedSchoolId ? parseInt(selectedSchoolId) : undefined) : (user.schoolId ? parseInt(user.schoolId) : undefined);
+        const schoolIdToUse = user.role === "superadmin" ? parseSafeInt(selectedSchoolId) : parseSafeInt(user.schoolId);
         const res = await apiService.getMarks(schoolIdToUse);
         const marksData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
         setMarks(marksData);
@@ -414,7 +414,7 @@ export default function Marks({ user }: { user: UserType }) {
         </TabsContent>
 
         <TabsContent value="entry" className="focus-visible:outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <MarksEntry user={user} forcedSchoolId={user.role === "superadmin" ? (selectedSchoolId ? parseInt(selectedSchoolId) : undefined) : undefined} />
+          <MarksEntry user={user} forcedSchoolId={user.role === "superadmin" ? parseSafeInt(selectedSchoolId) : undefined} />
         </TabsContent>
       </Tabs>
     </div>

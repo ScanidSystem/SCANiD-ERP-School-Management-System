@@ -62,7 +62,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { cn, parseSafeInt } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface Teacher {
@@ -125,7 +125,7 @@ export default function Teachers({ user }: { user: any }) {
   const fetchTeachers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiService.getTeachers(user?.schoolId ? parseInt(user.schoolId) : undefined);
+      const res = await apiService.getTeachers(parseSafeInt(user?.schoolId));
       
       const teacherData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
       
@@ -253,7 +253,7 @@ export default function Teachers({ user }: { user: any }) {
 
     try {
       const payload = {
-        schoolId: parseInt(formData.schoolId),
+        schoolId: parseSafeInt(formData.schoolId) || 1,
         employeeId: isEditing ? selectedTeacher?.employeeId : `EMP-${Date.now()}`,
         designation: "Faculty",
         department: formData.subject,
@@ -265,7 +265,7 @@ export default function Teachers({ user }: { user: any }) {
            passwordHash: "temp123",
            email: formData.email,
            role: "teacher",
-           schoolId: parseInt(formData.schoolId)
+           schoolId: parseSafeInt(formData.schoolId) || 1
         },
         // Audit fields: Ensure CreatedBy and ModifiedBy are captured for backend audit logging
         // CreatedBy is only set for new records, ModifiedBy is updated for every modification
@@ -274,7 +274,7 @@ export default function Teachers({ user }: { user: any }) {
       };
 
       if (isEditing && selectedTeacher) {
-        await apiService.updateTeacher(parseInt(selectedTeacher.id), payload as any);
+        await apiService.updateTeacher(parseSafeInt(selectedTeacher.id) || 0, payload as any);
         toast.success("Teacher profile updated successfully");
       } else {
         await apiService.createTeacher(payload as any);
@@ -298,7 +298,7 @@ export default function Teachers({ user }: { user: any }) {
     if (!deleteInfo) return;
     setLoading(true);
     try {
-      await apiService.deleteTeacher(parseInt(deleteInfo.id));
+      await apiService.deleteTeacher(parseSafeInt(deleteInfo.id) || 0);
       setTeachers(prev => prev.filter(t => t.id !== deleteInfo.id));
       toast.success(`${deleteInfo.name} removed successfully`);
       setIsDeleteDialogOpen(false);

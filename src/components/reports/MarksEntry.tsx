@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Save, AlertCircle, CheckCircle2, ChevronRight, Calculator, Upload, Download as DownloadIcon, FileSpreadsheet, Edit3, ArrowUpDown, UserPlus, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, parseSafeInt } from "@/lib/utils";
 import { 
   Dialog, 
   DialogContent, 
@@ -116,7 +116,7 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
     const fetchStudents = async () => {
       setLoading(true);
       try {
-        const schoolId = forcedSchoolId || (user.schoolId ? parseInt(user.schoolId) : undefined);
+        const schoolId = forcedSchoolId || parseSafeInt(user.schoolId);
         const res = await apiService.getStudents(schoolId);
         setStudents(res.data.map((s: any) => ({
           id: s.id.toString(),

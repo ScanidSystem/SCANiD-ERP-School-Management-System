@@ -79,7 +79,6 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
           console.warn("API returned empty navigation data, using hardcoded fallback");
           // IDs: SuperAdmin=1, Admin=2, Teacher=3, Student=4, Parent=5, All=0
           const allRoles = [1, 2, 3, 4, 5];
-          const staffRoles = [1, 2, 3];
           const adminRoles = [1, 2];
 
           rawData = [

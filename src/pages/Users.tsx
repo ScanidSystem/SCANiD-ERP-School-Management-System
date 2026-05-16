@@ -57,7 +57,7 @@ import { Label } from "@/components/ui/label";
 import { apiService } from "@/lib/api";
 import { User, RoleDescriptor } from "@/types";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, parseSafeInt } from "@/lib/utils";
 import { SimpleTooltip } from "@/components/shared/SimpleTooltip";
 
 export default function Users() {
@@ -129,7 +129,12 @@ export default function Users() {
 
     try {
       if (editingUser) {
-        await apiService.updateUser(parseInt(editingUser.id), formData);
+        const userId = parseSafeInt(editingUser.id);
+        if (userId === undefined) {
+          toast.error("Invalid user ID for update");
+          return;
+        }
+        await apiService.updateUser(userId, formData);
         toast.success("User updated successfully");
       } else {
         await apiService.createUser(formData);
@@ -145,7 +150,12 @@ export default function Users() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
     try {
-      await apiService.deleteUser(parseInt(id));
+      const userId = parseSafeInt(id);
+      if (userId === undefined) {
+        toast.error("Invalid user ID for deletion");
+        return;
+      }
+      await apiService.deleteUser(userId);
       toast.success("User deleted successfully");
       fetchData();
     } catch (error) {

@@ -21,7 +21,7 @@ import {
 import { Calendar as CalendarIcon, Check, X, Clock, Save, Loader2, CalendarCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, parseSafeInt } from "@/lib/utils";
 
 export default function Attendance({ user }: { user: any }) {
   const [students, setStudents] = useState<any[]>([]);
@@ -73,7 +73,7 @@ export default function Attendance({ user }: { user: any }) {
     const fetchStudents = async () => {
       setLoading(true);
       try {
-        const schoolIdToUse = user.role === "superadmin" ? (selectedSchoolId ? parseInt(selectedSchoolId) : undefined) : (user.schoolId ? parseInt(user.schoolId) : undefined);
+        const schoolIdToUse = user.role === "superadmin" ? parseSafeInt(selectedSchoolId) : parseSafeInt(user.schoolId);
         const res = await apiService.getStudents(schoolIdToUse);
         const studentData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
         setStudents(studentData.map((s: any) => {
@@ -111,7 +111,7 @@ export default function Attendance({ user }: { user: any }) {
         studentId: s.id,
         date: date.toISOString(),
         status: s.status.charAt(0).toUpperCase() + s.status.slice(1),
-        markedByUserId: parseInt(user.id),
+        markedByUserId: parseSafeInt(user.id),
         CreatedBy: user.name || user.email,
         ModifiedBy: user.name || user.email
       }));

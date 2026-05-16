@@ -102,10 +102,20 @@ export default function Login({ onLogin }: LoginProps) {
       // Handle both { token, user } structure and flat user object
       const userData = response.data.user || response.data;
       
-      // Ensure name and role are present
+      // Map roles to numeric IDs if not provided by backend
+      const ROLE_MAP: Record<string, number> = {
+        "superadmin": 1,
+        "admin": 2,
+        "teacher": 3,
+        "student": 4,
+        "parent": 5
+      };
+
+      // Ensure name, role, and roleId are present
       if (!userData.name && userData.fullName) userData.name = userData.fullName;
       if (!userData.name) userData.name = username.split("@")[0] || "User";
       if (!userData.role) userData.role = role;
+      if (!userData.roleId) userData.roleId = ROLE_MAP[role as string] || 0;
 
       // PERSIST LOGIN SELECTIONS TO USER OBJECT
       // This ensures the Navbar and other components reflect the choices made during login
@@ -140,11 +150,21 @@ export default function Login({ onLogin }: LoginProps) {
         const isAll = selectedSchool === "all";
         const school = schools.find(s => s.id.toString() === selectedSchool);
         const year = academicYears.find(y => y.id.toString() === selectedYear);
+        
+        const ROLE_MAP: Record<string, number> = {
+          "superadmin": 1,
+          "admin": 2,
+          "teacher": 3,
+          "student": 4,
+          "parent": 5
+        };
+
         const mockUser: User = {
           id: "demo-" + Math.random().toString(36).substr(2, 4),
           name: username.split("@")[0] || "Demo User",
           email: username.includes("@") ? username : `${username}@school.com`,
           role: role,
+          roleId: ROLE_MAP[role as string] || 0,
           schoolId: isAll ? undefined : selectedSchool,
           schoolName: isAll ? "All Schools" : school?.name,
           academicYearId: selectedYear,

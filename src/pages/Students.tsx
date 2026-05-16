@@ -65,6 +65,7 @@ import {
 } from "@/components/ui/select";
 
 import { User as UserType } from "@/types";
+import { cn, parseSafeInt } from "@/lib/utils";
 
 export default function Students({ user }: { user: UserType }) {
   const [students, setStudents] = useState<any[]>([]);
@@ -137,7 +138,7 @@ export default function Students({ user }: { user: UserType }) {
   const fetchStudents = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiService.getStudents(user.schoolId ? parseInt(user.schoolId) : undefined);
+      const response = await apiService.getStudents(parseSafeInt(user.schoolId));
     const studentData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
     const formatted = studentData.map((s: any) => {
       // Helper to fetch data by ensuring case-insensitive property access for specific schema fields
@@ -334,7 +335,11 @@ export default function Students({ user }: { user: UserType }) {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (uploadingStudentId && e.target.files?.[0]) {
       const file = e.target.files[0];
-      const studentId = parseInt(uploadingStudentId);
+      const studentId = parseSafeInt(uploadingStudentId);
+      if (studentId === undefined) {
+        toast.error("Invalid student ID for upload");
+        return;
+      }
       
       const loadingToast = toast.loading("Storing identity image on server...");
       try {
@@ -542,8 +547,8 @@ export default function Students({ user }: { user: UserType }) {
     try {
       const payload = {
         ...newStudentFormData,
-        schoolId: parseInt(newStudentFormData.schoolId),
-        rollNumber: parseInt(newStudentFormData.ROLLNO),
+        schoolId: parseSafeInt(newStudentFormData.schoolId) || 1,
+        rollNumber: parseSafeInt(newStudentFormData.ROLLNO) || 0,
         registrationNumber: newStudentFormData.registrationNumber || `REG/${new Date().getFullYear()}/${Math.floor(Math.random() * 900) + 100}`,
         name: `${newStudentFormData.FNAME} ${newStudentFormData.MNAME} ${newStudentFormData.LNAME}`.trim(),
         // Schema fields mapping
@@ -572,14 +577,14 @@ export default function Students({ user }: { user: UserType }) {
         // Map IDs from masters for manual data persistence
         StandardId: standardsMaster.find(s => s.name === newStudentFormData.STD)?.id,
         SectionId: sectionsMaster.find(s => s.name === newStudentFormData.DIV)?.id,
-        AcademicYearId: parseInt(newStudentFormData.academicyear) || academicYears.find(ay => ay.name === newStudentFormData.academicyear)?.id,
+        AcademicYearId: parseSafeInt(newStudentFormData.academicyear) || academicYears.find(ay => ay.name === newStudentFormData.academicyear)?.id,
         ShiftId: shifts.find(s => s.name === newStudentFormData.SHIFTNAME)?.id,
-        BloodGroupId: parseInt(newStudentFormData.BLOODGROUP),
-        HouseId: parseInt(newStudentFormData.house),
-        AdmissionTypeId: parseInt(newStudentFormData.admissiontype),
-        ReligionId: parseInt(newStudentFormData.RELIGION),
-        CasteId: parseInt(newStudentFormData.CASTE),
-        SubCasteId: parseInt(newStudentFormData.subcaste),
+        BloodGroupId: parseSafeInt(newStudentFormData.BLOODGROUP),
+        HouseId: parseSafeInt(newStudentFormData.house),
+        AdmissionTypeId: parseSafeInt(newStudentFormData.admissiontype),
+        ReligionId: parseSafeInt(newStudentFormData.RELIGION),
+        CasteId: parseSafeInt(newStudentFormData.CASTE),
+        SubCasteId: parseSafeInt(newStudentFormData.subcaste),
 
         // Audit fields: Ensure CreatedBy and ModifiedBy are captured for backend audit logging
         // CreatedBy is only set for new records, ModifiedBy is updated for every modification
@@ -588,7 +593,12 @@ export default function Students({ user }: { user: UserType }) {
       };
 
       if (isEditMode && currentStudentId) {
-        await apiService.updateStudent(parseInt(currentStudentId), { ...payload, id: parseInt(currentStudentId) });
+        const studentId = parseSafeInt(currentStudentId);
+        if (studentId === undefined) {
+          toast.error("Invalid student ID for update");
+          return;
+        }
+        await apiService.updateStudent(studentId, { ...payload, id: studentId });
         toast.success("Student updated successfully!");
       } else {
         await apiService.createStudent(payload);
@@ -615,7 +625,12 @@ export default function Students({ user }: { user: UserType }) {
     
     setIsProcessing(true);
     try {
-      await apiService.deleteStudent(parseInt(deleteInfo.id));
+      const studentId = parseSafeInt(deleteInfo.id);
+      if (studentId === undefined) {
+        toast.error("Invalid student ID for deletion");
+        return;
+      }
+      await apiService.deleteStudent(studentId);
       toast.success(`${deleteInfo.name} removed successfully`);
       setIsDeleteDialogOpen(false);
       setDeleteInfo(null);
@@ -1532,6 +1547,4 @@ export default function Students({ user }: { user: UserType }) {
   );
 }
 
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(" ");
-}
+// No need for local cn function anymore as we use the one from @/lib/utils

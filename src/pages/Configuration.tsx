@@ -82,7 +82,7 @@ import { apiService } from "@/lib/api";
 import { Navigate } from "react-router-dom";
 import { User } from "@/types";
 import { motion } from "motion/react";
-import { cn } from "@/lib/utils";
+import { cn, parseSafeInt } from "@/lib/utils";
 import { SimpleTooltip } from "@/components/shared/SimpleTooltip";
 
 interface ConfigurationProps {
@@ -297,8 +297,8 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
           title: formData.title,
           path: formData.path,
           icon: formData.icon,
-          parentId: formData.parentId ? parseInt(formData.parentId) : null,
-          sortOrder: parseInt(formData.sortOrder),
+          parentId: formData.parentId ? parseSafeInt(formData.parentId) : null,
+          sortOrder: parseSafeInt(formData.sortOrder) || 0,
           roles: formData.roles
         };
       } else {
@@ -312,9 +312,9 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       } else if (activeTab === "houses") {
         payload.color = formData.color;
       } else if (activeTab === "sub-castes") {
-        payload.casteId = parseInt(formData.casteId);
+        payload.casteId = parseSafeInt(formData.casteId);
       } else if (activeTab === "cities") {
-        payload.stateId = parseInt(formData.stateId);
+        payload.stateId = parseSafeInt(formData.stateId);
       } else if (activeTab === "schools") {
         payload.address = formData.address;
         payload.phone = formData.phone;
@@ -607,7 +607,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                             <TableCell className="text-xs font-bold text-slate-600">
                               {item.parentId ? (
                                 <Badge variant="outline" className="text-[10px] font-black uppercase text-slate-400">
-                                  {masterData.find(m => m.id === parseInt(item.parentId))?.title || "Parent Hidden"}
+                                  {masterData.find(m => m.id === parseSafeInt(item.parentId))?.title || "Parent Hidden"}
                                 </Badge>
                               ) : <span className="text-slate-300">—</span>}
                             </TableCell>
