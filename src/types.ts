@@ -1,4 +1,11 @@
-export type Role = string; // More flexible for dynamic roles from DB
+export interface RoleDescriptor {
+  id: number;
+  name: string;
+  description?: string;
+  isActive?: boolean;
+}
+
+export type Role = string;
 
 export interface User {
   id: string;

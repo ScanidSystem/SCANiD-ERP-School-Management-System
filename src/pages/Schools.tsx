@@ -314,7 +314,7 @@ export default function Schools({ user }: { user: UserType }) {
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Official Name</Label>
                     <Input 
-                      ref={el => inputRefs.current["name"] = el}
+                      ref={el => { inputRefs.current["name"] = el; }}
                       value={formData.name} 
                       onChange={e => {
                         setFormData({...formData, name: e.target.value});
@@ -331,7 +331,7 @@ export default function Schools({ user }: { user: UserType }) {
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Primary Address</Label>
                     <Input 
-                      ref={el => inputRefs.current["address"] = el}
+                      ref={el => { inputRefs.current["address"] = el; }}
                       value={formData.address} 
                       onChange={e => {
                         setFormData({...formData, address: e.target.value});
@@ -355,7 +355,7 @@ export default function Schools({ user }: { user: UserType }) {
                     <div className="space-y-1.5">
                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Office Phone</Label>
                       <Input 
-                        ref={el => inputRefs.current["phone"] = el}
+                        ref={el => { inputRefs.current["phone"] = el; }}
                         value={formData.phone} 
                         maxLength={12}
                         onChange={e => {
@@ -373,7 +373,7 @@ export default function Schools({ user }: { user: UserType }) {
                     <div className="space-y-1.5">
                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Direct Email</Label>
                       <Input 
-                        ref={el => inputRefs.current["email"] = el}
+                        ref={el => { inputRefs.current["email"] = el; }}
                         value={formData.email} 
                         onChange={e => {
                           setFormData({...formData, email: e.target.value});
@@ -463,7 +463,7 @@ export default function Schools({ user }: { user: UserType }) {
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Official Name</Label>
                     <Input 
-                      ref={el => inputRefs.current["name"] = el}
+                      ref={el => { inputRefs.current["name"] = el; }}
                       value={formData.name} 
                       onChange={e => {
                         setFormData({...formData, name: e.target.value});
@@ -480,7 +480,7 @@ export default function Schools({ user }: { user: UserType }) {
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Primary Address</Label>
                     <Input 
-                      ref={el => inputRefs.current["address"] = el}
+                      ref={el => { inputRefs.current["address"] = el; }}
                       value={formData.address} 
                       onChange={e => {
                         setFormData({...formData, address: e.target.value});
@@ -504,7 +504,7 @@ export default function Schools({ user }: { user: UserType }) {
                     <div className="space-y-1.5">
                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Office Phone</Label>
                       <Input 
-                        ref={el => inputRefs.current["phone"] = el}
+                        ref={el => { inputRefs.current["phone"] = el; }}
                         value={formData.phone} 
                         maxLength={12}
                         onChange={e => {
@@ -522,7 +522,7 @@ export default function Schools({ user }: { user: UserType }) {
                     <div className="space-y-1.5">
                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Direct Email</Label>
                       <Input 
-                        ref={el => inputRefs.current["email"] = el}
+                        ref={el => { inputRefs.current["email"] = el; }}
                         value={formData.email} 
                         onChange={e => {
                           setFormData({...formData, email: e.target.value});

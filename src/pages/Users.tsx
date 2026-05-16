@@ -55,14 +55,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { apiService } from "@/lib/api";
-import { User, Role } from "@/types";
+import { User, RoleDescriptor } from "@/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { SimpleTooltip } from "@/components/shared/SimpleTooltip";
 
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
+  const [roles, setRoles] = useState<RoleDescriptor[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [searchQuery, setSearchQuery] = useState("");
@@ -85,8 +85,8 @@ export default function Users() {
         apiService.getUsers(),
         apiService.getRoles()
       ]);
-      setUsers(usersRes.data || []);
-      setRoles(rolesRes.data || []);
+      setUsers(usersRes.data.data || usersRes.data || []);
+      setRoles(rolesRes.data.data || rolesRes.data || []);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast.error("Failed to load users");
@@ -129,7 +129,7 @@ export default function Users() {
 
     try {
       if (editingUser) {
-        await apiService.updateUser(editingUser.id, formData);
+        await apiService.updateUser(parseInt(editingUser.id), formData);
         toast.success("User updated successfully");
       } else {
         await apiService.createUser(formData);
@@ -142,10 +142,10 @@ export default function Users() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
     try {
-      await apiService.deleteUser(id);
+      await apiService.deleteUser(parseInt(id));
       toast.success("User deleted successfully");
       fetchData();
     } catch (error) {

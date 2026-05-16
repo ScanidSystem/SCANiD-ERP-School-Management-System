@@ -788,7 +788,7 @@ export default function Students({ user }: { user: UserType }) {
                               disabled={user.role !== "superadmin" && !!user.schoolId}
                             >
                               <SelectTrigger 
-                                ref={el => inputRefs.current["schoolId"] = el}
+                                ref={el => { inputRefs.current["schoolId"] = el; }}
                                 id="school" 
                                 className={cn(
                                   "h-10 border-slate-200 bg-slate-50/50 font-bold text-slate-800 rounded-xl px-4 focus:ring-2 focus:ring-blue-500/5 transition-all text-sm",
@@ -834,7 +834,7 @@ export default function Students({ user }: { user: UserType }) {
                             }}
                           >
                             <SelectTrigger 
-                              ref={el => inputRefs.current["STD"] = el}
+                              ref={el => { inputRefs.current["STD"] = el; }}
                               id="STD" 
                               className={cn(
                                 "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
@@ -864,7 +864,7 @@ export default function Students({ user }: { user: UserType }) {
                             }}
                           >
                             <SelectTrigger 
-                              ref={el => inputRefs.current["DIV"] = el}
+                              ref={el => { inputRefs.current["DIV"] = el; }}
                               id="DIV" 
                               className={cn(
                                 "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
@@ -937,7 +937,7 @@ export default function Students({ user }: { user: UserType }) {
                           <div className="space-y-1.5">
                             <Label htmlFor="registrationNumber" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.registrationNumber ? "text-red-500" : "text-slate-500")}>Registration (GRNO) {formErrors.registrationNumber && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["registrationNumber"] = el}
+                              ref={el => { inputRefs.current["registrationNumber"] = el; }}
                               id="registrationNumber" 
                               value={newStudentFormData.registrationNumber} 
                               onChange={(e) => {
@@ -954,7 +954,7 @@ export default function Students({ user }: { user: UserType }) {
                           <div className="space-y-1.5">
                             <Label htmlFor="ROLLNO" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.ROLLNO ? "text-red-500" : "text-slate-500")}>Roll Number {formErrors.ROLLNO && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["ROLLNO"] = el}
+                              ref={el => { inputRefs.current["ROLLNO"] = el; }}
                               id="ROLLNO" 
                               value={newStudentFormData.ROLLNO} 
                               onChange={(e) => {
@@ -978,7 +978,7 @@ export default function Students({ user }: { user: UserType }) {
                               }}
                             >
                               <SelectTrigger 
-                                ref={el => inputRefs.current["GENDER"] = el}
+                                ref={el => { inputRefs.current["GENDER"] = el; }}
                                 id="GENDER" 
                                 className={cn(
                                   "h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm",
@@ -1000,7 +1000,7 @@ export default function Students({ user }: { user: UserType }) {
                           <div className="space-y-1.5">
                             <Label htmlFor="aadharcard" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.aadharcard ? "text-red-500" : "text-slate-500")}>Aadhar ID {formErrors.aadharcard && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["aadharcard"] = el}
+                              ref={el => { inputRefs.current["aadharcard"] = el; }}
                               id="aadharcard" 
                               value={newStudentFormData.aadharcard} 
                               maxLength={12}
@@ -1039,7 +1039,7 @@ export default function Students({ user }: { user: UserType }) {
                           <div className="space-y-1.5">
                             <Label htmlFor="FNAME" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.FNAME ? "text-red-500" : "text-slate-500")}>First Name {formErrors.FNAME && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["FNAME"] = el}
+                              ref={el => { inputRefs.current["FNAME"] = el; }}
                               id="FNAME" 
                               value={newStudentFormData.FNAME} 
                               onChange={(e) => {
@@ -1060,7 +1060,7 @@ export default function Students({ user }: { user: UserType }) {
                           <div className="md:col-span-2 space-y-1.5">
                             <Label htmlFor="LNAME" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.LNAME ? "text-red-500" : "text-slate-500")}>Last Name {formErrors.LNAME && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["LNAME"] = el}
+                              ref={el => { inputRefs.current["LNAME"] = el; }}
                               id="LNAME" 
                               value={newStudentFormData.LNAME} 
                               onChange={(e) => {
@@ -1077,7 +1077,7 @@ export default function Students({ user }: { user: UserType }) {
                           <div className="md:col-span-2 space-y-1.5">
                             <Label htmlFor="DOB" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.DOB ? "text-red-500" : "text-slate-500")}>Date of Birth {formErrors.DOB && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["DOB"] = el}
+                              ref={el => { inputRefs.current["DOB"] = el; }}
                               id="DOB" 
                               type="date" 
                               value={newStudentFormData.DOB} 
@@ -1239,7 +1239,7 @@ export default function Students({ user }: { user: UserType }) {
                         <div className="space-y-1.5">
                           <Label htmlFor="MOTHERNAME" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.MOTHERNAME ? "text-red-500" : "text-slate-500")}>Mother's Name {formErrors.MOTHERNAME && "*"}</Label>
                           <Input 
-                            ref={el => inputRefs.current["MOTHERNAME"] = el}
+                            ref={el => { inputRefs.current["MOTHERNAME"] = el; }}
                             id="MOTHERNAME" 
                             value={newStudentFormData.MOTHERNAME} 
                             onChange={(e) => {
@@ -1256,7 +1256,7 @@ export default function Students({ user }: { user: UserType }) {
                         <div className="space-y-1.5">
                           <Label htmlFor="MOBILE" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.MOBILE ? "text-red-500" : "text-slate-500")}>Mobile No. {formErrors.MOBILE && "*"}</Label>
                           <Input 
-                            ref={el => inputRefs.current["MOBILE"] = el}
+                            ref={el => { inputRefs.current["MOBILE"] = el; }}
                             id="MOBILE" 
                             type="tel" 
                             value={newStudentFormData.MOBILE} 
@@ -1276,7 +1276,7 @@ export default function Students({ user }: { user: UserType }) {
                         <div className="md:col-span-2 space-y-1.5">
                           <Label htmlFor="ADDRESS" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.ADDRESS ? "text-red-500" : "text-slate-500")}>Residential Address {formErrors.ADDRESS && "*"}</Label>
                           <Input 
-                            ref={el => inputRefs.current["ADDRESS"] = el}
+                            ref={el => { inputRefs.current["ADDRESS"] = el; }}
                             id="ADDRESS" 
                             value={newStudentFormData.ADDRESS} 
                             onChange={(e) => {

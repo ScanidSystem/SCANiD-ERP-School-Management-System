@@ -689,7 +689,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                 {activeTab === "schools" ? "School Name" : activeTab === "role-assignment" ? "Full Name" : activeTab === "navigation" ? "Navigation Title" : "Name / Label"} {(formErrors.name || formErrors.title) && "*"}
               </Label>
               <Input 
-                ref={el => inputRefs.current[activeTab === "navigation" ? "title" : "name"] = el}
+                ref={el => { inputRefs.current[activeTab === "navigation" ? "title" : "name"] = el; }}
                 id="name" 
                 placeholder={`Enter ${activeTab === "schools" ? "school name" : activeTab === "role-assignment" ? "user's full name" : activeTab === "navigation" ? "menu title" : "name"}...`}
                 className={cn(
@@ -897,7 +897,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                   }}
                 >
                   <SelectTrigger 
-                    ref={el => inputRefs.current["casteId"] = el}
+                    ref={el => { inputRefs.current["casteId"] = el; }}
                     className={cn(
                       "h-12 rounded-xl border-slate-200 bg-white font-bold px-4",
                       formErrors.casteId && "border-red-500 ring-2 ring-red-500/10"
@@ -931,7 +931,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                   }}
                 >
                   <SelectTrigger 
-                    ref={el => inputRefs.current["stateId"] = el}
+                    ref={el => { inputRefs.current["stateId"] = el; }}
                     className={cn(
                       "h-12 rounded-xl border-slate-200 bg-white font-bold px-4",
                       formErrors.stateId && "border-red-500 ring-2 ring-red-500/10"

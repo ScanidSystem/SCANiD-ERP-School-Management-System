@@ -67,7 +67,7 @@ import { toast } from "sonner";
 
 interface Teacher {
   id: string;
-  fullName: string;
+  name: string;
   email: string;
   phone: string;
   qualification: string;
@@ -148,7 +148,7 @@ export default function Teachers({ user }: { user: any }) {
 
         return {
           id: t.id?.toString() || "",
-          fullName: getVal("fullName") || "Unnamed Teacher",
+          name: getVal("name") || getVal("fullName") || "Unnamed Teacher",
           email: getVal("email") || "N/A",
           phone: getVal("contactNumber") || getVal("phone") || "N/A",
           qualification: getVal("qualification") || "N/A",
@@ -181,7 +181,7 @@ export default function Teachers({ user }: { user: any }) {
 
   const filteredTeachers = teachers
     .filter(t => {
-      const matchesSearch = t.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      const matchesSearch = (t.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
                           t.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           t.subject.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = filterStatus === "all" || t.status === filterStatus;
@@ -261,7 +261,7 @@ export default function Teachers({ user }: { user: any }) {
         status: formData.status,
         user: {
            username: formData.email.split('@')[0] + Date.now(),
-           fullName: `${formData.firstName} ${formData.lastName}`.trim(),
+           name: `${formData.firstName} ${formData.lastName}`.trim(),
            passwordHash: "temp123",
            email: formData.email,
            role: "teacher",
@@ -379,7 +379,7 @@ export default function Teachers({ user }: { user: any }) {
                               disabled={user.role !== "superadmin" && !!user.schoolId}
                             >
                               <SelectTrigger 
-                                ref={el => inputRefs.current["schoolId"] = el}
+                                ref={el => { inputRefs.current["schoolId"] = el; }}
                                 className={cn(
                                   "h-12 border-slate-100 bg-slate-50/50 font-black text-slate-800 rounded-2xl px-5 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm",
                                   formErrors.schoolId && "border-red-500 ring-2 ring-red-500/10",
@@ -419,7 +419,7 @@ export default function Teachers({ user }: { user: any }) {
                           <div className="space-y-2">
                             <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.firstName ? "text-red-500" : "text-slate-400")}>First Name {formErrors.firstName && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["firstName"] = el}
+                              ref={el => { inputRefs.current["firstName"] = el; }}
                               value={formData.firstName} 
                               onChange={e => {
                                 setFormData({...formData, firstName: e.target.value});
@@ -439,7 +439,7 @@ export default function Teachers({ user }: { user: any }) {
                           <div className="space-y-2">
                             <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.lastName ? "text-red-500" : "text-slate-400")}>Last Name {formErrors.lastName && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["lastName"] = el}
+                              ref={el => { inputRefs.current["lastName"] = el; }}
                               value={formData.lastName} 
                               onChange={e => {
                                 setFormData({...formData, lastName: e.target.value});
@@ -465,7 +465,7 @@ export default function Teachers({ user }: { user: any }) {
                           <div className="space-y-2">
                             <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.email ? "text-red-500" : "text-slate-400")}>Email Protocol {formErrors.email && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["email"] = el}
+                              ref={el => { inputRefs.current["email"] = el; }}
                               type="email" 
                               value={formData.email} 
                               onChange={e => {
@@ -482,7 +482,7 @@ export default function Teachers({ user }: { user: any }) {
                           <div className="space-y-2">
                             <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.phone ? "text-red-500" : "text-slate-400")}>Direct Line {formErrors.phone && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["phone"] = el}
+                              ref={el => { inputRefs.current["phone"] = el; }}
                               value={formData.phone} 
                               maxLength={10}
                               onChange={e => {
@@ -509,7 +509,7 @@ export default function Teachers({ user }: { user: any }) {
                           <div className="space-y-2">
                             <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.qualification ? "text-red-500" : "text-slate-400")}>Education Deck {formErrors.qualification && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["qualification"] = el}
+                              ref={el => { inputRefs.current["qualification"] = el; }}
                               value={formData.qualification} 
                               onChange={e => {
                                 setFormData({...formData, qualification: e.target.value});
@@ -539,7 +539,7 @@ export default function Teachers({ user }: { user: any }) {
                         <div className="space-y-2">
                           <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.subject ? "text-red-500" : "text-slate-400")}>Primary Domain {formErrors.subject && "*"}</Label>
                           <Input 
-                            ref={el => inputRefs.current["subject"] = el}
+                            ref={el => { inputRefs.current["subject"] = el; }}
                             value={formData.subject} 
                             onChange={e => {
                               setFormData({...formData, subject: e.target.value});
@@ -630,9 +630,9 @@ export default function Teachers({ user }: { user: any }) {
                       Index ID <ChevronDown size={14} className={cn("transition-all opacity-0 group-hover:opacity-100", sortConfig?.key === 'employeeId' && sortConfig.direction === 'desc' && "rotate-180 opacity-100 text-blue-600")} />
                     </div>
                   </TableHead>
-                  <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('fullName')}>
+                  <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('name')}>
                     <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                      Faculty Entity <ChevronDown size={14} className={cn("transition-all opacity-0 group-hover:opacity-100", sortConfig?.key === 'fullName' && sortConfig.direction === 'desc' && "rotate-180 opacity-100 text-blue-600")} />
+                      Faculty Entity <ChevronDown size={14} className={cn("transition-all opacity-0 group-hover:opacity-100", sortConfig?.key === 'name' && sortConfig.direction === 'desc' && "rotate-180 opacity-100 text-blue-600")} />
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('subject')}>
@@ -673,11 +673,11 @@ export default function Teachers({ user }: { user: any }) {
                       <div className="flex items-center gap-4">
                         <Avatar className="h-11 w-11 ring-4 ring-white shadow-lg shadow-slate-200 transition-transform group-hover:scale-105">
                           <AvatarFallback className="bg-indigo-600 text-white font-black uppercase text-sm">
-                            {teacher.fullName[0]}
+                            {(teacher.name || "U")[0]}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col truncate max-w-[180px]">
-                          <span className="font-black text-slate-900 leading-none text-sm tracking-tight mb-1">{teacher.fullName}</span>
+                          <span className="font-black text-slate-900 leading-none text-sm tracking-tight mb-1">{teacher.name}</span>
                           <span className="text-[10px] text-slate-400 font-bold italic truncate">{teacher.email}</span>
                         </div>
                       </div>
@@ -714,7 +714,7 @@ export default function Teachers({ user }: { user: any }) {
                             <DropdownMenuItem className="gap-4 py-3 px-4 rounded-xl cursor-pointer focus:bg-indigo-50 group/item" onClick={() => {
                               setSelectedTeacher(teacher);
                               setIsEditing(true);
-                              const names = teacher.fullName.split(' ');
+                              const names = (teacher.name || "").split(' ');
                               setFormData({
                                 firstName: names[0],
                                 lastName: names.slice(-1)[0],
@@ -736,7 +736,7 @@ export default function Teachers({ user }: { user: any }) {
                                  <span className="text-[9px] text-slate-400 font-bold uppercase italic">Update qualifications</span>
                               </div>
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-4 py-3 px-4 rounded-xl cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50 group/del" onClick={() => handleDeleteTeacher(teacher.id, teacher.fullName)}>
+                            <DropdownMenuItem className="gap-4 py-3 px-4 rounded-xl cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50 group/del" onClick={() => handleDeleteTeacher(teacher.id, teacher.name)}>
                               <div className="p-2.5 bg-red-50 text-red-600 rounded-xl group-hover/del:bg-red-600 group-hover/del:text-white transition-colors">
                                 <Trash2 size={16} />
                               </div>

@@ -17,10 +17,10 @@ interface SimpleTooltipProps {
  * A highly accessible tooltip wrapper for improved ADA compliance and UX.
  * Provides hover over text for elements that might need additional context.
  */
-export function SimpleTooltip({ children, content, side = "top", nativeButton }: SimpleTooltipProps) {
+export function SimpleTooltip({ children, content, side = "top" }: SimpleTooltipProps) {
   return (
     <Tooltip>
-      <TooltipTrigger asChild nativeButton={nativeButton}>
+      <TooltipTrigger asChild>
         {children}
       </TooltipTrigger>
       <TooltipContent 

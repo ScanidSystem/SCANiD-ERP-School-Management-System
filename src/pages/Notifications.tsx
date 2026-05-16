@@ -36,7 +36,7 @@ export default function Notifications() {
     setLoading(true);
     try {
       const response = await apiService.getNotifications();
-      setNotifications(response.data || []);
+      setNotifications(response.data.data || response.data || []);
     } catch (error) {
       console.error("Error fetching notifications:", error);
       toast.error("Failed to load notifications");
