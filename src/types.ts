@@ -12,6 +12,7 @@ export interface User {
   name: string;
   email: string;
   role: Role;
+  roleId?: number;
   username?: string;
   isActive?: boolean;
   schoolId?: string;

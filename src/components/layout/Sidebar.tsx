@@ -19,7 +19,7 @@ import {
   Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Role } from "@/types";
+import { Role, User } from "@/types";
 import { apiService } from "@/lib/api";
 import { motion, AnimatePresence } from "motion/react";
 import { SimpleTooltip } from "@/components/shared/SimpleTooltip";
@@ -31,15 +31,12 @@ interface NavItem {
   path: string;
   parentId: number | null;
   sortOrder: number;
-  roles: string[];
+  roleIds: number[];
   subItems?: NavItem[];
 }
 
 interface SidebarProps {
-  user: {
-    name: string;
-    role: Role;
-  };
+  user: User;
   onLogout: () => void;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
@@ -64,11 +61,11 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
     const fetchNavigation = async () => {
       try {
         setIsLoading(true);
-        // Normalize role to lowercase for consistency
-        const currentRole = user.role.toLowerCase().replace(/\s+/g, "");
+        // Preference for numeric RoleId for more robust RBAC filtering
+        const currentRoleId = user.roleId || 0;
         
-        // Pass user role to backend for efficient filtering
-        const response = await apiService.getNavigations(currentRole);
+        // Fetch navigation filtered by roleId from backend
+        const response = await apiService.getNavigations(currentRoleId);
         let rawData = response.data?.data || response.data || [];
         
         // Ensure rawData is an array
@@ -80,61 +77,63 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
         // Fallback to hardcoded defaults if API returns nothing
         if (rawData.length === 0) {
           console.warn("API returned empty navigation data, using hardcoded fallback");
+          // IDs: SuperAdmin=1, Admin=2, Teacher=3, Student=4, Parent=5, All=0
+          const allRoles = [1, 2, 3, 4, 5];
+          const staffRoles = [1, 2, 3];
+          const adminRoles = [1, 2];
+
           rawData = [
-            { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
+            { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roleIds: allRoles },
             
             // Academic Operations Group
-            { id: 2, title: "Academic Operations", icon: "BookOpen", path: null, parentId: null, sortOrder: 2, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
-            { id: 3, title: "Student Registry", icon: "GraduationCap", path: "/students", parentId: 2, sortOrder: 1, roles: ["superadmin", "admin", "teacher", "parent"] },
-            { id: 4, title: "Attendance Tracking", icon: "CalendarCheck", path: "/attendance", parentId: 2, sortOrder: 2, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
-            { id: 5, title: "Examination & Marks", icon: "BarChart3", path: "/marks", parentId: 2, sortOrder: 3, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
+            { id: 2, title: "Academic Operations", icon: "BookOpen", path: null, parentId: null, sortOrder: 2, roleIds: allRoles },
+            { id: 3, title: "Student Registry", icon: "GraduationCap", path: "/students", parentId: 2, sortOrder: 1, roleIds: [1, 2, 3, 5] },
+            { id: 4, title: "Attendance Tracking", icon: "CalendarCheck", path: "/attendance", parentId: 2, sortOrder: 2, roleIds: allRoles },
+            { id: 5, title: "Examination & Marks", icon: "BarChart3", path: "/marks", parentId: 2, sortOrder: 3, roleIds: allRoles },
             
             // Staff & HR Group
-            { id: 6, title: "Staff & HR", icon: "Users", path: null, parentId: null, sortOrder: 3, roles: ["superadmin", "admin"] },
-            { id: 7, title: "Teacher Catalog", icon: "UserCheck", path: "/teachers", parentId: 6, sortOrder: 1, roles: ["superadmin", "admin"] },
+            { id: 6, title: "Staff & HR", icon: "Users", path: null, parentId: null, sortOrder: 3, roleIds: adminRoles },
+            { id: 7, title: "Teacher Catalog", icon: "UserCheck", path: "/teachers", parentId: 6, sortOrder: 1, roleIds: adminRoles },
             
             // Administrative Group
-            { id: 8, title: "Administrative", icon: "ShieldCheck", path: null, parentId: null, sortOrder: 4, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
-            { id: 9, title: "Fee Management", icon: "CreditCard", path: "/fees", parentId: 8, sortOrder: 1, roles: ["superadmin", "admin", "parent"] },
-            { id: 10, title: "Communication Hub", icon: "MessageSquare", path: "/messages", parentId: 8, sortOrder: 2, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
+            { id: 8, title: "Administrative", icon: "ShieldCheck", path: null, parentId: null, sortOrder: 4, roleIds: allRoles },
+            { id: 9, title: "Fee Management", icon: "CreditCard", path: "/fees", parentId: 8, sortOrder: 1, roleIds: [1, 2, 5] },
+            { id: 10, title: "Communication Hub", icon: "MessageSquare", path: "/messages", parentId: 8, sortOrder: 2, roleIds: allRoles },
             
             // Masters & Config Group
-            { id: 11, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 5, roles: ["superadmin", "admin"] },
-            { id: 12, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 11, sortOrder: 1, roles: ["superadmin", "admin"] },
+            { id: 11, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 5, roleIds: adminRoles },
+            { id: 12, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 11, sortOrder: 1, roleIds: adminRoles },
             
             // RBAC Sub-group
-            { id: 13, title: "Access Control (RBAC)", icon: "Key", path: null, parentId: 11, sortOrder: 2, roles: ["superadmin", "admin"] },
-            { id: 14, title: "Role Master", icon: "Shield", path: "/configuration/role-master", parentId: 13, sortOrder: 1, roles: ["superadmin", "admin"] },
-            { id: 15, title: "Role Assignment", icon: "UserCheck", path: "/configuration/role-assignment", parentId: 13, sortOrder: 2, roles: ["superadmin", "admin"] },
+            { id: 13, title: "Access Control (RBAC)", icon: "Key", path: null, parentId: 11, sortOrder: 2, roleIds: adminRoles },
+            { id: 14, title: "Role Master", icon: "Shield", path: "/configuration/role-master", parentId: 13, sortOrder: 1, roleIds: adminRoles },
+            { id: 15, title: "Role Assignment", icon: "UserCheck", path: "/configuration/role-assignment", parentId: 13, sortOrder: 2, roleIds: adminRoles },
             
             // Menu Designer Sub-group
-            { id: 16, title: "Menu Designer", icon: "Layout", path: null, parentId: 11, sortOrder: 3, roles: ["superadmin", "admin"] },
-            { id: 17, title: "Navigation Builder", icon: "LayoutGrid", path: "/configuration/navigation", parentId: 16, sortOrder: 1, roles: ["superadmin", "admin"] },
+            { id: 16, title: "Menu Designer", icon: "Layout", path: null, parentId: 11, sortOrder: 3, roleIds: adminRoles },
+            { id: 17, title: "Navigation Builder", icon: "LayoutGrid", path: "/configuration/navigation", parentId: 16, sortOrder: 1, roleIds: adminRoles },
             
             // Academic Masters Sub-group
-            { id: 18, title: "Academic Masters", icon: "BookOpen", path: null, parentId: 11, sortOrder: 4, roles: ["superadmin", "admin"] },
-            { id: 19, title: "Standards & Grades", icon: "Layers", path: "/configuration/standards", parentId: 18, sortOrder: 1, roles: ["superadmin", "admin"] },
-            { id: 20, title: "Divisions/Sections", icon: "Hash", path: "/configuration/sections", parentId: 18, sortOrder: 2, roles: ["superadmin", "admin"] },
-            { id: 21, title: "Academic Years", icon: "Calendar", path: "/configuration/academic-years", parentId: 18, sortOrder: 3, roles: ["superadmin", "admin"] },
-            { id: 22, title: "Subject Registry", icon: "BookOpen", path: "/configuration/subjects", parentId: 18, sortOrder: 4, roles: ["superadmin", "admin"] },
+            { id: 18, title: "Academic Masters", icon: "BookOpen", path: null, parentId: 11, sortOrder: 4, roleIds: adminRoles },
+            { id: 19, title: "Standards & Grades", icon: "Layers", path: "/configuration/standards", parentId: 18, sortOrder: 1, roleIds: adminRoles },
+            { id: 20, title: "Divisions/Sections", icon: "Hash", path: "/configuration/sections", parentId: 18, sortOrder: 2, roleIds: adminRoles },
+            { id: 21, title: "Academic Years", icon: "Calendar", path: "/configuration/academic-years", parentId: 18, sortOrder: 3, roleIds: adminRoles },
+            { id: 22, title: "Subject Registry", icon: "BookOpen", path: "/configuration/subjects", parentId: 18, sortOrder: 4, roleIds: adminRoles },
             
-            { id: 23, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roles: ["superadmin"] }
+            { id: 23, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roleIds: [1] }
           ];
         }
 
         // 1. Map to consistent NavItem format and normalize values
         const flatItems: NavItem[] = rawData.map((item: any) => {
-          // Normalize roles: handle both 'roles' string array and 'navigationRoles' objects
-          let roles: string[] = [];
-          if (Array.isArray(item.roles)) {
-            roles = item.roles.map((r: any) => String(r).toLowerCase().replace(/\s+/g, ""));
+          let roleIds: number[] = [];
+          if (Array.isArray(item.roleIds)) {
+            roleIds = item.roleIds.map(Number);
           } else if (item.navigationRoles && Array.isArray(item.navigationRoles)) {
-            roles = item.navigationRoles
-              .map((nr: any) => nr.role?.name?.toLowerCase()?.replace(/\s+/g, ""))
-              .filter(Boolean);
+            roleIds = item.navigationRoles.map((nr: any) => Number(nr.roleId)).filter(Boolean);
           } else {
-            // Default roles if none specified - ensuring all standard roles are included
-            roles = ["superadmin", "admin", "teacher", "parent", "student"];
+            // Default: All roles can see if no specific roles defined
+            roleIds = [0];
           }
 
           return {
@@ -144,20 +143,20 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
             path: item.path || "#",
             parentId: item.parentId ? Number(item.parentId) : null,
             sortOrder: Number(item.sortOrder || 0),
-            roles
+            roleIds
           };
         });
 
-        // 2. Filter by role
-        // Superadmin bypasses filtering to see everything
-        const roleFiltered = currentRole === "superadmin" 
+        // 2. Filter by roleId
+        // SuperAdmin (ID: 1) bypasses filtering to see everything
+        const roleFiltered = currentRoleId === 1 
           ? flatItems 
           : flatItems.filter(item => 
-              item.roles.includes(currentRole) || 
-              item.roles.includes("all")
+              item.roleIds.includes(currentRoleId) || 
+              item.roleIds.includes(0)
             );
 
-        // 3. Recursive hierarchy builder with safety for circular refs or null parents
+        // 3. Recursive hierarchy builder
         const buildMenu = (pId: number | null): NavItem[] => {
           return roleFiltered
             .filter(item => item.parentId === pId)
@@ -173,10 +172,10 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
 
       } catch (error) {
         console.error("Failed to fetch navigation:", error);
-        // On error, show at least the dashboard and configuration as safety fallback
+        // On error, show minimal safety fallback
         setMenuItems([
-          { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roles: ["superadmin"] },
-          { id: 4000, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 2, roles: ["superadmin"] }
+          { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roleIds: [1, 2, 3, 4, 5] },
+          { id: 11, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 2, roleIds: [1, 2] }
         ]);
       } finally {
         setIsLoading(false);
@@ -184,7 +183,7 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
     };
 
     fetchNavigation();
-  }, [user.role]);
+  }, [user.roleId]);
 
   // Sync expanded items when path changes - Accordion behavior for navigation
   useEffect(() => {

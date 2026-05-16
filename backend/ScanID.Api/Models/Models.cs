@@ -72,6 +72,9 @@ namespace ScanID.Api.Models
         public string? Name { get; set; }
         public string? Email { get; set; }
         public string? Role { get; set; } = "student";
+        public int? RoleId { get; set; }
+        [ForeignKey("RoleId")]
+        public Role? RoleEntity { get; set; }
         public int? SchoolId { get; set; }
         [ForeignKey("SchoolId")]
         public School? School { get; set; }

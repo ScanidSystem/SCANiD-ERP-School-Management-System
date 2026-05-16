@@ -377,7 +377,7 @@ export const apiService = {
   deleteRole: (id: number) => api.delete(`/masters/roles/${id}`),
 
   // Navigation (Sidebar)
-  getNavigations: (role?: string) => api.get("/navigation", { params: { role } }),
+  getNavigations: (roleId?: number) => api.get("/navigation", { params: { roleId } }),
   createNavigation: (data: any) => api.post("/navigation", data),
   updateNavigation: (id: number, data: any) => api.put(`/navigation/${id}`, data),
   deleteNavigation: (id: number) => api.delete(`/navigation/${id}`),
