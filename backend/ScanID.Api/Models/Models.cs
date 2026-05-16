@@ -89,7 +89,7 @@ namespace ScanID.Api.Models
         public int? ParentId { get; set; }
         public int SortOrder { get; set; }
         public bool IsActive { get; set; } = true;
-        public ICollection<NavigationRole>? NavigationRoles { get; set; }
+        public ICollection<NavigationRole> NavigationRoles { get; set; } = new List<NavigationRole>();
     }
 
     /// <summary>

@@ -42,7 +42,7 @@ namespace ScanID.Api.Controllers
                     i.Path,
                     i.ParentId,
                     i.SortOrder,
-                    roles = i.NavigationRoles?.Select(nr => nr.Role?.Name.ToLower().Replace(" ", "")).ToArray() ?? new string[] { "superadmin" }
+                    roles = i.NavigationRoles.Select(nr => nr.Role?.Name.ToLower().Replace(" ", "") ?? "all").ToArray()
                 }).OrderBy(i => i.SortOrder).ToList();
 
                 // Filter by role if provided
