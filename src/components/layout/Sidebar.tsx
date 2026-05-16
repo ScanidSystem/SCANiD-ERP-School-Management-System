@@ -83,42 +83,42 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
           rawData = [
             { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
             
-            // Academic Operations Group (1000)
-            { id: 1000, title: "Academic Operations", icon: "BookOpen", path: null, parentId: null, sortOrder: 2, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
-            { id: 11, title: "Student Registry", icon: "GraduationCap", path: "/students", parentId: 1000, sortOrder: 1, roles: ["superadmin", "admin", "teacher", "parent"] },
-            { id: 12, title: "Attendance Tracking", icon: "CalendarCheck", path: "/attendance", parentId: 1000, sortOrder: 2, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
-            { id: 13, title: "Examination & Marks", icon: "BarChart3", path: "/marks", parentId: 1000, sortOrder: 3, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
+            // Academic Operations Group
+            { id: 2, title: "Academic Operations", icon: "BookOpen", path: null, parentId: null, sortOrder: 2, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
+            { id: 3, title: "Student Registry", icon: "GraduationCap", path: "/students", parentId: 2, sortOrder: 1, roles: ["superadmin", "admin", "teacher", "parent"] },
+            { id: 4, title: "Attendance Tracking", icon: "CalendarCheck", path: "/attendance", parentId: 2, sortOrder: 2, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
+            { id: 5, title: "Examination & Marks", icon: "BarChart3", path: "/marks", parentId: 2, sortOrder: 3, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
             
-            // Staff & HR Group (2000)
-            { id: 2000, title: "Staff & HR", icon: "Users", path: null, parentId: null, sortOrder: 3, roles: ["superadmin", "admin"] },
-            { id: 21, title: "Teacher Catalog", icon: "UserCheck", path: "/teachers", parentId: 2000, sortOrder: 1, roles: ["superadmin", "admin"] },
+            // Staff & HR Group
+            { id: 6, title: "Staff & HR", icon: "Users", path: null, parentId: null, sortOrder: 3, roles: ["superadmin", "admin"] },
+            { id: 7, title: "Teacher Catalog", icon: "UserCheck", path: "/teachers", parentId: 6, sortOrder: 1, roles: ["superadmin", "admin"] },
             
-            // Administrative Group (3000)
-            { id: 3000, title: "Administrative", icon: "ShieldCheck", path: null, parentId: null, sortOrder: 4, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
-            { id: 31, title: "Fee Management", icon: "CreditCard", path: "/fees", parentId: 3000, sortOrder: 1, roles: ["superadmin", "admin", "parent"] },
-            { id: 32, title: "Communication Hub", icon: "MessageSquare", path: "/messages", parentId: 3000, sortOrder: 2, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
+            // Administrative Group
+            { id: 8, title: "Administrative", icon: "ShieldCheck", path: null, parentId: null, sortOrder: 4, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
+            { id: 9, title: "Fee Management", icon: "CreditCard", path: "/fees", parentId: 8, sortOrder: 1, roles: ["superadmin", "admin", "parent"] },
+            { id: 10, title: "Communication Hub", icon: "MessageSquare", path: "/messages", parentId: 8, sortOrder: 2, roles: ["superadmin", "admin", "teacher", "parent", "student"] },
             
-            // Masters & Config Group (4000)
-            { id: 4000, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 5, roles: ["superadmin", "admin"] },
-            { id: 41, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 4000, sortOrder: 1, roles: ["superadmin", "admin"] },
+            // Masters & Config Group
+            { id: 11, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 5, roles: ["superadmin", "admin"] },
+            { id: 12, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 11, sortOrder: 1, roles: ["superadmin", "admin"] },
             
-            // Access Control Sub-group (42)
-            { id: 42, title: "Access Control (RBAC)", icon: "Key", path: null, parentId: 4000, sortOrder: 2, roles: ["superadmin", "admin"] },
-            { id: 421, title: "Role Master", icon: "Shield", path: "/configuration/role-master", parentId: 42, sortOrder: 1, roles: ["superadmin", "admin"] },
-            { id: 422, title: "Role Assignment", icon: "UserCheck", path: "/configuration/role-assignment", parentId: 42, sortOrder: 2, roles: ["superadmin", "admin"] },
+            // RBAC Sub-group
+            { id: 13, title: "Access Control (RBAC)", icon: "Key", path: null, parentId: 11, sortOrder: 2, roles: ["superadmin", "admin"] },
+            { id: 14, title: "Role Master", icon: "Shield", path: "/configuration/role-master", parentId: 13, sortOrder: 1, roles: ["superadmin", "admin"] },
+            { id: 15, title: "Role Assignment", icon: "UserCheck", path: "/configuration/role-assignment", parentId: 13, sortOrder: 2, roles: ["superadmin", "admin"] },
             
-            // Menu Designer Sub-group (43)
-            { id: 43, title: "Menu Designer", icon: "Layout", path: null, parentId: 4000, sortOrder: 3, roles: ["superadmin", "admin"] },
-            { id: 431, title: "Navigation Builder", icon: "LayoutGrid", path: "/configuration/navigation", parentId: 43, sortOrder: 1, roles: ["superadmin", "admin"] },
+            // Menu Designer Sub-group
+            { id: 16, title: "Menu Designer", icon: "Layout", path: null, parentId: 11, sortOrder: 3, roles: ["superadmin", "admin"] },
+            { id: 17, title: "Navigation Builder", icon: "LayoutGrid", path: "/configuration/navigation", parentId: 16, sortOrder: 1, roles: ["superadmin", "admin"] },
             
-            // Academic Masters Sub-group (44)
-            { id: 44, title: "Academic Masters", icon: "BookOpen", path: null, parentId: 4000, sortOrder: 4, roles: ["superadmin", "admin"] },
-            { id: 441, title: "Standards & Grades", icon: "Layers", path: "/configuration/standards", parentId: 44, sortOrder: 1, roles: ["superadmin", "admin"] },
-            { id: 442, title: "Divisions/Sections", icon: "Hash", path: "/configuration/sections", parentId: 44, sortOrder: 2, roles: ["superadmin", "admin"] },
-            { id: 443, title: "Academic Years", icon: "Calendar", path: "/configuration/academic-years", parentId: 44, sortOrder: 3, roles: ["superadmin", "admin"] },
-            { id: 444, title: "Subject Registry", icon: "BookOpen", path: "/configuration/subjects", parentId: 44, sortOrder: 4, roles: ["superadmin", "admin"] },
+            // Academic Masters Sub-group
+            { id: 18, title: "Academic Masters", icon: "BookOpen", path: null, parentId: 11, sortOrder: 4, roles: ["superadmin", "admin"] },
+            { id: 19, title: "Standards & Grades", icon: "Layers", path: "/configuration/standards", parentId: 18, sortOrder: 1, roles: ["superadmin", "admin"] },
+            { id: 20, title: "Divisions/Sections", icon: "Hash", path: "/configuration/sections", parentId: 18, sortOrder: 2, roles: ["superadmin", "admin"] },
+            { id: 21, title: "Academic Years", icon: "Calendar", path: "/configuration/academic-years", parentId: 18, sortOrder: 3, roles: ["superadmin", "admin"] },
+            { id: 22, title: "Subject Registry", icon: "BookOpen", path: "/configuration/subjects", parentId: 18, sortOrder: 4, roles: ["superadmin", "admin"] },
             
-            { id: 5000, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roles: ["superadmin"] }
+            { id: 23, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roles: ["superadmin"] }
           ];
         }
 
