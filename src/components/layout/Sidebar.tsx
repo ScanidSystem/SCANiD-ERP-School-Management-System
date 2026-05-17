@@ -69,7 +69,7 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
         let rawData = response.data?.data || response.data || [];
         
         // Ensure rawData is an array
-        if (!Array.isArray(rawData)) {
+        if (!rawData || !Array.isArray(rawData)) {
           console.warn("API did not return an array for navigation, using hardcoded fallback");
           rawData = [];
         }
@@ -374,7 +374,7 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
                 level === 0 ? "ml-9 pl-4 border-l border-white/5 mt-1" : "ml-4 pl-3 border-l border-white/5 mt-1"
               )}
             >
-              {item.subItems?.map((subItem) => renderNavItem(subItem, level + 1))}
+              {Array.isArray(item.subItems) && item.subItems.map((subItem) => renderNavItem(subItem, level + 1))}
             </motion.div>
           )}
         </AnimatePresence>
@@ -484,7 +484,7 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
             <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          menuItems.map((item) => renderNavItem(item))
+          Array.isArray(menuItems) && menuItems.map((item) => renderNavItem(item))
         )}
       </nav>
 

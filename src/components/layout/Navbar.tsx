@@ -58,14 +58,14 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
         apiService.getNotifications()
       ]);
       
-      const schoolData = Array.isArray(schoolsRes.data) ? schoolsRes.data : (schoolsRes.data?.data || []);
-      const yearData = Array.isArray(yearsRes.data) ? yearsRes.data : (yearsRes.data?.data || []);
-      const notifData = Array.isArray(notifsRes.data) ? notifsRes.data : (notifsRes.data?.data || []);
+      const schoolData = schoolsRes.data && Array.isArray(schoolsRes.data) ? schoolsRes.data : (schoolsRes.data && Array.isArray(schoolsRes.data.data) ? schoolsRes.data.data : []);
+      const yearData = yearsRes.data && Array.isArray(yearsRes.data) ? yearsRes.data : (yearsRes.data && Array.isArray(yearsRes.data.data) ? yearsRes.data.data : []);
+      const notifData = notifsRes.data && Array.isArray(notifsRes.data) ? notifsRes.data : (notifsRes.data && Array.isArray(notifsRes.data.data) ? notifsRes.data.data : []);
       
       setSchools(schoolData);
       setAcademicYears(yearData);
       setNotifications(notifData);
-      setUnreadCount(notifData.filter((n: any) => !n.isRead).length);
+      setUnreadCount(Array.isArray(notifData) ? notifData.filter((n: any) => !n.isRead).length : 0);
     } catch (error) {
       console.error("Navbar lookups error:", error);
     }
@@ -213,8 +213,8 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
         <SelectContent className="rounded-xl border-slate-100 shadow-xl">
           <SelectItem value="" className="text-xs italic text-slate-400">Select School Branch</SelectItem>
                   <SelectItem value="all" className="text-xs font-black text-blue-600">Global Admin View</SelectItem>
-                  {schools.map(s => (
-                    <SelectItem key={s.id} value={s.id.toString()} className="text-xs font-medium">{s.name}</SelectItem>
+                  {Array.isArray(schools) && schools.map(s => (
+                    <SelectItem key={s.id || Math.random()} value={s.id ? s.id.toString() : ""} className="text-xs font-medium">{s.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -241,8 +241,8 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
         </SelectTrigger>
         <SelectContent className="rounded-xl border-slate-100 shadow-xl">
           <SelectItem value="" className="text-xs italic text-slate-400">Select Academic Year</SelectItem>
-                {academicYears.map(y => (
-                  <SelectItem key={y.id} value={y.id.toString()} className="text-xs font-bold">
+                {Array.isArray(academicYears) && academicYears.map(y => (
+                  <SelectItem key={y.id || Math.random()} value={y.id ? y.id.toString() : ""} className="text-xs font-bold">
                     {y.name} {y.isCurrent ? "★" : ""}
                   </SelectItem>
                 ))}
@@ -342,7 +342,7 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
             </div>
             
             <div className="max-h-[350px] overflow-y-auto">
-              {notifications.length === 0 ? (
+              {Array.isArray(notifications) && notifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-8 text-center">
                   <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center mb-2">
                     <Bell size={18} className="text-slate-400" />
@@ -351,7 +351,7 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
                   <p className="text-[10px] text-slate-400 mt-1">No new notifications at the moment.</p>
                 </div>
               ) : (
-                notifications.map((notif) => (
+                Array.isArray(notifications) && notifications.map((notif) => (
                   <div 
                     key={notif.id}
                     className={cn(

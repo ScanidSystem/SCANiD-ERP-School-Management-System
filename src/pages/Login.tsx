@@ -47,8 +47,8 @@ export default function Login({ onLogin }: LoginProps) {
         apiService.getAcademicYears()
       ]);
       
-      const schoolData = Array.isArray(schoolsRes.data) ? schoolsRes.data : (schoolsRes.data?.data || []);
-      const yearData = Array.isArray(yearsRes.data) ? yearsRes.data : (yearsRes.data?.data || []);
+      const schoolData = schoolsRes.data && Array.isArray(schoolsRes.data) ? schoolsRes.data : (schoolsRes.data && Array.isArray(schoolsRes.data.data) ? schoolsRes.data.data : []);
+      const yearData = yearsRes.data && Array.isArray(yearsRes.data) ? yearsRes.data : (yearsRes.data && Array.isArray(yearsRes.data.data) ? yearsRes.data.data : []);
       
       setSchools(schoolData);
       setAcademicYears(yearData);
@@ -352,7 +352,7 @@ export default function Login({ onLogin }: LoginProps) {
                         <SelectItem value="" className="text-xs italic text-slate-400">Select Current School</SelectItem>
                         <SelectItem value="all" className="text-xs font-bold text-blue-400">All Schools (System-wide)</SelectItem>
                         {schools.map(s => (
-                          <SelectItem key={s.id} value={s.id.toString()} className="text-xs">{s.name}</SelectItem>
+                          <SelectItem key={s.id || Math.random()} value={s.id ? s.id.toString() : ""} className="text-xs">{s.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -384,9 +384,9 @@ export default function Login({ onLogin }: LoginProps) {
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-slate-800 text-white">
                       <SelectItem value="" className="text-xs italic text-slate-400">Select Academic Year</SelectItem>
-                      {academicYears.map(y => (
-                        <SelectItem key={y.id} value={y.id.toString()} className="text-xs">{y.name}</SelectItem>
-                      ))}
+                        {Array.isArray(academicYears) && academicYears.map(y => (
+                          <SelectItem key={y.id || Math.random()} value={y.id ? y.id.toString() : ""} className="text-xs">{y.name}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>

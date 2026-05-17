@@ -478,7 +478,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                         </TableCell>
                       </TableRow>
                     ))
-                  ) : filteredData.length === 0 ? (
+                  ) : (Array.isArray(filteredData) && filteredData.length === 0) ? (
                     <TableRow>
                       <TableCell colSpan={10} className="h-64 text-center">
                         <div className="flex flex-col items-center justify-center gap-3">
@@ -490,7 +490,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredData.map((item) => (
+                    Array.isArray(filteredData) && filteredData.map((item) => (
                       <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors border-slate-50/50 h-20 group">
                         <TableCell className="pl-8">
                            <span className="font-mono text-[11px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
@@ -537,7 +537,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                                   </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
-                                  {dependencies.roles?.map((role: any) => (
+                                  {Array.isArray(dependencies.roles) && dependencies.roles.map((role: any) => (
                                     <SelectItem key={role.id} value={role.name.toLowerCase().replace(' ', '')} className="text-[10px] font-black py-2.5 rounded-xl uppercase tracking-widest">
                                       {role.name}
                                     </SelectItem>
@@ -613,7 +613,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-wrap gap-1 max-w-[150px]">
-                                {item.roles?.map((r: string) => (
+                                {Array.isArray(item.roles) && item.roles.map((r: string) => (
                                   <Badge key={r} className="bg-slate-100 text-slate-500 rounded-md text-[9px] font-black uppercase px-1.5 py-0.5">
                                     {r}
                                   </Badge>
@@ -764,7 +764,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-slate-200 shadow-xl max-h-60">
                         <SelectItem value="" className="font-semibold py-2">None (Root)</SelectItem>
-                        {dependencies.parentNavs?.filter((n: any) => n.id !== editingItem?.id).map(n => (
+                        {Array.isArray(dependencies.parentNavs) && dependencies.parentNavs.filter((n: any) => n.id !== editingItem?.id).map(n => (
                           <SelectItem key={n.id} value={n.id.toString()} className="font-semibold py-2">
                             {n.title}
                           </SelectItem>
@@ -910,7 +910,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-200 shadow-xl">
                     <SelectItem value="" className="font-semibold py-2 text-slate-400 italic">Select Parent Caste</SelectItem>
-                    {dependencies.castes?.map(c => (
+                    {Array.isArray(dependencies.castes) && dependencies.castes.map(c => (
                       <SelectItem key={c.id} value={c.id.toString()} className="font-semibold py-2">
                         {c.name}
                       </SelectItem>
@@ -944,7 +944,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-200 shadow-xl">
                     <SelectItem value="" className="font-semibold py-2 text-slate-400 italic">Select State Name</SelectItem>
-                    {dependencies.states?.map(s => (
+                    {Array.isArray(dependencies.states) && dependencies.states.map(s => (
                       <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2">
                         {s.name}
                       </SelectItem>
