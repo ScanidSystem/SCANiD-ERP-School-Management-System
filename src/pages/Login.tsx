@@ -351,7 +351,7 @@ export default function Login({ onLogin }: LoginProps) {
                       <SelectContent className="bg-slate-900 border-slate-800 text-white">
                         <SelectItem value="" className="text-xs italic text-slate-400">Select Current School</SelectItem>
                         <SelectItem value="all" className="text-xs font-bold text-blue-400">All Schools (System-wide)</SelectItem>
-                        {schools.map(s => (
+                        {Array.isArray(schools) && schools.map(s => (
                           <SelectItem key={s.id || Math.random()} value={s.id ? s.id.toString() : ""} className="text-xs">{s.name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -363,7 +363,7 @@ export default function Login({ onLogin }: LoginProps) {
                       <School size={12} /> Current School
                     </Label>
                     <div className="h-9 flex items-center px-3 rounded-md bg-slate-800/30 border border-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-wider overflow-hidden truncate">
-                      {schools.length > 0 ? schools[0].name : "No Schools Configured"}
+                      {Array.isArray(schools) && schools.length > 0 ? schools[0].name : "No Schools Configured"}
                     </div>
                   </div>
                 )}

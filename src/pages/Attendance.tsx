@@ -177,7 +177,7 @@ export default function Attendance({ user }: { user: any }) {
                     <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">
                       Select School Branch
                     </SelectItem>
-                    {schools.map(s => (
+                    {Array.isArray(schools) && schools.map(s => (
                       <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
                         <div className="flex flex-col gap-0.5">
                           <span className="text-sm font-bold">{s.name}</span>
@@ -200,7 +200,7 @@ export default function Attendance({ user }: { user: any }) {
                 </SelectTrigger>
                 <SelectContent className="rounded-xl shadow-2xl border-slate-200 p-2">
                   <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Standard</SelectItem>
-                  {standardsMaster.map(std => (
+                  {Array.isArray(standardsMaster) && standardsMaster.map(std => (
                     <SelectItem key={std.id} value={std.name} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{std.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -217,7 +217,7 @@ export default function Attendance({ user }: { user: any }) {
                 </SelectTrigger>
                 <SelectContent className="rounded-xl shadow-2xl border-slate-200 p-2">
                   <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Class Section</SelectItem>
-                  {sectionsMaster.map(sec => (
+                  {Array.isArray(sectionsMaster) && sectionsMaster.map(sec => (
                     <SelectItem key={sec.id} value={sec.name} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Section {sec.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -266,7 +266,7 @@ export default function Attendance({ user }: { user: any }) {
                   </TableRow>
               </TableHeader>
                 <TableBody>
-                  {students.map((student) => (
+                  {Array.isArray(students) && students.map((student) => (
                     <TableRow key={student.id} className="hover:bg-slate-50/50 transition-colors group border-b border-slate-50/50 h-20">
                       <TableCell className="pl-8 font-mono text-xs font-black text-blue-600 bg-blue-50/50 px-2.5 py-1.5 rounded-lg border border-blue-100/50 mx-4 my-2 block sm:inline-block">{(student as any).grno || `GR-${student.id}`}</TableCell>
                       <TableCell className="font-mono text-xs font-bold text-slate-400 hidden sm:table-cell">{student.roll}</TableCell>

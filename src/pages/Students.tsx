@@ -1351,7 +1351,7 @@ export default function Students({ user }: { user: UserType }) {
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
                     <SelectItem value="all" className="rounded-xl font-bold py-2.5">All Grades</SelectItem>
-                    {standardsMaster.map(std => (
+                    {Array.isArray(standardsMaster) && standardsMaster.map(std => (
                       <SelectItem key={std.id} value={std.name} className="rounded-xl font-bold py-2.5">Grade {std.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -1366,7 +1366,7 @@ export default function Students({ user }: { user: UserType }) {
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
                     <SelectItem value="all" className="rounded-xl font-bold py-2.5">All Sections</SelectItem>
-                    {sectionsMaster.map(sec => (
+                    {Array.isArray(sectionsMaster) && sectionsMaster.map(sec => (
                       <SelectItem key={sec.id} value={sec.name} className="rounded-xl font-bold py-2.5">Section {sec.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -1402,7 +1402,7 @@ export default function Students({ user }: { user: UserType }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredStudents.length > 0 ? (
+              {Array.isArray(filteredStudents) && filteredStudents.length > 0 ? (
                 filteredStudents.map((student) => (
                   <TableRow key={student.id} className="hover:bg-slate-50/50 transition-colors group border-b border-slate-50/50 h-20">
                     <TableCell className="pl-8">

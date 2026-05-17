@@ -7,7 +7,8 @@ import path from "path";
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT || 3000);
+  // Enforce port 3000 for standard environment routing
+const PORT = 3000;
 
   app.use(cors());
   app.use(express.json());
@@ -588,7 +589,8 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`SCANID running at http://localhost:${PORT}`);
+    console.log(`SCANID Backend API and Application Server running at http://localhost:${PORT}`);
+    console.log(`Note: If running frontend separately, ensure VITE_API_BASE_URL points to /api`);
   });
 }
 
