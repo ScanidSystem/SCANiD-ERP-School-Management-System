@@ -132,7 +132,7 @@ export default function Notifications() {
                 onClick={() => setFilter("all")}
               >
                 All Notifications
-                <Badge className="ml-auto bg-slate-200 text-slate-700">{notifications.length}</Badge>
+                <Badge className="ml-auto bg-slate-200 text-slate-700">{Array.isArray(notifications) ? notifications.length : 0}</Badge>
               </Button>
               <Button 
                 variant={filter === "unread" ? "default" : "ghost"} 
@@ -141,7 +141,7 @@ export default function Notifications() {
               >
                 Unread
                 <Badge className="ml-auto bg-blue-100 text-blue-700">
-                  {notifications.filter(n => !n.isRead).length}
+                  {Array.isArray(notifications) ? notifications.filter(n => !n.isRead).length : 0}
                 </Badge>
               </Button>
             </CardContent>

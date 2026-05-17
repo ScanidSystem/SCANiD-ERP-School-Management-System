@@ -292,7 +292,7 @@ export default function Messages({ user }: { user: any }) {
           </div>
 
           <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 custom-scrollbar">
-            {filteredContacts.map((contact) => (
+            {Array.isArray(filteredContacts) && filteredContacts.map((contact) => (
               <motion.div
                 layout
                 key={contact.id}
@@ -377,7 +377,7 @@ export default function Messages({ user }: { user: any }) {
               ref={scrollRef}
               className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30 custom-scrollbar"
             >
-              {conversationMessages.map((msg, idx) => {
+              {Array.isArray(conversationMessages) && conversationMessages.map((msg, idx) => {
                 const isMine = msg.senderId === user.id;
                 return (
                   <motion.div

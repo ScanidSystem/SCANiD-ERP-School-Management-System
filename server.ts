@@ -594,8 +594,13 @@ const PORT = 3000;
   }
 
   httpServer.listen(PORT, "0.0.0.0", () => {
-    console.log(`SCANID Application running at http://localhost:${PORT}`);
-    console.log(`Frontend and API are both served on this port.`);
+    console.log("\n" + "=".repeat(60));
+    console.log(`🚀 SCANID ERP SYSTEM DEPLOYED SUCCESSFULLY`);
+    console.log(`🌐 Application URL: http://localhost:${PORT}`);
+    console.log(`📡 Backend API:      http://localhost:${PORT}/api`);
+    console.log("=".repeat(60) + "\n");
+    console.log(`[INFO] Unified Server: Serving React Frontend and Express API`);
+    console.log(`[HINT] Use http://localhost:${PORT} to access the application.`);
   }).on("error", (err: any) => {
     if (err.code === "EADDRINUSE") {
       console.error(`\n❌ [FATAL] Port ${PORT} is already in use by another process.`);

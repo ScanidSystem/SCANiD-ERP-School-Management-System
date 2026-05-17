@@ -609,7 +609,7 @@ export default function Teachers({ user }: { user: any }) {
                   <Download size={16} className="mr-2" /> Export
                 </Button>
                 <div className="h-6 w-px bg-slate-100 mx-2" />
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Total Records: {filteredTeachers.length}</p>
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Total Records: {Array.isArray(filteredTeachers) ? filteredTeachers.length : 0}</p>
             </div>
           </div>
         </CardHeader>
@@ -650,7 +650,7 @@ export default function Teachers({ user }: { user: any }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTeachers.length === 0 ? (
+                {(!Array.isArray(filteredTeachers) || filteredTeachers.length === 0) ? (
                   <TableRow>
                      <TableCell colSpan={6} className="h-64 text-center">
                         <div className="flex flex-col items-center justify-center gap-3">
@@ -662,7 +662,7 @@ export default function Teachers({ user }: { user: any }) {
                      </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTeachers.map((teacher) => (
+                  Array.isArray(filteredTeachers) && filteredTeachers.map((teacher) => (
                   <TableRow key={teacher.id} className="hover:bg-slate-50/50 transition-all group border-b border-slate-50/80 h-20">
                     <TableCell className="pl-8">
                        <span className="font-mono text-[11px] font-black text-blue-600 bg-blue-50/50 px-2.5 py-1 rounded-lg border border-blue-100/50 italic tracking-tighter">

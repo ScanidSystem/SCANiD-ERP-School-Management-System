@@ -237,10 +237,10 @@ export default function Users() {
                         </SelectTrigger>
                         <SelectContent className="rounded-2xl shadow-xl border-slate-100">
                             <SelectItem value="all">All Roles</SelectItem>
-                            {roles.map(role => (
+                            {Array.isArray(roles) && roles.map(role => (
                                 <SelectItem key={role.id} value={role.name.toLowerCase().replace(' ', '')}>{role.name}</SelectItem>
                             ))}
-                            {roles.length === 0 && (
+                            {(!Array.isArray(roles) || roles.length === 0) && (
                                 <>
                                     <SelectItem value="superadmin">Super Admin</SelectItem>
                                     <SelectItem value="admin">Admin</SelectItem>
@@ -285,7 +285,7 @@ export default function Users() {
                                         </TableCell>
                                     </TableRow>
                                 ))
-                            ) : filteredUsers.length === 0 ? (
+                            ) : (!Array.isArray(filteredUsers) || filteredUsers.length === 0) ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="h-64 text-center">
                                         <div className="flex flex-col items-center justify-center gap-3">
@@ -295,7 +295,7 @@ export default function Users() {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                filteredUsers.map((user) => (
+                                Array.isArray(filteredUsers) && filteredUsers.map((user) => (
                                     <TableRow key={user.id} className="hover:bg-blue-50/10 border-slate-50 h-20 group">
                                         <TableCell className="pl-6">
                                             <Avatar className="h-10 w-10 border-2 border-white shadow-sm ring-1 ring-slate-100">
@@ -348,7 +348,7 @@ export default function Users() {
                             <div key={i} className="h-48 bg-slate-50 animate-pulse rounded-3xl" />
                         ))
                     ) : (
-                        filteredUsers.map(user => (
+                        Array.isArray(filteredUsers) && filteredUsers.map(user => (
                             <Card key={user.id} className="border-none shadow-sm rounded-3xl bg-slate-50/50 hover:bg-white hover:shadow-md transition-all group overflow-hidden border-2 border-transparent hover:border-blue-100">
                                 <CardContent className="p-6">
                                     <div className="flex flex-col items-center text-center">
