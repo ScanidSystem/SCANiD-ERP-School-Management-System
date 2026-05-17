@@ -38,7 +38,9 @@ Follow these steps to set up the application on your local machine with a .NET C
    ```
 3. Create a `.env` file in the root directory (if not present) and add your API URL:
    ```env
-   VITE_API_BASE_URL=http://localhost:5000/api
+   VITE_API_BASE_URL=/api
+
+   *Note: In the unified production/dev environment, the frontend and backend are both served on port 3000.*
    ```
 4. Start the development server:
    ```bash

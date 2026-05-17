@@ -485,6 +485,12 @@ const PORT = 3000;
 
   // Notifications
   app.get("/api/notifications", (req, res) => res.json({ data: notifications }));
+  app.get("/api/notifications/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    const notif = notifications.find(n => n.id === id);
+    if (notif) res.json({ data: notif });
+    else res.status(404).json({ message: "Notification not found" });
+  });
   app.put("/api/notifications/:id/read", (req, res) => {
     const id = parseInt(req.params.id);
     const index = notifications.findIndex(n => n.id === id);
@@ -492,7 +498,7 @@ const PORT = 3000;
       notifications[index].isRead = true;
       res.json({ data: notifications[index] });
     } else {
-      res.status(404).json({ message: "Not found" });
+      res.status(404).json({ message: "Notification not found" });
     }
   });
   app.delete("/api/notifications/:id", (req, res) => {
@@ -505,7 +511,7 @@ const PORT = 3000;
   app.get("/api/messages", (req, res) => res.json({ data: messages }));
   app.post("/api/messages", (req, res) => {
     const newMessage = {
-      id: messages.length + 1,
+      id: messages.length > 0 ? Math.max(...messages.map(m => m.id)) + 1 : 1,
       senderId: req.body.senderId || 1,
       createdAt: new Date().toISOString(),
       isRead: false,
@@ -521,7 +527,7 @@ const PORT = 3000;
       messages[index].isRead = true;
       res.json({ data: messages[index] });
     } else {
-      res.status(404).json({ message: "Not found" });
+      res.status(404).json({ message: "Message not found" });
     }
   });
 
@@ -530,7 +536,7 @@ const PORT = 3000;
     const userRole = req.query.role as string;
     let filtered = navigationItems;
     if (userRole && userRole !== "all") {
-      filtered = navigationItems.filter(item => item.roles.includes(userRole));
+      filtered = navigationItems.filter(item => Array.isArray(item.roles) && item.roles.includes(userRole));
     }
     res.json({ data: filtered });
   });
@@ -552,7 +558,7 @@ const PORT = 3000;
       navigationItems[index] = { ...navigationItems[index], ...req.body };
       res.json({ data: navigationItems[index] });
     } else {
-      res.status(404).json({ message: "Not found" });
+      res.status(404).json({ message: "Navigation item not found" });
     }
   });
 
@@ -563,16 +569,38 @@ const PORT = 3000;
       navigationItems.splice(index, 1);
       res.status(204).send();
     } else {
-      res.status(404).json({ message: "Not found" });
+      res.status(404).json({ message: "Navigation item not found" });
     }
   });
 
-  // Alias for schools if called without /masters/
-  app.get("/api/schools", (req, res) => res.json({ data: schools }));
-  app.post("/api/schools", (req, res) => {
-    const newItem = { id: schools.length + 1, ...req.body, status: "Active" };
-    schools.push(newItem);
-    res.status(201).json({ data: newItem });
+  // Base API Route
+  app.get("/api", (req, res) => {
+    res.json({
+      status: "online",
+      name: "SCANID ERP API",
+      endpoints: [
+        "/api/health", 
+        "/api/stats", 
+        "/api/students", 
+        "/api/schools", 
+        "/api/teachers", 
+        "/api/users",
+        "/api/attendance",
+        "/api/notifications",
+        "/api/messages",
+        "/api/masters/*"
+      ]
+    });
+  });
+
+  // API Fail-safe catch-all (Must be BEFORE static/vite)
+  app.all("/api/*", (req, res) => {
+    console.warn(`[404] API Route Not Found: ${req.method} ${req.url}`);
+    res.status(404).json({ 
+      error: "API Endpoint Not Found", 
+      message: `The route ${req.url} is not implemented in this mock server.`,
+      availableEnpoints: "/api"
+    });
   });
 
   // File serving and Vite
