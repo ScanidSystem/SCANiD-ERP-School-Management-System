@@ -181,7 +181,7 @@ export default function Marks({ user }: { user: UserType }) {
                     </SelectTrigger>
                     <SelectContent className="rounded-[2rem] border-slate-100 shadow-3xl p-3 max-h-80">
                       <SelectItem value="" className="font-bold py-3 px-4 rounded-xl text-slate-400 italic">Select Academic Branch</SelectItem>
-                      {schools.map(s => (
+                      {Array.isArray(schools) && schools.map(s => (
                         <SelectItem key={s.id} value={s.id.toString()} className="font-black py-4 px-4 rounded-2xl focus:bg-indigo-50 focus:text-indigo-700 cursor-pointer">
                           <div className="flex flex-col gap-1">
                             <span className="text-sm uppercase tracking-tight">{s.name}</span>
@@ -262,7 +262,7 @@ export default function Marks({ user }: { user: UserType }) {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {sortedMarks.map((result) => (
+                        {Array.isArray(sortedMarks) && sortedMarks.map((result) => (
                           <TableRow key={result.id} className="group hover:bg-slate-50/50 transition-all border-b border-slate-50/80 h-20">
                             <TableCell className="pl-8">
                               <div className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors tracking-tight text-sm mb-1">

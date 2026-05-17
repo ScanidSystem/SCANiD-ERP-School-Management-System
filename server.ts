@@ -4,9 +4,11 @@ import cors from "cors";
 import "dotenv/config";
 import { createServer as createViteServer } from "vite";
 import path from "path";
+import http from "http";
 
 async function startServer() {
   const app = express();
+  const httpServer = http.createServer(app);
   // Enforce port 3000 for standard environment routing
 const PORT = 3000;
 
@@ -576,7 +578,10 @@ const PORT = 3000;
   // File serving and Vite
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { 
+        middlewareMode: true,
+        hmr: { server: httpServer }
+      },
       appType: "spa",
     });
     app.use(vite.middlewares);
@@ -588,9 +593,9 @@ const PORT = 3000;
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`SCANID Backend API and Application Server running at http://localhost:${PORT}`);
-    console.log(`Note: If running frontend separately, ensure VITE_API_BASE_URL points to /api`);
+  httpServer.listen(PORT, "0.0.0.0", () => {
+    console.log(`SCANID Application running at http://localhost:${PORT}`);
+    console.log(`Frontend and API are both served on this port.`);
   });
 }
 

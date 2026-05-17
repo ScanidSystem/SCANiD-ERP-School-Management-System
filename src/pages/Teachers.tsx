@@ -395,7 +395,7 @@ export default function Teachers({ user }: { user: any }) {
                                 <SelectItem value="" className="font-bold py-3 px-4 rounded-xl focus:bg-slate-50 text-slate-400 italic">
                                   Select Campus
                                 </SelectItem>
-                                {schools.length > 0 ? (
+                                {Array.isArray(schools) && schools.length > 0 ? (
                                   schools.map(s => (
                                     <SelectItem key={s.id} value={s.id.toString()} className="font-black py-4 px-4 rounded-2xl focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
                                       <div className="flex flex-col gap-1">
