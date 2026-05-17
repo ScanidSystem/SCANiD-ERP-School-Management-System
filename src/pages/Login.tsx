@@ -120,16 +120,16 @@ export default function Login({ onLogin }: LoginProps) {
       // PERSIST LOGIN SELECTIONS TO USER OBJECT
       // This ensures the Navbar and other components reflect the choices made during login
       userData.academicYearId = selectedYear;
-      const year = academicYears.find(y => y.id.toString() === selectedYear);
+      const year = (Array.isArray(academicYears) ? academicYears : []).find(y => y.id.toString() === selectedYear);
       if (year) userData.academicYearName = year.name;
 
       if (selectedSchool && selectedSchool !== "all") {
         userData.schoolId = selectedSchool;
-        userData.schoolName = schools.find(s => s.id.toString() === selectedSchool)?.name;
+        userData.schoolName = (Array.isArray(schools) ? schools : []).find(s => s.id.toString() === selectedSchool)?.name;
       } else if (selectedSchool === "all") {
         userData.schoolId = "all";
         userData.schoolName = "All Schools";
-      } else if (role !== "superadmin" && schools.length > 0) {
+      } else if (role !== "superadmin" && Array.isArray(schools) && schools.length > 0) {
         // For non-superadmin, they are locked to their primary school
         userData.schoolId = schools[0].id.toString();
         userData.schoolName = schools[0].name;
@@ -148,8 +148,8 @@ export default function Login({ onLogin }: LoginProps) {
       if (import.meta.env.DEV && (!err.response || err.response.status >= 500)) {
         console.warn("API Error/Offline - Using dev fallback");
         const isAll = selectedSchool === "all";
-        const school = schools.find(s => s.id.toString() === selectedSchool);
-        const year = academicYears.find(y => y.id.toString() === selectedYear);
+        const school = (Array.isArray(schools) ? schools : []).find(s => s.id.toString() === selectedSchool);
+        const year = (Array.isArray(academicYears) ? academicYears : []).find(y => y.id.toString() === selectedYear);
         
         const ROLE_MAP: Record<string, number> = {
           "superadmin": 1,

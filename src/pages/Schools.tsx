@@ -632,7 +632,7 @@ export default function Schools({ user }: { user: UserType }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedSchools.map((school) => (
+                {Array.isArray(sortedSchools) && sortedSchools.map((school) => (
                   <TableRow key={school.id} className="hover:bg-slate-50/80 transition-colors group border-b border-slate-50">
                     <TableCell className="pl-8 font-mono text-xs font-black text-blue-600 italic">SCH-{school.id}</TableCell>
                     <TableCell>

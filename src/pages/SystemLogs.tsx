@@ -192,7 +192,7 @@ export default function SystemLogs({ user }: SystemLogsProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {auditLogs.length === 0 ? (
+                    {(!Array.isArray(auditLogs) || auditLogs.length === 0) ? (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center py-20">
                           <div className="flex flex-col items-center gap-3">
@@ -266,7 +266,7 @@ export default function SystemLogs({ user }: SystemLogsProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {errorLogs.length === 0 ? (
+                    {(!Array.isArray(errorLogs) || errorLogs.length === 0) ? (
                       <TableRow>
                         <TableCell colSpan={4} className="text-center py-20">
                           <div className="flex flex-col items-center gap-3">

@@ -820,7 +820,7 @@ export default function Students({ user }: { user: UserType }) {
                                 <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">
                                   Select School Branch
                                 </SelectItem>
-                                {schools.length > 0 ? (
+                                {Array.isArray(schools) && schools.length > 0 ? (
                                   schools.map(s => (
                                     <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
                                       <div className="flex flex-col gap-0.5">
@@ -862,7 +862,7 @@ export default function Students({ user }: { user: UserType }) {
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                               <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Grade</SelectItem>
-                              {standardsMaster.map(std => (
+                              {Array.isArray(standardsMaster) && standardsMaster.map(std => (
                                 <SelectItem key={std.id} value={std.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{std.name}</SelectItem>
                               ))}
                             </SelectContent>
@@ -892,7 +892,7 @@ export default function Students({ user }: { user: UserType }) {
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                               <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Section/Division</SelectItem>
-                              {sectionsMaster.map(sec => (
+                              {Array.isArray(sectionsMaster) && sectionsMaster.map(sec => (
                                 <SelectItem key={sec.id} value={sec.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Section {sec.name}</SelectItem>
                               ))}
                             </SelectContent>
@@ -912,7 +912,7 @@ export default function Students({ user }: { user: UserType }) {
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                               <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Year</SelectItem>
-                              {academicYears.map(y => (
+                              {Array.isArray(academicYears) && academicYears.map(y => (
                                 <SelectItem key={y.id} value={y.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{y.name} {y.isCurrent ? "(Current)" : ""}</SelectItem>
                               ))}
                             </SelectContent>
@@ -932,7 +932,7 @@ export default function Students({ user }: { user: UserType }) {
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                               <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Shift</SelectItem>
-                              {shifts.map(s => (
+                              {Array.isArray(shifts) && shifts.map(s => (
                                 <SelectItem key={s.id} value={s.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{s.name}</SelectItem>
                               ))}
                             </SelectContent>
@@ -1120,7 +1120,7 @@ export default function Students({ user }: { user: UserType }) {
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                                 <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Religion</SelectItem>
-                                {religions.map(r => (
+                                {Array.isArray(religions) && religions.map(r => (
                                   <SelectItem key={r.id} value={r.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{r.name}</SelectItem>
                                 ))}
                               </SelectContent>
@@ -1140,7 +1140,7 @@ export default function Students({ user }: { user: UserType }) {
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                                 <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Blood Group</SelectItem>
-                                {bloodGroups.map(bg => (
+                                {Array.isArray(bloodGroups) && bloodGroups.map(bg => (
                                   <SelectItem key={bg.id} value={bg.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{bg.name}</SelectItem>
                                 ))}
                               </SelectContent>
@@ -1160,7 +1160,7 @@ export default function Students({ user }: { user: UserType }) {
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                                 <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Caste Category</SelectItem>
-                                {castes.map(c => (
+                                {Array.isArray(castes) && castes.map(c => (
                                   <SelectItem key={c.id} value={c.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{c.name}</SelectItem>
                                 ))}
                               </SelectContent>
@@ -1181,7 +1181,7 @@ export default function Students({ user }: { user: UserType }) {
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                                 <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Sub-Caste</SelectItem>
-                                {subCastes
+                                {Array.isArray(subCastes) && subCastes
                                   .filter(sc => sc.casteId?.toString() === newStudentFormData.CASTE)
                                   .map(sc => (
                                     <SelectItem key={sc.id} value={sc.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{sc.name}</SelectItem>
@@ -1209,7 +1209,7 @@ export default function Students({ user }: { user: UserType }) {
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                               <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student House Group</SelectItem>
-                              {houses.map(h => (
+                              {Array.isArray(houses) && houses.map(h => (
                                 <SelectItem key={h.id} value={h.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
                                   <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: h.color }}></div>
@@ -1234,7 +1234,7 @@ export default function Students({ user }: { user: UserType }) {
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                               <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Admission Type</SelectItem>
-                              {admissionTypes.map(at => (
+                              {Array.isArray(admissionTypes) && admissionTypes.map(at => (
                                 <SelectItem key={at.id} value={at.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{at.name}</SelectItem>
                               ))}
                             </SelectContent>
@@ -1382,7 +1382,7 @@ export default function Students({ user }: { user: UserType }) {
                 ))}
               </div>
               <div className="text-xs text-slate-500">
-                <span className="font-black text-slate-900">{filteredStudents.length}</span> Active Registry Records
+                <span className="font-black text-slate-900">{Array.isArray(filteredStudents) ? filteredStudents.length : 0}</span> Active Registry Records
               </div>
             </div>
           </div>

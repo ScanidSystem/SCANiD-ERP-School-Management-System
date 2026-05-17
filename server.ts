@@ -596,6 +596,15 @@ const PORT = 3000;
   httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`SCANID Application running at http://localhost:${PORT}`);
     console.log(`Frontend and API are both served on this port.`);
+  }).on("error", (err: any) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(`\n❌ [FATAL] Port ${PORT} is already in use by another process.`);
+      console.error(`Please stop the application already running on port ${PORT} and try again.`);
+      console.error(`If you are a developer, ensure no other "npm run dev" or backend process is active on this port.\n`);
+      process.exit(1);
+    } else {
+      console.error("Server start error:", err);
+    }
   });
 }
 
