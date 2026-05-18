@@ -20,18 +20,30 @@ namespace ScanID.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves students for a specific school.
+        /// Retrieves students for a specific school and optionally an academic year.
         /// </summary>
         /// <param name="schoolId">Optional school ID filter.</param>
+        /// <param name="academicYearId">Optional academic year ID filter.</param>
         /// <returns>A list of students.</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Student>>> GetStudents(int? schoolId)
+        public async Task<ActionResult<IEnumerable<Student>>> GetStudents(int? schoolId, int? academicYearId)
         {
-            var query = _context.Students.AsNoTracking().AsQueryable();
+            var query = _context.Students
+                .Include(s => s.Standard)
+                .Include(s => s.Section)
+                .Include(s => s.AcademicYear)
+                .AsNoTracking().AsQueryable();
             
             if (schoolId.HasValue)
             {
                 query = query.Where(s => s.SchoolId == schoolId.Value);
+            }
+
+            if (academicYearId.HasValue)
+            {
+                // We support both the ID-based master link and the legacy string-based academicyear
+                // Try filtering by AcademicYearId first, or by the string representation if preferred
+                query = query.Where(s => s.AcademicYearId == academicYearId.Value || s.academicyear == academicYearId.Value.ToString());
             }
 
             return await query.ToListAsync();

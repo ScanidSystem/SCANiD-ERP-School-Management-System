@@ -47,51 +47,127 @@ const PORT = 3000;
   let students = [
     { 
       id: 1, 
-      grno: "1001", 
+      grno: "REG1001", 
       registrationNumber: "REG1001",
-      fullName: "Shivansh Sanjay Khopkar", 
-      firstName: "Shivansh",
-      lastName: "Khopkar",
-      dateOfBirth: "2018-04-27",
+      fullName: "SHIVANSH SANJAY KHOPKAR", 
+      firstName: "SHIVANSH",
+      lastName: "KHOPKAR",
+      dateOfBirth: "2020-04-27",
       standard: "1st", 
       section: "A", 
       rollNumber: 1, 
       gender: "Male",
       schoolId: 1,
+      academicYearId: 2,
+      academicyear: "2",
       standardId: 1,
       sectionId: 1,
       attendance: "95%",
       performance: "Excellent",
-      FNAME: "Shivansh",
-      MNAME: "Sanjay",
-      LNAME: "Khopkar",
-      DOB: "2018-04-27",
+      FNAME: "SHIVANSH",
+      MNAME: "SANJAY",
+      LNAME: "KHOPKAR",
+      DOB: "2020-04-27",
       MOBILE: "9823674019",
-      MOTHERNAME: "Sanjana Khopkar"
+      MOTHERNAME: "SANJANA",
+      STUDENTID: "REG1001",
+      STD: "1st",
+      DIV: "A",
+      ROLLNO: "1",
+      GRNO: "REG1001"
     },
     { 
       id: 2, 
-      grno: "1002", 
+      grno: "REG1002", 
       registrationNumber: "REG1002",
-      fullName: "Aavya Amit Patil", 
-      firstName: "Aavya",
-      lastName: "Patil",
-      dateOfBirth: "2018-08-20",
+      fullName: "AAVYA AMIT PATIL", 
+      firstName: "AAVYA",
+      lastName: "PATIL",
+      dateOfBirth: "2020-08-20",
       standard: "1st", 
       section: "A", 
       rollNumber: 2, 
       gender: "Female",
       schoolId: 1,
+      academicYearId: 2,
+      academicyear: "2",
       standardId: 1,
       sectionId: 1,
       attendance: "92%",
       performance: "Good",
-      FNAME: "Aavya",
-      MNAME: "Amit",
-      LNAME: "Patil",
-      DOB: "2018-08-20",
+      FNAME: "AAVYA",
+      MNAME: "AMIT",
+      LNAME: "PATIL",
+      DOB: "2020-08-20",
       MOBILE: "8888941563",
-      MOTHERNAME: "Amita Patil"
+      MOTHERNAME: "AMITA PATIL",
+      STUDENTID: "REG1002",
+      STD: "1st",
+      DIV: "A",
+      ROLLNO: "2",
+      GRNO: "REG1002"
+    },
+    { 
+      id: 3, 
+      grno: "REG/2024/003", 
+      registrationNumber: "REG/2024/003",
+      fullName: "LIAM WILSON", 
+      firstName: "LIAM",
+      lastName: "WILSON",
+      dateOfBirth: "2019-01-15",
+      standard: "2nd", 
+      section: "A", 
+      rollNumber: 3, 
+      gender: "Male",
+      schoolId: 1,
+      academicYearId: 2,
+      academicyear: "2",
+      standardId: 2,
+      sectionId: 1,
+      attendance: "88%",
+      performance: "Average",
+      FNAME: "LIAM",
+      MNAME: "",
+      LNAME: "WILSON",
+      DOB: "2019-01-15",
+      MOBILE: "9999999999",
+      MOTHERNAME: "SARAH WILSON",
+      STUDENTID: "REG/2024/003",
+      STD: "2nd",
+      DIV: "A",
+      ROLLNO: "3",
+      GRNO: "REG/2024/003"
+    },
+    { 
+      id: 4, 
+      grno: "REG/2024/003", 
+      registrationNumber: "REG/2024/003",
+      fullName: "RAJESH PATEL", 
+      firstName: "RAJESH",
+      lastName: "PATEL",
+      dateOfBirth: "2020-02-10",
+      standard: "1st", 
+      section: "A", 
+      rollNumber: 4, 
+      gender: "Male",
+      schoolId: 1,
+      academicYearId: 2,
+      academicyear: "2",
+      standardId: 1,
+      sectionId: 1,
+      attendance: "90%",
+      performance: "Good",
+      FNAME: "RAJESH",
+      MNAME: "",
+      LNAME: "PATEL",
+      DOB: "2020-02-10",
+      MOBILE: "8888888888",
+      MOTHERNAME: "MEENA PATEL",
+      STUDENTID: "REG/2024/003",
+      STD: "1st",
+      DIV: "A",
+      ROLLNO: "4",
+      GRNO: "REG/2024/003"
     }
   ];
 
@@ -284,9 +360,14 @@ const PORT = 3000;
   // Students
   app.get("/api/students", (req, res) => {
     const schoolId = req.query.schoolId ? parseInt(req.query.schoolId as string) : null;
+    const academicYearId = req.query.academicYearId ? parseInt(req.query.academicYearId as string) : null;
+    
     let filtered = students;
     if (schoolId) {
-      filtered = students.filter(s => s.schoolId === schoolId);
+      filtered = filtered.filter(s => s.schoolId === schoolId);
+    }
+    if (academicYearId) {
+      filtered = filtered.filter(s => s.academicYearId === academicYearId || s.academicyear === academicYearId.toString());
     }
     res.json({ data: filtered });
   });
@@ -372,17 +453,17 @@ const PORT = 3000;
           { id: 2, title: "Teacher Training", date: "2024-05-25", type: "Workshop" }
         ],
         attendanceTrend: [
-          { name: "Mon", present: 450, absent: 20 },
-          { name: "Tue", present: 440, absent: 30 },
-          { name: "Wed", present: 460, absent: 10 },
-          { name: "Thu", present: 455, absent: 15 },
-          { name: "Fri", present: 448, absent: 22 }
+          { day: "Mon", attendance: 92 },
+          { day: "Tue", attendance: 95 },
+          { day: "Wed", attendance: 88 },
+          { day: "Thu", attendance: 94 },
+          { day: "Fri", attendance: 91 }
         ],
         performanceData: [
-          { name: "Math", score: 85 },
-          { name: "Science", score: 78 },
-          { name: "English", score: 82 },
-          { name: "History", score: 75 }
+          { name: "Term 1", avg: 72, top: 94 },
+          { name: "Term 2", avg: 78, top: 96 },
+          { name: "Term 3", avg: 75, top: 93 },
+          { name: "Term 4", avg: 82, top: 98 }
         ]
       }
     });
@@ -392,10 +473,13 @@ const PORT = 3000;
   app.get("/api/marks", (req, res) => res.json({ data: [] }));
   app.get("/api/teachers", (req, res) => {
     const schoolId = req.query.schoolId ? parseInt(req.query.schoolId as string) : null;
+    const academicYearId = req.query.academicYearId ? parseInt(req.query.academicYearId as string) : null;
+    
     let filtered = teachers;
     if (schoolId) {
-      filtered = teachers.filter(t => t.schoolId === schoolId);
+      filtered = filtered.filter(t => t.schoolId === schoolId);
     }
+    // Teachers might not be filtered by academic year in this simple mock
     res.json({ data: filtered });
   });
 

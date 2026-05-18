@@ -20,19 +20,25 @@ namespace ScanID.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves attendance records for a specific date and optional school.
+        /// Retrieves attendance records for a specific date, optional school, and optional academic year.
         /// </summary>
         /// <param name="date">The date of attendance.</param>
         /// <param name="schoolId">Optional school filter.</param>
+        /// <param name="academicYearId">Optional academic year filter.</param>
         /// <returns>A list of attendance records.</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Attendance>>> GetAttendance(DateTime date, int? schoolId)
+        public async Task<ActionResult<IEnumerable<Attendance>>> GetAttendance(DateTime date, int? schoolId, int? academicYearId)
         {
             var query = _context.Attendance.Include(a => a.Student).AsNoTracking().AsQueryable();
             
             if (schoolId.HasValue)
             {
                 query = query.Where(a => a.Student!.SchoolId == schoolId.Value);
+            }
+
+            if (academicYearId.HasValue)
+            {
+                query = query.Where(a => a.Student!.AcademicYearId == academicYearId.Value || a.Student!.academicyear == academicYearId.Value.ToString());
             }
 
             return await query.Where(a => a.Date.Date == date.Date).ToListAsync();

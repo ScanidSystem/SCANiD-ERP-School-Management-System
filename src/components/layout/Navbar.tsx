@@ -66,6 +66,25 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
       setAcademicYears(yearData);
       setNotifications(notifData);
       setUnreadCount(Array.isArray(notifData) ? notifData.filter((n: any) => !n.isRead).length : 0);
+
+      // Auto-initialize school if not set
+      if (!user.schoolId && schoolData.length > 0) {
+        onUserUpdate({
+          ...user,
+          schoolId: schoolData[0].id.toString(),
+          schoolName: schoolData[0].name
+        });
+      }
+
+      // Auto-initialize academic year if not set
+      if (!user.academicYearId && yearData.length > 0) {
+        const currentYear = yearData.find((y: any) => y.isCurrent) || yearData[0];
+        onUserUpdate({
+          ...user,
+          academicYearId: currentYear.id.toString(),
+          academicYearName: currentYear.name
+        });
+      }
     } catch (error) {
       console.error("Navbar lookups error:", error);
     }

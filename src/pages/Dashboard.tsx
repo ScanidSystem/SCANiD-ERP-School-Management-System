@@ -60,8 +60,10 @@ export default function Dashboard({ user }: DashboardProps) {
         const parsedYearId = parseSafeInt(user.academicYearId);
 
         const res = await apiService.getStats(parsedSchoolId, parsedYearId);
-        const statsData = res.data?.data || res.data;
-        setStats(statsData);
+        if (res && res.data) {
+          const statsData = res.data.data || res.data;
+          setStats(statsData);
+        }
       } catch (error) {
         console.error("Dashboard error:", error);
       }

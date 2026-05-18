@@ -20,13 +20,14 @@ namespace ScanID.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves marks records, optionally filtered by student or school.
+        /// Retrieves marks records, optionally filtered by student, school, or academic year.
         /// </summary>
         /// <param name="studentId">Optional student filter.</param>
         /// <param name="schoolId">Optional school filter.</param>
+        /// <param name="academicYearId">Optional academic year filter.</param>
         /// <returns>A list of marks records.</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Mark>>> GetMarks(int? studentId, int? schoolId)
+        public async Task<ActionResult<IEnumerable<Mark>>> GetMarks(int? studentId, int? schoolId, int? academicYearId)
         {
             var query = _context.Marks.Include(m => m.Student).AsNoTracking().AsQueryable();
             
@@ -35,6 +36,9 @@ namespace ScanID.Api.Controllers
             
             if (schoolId.HasValue)
                 query = query.Where(m => m.Student!.SchoolId == schoolId.Value);
+
+            if (academicYearId.HasValue)
+                query = query.Where(m => m.Student!.AcademicYearId == academicYearId.Value || m.Student!.academicyear == academicYearId.Value.ToString());
 
             return await query.ToListAsync();
         }

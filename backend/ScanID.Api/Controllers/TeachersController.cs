@@ -20,15 +20,20 @@ namespace ScanID.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves a list of teachers, optionally filtered by school.
+        /// Retrieves a list of teachers, optionally filtered by school and academic year.
         /// </summary>
         /// <param name="schoolId">The school ID (optional).</param>
+        /// <param name="academicYearId">The academic year ID (optional).</param>
         /// <returns>A list of teachers with their linked user profiles.</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Teacher>>> GetTeachers(int? schoolId)
+        public async Task<ActionResult<IEnumerable<Teacher>>> GetTeachers(int? schoolId, int? academicYearId)
         {
             var query = _context.Teachers.Include(t => t.User).AsNoTracking().AsQueryable();
             if (schoolId.HasValue) query = query.Where(t => t.SchoolId == schoolId.Value);
+            
+            // Note: In some schemas, teachers are linked to academic years via classes or assignments.
+            // If the model is extended with such links, add the filter here.
+            
             return await query.ToListAsync();
         }
 
