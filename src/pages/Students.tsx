@@ -226,7 +226,7 @@ export default function Students({ user }: { user: UserType }) {
   
   const canManage = user.role === "superadmin" || user.role === "admin";
   
-  const [uploadingStudentId, setUploadingStudentId] = useState<number | null>(null);
+  const [uploadingStudentId, setUploadingStudentId] = useState<string | number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -330,25 +330,26 @@ export default function Students({ user }: { user: UserType }) {
     setIsBulkUploadOpen(true);
   };
 
-  const triggerPhotoUpload = (id: number) => {
+  const triggerPhotoUpload = (id: string | number) => {
     setUploadingStudentId(id);
     fileInputRef.current?.click();
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (uploadingStudentId && e.target.files?.[0]) {
+    if (uploadingStudentId !== null && e.target.files?.[0]) {
       const file = e.target.files[0];
       const studentId = uploadingStudentId;
       
       const loadingToast = toast.loading("Storing identity image on server...");
       try {
-        const response = await apiService.uploadStudentPhoto(studentId, file);
-        const newPath = response.data.path;
+        const response = await apiService.uploadStudentPhoto(Number(studentId), file);
+        // Correctly access path from nested data wrapper used by API
+        const newPath = response.data.data?.path || response.data.path;
         
         // Update local state with the new physical path from server
         // This ensures the image persists and uses the industry standard naming
         setStudents(prev => prev.map(s => 
-          s.id === studentId ? { ...s, photo: newPath, profilePhotoPath: newPath, ProfilePhotoPath: newPath } : s
+          s.id.toString() === studentId.toString() ? { ...s, photo: newPath, profilePhotoPath: newPath, ProfilePhotoPath: newPath } : s
         ));
         
         toast.dismiss(loadingToast);

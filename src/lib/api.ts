@@ -190,7 +190,7 @@ api.interceptors.response.use(
     const isServerError = error.response && error.response.status >= 500;
     const isNotFound = error.response && error.response.status === 404;
 
-    if (isNetworkError || isNotFound || isServerError) {
+    if ((isNetworkError || isNotFound || isServerError) && error.config?.method?.toLowerCase() === 'get') {
       const configUrl = error.config?.url || "";
       const urlWithPrefix = configUrl.split("?")[0];
       
@@ -257,11 +257,7 @@ export const apiService = {
   uploadStudentPhoto: (id: number, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    return api.post(`/students/${id}/photo`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    return api.post(`/students/${id}/photo`, formData);
   },
 
   // Marks
@@ -276,11 +272,7 @@ export const apiService = {
   uploadSchoolPhoto: (id: number, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    return api.post(`/schools/${id}/photo`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    return api.post(`/schools/${id}/photo`, formData);
   },
 
   // Teachers

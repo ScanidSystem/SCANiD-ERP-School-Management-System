@@ -174,11 +174,14 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !uploadingSchoolId) return;
+    if (!file || uploadingSchoolId === null) return;
 
     const loadingToast = toast.loading("Uploading institutional logo...");
     try {
-      await apiService.uploadSchoolPhoto(uploadingSchoolId, file);
+      const response = await apiService.uploadSchoolPhoto(uploadingSchoolId, file);
+      // Access path from potential data wrapper
+      const _newPath = response.data.data?.path || response.data.path;
+      
       toast.dismiss(loadingToast);
       toast.success("Institutional identity updated physically.");
       fetchData(); // Refresh to see the new logo

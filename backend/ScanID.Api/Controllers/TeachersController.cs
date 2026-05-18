@@ -13,10 +13,12 @@ namespace ScanID.Api.Controllers
     public class TeachersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public TeachersController(ApplicationDbContext context)
+        public TeachersController(ApplicationDbContext context, IWebHostEnvironment environment)
         {
             _context = context;
+            _environment = environment;
         }
 
         /// <summary>
@@ -110,6 +112,42 @@ namespace ScanID.Api.Controllers
 
             return NoContent();
         }
-    }
 
+        /// <summary>
+        /// Handles physical storage of teacher photos.
+        /// </summary>
+        [HttpPost("{id}/photo")]
+        public async Task<IActionResult> UploadPhoto(int id, [FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0) return BadRequest(new { message = "Empty payload" });
+
+            try
+            {
+                var teacher = await _context.Teachers.FindAsync(id);
+                if (teacher == null) return NotFound(new { message = "Teacher not found" });
+
+                var uploadsFolder = Path.Combine(_environment.WebRootPath ?? "wwwroot", "uploads", "teachers");
+                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                var fileName = $"teacher_{id}_{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                var filePath = Path.Combine(uploadsFolder, fileName);
+                var relativePath = $"/uploads/teachers/{fileName}";
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                teacher.ProfilePhotoPath = relativePath;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { data = new { path = relativePath } });
+            }
+            catch (Exception ex)
+            {
+                ScanID.Api.Utilities.FileLogger.LogError(ex);
+                return StatusCode(500, new { message = "Storage failed: " + ex.Message });
+            }
+        }
+    }
 }
