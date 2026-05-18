@@ -194,25 +194,38 @@ api.interceptors.response.use(
     if (isNetworkError || isNotFound) {
       const configUrl = error.config?.url || "";
       const urlWithPrefix = configUrl.split("?")[0];
-      const url = urlWithPrefix.startsWith("/api") ? urlWithPrefix.substring(4) : urlWithPrefix;
+      
+      // Better URL parsing to extract the relative path
+      let url = urlWithPrefix;
+      if (url.includes("/api/")) {
+        url = url.substring(url.indexOf("/api/") + 4);
+      } else if (url.startsWith("/api")) {
+        url = url.substring(4);
+      }
+      
+      // Clean up leading/trailing slashes for matching
+      const cleanUrl = "/" + url.replace(/^\/+/, "").replace(/\/+$/, "");
       
       console.warn(
-        `Backend connection issue at [${urlWithPrefix}]. Error: ${error.message}. Using demo fallback data for URL: ${url}`
+        `Backend connection issue at [${configUrl}]. Using demo fallback data for path: ${cleanUrl}`
       );
 
-      // Try exact match then startsWith for reliability
-      let mockKey = Object.keys(mockFallbacks).find(key => url === key || url === key + "/" || url === "/" + key);
+      // Try exact match in fallbacks
+      let mockKey = Object.keys(mockFallbacks).find(key => 
+        cleanUrl === key || cleanUrl === key + "/" || "/" + cleanUrl === key
+      );
       
       if (!mockKey) {
-        mockKey = Object.keys(mockFallbacks).find(key => url.startsWith(key));
+        mockKey = Object.keys(mockFallbacks).find(key => cleanUrl.startsWith(key));
       }
 
       if (mockKey) {
         const mockData = mockFallbacks[mockKey];
-        // Wrap in { data: [...] } for masters if the URL contains /masters/
-        const finalResponseData = url.includes("/masters/") || url === "/schools" || url === "/users" || url === "/navigation" || url === "/teachers" || url === "/students" || url === "/notifications" || url === "/messages" || url === "/auditlogs" || url === "/errorlogs" || url === "/errorlogs/filesystem"
-          ? { data: mockData }
-          : mockData;
+        // Wrap in { data: [...] } for specific paths
+        const needsDataWrap = cleanUrl.includes("/masters/") || 
+                            ["/schools", "/users", "/navigation", "/teachers", "/students", "/notifications", "/messages", "/auditlogs", "/errorlogs"].some(p => cleanUrl.startsWith(p));
+        
+        const finalResponseData = needsDataWrap ? { data: mockData } : mockData;
           
         return Promise.resolve({ data: finalResponseData });
       }
