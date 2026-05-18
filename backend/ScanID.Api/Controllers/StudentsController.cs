@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ScanID.Api.Data;
 using ScanID.Api.Models;
+using ScanID.Api.Utilities;
 
 namespace ScanID.Api.Controllers
 {

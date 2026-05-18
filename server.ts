@@ -410,7 +410,29 @@ const PORT = 3000;
   });
 
   app.post("/api/students/:id/photo", (req, res) => {
-    res.json({ data: { path: "https://api.dicebear.com/7.x/avataaars/svg?seed=" + req.params.id } });
+    const id = parseInt(req.params.id);
+    const index = students.findIndex(s => s.id === id);
+    const mockPath = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + id + "_" + Date.now();
+    if (index !== -1) {
+      // @ts-ignore
+      students[index].photo = mockPath;
+      // @ts-ignore
+      students[index].ProfilePhotoPath = mockPath;
+    }
+    res.json({ data: { path: mockPath } });
+  });
+
+  app.post("/api/schools/:id/photo", (req, res) => {
+    const id = parseInt(req.params.id);
+    const index = schools.findIndex(s => s.id === id);
+    const mockPath = "https://api.dicebear.com/7.x/initials/svg?seed=" + id + "_" + Date.now();
+    if (index !== -1) {
+      // @ts-ignore
+      schools[index].ProfilePhotoPath = mockPath;
+      // @ts-ignore
+      schools[index].profilePhotoPath = mockPath;
+    }
+    res.json({ data: { path: mockPath } });
   });
 
   // Attendance

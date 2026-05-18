@@ -29,7 +29,9 @@ import {
   Award,
   Briefcase,
   UserRound,
-  Hammer
+  Hammer,
+  Camera,
+  CameraIcon
 } from "lucide-react";
 import { 
   Card, 
@@ -77,6 +79,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { apiService } from "@/lib/api";
 import { Navigate } from "react-router-dom";
@@ -161,6 +164,34 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
     phone: "",
     email: ""
   });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingSchoolId, setUploadingSchoolId] = useState<number | null>(null);
+
+  const triggerPhotoUpload = (id: number) => {
+    setUploadingSchoolId(id);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadingSchoolId) return;
+
+    const loadingToast = toast.loading("Uploading institutional logo...");
+    try {
+      await apiService.uploadSchoolPhoto(uploadingSchoolId, file);
+      toast.dismiss(loadingToast);
+      toast.success("Institutional identity updated physically.");
+      fetchData(); // Refresh to see the new logo
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      toast.error("Failed to update logo physically. Check server permissions.");
+      console.error(error);
+    } finally {
+      setUploadingSchoolId(null);
+      if (e.target) e.target.value = "";
+    }
+  };
 
   /**
    * FETCH MASTER DATA
@@ -402,6 +433,13 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       </div>
 
       <Card className="dashboard-card border-none overflow-hidden">
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          accept="image/*" 
+          onChange={handleFileChange} 
+        />
         <div className="w-full">
           <div className="px-6 sm:px-8 py-8 border-b border-slate-50 bg-white/50 backdrop-blur-sm flex flex-col xl:flex-row xl:items-center justify-between gap-6">
             <div>
@@ -498,15 +536,33 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                            </span>
                         </TableCell>
                         <TableCell className="font-black text-slate-900 text-sm tracking-tight truncate max-w-[200px]">
-                          {activeTab === "navigation" && item.icon && (
-                            <span className="mr-2 inline-flex items-center">
-                              {(() => {
-                                const IconComp = (LucideIcons as any)[item.icon];
-                                return IconComp ? <IconComp size={16} className="text-blue-500" /> : null;
-                              })()}
-                            </span>
-                          )}
-                          {item.name || item.title || item.fullName}
+                          <div className="flex items-center gap-3">
+                            {activeTab === "schools" && (
+                              <div className="relative group shrink-0">
+                                <Avatar className="h-10 w-10 border-2 border-white shadow-sm ring-1 ring-slate-100 group-hover:ring-blue-400 group-hover:scale-105 transition-all">
+                                  <AvatarImage src={item.profilePhotoPath || item.ProfilePhotoPath} alt={item.name} className="object-cover" />
+                                  <AvatarFallback className="bg-slate-100 text-slate-400 text-[10px] font-black uppercase">
+                                    {(item.name || "S").split(' ').map((n: any) => n[0]).join('').substring(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <button 
+                                  onClick={() => triggerPhotoUpload(item.id)}
+                                  className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full shadow-md border border-slate-100 opacity-0 group-hover:opacity-100 transition-all hover:bg-blue-600 hover:text-white"
+                                >
+                                  <Camera size={8} />
+                                </button>
+                              </div>
+                            )}
+                            {activeTab === "navigation" && item.icon && (
+                              <span className="mr-2 inline-flex items-center">
+                                {(() => {
+                                  const IconComp = (LucideIcons as any)[item.icon];
+                                  return IconComp ? <IconComp size={16} className="text-blue-500" /> : null;
+                                })()}
+                              </span>
+                            )}
+                            <span className="truncate">{item.name || item.title || item.fullName}</span>
+                          </div>
                         </TableCell>
 
                         {activeTab === "role-assignment" && (
@@ -651,6 +707,11 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                               <DropdownMenuItem onClick={() => handleOpenDialog(item)} className="rounded-xl py-3 px-4 font-black transition-all text-xs uppercase tracking-widest text-slate-600 focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
                                 <Edit3 size={14} className="mr-3" /> Update Record
                               </DropdownMenuItem>
+                              {activeTab === "schools" && (
+                                <DropdownMenuItem onClick={() => triggerPhotoUpload(item.id)} className="rounded-xl py-3 px-4 font-black transition-all text-xs uppercase tracking-widest text-slate-600 focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
+                                  <CameraIcon size={14} className="mr-3" /> Update Logo
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem onClick={() => handleDelete(item.id)} className="rounded-xl py-3 px-4 font-black transition-all text-xs uppercase tracking-widest text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer">
                                 <Trash2 size={14} className="mr-3" /> {activeTab === "role-assignment" ? "Deactivate User" : "Purge Entry"}
                               </DropdownMenuItem>
