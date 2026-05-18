@@ -147,10 +147,10 @@ export default function Dashboard({ user }: DashboardProps) {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="h-[340px] w-full pt-4 pr-6 pb-6">
+          <CardContent className="h-[350px] w-full pt-6 pr-6 pb-6">
             {isMounted ? (
-              <div className="h-full w-full">
-                <ResponsiveContainer width="100%" height="100%" debounce={50} minWidth={0} minHeight={0}>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={performanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#e2e8f0" />
                     <XAxis 
@@ -207,10 +207,10 @@ export default function Dashboard({ user }: DashboardProps) {
             <CardTitle className="text-xl font-bold text-slate-900 leading-tight">Weekly Attendance</CardTitle>
             <CardDescription className="font-medium text-slate-400">Daily student presence status</CardDescription>
           </CardHeader>
-          <CardContent className="h-[340px] w-full pt-4 px-4 pb-6">
+          <CardContent className="h-[350px] w-full pt-6 px-4 pb-6">
             {isMounted ? (
-              <div className="h-full w-full">
-                <ResponsiveContainer width="100%" height="100%" debounce={50} minWidth={0} minHeight={0}>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={attendanceData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#e2e8f0" />
                     <XAxis 
