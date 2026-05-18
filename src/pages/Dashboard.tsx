@@ -57,8 +57,9 @@ export default function Dashboard({ user }: DashboardProps) {
     const fetchStats = async () => {
       try {
         const parsedSchoolId = parseSafeInt(user.schoolId);
+        const parsedYearId = parseSafeInt(user.academicYearId);
 
-        const res = await apiService.getStats(parsedSchoolId);
+        const res = await apiService.getStats(parsedSchoolId, parsedYearId);
         const statsData = res.data?.data || res.data;
         setStats(statsData);
       } catch (error) {
@@ -67,7 +68,7 @@ export default function Dashboard({ user }: DashboardProps) {
     };
     fetchStats();
     return () => clearTimeout(timer);
-  }, [user.schoolId]);
+  }, [user.schoolId, user.academicYearId]);
 
   return (
     <div className="space-y-4 sm:space-y-8 animate-in fade-in duration-500">

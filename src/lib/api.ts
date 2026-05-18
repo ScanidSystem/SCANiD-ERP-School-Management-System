@@ -247,8 +247,8 @@ export const apiService = {
     api.post("/auth/forgot-password", { username }),
 
   // Students
-  getStudents: (schoolId?: number) =>
-    api.get("/students", { params: { schoolId } }),
+  getStudents: (schoolId?: number, academicYearId?: number) =>
+    api.get("/students", { params: { schoolId, academicYearId } }),
   getStudentById: (id: number) => api.get(`/students/${id}`),
   createStudent: (data: any) => api.post("/students", data),
   bulkCreateStudents: (data: any[]) => api.post("/students/bulk", data),
@@ -265,7 +265,7 @@ export const apiService = {
   },
 
   // Marks
-  getMarks: (schoolId?: number) => api.get("/marks", { params: { schoolId } }),
+  getMarks: (schoolId?: number, academicYearId?: number) => api.get("/marks", { params: { schoolId, academicYearId } }),
 
   // Schools
   getSchools: () => api.get("/schools"),
@@ -275,22 +275,22 @@ export const apiService = {
   deleteSchool: (id: number) => api.delete(`/schools/${id}`),
 
   // Teachers
-  getTeachers: (schoolId?: number) =>
-    api.get("/teachers", { params: { schoolId } }),
+  getTeachers: (schoolId?: number, academicYearId?: number) =>
+    api.get("/teachers", { params: { schoolId, academicYearId } }),
   createTeacher: (data: any) => api.post("/teachers", data),
   updateTeacher: (id: number, data: any) => api.put(`/teachers/${id}`, data),
   deleteTeacher: (id: number) => api.delete(`/teachers/${id}`),
 
   // Stats
-  getStats: (schoolId?: number) => api.get("/stats", { params: { schoolId } }),
+  getStats: (schoolId?: number, academicYearId?: number) => api.get("/stats", { params: { schoolId, academicYearId } }),
 
   // Attendance
-  getAttendance: (date: string, schoolId?: number) =>
-    api.get("/attendance", { params: { date, schoolId } }),
+  getAttendance: (date: string, schoolId?: number, academicYearId?: number) =>
+    api.get("/attendance", { params: { date, schoolId, academicYearId } }),
   markAttendance: (data: any) => api.post("/attendance", data),
 
   // Fees
-  getFees: (schoolId?: number) => api.get("/fees", { params: { schoolId } }),
+  getFees: (schoolId?: number, academicYearId?: number) => api.get("/fees", { params: { schoolId, academicYearId } }),
 
   // System Logs
   getAuditLogs: () => api.get("/auditlogs"),

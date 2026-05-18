@@ -125,7 +125,10 @@ export default function Teachers({ user }: { user: any }) {
   const fetchTeachers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiService.getTeachers(parseSafeInt(user?.schoolId));
+      const res = await apiService.getTeachers(
+        parseSafeInt(user?.schoolId),
+        parseSafeInt(user?.academicYearId)
+      );
       
       const teacherData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
       
@@ -165,7 +168,7 @@ export default function Teachers({ user }: { user: any }) {
     } finally {
       setLoading(false);
     }
-  }, [user?.schoolId]);
+  }, [user?.schoolId, user?.academicYearId]);
 
   useEffect(() => {
     fetchTeachers();

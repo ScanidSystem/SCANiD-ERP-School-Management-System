@@ -74,7 +74,8 @@ export default function Attendance({ user }: { user: any }) {
       setLoading(true);
       try {
         const schoolIdToUse = user.role === "superadmin" ? parseSafeInt(selectedSchoolId) : parseSafeInt(user.schoolId);
-        const res = await apiService.getStudents(schoolIdToUse);
+        const academicYearIdToUse = parseSafeInt(user.academicYearId);
+        const res = await apiService.getStudents(schoolIdToUse, academicYearIdToUse);
         const studentData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
         setStudents(studentData.map((s: any) => {
           const getVal = (prop: string, fallback?: any) => {
@@ -95,7 +96,7 @@ export default function Attendance({ user }: { user: any }) {
       }
     };
     fetchStudents();
-  }, [user.schoolId, user.role, selectedSchoolId]);
+  }, [user.schoolId, user.academicYearId, user.role, selectedSchoolId]);
 
   const updateStatus = (id: string, status: string) => {
     if (!canManage) return;

@@ -59,7 +59,8 @@ export default function Fees({ user }: { user: any }) {
       setLoading(true);
       try {
         const schoolIdToUse = user.role === "superadmin" ? parseSafeInt(selectedSchoolId) : parseSafeInt(user.schoolId);
-        const res = await apiService.getFees(schoolIdToUse);
+        const academicYearIdToUse = parseSafeInt(user.academicYearId);
+        const res = await apiService.getFees(schoolIdToUse, academicYearIdToUse);
         setFees(res.data);
       } catch (error) {
         console.error("Fees error:", error);
@@ -68,7 +69,7 @@ export default function Fees({ user }: { user: any }) {
       }
     };
     if (isManagement) fetchFees();
-  }, [user.schoolId, isManagement, selectedSchoolId, user.role]);
+  }, [user.schoolId, user.academicYearId, isManagement, selectedSchoolId, user.role]);
 
   if (!isManagement && !isParent) {
     return <Navigate to="/" replace />;

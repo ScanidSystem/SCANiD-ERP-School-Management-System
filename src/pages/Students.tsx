@@ -138,7 +138,10 @@ export default function Students({ user }: { user: UserType }) {
   const fetchStudents = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiService.getStudents(parseSafeInt(user.schoolId));
+      const response = await apiService.getStudents(
+        parseSafeInt(user.schoolId),
+        parseSafeInt(user.academicYearId)
+      );
     const studentData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
     const formatted = studentData.map((s: any) => {
       // Helper to fetch data by ensuring case-insensitive property access for specific schema fields
@@ -214,7 +217,7 @@ export default function Students({ user }: { user: UserType }) {
     } finally {
       setLoading(false);
     }
-  }, [user.schoolId]);
+  }, [user.schoolId, user.academicYearId]);
 
   useEffect(() => {
     fetchStudents();

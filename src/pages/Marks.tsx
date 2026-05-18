@@ -64,7 +64,8 @@ export default function Marks({ user }: { user: UserType }) {
       setLoading(true);
       try {
         const schoolIdToUse = user.role === "superadmin" ? parseSafeInt(selectedSchoolId) : parseSafeInt(user.schoolId);
-        const res = await apiService.getMarks(schoolIdToUse);
+        const academicYearIdToUse = parseSafeInt(user.academicYearId);
+        const res = await apiService.getMarks(schoolIdToUse, academicYearIdToUse);
         const marksData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
         setMarks(marksData);
       } catch (error) {
@@ -74,7 +75,7 @@ export default function Marks({ user }: { user: UserType }) {
       }
     };
     fetchMarks();
-  }, [user.schoolId, user.role, selectedSchoolId]);
+  }, [user.schoolId, user.academicYearId, user.role, selectedSchoolId]);
 
   const requestSort = (key: string) => {
     let direction: "asc" | "desc" = "asc";
