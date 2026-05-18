@@ -18,6 +18,8 @@ interface SimpleTooltipProps {
  * Provides hover over text for elements that might need additional context.
  */
 export function SimpleTooltip({ children, content, side = "top" }: SimpleTooltipProps) {
+  if (!content) return <>{children}</>;
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>

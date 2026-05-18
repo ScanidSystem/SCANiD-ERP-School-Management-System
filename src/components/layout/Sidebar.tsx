@@ -429,7 +429,7 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
           </button>
         )}
 
-        <SimpleTooltip content={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"} side="right" nativeButton={true}>
+        <SimpleTooltip content={isCollapsed ? "Expand Sidebar" : ""} side="right" nativeButton={true}>
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="absolute -right-3 top-10 bg-blue-600 text-white rounded-full p-1.5 shadow-xl hover:bg-blue-500 transition-all z-50 border-2 border-slate-950 scale-100 hover:scale-110 active:scale-95 hidden lg:block"
