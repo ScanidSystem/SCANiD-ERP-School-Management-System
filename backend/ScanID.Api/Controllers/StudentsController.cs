@@ -13,10 +13,12 @@ namespace ScanID.Api.Controllers
     public class StudentsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public StudentsController(ApplicationDbContext context)
+        public StudentsController(ApplicationDbContext context, IWebHostEnvironment environment)
         {
             _context = context;
+            _environment = environment;
         }
 
         /// <summary>
@@ -172,11 +174,9 @@ namespace ScanID.Api.Controllers
         {
             if (file == null || file.Length == 0) 
             {
-                // If no file is provided, we can't proceed
                 return BadRequest(new { message = "No image file provided for upload." });
             }
 
-            // Fetch student with related master data to build hierarchical path
             var student = await _context.Students
                 .Include(s => s.School)
                 .Include(s => s.Standard)
@@ -190,44 +190,56 @@ namespace ScanID.Api.Controllers
 
             try 
             {
-                // Retrieve names from masters or use standard industry fallbacks
                 var schoolName = SanitizeFolderName(student.School?.Name ?? "General");
                 var standardName = SanitizeFolderName(student.Standard?.Name ?? student.STD ?? "Unassigned");
                 var divisionName = SanitizeFolderName(student.Section?.Name ?? student.DIV ?? "General");
 
-                // Define the dynamic physical upload location: /uploads/[schoolname]/[standard]/[division]
-                var relativeFolder = Path.Combine("uploads", schoolName, standardName, divisionName);
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativeFolder);
+                var relativeFolder = Path.Combine("uploads", "students", schoolName, standardName, divisionName);
                 
-                // Ensure the hierarchical directory structure exists on the physical machine
+                // Enhanced path resolution for robust folder creation across different environments
+                string webRootPath = _environment.WebRootPath;
+                if (string.IsNullOrEmpty(webRootPath))
+                {
+                    // Fallback 1: Try to find wwwroot in current directory
+                    webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                }
+                
+                // Fallback 2: If we are in a subfolder or different context, ensure we have a base
+                if (!Directory.Exists(webRootPath))
+                {
+                    Directory.CreateDirectory(webRootPath);
+                }
+
+                var uploadsFolder = Path.Combine(webRootPath, relativeFolder);
+                
+                // Ensure the hierarchical directory structure exists
                 if (!Directory.Exists(uploadsFolder)) 
                 {
                     Directory.CreateDirectory(uploadsFolder);
                 }
 
-                // Generate a unique filename using industry standard naming (prefix + id + timestamp)
                 var extension = Path.GetExtension(file.FileName);
                 var fileName = $"student_{id}_{DateTime.Now.Ticks}{extension}";
                 var filePath = Path.Combine(uploadsFolder, fileName);
 
-                // Save the file physically on the computer
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
                 }
 
-                // Delete old photo if it exists to maintain filesystem cleanliness
+                // Path for storage in DB and serving to frontend
+                var relativePath = $"/{relativeFolder.Replace("\\", "/")}/{fileName}";
+
                 if (!string.IsNullOrEmpty(student.ProfilePhotoPath))
                 {
-                    var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", student.ProfilePhotoPath.TrimStart('/'));
+                    var oldFilePath = Path.Combine(webRootPath, student.ProfilePhotoPath.TrimStart('/'));
                     if (System.IO.File.Exists(oldFilePath))
                     {
-                        System.IO.File.Delete(oldFilePath);
+                        try { System.IO.File.Delete(oldFilePath); } catch { /* ignore if fail */ }
                     }
                 }
 
-                // Update database with the new structured path
-                student.ProfilePhotoPath = $"/{relativeFolder.Replace("\\", "/")}/{fileName}";
+                student.ProfilePhotoPath = relativePath;
                 student.ModifiedOn = DateTime.Now;
                 
                 await _context.SaveChangesAsync();
@@ -239,7 +251,7 @@ namespace ScanID.Api.Controllers
             }
             catch (Exception ex)
             {
-                // Return detailed error for troubleshooting during development
+                FileLogger.LogError(ex);
                 return StatusCode(500, new { message = "Physical storage failed: " + ex.Message });
             }
         }

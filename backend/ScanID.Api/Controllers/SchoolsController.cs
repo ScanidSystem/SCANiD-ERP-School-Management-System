@@ -13,10 +13,12 @@ namespace ScanID.Api.Controllers
     public class SchoolsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public SchoolsController(ApplicationDbContext context)
+        public SchoolsController(ApplicationDbContext context, IWebHostEnvironment environment)
         {
             _context = context;
+            _environment = environment;
         }
 
         /// <summary>
@@ -112,7 +114,20 @@ namespace ScanID.Api.Controllers
             {
                 var schoolSnapshotName = SanitizeFolderName(school.Name);
                 var relativeFolder = Path.Combine("uploads", "schools", schoolSnapshotName);
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativeFolder);
+                
+                // Enhanced path resolution for robust folder creation
+                string webRootPath = _environment.WebRootPath;
+                if (string.IsNullOrEmpty(webRootPath))
+                {
+                    webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                }
+                
+                if (!Directory.Exists(webRootPath))
+                {
+                    Directory.CreateDirectory(webRootPath);
+                }
+
+                var uploadsFolder = Path.Combine(webRootPath, relativeFolder);
                 
                 if (!Directory.Exists(uploadsFolder)) 
                 {
@@ -128,17 +143,19 @@ namespace ScanID.Api.Controllers
                     await file.CopyToAsync(stream);
                 }
 
-                // Delete old photo if it exists
+                // Path for storage in DB and serving to frontend
+                var relativePath = $"/{relativeFolder.Replace("\\", "/")}/{fileName}";
+
                 if (!string.IsNullOrEmpty(school.ProfilePhotoPath))
                 {
-                    var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", school.ProfilePhotoPath.TrimStart('/'));
+                    var oldFilePath = Path.Combine(webRootPath, school.ProfilePhotoPath.TrimStart('/'));
                     if (System.IO.File.Exists(oldFilePath))
                     {
-                        System.IO.File.Delete(oldFilePath);
+                        try { System.IO.File.Delete(oldFilePath); } catch { /* ignore */ }
                     }
                 }
 
-                school.ProfilePhotoPath = $"/{relativeFolder.Replace("\\", "/")}/{fileName}";
+                school.ProfilePhotoPath = relativePath;
                 school.ModifiedOn = DateTime.Now;
                 
                 await _context.SaveChangesAsync();
@@ -150,6 +167,7 @@ namespace ScanID.Api.Controllers
             }
             catch (Exception ex)
             {
+                FileLogger.LogError(ex);
                 return StatusCode(500, new { message = "Physical storage failed: " + ex.Message });
             }
         }
