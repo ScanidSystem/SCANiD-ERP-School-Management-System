@@ -119,6 +119,15 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
             { id: 21, title: "Academic Years", icon: "Calendar", path: "/configuration/academic-years", parentId: 18, sortOrder: 3, roleIds: adminRoles },
             { id: 22, title: "Subject Registry", icon: "BookOpen", path: "/configuration/subjects", parentId: 18, sortOrder: 4, roleIds: adminRoles },
             
+            // General Masters Sub-group
+            { id: 45, title: "General Masters", icon: "Database", path: null, parentId: 11, sortOrder: 5, roleIds: adminRoles },
+            { id: 451, title: "Religions", icon: "Heart", path: "/configuration/religions", parentId: 45, sortOrder: 1, roleIds: adminRoles },
+            { id: 452, title: "Blood Group", icon: "Droplets", path: "/configuration/blood-groups", parentId: 45, sortOrder: 2, roleIds: adminRoles },
+            { id: 453, title: "Caste Category", icon: "Users", path: "/configuration/castes", parentId: 45, sortOrder: 3, roleIds: adminRoles },
+            { id: 454, title: "Sub-Caste", icon: "UserCircle", path: "/configuration/sub-castes", parentId: 45, sortOrder: 4, roleIds: adminRoles },
+            { id: 455, title: "School House", icon: "Home", path: "/configuration/houses", parentId: 45, sortOrder: 5, roleIds: adminRoles },
+            { id: 456, title: "Admission Types", icon: "UserCheck", path: "/configuration/admission-types", parentId: 45, sortOrder: 6, roleIds: adminRoles },
+
             { id: 23, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roleIds: [1] }
           ];
         }
