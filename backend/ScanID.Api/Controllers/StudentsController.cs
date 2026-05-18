@@ -28,11 +28,11 @@ namespace ScanID.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Student>>> GetStudents(int? schoolId, int? academicYearId)
         {
-            var query = _context.Students
+            IQueryable<Student> query = _context.Students
                 .Include(s => s.Standard)
                 .Include(s => s.Section)
                 .Include(s => s.AcademicYear)
-                .AsNoTracking().AsQueryable();
+                .AsNoTracking();
             
             if (schoolId.HasValue)
             {

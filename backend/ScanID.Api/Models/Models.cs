@@ -209,6 +209,10 @@ namespace ScanID.Api.Models
         public int? StandardId { get; set; }
         public int? SectionId { get; set; }
         public int? AcademicYearId { get; set; }
+        
+        [ForeignKey("AcademicYearId")]
+        public AcademicYear? AcademicYear { get; set; }
+        
         public int? CasteId { get; set; }
         public int? SubCasteId { get; set; }
         public int? ReligionId { get; set; }
