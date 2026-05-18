@@ -34,6 +34,11 @@ export default defineConfig(({mode}) => {
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/SCANiD_ERP_API/, '')
+        },
+        '/uploads': {
+          target: 'http://localhost:5000',
+          changeOrigin: true,
+          secure: false,
         }
       }
     },
@@ -50,6 +55,11 @@ export default defineConfig(({mode}) => {
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/SCANiD_ERP_API/, '')
+        },
+        '/uploads': {
+          target: 'http://localhost:5000',
+          changeOrigin: true,
+          secure: false,
         }
       }
     },

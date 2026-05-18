@@ -32,6 +32,7 @@ namespace ScanID.Api.Controllers
                 .Include(s => s.Standard)
                 .Include(s => s.Section)
                 .Include(s => s.AcademicYear)
+                .Where(s => !s.IsDeleted)
                 .AsNoTracking();
             
             if (schoolId.HasValue)
@@ -41,9 +42,23 @@ namespace ScanID.Api.Controllers
 
             if (academicYearId.HasValue)
             {
-                // We support both the ID-based master link and the legacy string-based academicyear
-                // Try filtering by AcademicYearId first, or by the string representation if preferred
-                query = query.Where(s => s.AcademicYearId == academicYearId.Value || s.academicyear == academicYearId.Value.ToString());
+                // To support both the modern ID-based link and the legacy string-based year name (e.g., "2025-2026")
+                // we first find the year name associated with the provided ID.
+                var academicYear = await _context.AcademicYears.FindAsync(academicYearId.Value);
+                if (academicYear != null)
+                {
+                    var yearName = academicYear.Name;
+                    query = query.Where(s => 
+                        s.AcademicYearId == academicYearId.Value || 
+                        s.academicyear == academicYearId.Value.ToString() ||
+                        s.academicyear == yearName);
+                }
+                else
+                {
+                    query = query.Where(s => 
+                        s.AcademicYearId == academicYearId.Value || 
+                        s.academicyear == academicYearId.Value.ToString());
+                }
             }
 
             return await query.ToListAsync();

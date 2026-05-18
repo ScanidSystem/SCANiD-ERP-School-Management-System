@@ -59,6 +59,7 @@ namespace ScanID.Api.Models
         public string? Phone { get; set; }
         public int TotalStudents { get; set; }
         public string Status { get; set; } = "Active";
+        public string? ProfilePhotoPath { get; set; }
     }
 
     /// <summary>

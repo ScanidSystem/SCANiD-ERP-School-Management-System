@@ -273,6 +273,15 @@ export const apiService = {
   createSchool: (data: any) => api.post("/schools", data),
   updateSchool: (id: number, data: any) => api.put(`/schools/${id}`, data),
   deleteSchool: (id: number) => api.delete(`/schools/${id}`),
+  uploadSchoolPhoto: (id: number, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post(`/schools/${id}/photo`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
 
   // Teachers
   getTeachers: (schoolId?: number, academicYearId?: number) =>

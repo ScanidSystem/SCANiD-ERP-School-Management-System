@@ -269,6 +269,7 @@ CREATE TABLE [dbo].[Schools](
 	[Email] [nvarchar](max) NULL,
 	[Phone] [nvarchar](max) NULL,
 	[TotalStudents] [int] NOT NULL,
+	[ProfilePhotoPath] [nvarchar](max) NULL,
 	[Status] [nvarchar](max) NOT NULL DEFAULT (N'Active'),
     [IsActive] [bit] NOT NULL DEFAULT (1),
     [IsDeleted] [bit] NOT NULL DEFAULT (0),

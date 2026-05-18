@@ -26,8 +26,12 @@ import {
   FileText,
   ArrowUpDown,
   Edit,
-  Trash2
+  Trash2,
+  Camera,
+  Image as ImageIcon
 } from "lucide-react";
+import { Import, Download, Camera as CameraIcon } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -78,6 +82,8 @@ export default function Schools({ user }: { user: UserType }) {
   const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
   const inputRefs = useRef<Record<string, any>>({});
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingSchoolId, setUploadingSchoolId] = useState<number | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -241,6 +247,39 @@ export default function Schools({ user }: { user: UserType }) {
       fetchSchools();
     }
   }, [user.role]);
+
+  const triggerPhotoUpload = (id: number) => {
+    setUploadingSchoolId(id);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (uploadingSchoolId && e.target.files?.[0]) {
+      const file = e.target.files[0];
+      const schoolId = uploadingSchoolId;
+      
+      const loadingToast = toast.loading("Uploading school identity image...");
+      try {
+        const response = await apiService.uploadSchoolPhoto(schoolId, file);
+        const newPath = response.data.path;
+        
+        // Update local state with the new photo path
+        setSchools(prev => prev.map(s => 
+          s.id === schoolId ? { ...s, profilePhotoPath: newPath, ProfilePhotoPath: newPath } : s
+        ));
+        
+        toast.dismiss(loadingToast);
+        toast.success("School logo updated successfully.");
+      } catch (error) {
+        toast.dismiss(loadingToast);
+        console.error("Upload failed:", error);
+        toast.error("Failed to upload school logo.");
+      } finally {
+        setUploadingSchoolId(null);
+      }
+    }
+    e.target.value = '';
+  };
 
   if (user.role !== "superadmin") {
     return <Navigate to="/" replace />;
@@ -581,6 +620,13 @@ export default function Schools({ user }: { user: UserType }) {
       </div>
 
       <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          accept="image/*" 
+          onChange={handleFileChange} 
+        />
         <CardHeader className="pb-6 border-b border-slate-100 bg-white px-8 pt-8">
           <div className="flex items-center justify-between">
             <div className="relative max-w-md w-full">
@@ -636,12 +682,28 @@ export default function Schools({ user }: { user: UserType }) {
                   <TableRow key={school.id} className="hover:bg-slate-50/80 transition-colors group border-b border-slate-50">
                     <TableCell className="pl-8 font-mono text-xs font-black text-blue-600 italic">SCH-{school.id}</TableCell>
                     <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-slate-900 leading-tight">{school.name}</span>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                            <MapPin size={10} /> {school.address || "Main Branch"}
-                          </span>
+                      <div className="flex items-center gap-4">
+                        <div className="relative group">
+                          <Avatar className="h-12 w-12 border-2 border-white shadow-md ring-1 ring-slate-100 group-hover:ring-blue-400 group-hover:scale-105 transition-all duration-300">
+                            <AvatarImage src={school.profilePhotoPath || school.ProfilePhotoPath} alt={school.name} className="object-cover" />
+                            <AvatarFallback className="bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 font-black text-xs">
+                              {school.name.split(' ').map((n: any) => n[0]).join('').toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <button 
+                            onClick={() => triggerPhotoUpload(school.id)}
+                            className="absolute -bottom-1 -right-1 bg-white p-1.5 rounded-full shadow-lg border border-slate-100 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-blue-600 hover:text-white"
+                          >
+                            <Camera size={10} />
+                          </button>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-900 leading-tight">{school.name}</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                              <MapPin size={10} /> {school.address || "Main Branch"}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </TableCell>
@@ -668,6 +730,9 @@ export default function Schools({ user }: { user: UserType }) {
                         />
                         <DropdownMenuContent align="end">
                           <DropdownMenuGroup>
+                            <DropdownMenuItem className="gap-2" onClick={() => triggerPhotoUpload(school.id)}>
+                              <CameraIcon size={14} /> Update Logo
+                            </DropdownMenuItem>
                             <DropdownMenuItem className="gap-2" onClick={() => handleEditClick(school)}>
                               <Edit size={14} /> Edit School
                             </DropdownMenuItem>
