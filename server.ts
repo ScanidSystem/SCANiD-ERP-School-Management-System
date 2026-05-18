@@ -147,44 +147,44 @@ const PORT = 3000;
     // Root level items
     { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roleIds: [1, 2, 3, 4, 5] },
     
-    // Academic Operations Group
-    { id: 1000, title: "Academic Operations", icon: "BookOpen", path: null, parentId: null, sortOrder: 2, roleIds: [1, 2, 3, 4, 5] },
-    { id: 11, title: "Student Registry", icon: "GraduationCap", path: "/students", parentId: 1000, sortOrder: 1, roleIds: [1, 2, 3, 5] },
-    { id: 12, title: "Attendance Tracking", icon: "CalendarCheck", path: "/attendance", parentId: 1000, sortOrder: 2, roleIds: [1, 2, 3, 4, 5] },
-    { id: 13, title: "Examination & Marks", icon: "BarChart3", path: "/marks", parentId: 1000, sortOrder: 3, roleIds: [1, 2, 3, 4, 5] },
+    // Academic Operations Group (2)
+    { id: 2, title: "Academic Operations", icon: "BookOpen", path: null, parentId: null, sortOrder: 2, roleIds: [1, 2, 3, 4, 5] },
+    { id: 3, title: "Student Registry", icon: "GraduationCap", path: "/students", parentId: 2, sortOrder: 1, roleIds: [1, 2, 3, 5] },
+    { id: 4, title: "Attendance Tracking", icon: "CalendarCheck", path: "/attendance", parentId: 2, sortOrder: 2, roleIds: [1, 2, 3, 4, 5] },
+    { id: 5, title: "Examination & Marks", icon: "BarChart3", path: "/marks", parentId: 2, sortOrder: 3, roleIds: [1, 2, 3, 4, 5] },
     
-    // Staff & HR Group
-    { id: 2000, title: "Staff & HR", icon: "Users", path: null, parentId: null, sortOrder: 3, roleIds: [1, 2] },
-    { id: 21, title: "Teacher Catalog", icon: "UserCheck", path: "/teachers", parentId: 2000, sortOrder: 1, roleIds: [1, 2] },
-    { id: 22, title: "Manage Users", icon: "UserPlus", path: "/configuration/users", parentId: 2000, sortOrder: 2, roleIds: [1, 2] },
+    // Staff & HR Group (6)
+    { id: 6, title: "Staff & HR", icon: "Users", path: null, parentId: null, sortOrder: 3, roleIds: [1, 2] },
+    { id: 7, title: "Teacher Catalog", icon: "UserCheck", path: "/teachers", parentId: 6, sortOrder: 1, roleIds: [1, 2] },
+    { id: 432, title: "Manage Users", icon: "UserPlus", path: "/configuration/users", parentId: 6, sortOrder: 2, roleIds: [1, 2] },
     
-    // Administrative Group
-    { id: 3000, title: "Administrative", icon: "ShieldCheck", path: null, parentId: null, sortOrder: 4, roleIds: [1, 2, 3, 4, 5] },
-    { id: 31, title: "Fee Management", icon: "CreditCard", path: "/fees", parentId: 3000, sortOrder: 1, roleIds: [1, 2, 5] },
-    { id: 32, title: "Communication Hub", icon: "MessageSquare", path: "/messages", parentId: 3000, sortOrder: 2, roleIds: [1, 2, 3, 4, 5] },
+    // Administrative Group (8)
+    { id: 8, title: "Administrative", icon: "ShieldCheck", path: null, parentId: null, sortOrder: 4, roleIds: [1, 2, 3, 4, 5] },
+    { id: 9, title: "Fee Management", icon: "CreditCard", path: "/fees", parentId: 8, sortOrder: 1, roleIds: [1, 2, 5] },
+    { id: 10, title: "Communication Hub", icon: "MessageSquare", path: "/messages", parentId: 8, sortOrder: 2, roleIds: [1, 2, 3, 4, 5] },
     
-    // Masters & Config Group (The big one)
-    { id: 4000, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 5, roleIds: [1, 2] },
-    { id: 41, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 4000, sortOrder: 1, roleIds: [1, 2] },
+    // Masters & Config Group (11)
+    { id: 11, title: "Masters & Config", icon: "Database", path: "/configuration", parentId: null, sortOrder: 5, roleIds: [1, 2] },
+    { id: 12, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 11, sortOrder: 1, roleIds: [1, 2] },
     
-    // RBAC Sub-group
-    { id: 42, title: "Access Control (RBAC)", icon: "Key", path: null, parentId: 4000, sortOrder: 2, roleIds: [1, 2] },
-    { id: 421, title: "Role Master", icon: "Shield", path: "/configuration/role-master", parentId: 42, sortOrder: 1, roleIds: [1, 2] },
-    { id: 422, title: "Role Assignment", icon: "UserCheck", path: "/configuration/role-assignment", parentId: 42, sortOrder: 2, roleIds: [1, 2] },
+    // RBAC Sub-group (13)
+    { id: 13, title: "Access Control (RBAC)", icon: "Key", path: null, parentId: 11, sortOrder: 2, roleIds: [1, 2] },
+    { id: 14, title: "Role Master", icon: "Shield", path: "/configuration/role-master", parentId: 13, sortOrder: 1, roleIds: [1, 2] },
+    { id: 15, title: "Role Assignment", icon: "UserCheck", path: "/configuration/role-assignment", parentId: 13, sortOrder: 2, roleIds: [1, 2] },
     
-    // Menu Designer Sub-group
-    { id: 43, title: "Menu Designer", icon: "Layout", path: null, parentId: 4000, sortOrder: 3, roleIds: [1, 2] },
-    { id: 431, title: "Navigation Builder", icon: "LayoutGrid", path: "/configuration/navigation", parentId: 43, sortOrder: 1, roleIds: [1, 2] },
+    // Menu Designer Sub-group (16)
+    { id: 16, title: "Menu Designer", icon: "Layout", path: null, parentId: 11, sortOrder: 3, roleIds: [1, 2] },
+    { id: 17, title: "Navigation Builder", icon: "LayoutGrid", path: "/configuration/navigation", parentId: 16, sortOrder: 1, roleIds: [1, 2] },
     
-    // Academic Masters Sub-group
-    { id: 44, title: "Academic Masters", icon: "BookOpen", path: null, parentId: 4000, sortOrder: 4, roleIds: [1, 2] },
-    { id: 441, title: "Standards & Grades", icon: "Layers", path: "/configuration/standards", parentId: 44, sortOrder: 1, roleIds: [1, 2] },
-    { id: 442, title: "Divisions/Sections", icon: "Hash", path: "/configuration/sections", parentId: 44, sortOrder: 2, roleIds: [1, 2] },
-    { id: 443, title: "Academic Years", icon: "Calendar", path: "/configuration/academic-years", parentId: 44, sortOrder: 3, roleIds: [1, 2] },
-    { id: 444, title: "Subject Registry", icon: "BookOpen", path: "/configuration/subjects", parentId: 44, sortOrder: 4, roleIds: [1, 2] },
+    // Academic Masters Sub-group (18)
+    { id: 18, title: "Academic Masters", icon: "BookOpen", path: null, parentId: 11, sortOrder: 4, roleIds: [1, 2] },
+    { id: 19, title: "Standards & Grades", icon: "Layers", path: "/configuration/standards", parentId: 18, sortOrder: 1, roleIds: [1, 2] },
+    { id: 20, title: "Divisions/Sections", icon: "Hash", path: "/configuration/sections", parentId: 18, sortOrder: 2, roleIds: [1, 2] },
+    { id: 21, title: "Academic Years", icon: "Calendar", path: "/configuration/academic-years", parentId: 18, sortOrder: 3, roleIds: [1, 2] },
+    { id: 22, title: "Subject Registry", icon: "BookOpen", path: "/configuration/subjects", parentId: 18, sortOrder: 4, roleIds: [1, 2] },
     
-    // General Masters Sub-group
-    { id: 45, title: "General Masters", icon: "Database", path: null, parentId: 4000, sortOrder: 5, roleIds: [1, 2] },
+    // General Masters Sub-group (45)
+    { id: 45, title: "General Masters", icon: "Database", path: null, parentId: 11, sortOrder: 5, roleIds: [1, 2] },
     { id: 451, title: "Religion Master", icon: "Heart", path: "/configuration/religions", parentId: 45, sortOrder: 1, roleIds: [1, 2] },
     { id: 452, title: "Blood Group Master", icon: "Droplets", path: "/configuration/blood-groups", parentId: 45, sortOrder: 2, roleIds: [1, 2] },
     { id: 453, title: "Caste Category", icon: "Users", path: "/configuration/castes", parentId: 45, sortOrder: 3, roleIds: [1, 2] },
@@ -192,8 +192,8 @@ const PORT = 3000;
     { id: 455, title: "School House", icon: "Home", path: "/configuration/houses", parentId: 45, sortOrder: 5, roleIds: [1, 2] },
     { id: 456, title: "Admission Types", icon: "UserCheck", path: "/configuration/admission-types", parentId: 45, sortOrder: 6, roleIds: [1, 2] },
 
-    // System Audit
-    { id: 5000, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roleIds: [1] },
+    // System Audit (23)
+    { id: 23, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roleIds: [1] },
   ];
 
   const mastersMap: Record<string, any[]> = {
