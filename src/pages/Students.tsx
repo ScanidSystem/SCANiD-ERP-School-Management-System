@@ -226,7 +226,7 @@ export default function Students({ user }: { user: UserType }) {
   
   const canManage = user.role === "superadmin" || user.role === "admin";
   
-  const [uploadingStudentId, setUploadingStudentId] = useState<string | null>(null);
+  const [uploadingStudentId, setUploadingStudentId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -330,7 +330,7 @@ export default function Students({ user }: { user: UserType }) {
     setIsBulkUploadOpen(true);
   };
 
-  const triggerPhotoUpload = (id: string) => {
+  const triggerPhotoUpload = (id: number) => {
     setUploadingStudentId(id);
     fileInputRef.current?.click();
   };
@@ -338,11 +338,7 @@ export default function Students({ user }: { user: UserType }) {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (uploadingStudentId && e.target.files?.[0]) {
       const file = e.target.files[0];
-      const studentId = parseSafeInt(uploadingStudentId);
-      if (studentId === undefined) {
-        toast.error("Invalid student ID for upload");
-        return;
-      }
+      const studentId = uploadingStudentId;
       
       const loadingToast = toast.loading("Storing identity image on server...");
       try {
@@ -352,7 +348,7 @@ export default function Students({ user }: { user: UserType }) {
         // Update local state with the new physical path from server
         // This ensures the image persists and uses the industry standard naming
         setStudents(prev => prev.map(s => 
-          s.id === uploadingStudentId ? { ...s, photo: newPath, profilePhotoPath: newPath, ProfilePhotoPath: newPath } : s
+          s.id === studentId ? { ...s, photo: newPath, profilePhotoPath: newPath, ProfilePhotoPath: newPath } : s
         ));
         
         toast.dismiss(loadingToast);

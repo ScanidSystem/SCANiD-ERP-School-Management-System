@@ -171,7 +171,7 @@ namespace ScanID.Api.Controllers
         /// <param name="file">The uploaded image file.</param>
         /// <returns>JSON object containing the saved relative path.</returns>
         [HttpPost("{id}/photo")]
-        public async Task<IActionResult> UploadPhoto(int id, IFormFile file)
+        public async Task<IActionResult> UploadPhoto(int id, [FromForm] IFormFile file)
         {
             if (file == null || file.Length == 0) 
             {
@@ -252,7 +252,7 @@ namespace ScanID.Api.Controllers
             }
             catch (Exception ex)
             {
-                FileLogger.LogError(ex);
+                ScanID.Api.Utilities.FileLogger.LogError(ex);
                 return StatusCode(500, new { message = "Physical storage failed: " + ex.Message });
             }
         }

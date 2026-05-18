@@ -30,8 +30,7 @@ import {
   Briefcase,
   UserRound,
   Hammer,
-  Camera,
-  CameraIcon
+  Camera
 } from "lucide-react";
 import { 
   Card, 
@@ -709,7 +708,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                               </DropdownMenuItem>
                               {activeTab === "schools" && (
                                 <DropdownMenuItem onClick={() => triggerPhotoUpload(item.id)} className="rounded-xl py-3 px-4 font-black transition-all text-xs uppercase tracking-widest text-slate-600 focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
-                                  <CameraIcon size={14} className="mr-3" /> Update Logo
+                                  <Camera size={14} className="mr-3" /> Update Logo
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuItem onClick={() => handleDelete(item.id)} className="rounded-xl py-3 px-4 font-black transition-all text-xs uppercase tracking-widest text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer">
