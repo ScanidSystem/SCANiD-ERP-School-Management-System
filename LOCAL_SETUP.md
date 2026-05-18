@@ -64,7 +64,8 @@ I have added a `.vscode` folder with `launch.json` and `tasks.json` to make debu
 - **DirectoryNotFoundException (wwwroot)**: If you get an error saying `wwwroot` is missing, create an empty folder named `wwwroot` in the `/backend/ScanID.Api/` directory. ASP.NET Core expects this folder for static assets even if you aren't serving any yet.
 - **CORS Errors**: If you see CORS errors in the browser, ensure your current React URL (e.g., `http://localhost:3000` or `http://localhost:4173`) is listed in your .NET `Program.cs` under `.WithOrigins(...)`.
 - **Backend Port & URL**: 
-  - For **Local Development**: The `.env` file should have `VITE_API_BASE_URL=http://localhost:5000/api`. This points directly to your .NET backend.
-  - For **Production Deployment**: Change `.env` to `VITE_API_BASE_URL=/SCANiD_ERP_API/api` (or your actual server path).
-- **Dropdowns Blank?**: The application now falls back to demo data if the API is unreachable OR returns a 500 error (e.g. if your database is not running). Check the browser console (F12) for specific error messages.
-- **500 Internal Server Error**: I have improved the backend exception handler in `Program.cs`. Check the backend console or `error_logs.txt` in the API directory for details. It usually means the SQL Server connection failed.
+  - For **Local Development**: The `.env.development` file should have `VITE_API_BASE_URL=/api`. The Vite dev server will proxy these requests to `http://localhost:5000`.
+  - For **Production Deployment**: The `.env.production` file should have `VITE_API_BASE_URL=/SCANiD_ERP_API/api`.
+- **500 Internal Server Error**: I have improved the backend exception handler in `Program.cs`. Check the backend console or `error_logs.txt` in the API directory.
+- **Port 5000 ERR_EMPTY_RESPONSE**: If browsing `http://localhost:5000` gives an empty response, I have disabled mandatory HTTPS redirection in `Program.cs` for development mode. Restart your .NET API to apply this change.
+- **Dropdowns Blank?**: The application fallback to demo data if the API is unreachable OR returns a 500 error.

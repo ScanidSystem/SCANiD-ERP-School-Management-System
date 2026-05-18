@@ -94,10 +94,13 @@ app.UseSwaggerUI(c =>
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    // development-only features can go here
+    // In development, we might not have SSL certificates configured locally, 
+    // so we skip redirection to prevent "Empty Response" errors.
 }
-
-app.UseHttpsRedirection();
+else 
+{
+    app.UseHttpsRedirection();
+}
 app.UseStaticFiles(); // Enable serving of static files from wwwroot
 app.UseCors("AllowReactApp");
 

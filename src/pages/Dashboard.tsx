@@ -53,7 +53,7 @@ export default function Dashboard({ user }: DashboardProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsMounted(true), 150); // Slightly longer delay for stability
+    const timer = setTimeout(() => setIsMounted(true), 500); // Increased delay for layout stability
     const fetchStats = async () => {
       try {
         const parsedSchoolId = parseSafeInt(user.schoolId);
@@ -149,8 +149,8 @@ export default function Dashboard({ user }: DashboardProps) {
           </CardHeader>
           <CardContent className="h-[350px] w-full pt-6 pr-6 pb-6">
             {isMounted ? (
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="h-[300px] w-full" style={{ minHeight: '300px' }}>
+                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                   <LineChart data={performanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#e2e8f0" />
                     <XAxis 
@@ -209,8 +209,8 @@ export default function Dashboard({ user }: DashboardProps) {
           </CardHeader>
           <CardContent className="h-[350px] w-full pt-6 px-4 pb-6">
             {isMounted ? (
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="h-[300px] w-full" style={{ minHeight: '300px' }}>
+                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                   <BarChart data={attendanceData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#e2e8f0" />
                     <XAxis 

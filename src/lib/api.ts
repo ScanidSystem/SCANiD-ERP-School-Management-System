@@ -1,10 +1,10 @@
 import axios from "axios";
 
-const DEFAULT_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
-
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
-export const API_BASE_URL = trimTrailingSlash(DEFAULT_API_BASE_URL);
+export const API_BASE_URL = trimTrailingSlash(import.meta.env.VITE_API_BASE_URL || "/api");
+
+console.log(`[API] Initialized with Base URL: ${API_BASE_URL}`);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
