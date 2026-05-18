@@ -189,9 +189,9 @@ api.interceptors.response.use(
     const isNetworkError = error.message?.includes("Network Error") || 
                            error.code === "ECONNABORTED" || 
                            error.message?.includes("ERR_CONNECTION_REFUSED");
-    const isNotFound = error.response && error.response.status === 404;
+    const isServerError = error.response && error.response.status >= 500;
 
-    if (isNetworkError || isNotFound) {
+    if (isNetworkError || isNotFound || isServerError) {
       const configUrl = error.config?.url || "";
       const urlWithPrefix = configUrl.split("?")[0];
       

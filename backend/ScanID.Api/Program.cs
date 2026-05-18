@@ -53,18 +53,33 @@ app.Use(async (context, next) =>
         // Log to Filesystem
         FileLogger.LogError(ex);
 
-        // Log to Database
-        var db = context.RequestServices.GetRequiredService<ApplicationDbContext>();
-        db.ErrorLogs.Add(new ErrorLog
+        // Log to Database (optional, don't crash if DB is down)
+        try 
         {
-            Message = ex.Message,
-            Exception = ex.ToString(),
-            Level = "Error",
-            Timestamp = DateTime.Now,
-            Properties = $"Path: {context.Request.Path}"
+            var db = context.RequestServices.GetRequiredService<ApplicationDbContext>();
+            db.ErrorLogs.Add(new ErrorLog
+            {
+                Message = ex.Message,
+                Exception = ex.ToString(),
+                Level = "Error",
+                Timestamp = DateTime.Now,
+                Properties = $"Path: {context.Request.Path}"
+            });
+            await db.SaveChangesAsync();
+        }
+        catch (Exception dbEx)
+        {
+            FileLogger.LogError(new Exception("Failed to log error to database. " + dbEx.Message, dbEx));
+        }
+        
+        // Return a cleaner 500 error instead of throwing a raw exception that might leak info
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new { 
+            error = "Internal Server Error", 
+            message = ex.Message,
+            details = "Check server logs for more information."
         });
-        await db.SaveChangesAsync();
-        throw; // Re-throw to let standard handlers work
     }
 });
 
