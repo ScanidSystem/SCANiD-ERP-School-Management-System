@@ -22,8 +22,8 @@ const PORT = 3000;
 
   // Mock data arrays for basic management
   let schools = [
-    { id: 1, name: "SCANID PRIMARY SCHOOL", code: "SPS001", address: "MUMBAI, MAHARASHTRA", email: "pri@scanid.com", phone: "9876543210", totalStudents: 450, status: "Active" },
-    { id: 2, name: "SCANID SECONDARY HIGH SCHOOL", code: "SSHS002", address: "PUNE, MAHARASHTRA", email: "sec@scanid.com", phone: "9876543211", totalStudents: 620, status: "Active" }
+    { id: 1, name: "SCANiD PRIMARY SCHOOL", code: "SPS001", address: "MUMBAI, MAHARASHTRA", email: "pri@scanid.com", phone: "9876543210", totalStudents: 450, status: "Active" },
+    { id: 2, name: "SCANiD SECONDARY HIGH SCHOOL", code: "SSHS002", address: "PUNE, MAHARASHTRA", email: "sec@scanid.com", phone: "9876543211", totalStudents: 620, status: "Active" }
   ];
 
   let teachers = [
@@ -235,7 +235,7 @@ const PORT = 3000;
 
   // API Routes
   app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", message: "SCANID Dev Server is running." });
+    res.json({ status: "ok", message: "SCANiD Dev Server is running." });
   });
 
   // Audit Logs
@@ -250,10 +250,10 @@ const PORT = 3000;
   });
 
   // Common Logs
-  app.get("/api/applogs", (req, res) => res.json({ data: { content: "Log stream started...\n[INFO] SCANID System Initialized\n[INFO] Connected to In-Memory DB\n[DEBUG] Vite Middleware Mounted" } }));
+  app.get("/api/applogs", (req, res) => res.json({ data: { content: "Log stream started...\n[INFO] SCANiD System Initialized\n[INFO] Connected to In-Memory DB\n[DEBUG] Vite Middleware Mounted" } }));
   app.get("/api/database/schema", (req, res) => res.json({ data: { schema: "Mock In-Memory DB", tables: Object.keys(mastersMap) } }));
   app.get("/api/database/script", (req, res) => res.json({ data: { content: "-- Mock SQL Server Schema --\nCREATE TABLE Students (\n  Id INT PRIMARY KEY IDENTITY,\n  GRNO NVARCHAR(50),\n  FullName NVARCHAR(200)\n);" } }));
-  app.get("/api/database/seed", (req, res) => res.json({ data: { content: "-- Mock Seed Script --\nINSERT INTO Schools (Name) VALUES ('SCANID PRIMARY');\nINSERT INTO Roles (Name) VALUES ('SuperAdmin');" } }));
+  app.get("/api/database/seed", (req, res) => res.json({ data: { content: "-- Mock Seed Script --\nINSERT INTO Schools (Name) VALUES ('SCANiD PRIMARY');\nINSERT INTO Roles (Name) VALUES ('SuperAdmin');" } }));
 
   // Auth
   app.post("/api/auth/login", (req, res) => {
@@ -593,7 +593,7 @@ const PORT = 3000;
   app.get("/api", (req, res) => {
     res.json({
       status: "online",
-      name: "SCANID ERP API",
+      name: "SCANiD ERP API",
       endpoints: [
         "/api/health", 
         "/api/stats", 
@@ -639,7 +639,7 @@ const PORT = 3000;
 
   httpServer.listen(PORT, "0.0.0.0", () => {
     console.log("\n" + "=".repeat(60));
-    console.log(`🚀 SCANID ERP SYSTEM DEPLOYED SUCCESSFULLY`);
+    console.log(`🚀 SCANiD ERP SYSTEM DEPLOYED SUCCESSFULLY`);
     console.log(`🌐 Application URL: http://localhost:${PORT}`);
     console.log(`📡 Backend API:      http://localhost:${PORT}/api`);
     console.log("=".repeat(60) + "\n");

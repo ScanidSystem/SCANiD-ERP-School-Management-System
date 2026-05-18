@@ -1,4 +1,4 @@
--- SCANID Database Setup Script (SQL Server)
+-- SCANiD Database Setup Script (SQL Server)
 -- Create Database
 IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'ScanID_DB')
 BEGIN

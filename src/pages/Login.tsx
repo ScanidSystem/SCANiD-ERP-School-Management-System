@@ -8,6 +8,7 @@ import { Role, User } from "@/types";
 import { GraduationCap, School, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/lib/api";
+import { Logo } from "@/components/shared/Logo";
 import { 
   Select, 
   SelectContent, 
@@ -211,12 +212,7 @@ export default function Login({ onLogin }: LoginProps) {
       <Card className="w-full max-w-md border-slate-800 bg-slate-900/50 backdrop-blur-xl relative z-10 shadow-2xl">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-full flex items-center justify-center p-2">
-            <img 
-              src="https://ais-dev-qbyadn55tzqynrpuxuan4r-416405542511.asia-southeast1.run.app/artifact/logo_scanid_logo.png" 
-              alt="SCANID Logo" 
-              className="h-auto w-full max-w-[200px]"
-              referrerPolicy="no-referrer"
-            />
+            <Logo size="lg" />
           </div>
           <div className="space-y-1">
             <CardTitle className="text-white text-xl font-bold tracking-tight">

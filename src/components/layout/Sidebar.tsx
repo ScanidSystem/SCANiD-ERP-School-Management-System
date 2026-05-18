@@ -23,6 +23,7 @@ import { Role, User } from "@/types";
 import { apiService } from "@/lib/api";
 import { motion, AnimatePresence } from "motion/react";
 import { SimpleTooltip } from "@/components/shared/SimpleTooltip";
+import { Logo } from "@/components/shared/Logo";
 
 interface NavItem {
   id: number;
@@ -448,25 +449,8 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
           </button>
         </SimpleTooltip>
 
-        <div className="flex items-center justify-center mb-4 h-12 w-full px-2">
-          <motion.div layout className="flex items-center justify-center">
-            {isCollapsed ? (
-              <motion.div 
-                layoutId="logo-box"
-                className="bg-gradient-to-br from-blue-500 to-blue-700 h-10 w-10 rounded-xl flex items-center justify-center font-bold text-xl shrink-0 shadow-lg shadow-blue-500/20"
-              >
-                S
-              </motion.div>
-            ) : (
-              <motion.img 
-                layoutId="logo-img"
-                src="https://ais-dev-qbyadn55tzqynrpuxuan4r-416405542511.asia-southeast1.run.app/artifact/logo_scanid_logo.png" 
-                alt="SCANID Logo" 
-                className="h-auto w-full max-w-[140px] object-contain drop-shadow-md"
-                referrerPolicy="no-referrer"
-              />
-            )}
-          </motion.div>
+        <div className="flex items-center justify-center mb-4 min-h-[48px] w-full px-2">
+          <Logo isCollapsed={isCollapsed} size="md" />
         </div>
         
         <AnimatePresence initial={false}>

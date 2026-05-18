@@ -8,10 +8,10 @@
 SET IDENTITY_INSERT [dbo].[Schools] ON;
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Schools] WHERE [Id] = 1)
     INSERT [dbo].[Schools] ([Id], [Name], [Address], [Phone], [Email], [TotalStudents], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
-    VALUES (1, N'SCANID PRIMARY SCHOOL', N'MUMBAI, MAHARASHTRA', N'9876543210', N'pri@scanid.com', 0, 1, 0, N'SYSTEM', GETUTCDATE());
+    VALUES (1, N'SCANiD PRIMARY SCHOOL', N'MUMBAI, MAHARASHTRA', N'9876543210', N'pri@scanid.com', 0, 1, 0, N'SYSTEM', GETUTCDATE());
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Schools] WHERE [Id] = 2)
     INSERT [dbo].[Schools] ([Id], [Name], [Address], [Phone], [Email], [TotalStudents], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn]) 
-    VALUES (2, N'SCANID SECONDARY HIGH SCHOOL', N'PUNE, MAHARASHTRA', N'9876543211', N'sec@scanid.com', 0, 1, 0, N'SYSTEM', GETUTCDATE());
+    VALUES (2, N'SCANiD SECONDARY HIGH SCHOOL', N'PUNE, MAHARASHTRA', N'9876543211', N'sec@scanid.com', 0, 1, 0, N'SYSTEM', GETUTCDATE());
 SET IDENTITY_INSERT [dbo].[Schools] OFF;
 GO
 

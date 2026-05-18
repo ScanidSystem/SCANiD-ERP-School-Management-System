@@ -1,4 +1,4 @@
-# Local Setup Instructions for SCANID
+# Local Setup Instructions for SCANiD
 
 Follow these steps to set up the application on your local machine with a .NET Core backend and SQL Server.
 
