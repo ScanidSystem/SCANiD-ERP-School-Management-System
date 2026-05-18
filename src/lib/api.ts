@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const DEFAULT_API_BASE_URL = "/api";
+const DEFAULT_API_BASE_URL = "/SCANiD_ERP_API/api";
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
@@ -10,7 +10,7 @@ const API_BASE_URL = trimTrailingSlash(
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // Increased to 30s so the debugger has time when you pause at a breakpoint
+  timeout: 30000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -197,7 +197,13 @@ api.interceptors.response.use(
       
       // Better URL parsing to extract the relative path
       let url = urlWithPrefix;
-      if (url.includes("/api/")) {
+      
+      // If the URL starts with the base URL, strip it
+      if (API_BASE_URL && url.startsWith(API_BASE_URL)) {
+        url = url.substring(API_BASE_URL.length);
+      } 
+      // Fallback for cases where baseURL might not be exactly matching due to protocol differences etc
+      else if (url.includes("/api/")) {
         url = url.substring(url.indexOf("/api/") + 4);
       } else if (url.startsWith("/api")) {
         url = url.substring(4);

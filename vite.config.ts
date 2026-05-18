@@ -28,6 +28,12 @@ export default defineConfig(({mode}) => {
           target: 'http://localhost:5000',
           changeOrigin: true,
           secure: false,
+        },
+        '/SCANiD_ERP_API/api': {
+          target: 'http://localhost:5000',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/SCANiD_ERP_API/, '')
         }
       }
     },
