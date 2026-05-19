@@ -37,7 +37,7 @@ namespace ScanID.Api.Controllers
                 .Include(s => s.AcademicYear)
                 .Where(s => !s.IsDeleted)
                 .AsNoTracking();
-            
+
             if (schoolId.HasValue)
             {
                 query = query.Where(s => s.SchoolId == schoolId.Value);
@@ -115,10 +115,10 @@ namespace ScanID.Api.Controllers
             }
 
             var students = await query.ToListAsync();
-            
+
             var csv = new System.Text.StringBuilder();
             // Comprehensive Header
-            csv.AppendLine("RegistrationNumber,Name,Standard,Section,AcademicYear,RollNumber,GRNO,Gender,DOB,Category,Religion,Caste,Status,Mobile,Email,Address,MotherName,AadharCard,RFID,Shift,BloodGroup,House,AdmissionDate,FatherName,NationalId,BankAcc");
+            csv.AppendLine("RegistrationNumber,Name,Standard,Section,AcademicYear,RollNumber,GRNO,Gender,DOB,Category,Religion,Caste,Status,Mobile,Email,Address,MotherName,AadharCard,RFID,Shift,BloodGroup,House,AdmissionDate,FatherName,NationalId,BankAcc,ProfilePhotoPath");
 
             foreach (var s in students)
             {
@@ -149,7 +149,8 @@ namespace ScanID.Api.Controllers
                     s.DOA,
                     s.FATHERNAME,
                     s.PEN_No,
-                    s.bankacc
+                    s.bankacc,
+                    s.ProfilePhotoPath
                 };
                 csv.AppendLine(string.Join(",", row));
             }
@@ -165,10 +166,10 @@ namespace ScanID.Api.Controllers
         {
             var csv = new System.Text.StringBuilder();
             // Required Header reflecting all critical table fields
-            csv.AppendLine("RegistrationNumber,Name,SchoolId,StandardId,SectionId,AcademicYearId,RollNumber,GRNO,Gender,DOB,CategoryId,ReligionId,CasteId,Mobile,Email,Address,MotherName,AadharCard,RFID,ShiftId,BloodGroupId,HouseId,DOA,FatherName,PEN_No,BankAcc");
+            csv.AppendLine("RegistrationNumber,Name,SchoolId,StandardId,SectionId,AcademicYearId,RollNumber,GRNO,Gender,DOB,CategoryId,ReligionId,CasteId,Mobile,Email,Address,MotherName,AadharCard,RFID,ShiftId,BloodGroupId,HouseId,DOA,FatherName,PEN_No,BankAcc,ProfilePhotoPath");
             // Example data row
-            csv.AppendLine("REG001,John Doe,1,1,1,1,10,1234,Male,2015-05-15,1,1,1,9876543210,john@example.com,City Main Road,Jane Doe,123456789012,RF-123,1,1,1,2024-06-01,Robert Doe,PEN123,ACC12345");
-            
+            csv.AppendLine("REG001,John Doe,1,1,1,1,10,1234,Male,2015-05-15,1,1,1,9876543210,john@example.com,City Main Road,Jane Doe,123456789012,RF-123,1,1,1,2024-06-01,Robert Doe,PEN123,ACC12345,/photos/1/example.jpg");
+
             return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "Student_Upload_Template.csv");
         }
 
@@ -184,11 +185,11 @@ namespace ScanID.Api.Controllers
             if (id != student.Id) return BadRequest();
 
             _context.Entry(student).State = EntityState.Modified;
-            
+
             // Ensure auditing and non-schema fields are preserved if not sent
             // or just let EF handle it. Here we use Entry(student).State = Modified.
             // But we should ensure we don't accidentally overwrite IsDeleted etc if not in payload.
-            
+
             try
             {
                 await _context.SaveChangesAsync();
@@ -218,7 +219,7 @@ namespace ScanID.Api.Controllers
                 student.ModifiedOn = DateTime.Now;
                 student.IsActive = true;
                 student.IsDeleted = false;
-                
+
                 // Ensure RegistrationNumber is set if missing
                 if (string.IsNullOrEmpty(student.RegistrationNumber))
                 {
@@ -260,7 +261,7 @@ namespace ScanID.Api.Controllers
         [HttpPost("{id}/photo")]
         public async Task<IActionResult> UploadPhoto(int id, [FromForm] IFormFile file)
         {
-            if (file == null || file.Length == 0) 
+            if (file == null || file.Length == 0)
             {
                 return BadRequest(new { message = "No image file provided for upload." });
             }
@@ -271,19 +272,16 @@ namespace ScanID.Api.Controllers
                 .Include(s => s.Section)
                 .FirstOrDefaultAsync(s => s.Id == id);
 
-            if (student == null) 
+            if (student == null)
             {
                 return NotFound(new { message = "Student record not found." });
             }
 
-            try 
+            try
             {
-                var schoolName = SanitizeFolderName(student.School?.Name ?? "General");
-                var standardName = SanitizeFolderName(student.Standard?.Name ?? "Unassigned");
-                var divisionName = SanitizeFolderName(student.Section?.Name ?? "General");
+                var schoolID = SanitizeFolderName(student.School?.Id.ToString() ?? student.SchoolId.ToString());
+                var relativeFolder = Path.Combine("photos", schoolID);
 
-                var relativeFolder = Path.Combine("uploads", "students", schoolName, standardName, divisionName);
-                
                 // Enhanced path resolution for robust folder creation across different environments
                 string webRootPath = _environment.WebRootPath;
                 if (string.IsNullOrEmpty(webRootPath))
@@ -291,7 +289,7 @@ namespace ScanID.Api.Controllers
                     // Fallback 1: Try to find wwwroot in current directory
                     webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
                 }
-                
+
                 // Fallback 2: If we are in a subfolder or different context, ensure we have a base
                 if (!Directory.Exists(webRootPath))
                 {
@@ -299,15 +297,25 @@ namespace ScanID.Api.Controllers
                 }
 
                 var uploadsFolder = Path.Combine(webRootPath, relativeFolder);
-                
+
                 // Ensure the hierarchical directory structure exists
-                if (!Directory.Exists(uploadsFolder)) 
+                if (!Directory.Exists(uploadsFolder))
                 {
                     Directory.CreateDirectory(uploadsFolder);
                 }
 
                 var extension = Path.GetExtension(file.FileName);
-                var fileName = $"student_{id}_{DateTime.Now.Ticks}{extension}";
+                if (string.IsNullOrEmpty(extension)) extension = ".jpg";
+                
+                // Generate a 12-digit random number for the filename as requested
+                Random res = new Random();
+                string random12Digit = "";
+                for (int i = 0; i < 12; i++)
+                {
+                    random12Digit += res.Next(0, 10).ToString();
+                }
+
+                var fileName = $"{random12Digit}{extension}";
                 var filePath = Path.Combine(uploadsFolder, fileName);
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
@@ -316,7 +324,7 @@ namespace ScanID.Api.Controllers
                 }
 
                 // Path for storage in DB and serving to frontend
-                var relativePath = $"/{relativeFolder.Replace("\\", "/")}/{fileName}";
+                var relativePath = $"/photos/{schoolID}/{fileName}";
 
                 if (!string.IsNullOrEmpty(student.ProfilePhotoPath))
                 {
@@ -329,12 +337,13 @@ namespace ScanID.Api.Controllers
 
                 student.ProfilePhotoPath = relativePath;
                 student.ModifiedOn = DateTime.Now;
-                
+
                 await _context.SaveChangesAsync();
 
-                return Ok(new { 
-                    message = "Identity image updated successfully", 
-                    path = student.ProfilePhotoPath 
+                return Ok(new
+                {
+                    message = "Identity image updated successfully",
+                    path = student.ProfilePhotoPath
                 });
             }
             catch (Exception ex)
@@ -350,11 +359,11 @@ namespace ScanID.Api.Controllers
         private string SanitizeFolderName(string name)
         {
             if (string.IsNullOrWhiteSpace(name)) return "Unassigned";
-            
+
             // Remove illegal characters from path
             var invalidChars = Path.GetInvalidFileNameChars();
             var sanitized = new string(name.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray());
-            
+
             // Further cleaning to ensure it's a slick folder name
             return sanitized.Replace(" ", "_").Trim('_');
         }

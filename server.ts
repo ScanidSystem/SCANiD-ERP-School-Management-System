@@ -11,46 +11,9 @@ async function startServer() {
   const app = express();
   const httpServer = http.createServer(app);
   // Enforce port 3000 for standard environment routing
-const PORT = 3000;
+  const PORT = 3000;
 
   app.use(cors());
-
-  // Proxy API requests to the .NET backend if it's running on port 5000
-  // This allows the frontend to hit http://localhost:3000/api and be forwarded
-  // CRITICAL: Proxy must be defined BEFORE any body parsers to avoid stream consumption issues
-  const apiProxy = createProxyMiddleware({
-    target: "http://127.0.0.1:5000",
-    changeOrigin: true,
-    secure: false,
-    ws: true,
-    // Filter logic for v4
-    pathFilter: (pathname, req) => {
-      // @ts-ignore
-      return (pathname.startsWith('/api') || pathname.startsWith('/uploads') || pathname.startsWith('/SCANiD_ERP_API')) && !req.proxyFailed;
-    },
-    // Error handler for when the backend is not running
-    on: {
-      error: (err, req, res) => {
-        console.warn(`[Proxy] Could not connect to .NET backend at http://127.0.0.1:5000: ${err.message}`);
-        
-        // If it's a ServerResponse (not a Socket), we can send a 503
-        if ('writeHead' in res && !res.headersSent) {
-          res.writeHead(503, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ 
-            error: "Backend Unavailable", 
-            message: "The .NET backend is not running on port 5000. Please start it to use this feature." 
-          }));
-        }
-      }
-    }
-  });
-
-  app.use(['/api', '/uploads', '/SCANiD_ERP_API'], apiProxy);
-
-  // Safeguard: Serve static files from backend/ScanID.Api/wwwroot for uploads if the proxy backend is unavailable or not serving them
-  // This ensures images are displayed as long as they exist on the filesystem
-  const backendWwwRoot = path.join(process.cwd(), 'backend/ScanID.Api/wwwroot');
-  app.use('/uploads', express.static(path.join(backendWwwRoot, 'uploads')));
 
   app.use(express.json());
 
@@ -373,14 +336,15 @@ const PORT = 3000;
   // Auth
   app.post("/api/auth/login", (req, res) => {
     const { username, password } = req.body;
-    if (username === "superadmin" && password === "Password123") {
+    if ((username === "superadmin" && password === "Password123") || 
+        (username === "admin" && password === "admin123")) {
       res.json({
         id: "1",
-        name: "Global Admin",
-        email: "admin@scanid.com",
-        role: "superadmin",
-        roleId: 1,
-        schoolName: "System-wide",
+        name: username === "superadmin" ? "Global Admin" : "School Administrator",
+        email: username === "superadmin" ? "admin@scanid.com" : "admin@scanid.com",
+        role: username === "superadmin" ? "superadmin" : "admin",
+        roleId: username === "superadmin" ? 1 : 2,
+        schoolName: "SCANiD PRIMARY SCHOOL",
         schoolId: "1"
       });
     } else {
@@ -396,6 +360,7 @@ const PORT = 3000;
     res.status(201).json({ data: newItem });
   });
 
+  /* 
   // Students
   app.get("/api/students", (req, res) => {
     const schoolId = req.query.schoolId ? parseInt(req.query.schoolId as string) : null;
@@ -460,6 +425,7 @@ const PORT = 3000;
     }
     res.json({ data: { path: mockPath } });
   });
+  */
 
   app.post("/api/schools/:id/photo", (req, res) => {
     const id = parseInt(req.params.id);
@@ -755,6 +721,51 @@ const PORT = 3000;
   });
 
   // API Fail-safe catch-all (Must be BEFORE static/vite)
+  // But we first try to proxy to the real .NET backend if it's running
+  const apiProxy = createProxyMiddleware({
+    target: "http://127.0.0.1:5000",
+    changeOrigin: true,
+    secure: false,
+    ws: true,
+    // Filter logic to only forward if it hasn't been handled by previous routes
+    pathFilter: (pathname, req) => {
+      return (pathname.startsWith('/api') || pathname.startsWith('/uploads') || pathname.startsWith('/photos') || pathname.startsWith('/SCANiD_ERP_API'));
+    },
+    on: {
+      error: (err, req, res) => {
+        // Only log if it's not a missing endpoint (which we want to fall through to 404)
+        if (!req.url?.includes('health')) {
+          console.warn(`[Proxy] Backend unreachable at http://127.0.0.1:5000: ${err.message}`);
+        }
+        
+        if ('writeHead' in res && !res.headersSent) {
+          res.writeHead(503, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            error: "Backend Unavailable", 
+            message: "The .NET backend is offline. Please start it for full functionality." 
+          }));
+        }
+      },
+      proxyReq: (proxyReq, req, res) => {
+        // Fix for body consumption issue when express.json() is used before proxy
+        if (req.body) {
+          const bodyData = JSON.stringify(req.body);
+          proxyReq.setHeader('Content-Type', 'application/json');
+          proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+          proxyReq.write(bodyData);
+        }
+      }
+    }
+  });
+
+  // Proxy as a fallback for routes NOT handled by the mocks above
+  app.use(['/api', '/uploads', '/photos', '/SCANiD_ERP_API'], apiProxy);
+
+  // Safeguard: Serve static files from backend/ScanID.Api/wwwroot for uploads and photos if the proxy backend is unavailable
+  const backendWwwRoot = path.join(process.cwd(), 'backend/ScanID.Api/wwwroot');
+  app.use('/uploads', express.static(path.join(backendWwwRoot, 'uploads')));
+  app.use('/photos', express.static(path.join(backendWwwRoot, 'photos')));
+
   app.all("/api/*", (req, res) => {
     console.warn(`[404] API Route Not Found: ${req.method} ${req.url}`);
     res.status(404).json({ 
