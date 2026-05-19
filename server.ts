@@ -5,6 +5,7 @@ import "dotenv/config";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import http from "http";
+import { createProxyMiddleware } from "http-proxy-middleware";
 
 async function startServer() {
   const app = express();
@@ -13,6 +14,39 @@ async function startServer() {
 const PORT = 3000;
 
   app.use(cors());
+
+  // Proxy API requests to the .NET backend if it's running on port 5000
+  // This allows the frontend to hit http://localhost:3000/api and be forwarded
+  // CRITICAL: Proxy must be defined BEFORE any body parsers to avoid stream consumption issues
+  const apiProxy = createProxyMiddleware({
+    target: "http://127.0.0.1:5000",
+    changeOrigin: true,
+    secure: false,
+    ws: true,
+    // Filter logic for v4
+    pathFilter: (pathname, req) => {
+      // @ts-ignore
+      return (pathname.startsWith('/api') || pathname.startsWith('/uploads') || pathname.startsWith('/SCANiD_ERP_API')) && !req.proxyFailed;
+    },
+    // Error handler for when the backend is not running
+    on: {
+      error: (err, req, res) => {
+        console.warn(`[Proxy] Could not connect to .NET backend at http://127.0.0.1:5000: ${err.message}`);
+        
+        // If it's a ServerResponse (not a Socket), we can send a 503
+        if ('writeHead' in res && !res.headersSent) {
+          res.writeHead(503, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            error: "Backend Unavailable", 
+            message: "The .NET backend is not running on port 5000. Please start it to use this feature." 
+          }));
+        }
+      }
+    }
+  });
+
+  app.use(['/api', '/uploads', '/SCANiD_ERP_API'], apiProxy);
+
   app.use(express.json());
 
   app.use((req, res, next) => {

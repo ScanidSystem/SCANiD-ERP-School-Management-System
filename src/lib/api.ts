@@ -281,6 +281,11 @@ export const apiService = {
   createTeacher: (data: any) => api.post("/teachers", data),
   updateTeacher: (id: number, data: any) => api.put(`/teachers/${id}`, data),
   deleteTeacher: (id: number) => api.delete(`/teachers/${id}`),
+  uploadTeacherPhoto: (id: number, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post(`/teachers/${id}/photo`, formData);
+  },
 
   // Stats
   getStats: (schoolId?: number, academicYearId?: number) => api.get("/stats", { params: { schoolId, academicYearId } }),

@@ -78,6 +78,7 @@ interface Teacher {
   status: "Active" | "On Leave" | "Resigned";
   joiningDate?: string;
   employeeId?: string;
+  photo?: string;
 }
 
 export default function Teachers({ user }: { user: any }) {
@@ -92,6 +93,8 @@ export default function Teachers({ user }: { user: any }) {
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: keyof Teacher; direction: "asc" | "desc" } | null>(null);
+  const [uploadingTeacherId, setUploadingTeacherId] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterSubject, setFilterSubject] = useState<string>("all");
   const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
@@ -160,7 +163,8 @@ export default function Teachers({ user }: { user: any }) {
           standard: getVal("standard") || getVal("standardId")?.toString() || "N/A",
           section: getVal("section") || getVal("sectionId")?.toString() || "N/A",
           status: getVal("status") || "Active",
-          employeeId: getVal("employeeId") || "N/A"
+          employeeId: getVal("employeeId") || "N/A",
+          photo: getVal("photo") || getVal("profilePhotoPath") || getVal("ProfilePhotoPath") || ""
         };
       }));
     } catch (error) {
@@ -313,8 +317,47 @@ export default function Teachers({ user }: { user: any }) {
     }
   };
 
+  const triggerPhotoUpload = (id: string) => {
+    setUploadingTeacherId(id);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (uploadingTeacherId && e.target.files?.[0]) {
+      const file = e.target.files[0];
+      const teacherId = uploadingTeacherId;
+      
+      const loadingToast = toast.loading("Uploading identity image...");
+      try {
+        const response = await apiService.uploadTeacherPhoto(Number(teacherId), file);
+        const newPath = response.data.data?.path || response.data.path;
+        
+        setTeachers(prev => prev.map(t => 
+          t.id.toString() === teacherId.toString() ? { ...t, photo: newPath } : t
+        ));
+        
+        toast.dismiss(loadingToast);
+        toast.success("Profile photo updated successfully");
+      } catch (error) {
+        toast.dismiss(loadingToast);
+        console.error("Upload failed:", error);
+        toast.error("Failed to upload photo. Please try again.");
+      } finally {
+        setUploadingTeacherId(null);
+      }
+    }
+    e.target.value = '';
+  };
+
   return (
     <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-500">
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        className="hidden" 
+        accept="image/*"
+      />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
            <div className="bg-blue-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:-rotate-3">
@@ -675,6 +718,7 @@ export default function Teachers({ user }: { user: any }) {
                     <TableCell>
                       <div className="flex items-center gap-4">
                         <Avatar className="h-11 w-11 ring-4 ring-white shadow-lg shadow-slate-200 transition-transform group-hover:scale-105">
+                          <AvatarImage src={teacher.photo} />
                           <AvatarFallback className="bg-indigo-600 text-white font-black uppercase text-sm">
                             {(teacher.name || "U")[0]}
                           </AvatarFallback>
@@ -737,6 +781,15 @@ export default function Teachers({ user }: { user: any }) {
                               <div className="flex flex-col">
                                  <span className="font-black text-slate-800 text-xs uppercase tracking-widest">Modify Master</span>
                                  <span className="text-[9px] text-slate-400 font-bold uppercase italic">Update qualifications</span>
+                              </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-4 py-3 px-4 rounded-xl cursor-pointer focus:bg-blue-50 group/photo" onClick={() => triggerPhotoUpload(teacher.id)}>
+                              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl group-hover/photo:bg-blue-600 group-hover/photo:text-white transition-colors">
+                                <Plus size={16} />
+                              </div>
+                              <div className="flex flex-col">
+                                 <span className="font-black text-slate-800 text-xs uppercase tracking-widest">Update Photo</span>
+                                 <span className="text-[9px] text-slate-400 font-bold uppercase italic">Upload official identity portrait</span>
                               </div>
                             </DropdownMenuItem>
                             <DropdownMenuItem className="gap-4 py-3 px-4 rounded-xl cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50 group/del" onClick={() => handleDeleteTeacher(teacher.id, teacher.name)}>
