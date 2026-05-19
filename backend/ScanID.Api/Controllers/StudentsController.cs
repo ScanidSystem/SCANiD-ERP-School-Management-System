@@ -45,23 +45,7 @@ namespace ScanID.Api.Controllers
 
             if (academicYearId.HasValue)
             {
-                // To support both the modern ID-based link and the legacy string-based year name (e.g., "2025-2026")
-                // we first find the year name associated with the provided ID.
-                var academicYear = await _context.AcademicYears.FindAsync(academicYearId.Value);
-                if (academicYear != null)
-                {
-                    var yearName = academicYear.Name;
-                    query = query.Where(s => 
-                        s.AcademicYearId == academicYearId.Value || 
-                        s.academicyear == academicYearId.Value.ToString() ||
-                        s.academicyear == yearName);
-                }
-                else
-                {
-                    query = query.Where(s => 
-                        s.AcademicYearId == academicYearId.Value || 
-                        s.academicyear == academicYearId.Value.ToString());
-                }
+                query = query.Where(s => s.AcademicYearId == academicYearId.Value);
             }
 
             return await query.ToListAsync();
@@ -192,8 +176,8 @@ namespace ScanID.Api.Controllers
             try 
             {
                 var schoolName = SanitizeFolderName(student.School?.Name ?? "General");
-                var standardName = SanitizeFolderName(student.Standard?.Name ?? student.STD ?? "Unassigned");
-                var divisionName = SanitizeFolderName(student.Section?.Name ?? student.DIV ?? "General");
+                var standardName = SanitizeFolderName(student.Standard?.Name ?? "Unassigned");
+                var divisionName = SanitizeFolderName(student.Section?.Name ?? "General");
 
                 var relativeFolder = Path.Combine("uploads", "students", schoolName, standardName, divisionName);
                 

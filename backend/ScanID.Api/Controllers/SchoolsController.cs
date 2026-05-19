@@ -114,7 +114,6 @@ namespace ScanID.Api.Controllers
             try 
             {
                 var schoolSnapshotName = SanitizeFolderName(school.Name);
-                var relativeFolder = Path.Combine("uploads", "schools", schoolSnapshotName);
                 
                 // Enhanced path resolution for robust folder creation
                 string webRootPath = _environment.WebRootPath;
@@ -128,6 +127,7 @@ namespace ScanID.Api.Controllers
                     Directory.CreateDirectory(webRootPath);
                 }
 
+                var relativeFolder = Path.Combine("uploads", "schools", schoolSnapshotName);
                 var uploadsFolder = Path.Combine(webRootPath, relativeFolder);
                 
                 if (!Directory.Exists(uploadsFolder)) 
@@ -138,14 +138,12 @@ namespace ScanID.Api.Controllers
                 var extension = Path.GetExtension(file.FileName);
                 var fileName = $"school_{id}_{DateTime.Now.Ticks}{extension}";
                 var filePath = Path.Combine(uploadsFolder, fileName);
+                var relativePath = $"/{relativeFolder.Replace("\\", "/")}/{fileName}";
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
                 }
-
-                // Path for storage in DB and serving to frontend
-                var relativePath = $"/{relativeFolder.Replace("\\", "/")}/{fileName}";
 
                 if (!string.IsNullOrEmpty(school.ProfilePhotoPath))
                 {

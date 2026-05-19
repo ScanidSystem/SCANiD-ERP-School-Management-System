@@ -130,41 +130,21 @@ namespace ScanID.Api.Models
         public string? MNAME { get; set; }
         public string? LNAME { get; set; }
         
-        [Required]
-        public string STD { get; set; } = string.Empty;
-        
-        [Required]
-        public string DIV { get; set; } = string.Empty;
-        
-        [Required]
-        public string ROLLNO { get; set; } = string.Empty;
-        
         public string? GRNO { get; set; }
         public string? GENDER { get; set; }
         public string? DOB { get; set; }
-        public string? BLOODGROUP { get; set; }
-        public string? CASTE { get; set; }
-        public string? RELIGION { get; set; }
-        public string? CATEGORY { get; set; }
         public string? ADDRESS { get; set; }
-        public string? CITY { get; set; }
         public string? PIN { get; set; }
-        public string? STATE { get; set; }
         public string? FATHERNAME { get; set; }
         public string? MOTHERNAME { get; set; }
         public string? MOBILE { get; set; }
         public string? EMAIL { get; set; }
-        public string? SHIFTNAME { get; set; }
         public string? DOA { get; set; }
         public string? ProfilePhotoPath { get; set; }
         public string? CARDID { get; set; }
         public string? VALIDFROM { get; set; }
         public string? VALIDTO { get; set; }
         public string? sms { get; set; }
-        public string? subcaste { get; set; }
-        public string? contact2 { get; set; }
-        public byte[]? photo { get; set; } // image type in SQL
-        public string? ispromoted { get; set; }
         public string? saralid { get; set; }
         public string? aadharcard { get; set; }
         public string? bankname { get; set; }
@@ -173,7 +153,6 @@ namespace ScanID.Api.Models
         public string? fingerid { get; set; }
         public string? freeshiptype { get; set; }
         public string? otp { get; set; }
-        public string? admissiontype { get; set; }
         public string? subjects { get; set; }
         public string? placeofbirth { get; set; }
         public string? birthtaluka { get; set; }
@@ -195,9 +174,7 @@ namespace ScanID.Api.Models
         public string? IQLD { get; set; }
         public string? schoolsection { get; set; }
         public string? leftstatus { get; set; }
-        public string? academicyear { get; set; }
         public string? stdstudying { get; set; }
-        public string? house { get; set; }
         public string? feesinstallment { get; set; }
         public string? uniformid { get; set; }
         public string? stdstudyingInWords { get; set; }
@@ -210,9 +187,13 @@ namespace ScanID.Api.Models
         public int? StandardId { get; set; }
         public int? SectionId { get; set; }
         public int? AcademicYearId { get; set; }
+        public int? CategoryId { get; set; }
         
         [ForeignKey("AcademicYearId")]
         public AcademicYear? AcademicYear { get; set; }
+
+        [ForeignKey("CategoryId")]
+        public Category? Category { get; set; }
         
         public int? CasteId { get; set; }
         public int? SubCasteId { get; set; }

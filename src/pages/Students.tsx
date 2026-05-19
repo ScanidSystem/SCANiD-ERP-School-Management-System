@@ -85,6 +85,7 @@ export default function Students({ user }: { user: UserType }) {
   const [subCastes, setSubCastes] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [shifts, setShifts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentStudentId, setCurrentStudentId] = useState<string | null>(null);
@@ -102,7 +103,8 @@ export default function Students({ user }: { user: UserType }) {
         castesRes,
         subCastesRes,
         academicYearsRes,
-        shiftsRes
+        shiftsRes,
+        categoriesRes
       ] = await Promise.all([
         apiService.getStandards(),
         apiService.getSections(),
@@ -114,7 +116,8 @@ export default function Students({ user }: { user: UserType }) {
         apiService.getCastes(),
         apiService.getSubCastes(),
         apiService.getAcademicYears(),
-        apiService.getShifts()
+        apiService.getShifts(),
+        apiService.getCategories()
       ]);
       
       const normalize = (res: any) => Array.isArray(res.data) ? res.data : (res.data?.data || []);
@@ -130,6 +133,7 @@ export default function Students({ user }: { user: UserType }) {
       setSubCastes(normalize(subCastesRes));
       setAcademicYears(normalize(academicYearsRes));
       setShifts(normalize(shiftsRes));
+      setCategories(normalize(categoriesRes));
     } catch (error) {
       console.error("Fetch masters error:", error);
     }
@@ -259,6 +263,7 @@ export default function Students({ user }: { user: UserType }) {
     RELIGION: "",
     CASTE: "",
     subcaste: "",
+    CATEGORY: "",
     academicyear: "",
     status: "Active",
     RFID: "",
@@ -304,6 +309,7 @@ export default function Students({ user }: { user: UserType }) {
       admissiontype: student.admissiontype || student.admissionTypeId?.toString() || "",
       RELIGION: student.RELIGION || student.religionId?.toString() || "",
       CASTE: student.CASTE || student.casteId?.toString() || "",
+      CATEGORY: student.CATEGORY || student.categoryId?.toString() || "",
       subcaste: student.subcaste || student.subCasteId?.toString() || "",
       academicyear: student.academicyear || student.joiningAcademicYearId?.toString() || "",
       status: student.status || "Active",
@@ -585,6 +591,7 @@ export default function Students({ user }: { user: UserType }) {
         ReligionId: parseSafeInt(newStudentFormData.RELIGION),
         CasteId: parseSafeInt(newStudentFormData.CASTE),
         SubCasteId: parseSafeInt(newStudentFormData.subcaste),
+        CategoryId: parseSafeInt(newStudentFormData.CATEGORY),
 
         // Audit fields: Ensure CreatedBy and ModifiedBy are captured for backend audit logging
         // CreatedBy is only set for new records, ModifiedBy is updated for every modification
@@ -1147,25 +1154,45 @@ export default function Students({ user }: { user: UserType }) {
                             </Select>
                           </div>
 
-                          <div className="space-y-1.5">
-                            <Label htmlFor="CASTE" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Caste</Label>
-                            <Select 
-                              value={newStudentFormData.CASTE} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, CASTE: v})}
-                            >
-                              <SelectTrigger id="CASTE" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Caste Category">
-                                  {newStudentFormData.CASTE ? castes.find(c => c.id.toString() === newStudentFormData.CASTE)?.name : undefined}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                                <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Caste Category</SelectItem>
-                                {Array.isArray(castes) && castes.map(c => (
-                                  <SelectItem key={c.id} value={c.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{c.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
+                           <div className="space-y-1.5">
+                             <Label htmlFor="CASTE" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Caste</Label>
+                             <Select 
+                               value={newStudentFormData.CASTE} 
+                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, CASTE: v})}
+                             >
+                               <SelectTrigger id="CASTE" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                                 <SelectValue placeholder="Select Caste">
+                                   {newStudentFormData.CASTE ? castes.find(c => c.id.toString() === newStudentFormData.CASTE)?.name : undefined}
+                                 </SelectValue>
+                               </SelectTrigger>
+                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                                 <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Caste</SelectItem>
+                                 {Array.isArray(castes) && castes.map(c => (
+                                   <SelectItem key={c.id} value={c.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{c.name}</SelectItem>
+                                 ))}
+                               </SelectContent>
+                             </Select>
+                           </div>
+
+                           <div className="space-y-1.5">
+                             <Label htmlFor="CATEGORY" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Category</Label>
+                             <Select 
+                               value={newStudentFormData.CATEGORY} 
+                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, CATEGORY: v})}
+                             >
+                               <SelectTrigger id="CATEGORY" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                                 <SelectValue placeholder="Select Category">
+                                   {newStudentFormData.CATEGORY ? categories.find(c => c.id.toString() === newStudentFormData.CATEGORY)?.name : undefined}
+                                 </SelectValue>
+                               </SelectTrigger>
+                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                                 <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Category</SelectItem>
+                                 {Array.isArray(categories) && categories.map(c => (
+                                   <SelectItem key={c.id} value={c.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{c.name}</SelectItem>
+                                 ))}
+                               </SelectContent>
+                             </Select>
+                           </div>
 
                           <div className="space-y-1.5">
                             <Label htmlFor="subcaste" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Sub-Caste</Label>

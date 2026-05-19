@@ -47,6 +47,11 @@ const PORT = 3000;
 
   app.use(['/api', '/uploads', '/SCANiD_ERP_API'], apiProxy);
 
+  // Safeguard: Serve static files from backend/ScanID.Api/wwwroot for uploads if the proxy backend is unavailable or not serving them
+  // This ensures images are displayed as long as they exist on the filesystem
+  const backendWwwRoot = path.join(process.cwd(), 'backend/ScanID.Api/wwwroot');
+  app.use('/uploads', express.static(path.join(backendWwwRoot, 'uploads')));
+
   app.use(express.json());
 
   app.use((req, res, next) => {

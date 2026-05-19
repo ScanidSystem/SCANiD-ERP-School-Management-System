@@ -126,12 +126,30 @@ namespace ScanID.Api.Controllers
                 var teacher = await _context.Teachers.FindAsync(id);
                 if (teacher == null) return NotFound(new { message = "Teacher not found" });
 
-                var uploadsFolder = Path.Combine(_environment.WebRootPath ?? "wwwroot", "uploads", "teachers");
-                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+                // Enhanced path resolution for robust folder creation
+                string webRootPath = _environment.WebRootPath;
+                if (string.IsNullOrEmpty(webRootPath))
+                {
+                    webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                }
+                
+                if (!Directory.Exists(webRootPath))
+                {
+                    Directory.CreateDirectory(webRootPath);
+                }
 
-                var fileName = $"teacher_{id}_{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                var relativeFolder = Path.Combine("uploads", "teachers");
+                var uploadsFolder = Path.Combine(webRootPath, relativeFolder);
+                
+                if (!Directory.Exists(uploadsFolder)) 
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                var extension = Path.GetExtension(file.FileName);
+                var fileName = $"teacher_{id}_{DateTime.Now.Ticks}{extension}";
                 var filePath = Path.Combine(uploadsFolder, fileName);
-                var relativePath = $"/uploads/teachers/{fileName}";
+                var relativePath = $"/{relativeFolder.Replace("\\", "/")}/{fileName}";
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
@@ -146,7 +164,7 @@ namespace ScanID.Api.Controllers
             catch (Exception ex)
             {
                 ScanID.Api.Utilities.FileLogger.LogError(ex);
-                return StatusCode(500, new { message = "Storage failed: " + ex.Message });
+                return StatusCode(500, new { message = "Physical storage failed: " + ex.Message });
             }
         }
     }
