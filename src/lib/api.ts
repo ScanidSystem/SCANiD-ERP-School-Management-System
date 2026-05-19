@@ -254,6 +254,8 @@ export const apiService = {
   bulkCreateStudents: (data: any[]) => api.post("/students/bulk", data),
   updateStudent: (id: number, data: any) => api.put(`/students/${id}`, data),
   deleteStudent: (id: number) => api.delete(`/students/${id}`),
+  exportStudents: (schoolId?: number) => api.get("/students/export", { params: { schoolId }, responseType: 'blob' }),
+  getStudentSampleTemplate: () => api.get("/students/sample-template", { responseType: 'blob' }),
   uploadStudentPhoto: (id: number, file: File) => {
     const formData = new FormData();
     formData.append("file", file);

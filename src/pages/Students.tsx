@@ -324,12 +324,21 @@ export default function Students({ user }: { user: UserType }) {
     fetchMasters();
   };
 
-  const handleExport = () => {
-    toast.promise(new Promise((resolve) => setTimeout(resolve, 2000)), {
-      loading: "Preparing student export...",
-      success: "Students records exported to Excel successfully!",
-      error: "Export failed",
-    });
+  const handleExport = async () => {
+    try {
+      const response = await apiService.exportStudents(parseSafeInt(user.schoolId));
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Students_Export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Students records exported successfully!");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Failed to export students.");
+    }
   };
 
   const handleImport = () => {
@@ -371,40 +380,21 @@ export default function Students({ user }: { user: UserType }) {
     e.target.value = '';
   };
 
-  const downloadSampleExcel = () => {
-    const sampleData = [
-      {
-        FNAME: "SHIVANSH",
-        MNAME: "SANJAY",
-        LNAME: "KHOPKAR",
-        MOTHERNAME: "SANJANA",
-        SHIFTNAME: "SHIFT-I-XII",
-        STD: "UKG",
-        DIV: "B",
-        ROLLNO: "1",
-        GRNO: "1001",
-        GENDER: "M",
-        DOB: "27/04/2020",
-        MOBILE: "9823674019",
-        contact2: "8888941563",
-        RFID: "0",
-        sms: "1",
-        ADDRESS: "AT POST KHOPI, ROHIDAS WADI, TAL-KHED, DIST-RATNAGIRI",
-        BLOODGROUP: "O+",
-        RELIGION: "Hindu",
-        CASTE: "General",
-        academicyear: "2025-2026",
-        house: "Red",
-        admissiontype: "Regular",
-        aadharcard: "123456789012"
-      }
-    ];
-
-    const ws = XLSX.utils.json_to_sheet(sampleData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Students");
-    XLSX.writeFile(wb, "Student_Import_Sample.xlsx");
-    toast.success("Sample template downloaded successfully.");
+  const downloadSampleExcel = async () => {
+    try {
+      const response = await apiService.getStudentSampleTemplate();
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Student_Upload_Template.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Sample template downloaded successfully.");
+    } catch (error) {
+      console.error("Template download error:", error);
+      toast.error("Failed to download template.");
+    }
   };
 
   const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -429,55 +419,66 @@ export default function Students({ user }: { user: UserType }) {
 
         const studentsToUpload = data.map((item: any) => {
           // Internal ID mapping for master tables
-          // This makes the upload dynamic by linking text values to their database IDs
-          const stdMasterId = standardsMaster.find(s => 
+          // Supports both ID-based columns (new template) and Name-based columns (legacy mapping)
+          
+          const stdMasterId = item.StandardId || standardsMaster.find(s => 
             s.name.toLowerCase() === item.STD?.toString().toLowerCase()
           )?.id;
           
-          const divMasterId = sectionsMaster.find(s => 
+          const divMasterId = item.SectionId || sectionsMaster.find(s => 
             s.name.toLowerCase() === item.DIV?.toString().toLowerCase()
           )?.id;
           
-          const shiftMasterId = shifts.find(s => 
+          const shiftMasterId = item.ShiftId || shifts.find(s => 
             s.name.toLowerCase() === item.SHIFTNAME?.toString().toLowerCase()
           )?.id;
 
-          const ayMasterId = academicYears.find(s => 
+          const ayMasterId = item.AcademicYearId || academicYears.find(s => 
             s.name.toLowerCase() === item.academicyear?.toString().toLowerCase()
           )?.id;
 
-          const bgMasterId = bloodGroups.find(bg => 
+          const bgMasterId = item.BloodGroupId || bloodGroups.find(bg => 
             bg.name.toLowerCase() === item.BLOODGROUP?.toString().toLowerCase()
           )?.id;
 
-          const religionMasterId = religions.find(r => 
+          const religionMasterId = item.ReligionId || religions.find(r => 
             r.name.toLowerCase() === item.RELIGION?.toString().toLowerCase()
           )?.id;
 
-          const houseMasterId = houses.find(h => 
+          const houseMasterId = item.HouseId || houses.find(h => 
             h.name.toLowerCase() === item.house?.toString().toLowerCase()
           )?.id;
 
-          const admissionTypeMasterId = admissionTypes.find(at => 
+          const admissionTypeMasterId = item.AdmissionTypeId || admissionTypes.find(at => 
             at.name.toLowerCase() === item.admissiontype?.toString().toLowerCase()
           )?.id;
 
-          const casteMasterId = castes.find(c => 
+          const casteMasterId = item.CasteId || castes.find(c => 
             c.name.toLowerCase() === item.CASTE?.toString().toLowerCase()
           )?.id;
 
+          const categoryMasterId = item.CategoryId || categories.find(c => 
+            c.name.toLowerCase() === item.CATEGORY?.toString().toLowerCase()
+          )?.id;
+
           return {
-            ...item,
-            schoolId: parseInt(user.schoolId || "1"),
-            status: item.status || "Active",
-            rollNumber: parseInt(item.ROLLNO || item.rollNumber || "0"),
-            registrationNumber: item.GRNO || item.registrationNumber || `REG-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-            name: item.name || item.fullName || `${item.FNAME || ""} ${item.MNAME || ""} ${item.LNAME || ""}`.trim(),
-            
-            // Text values kept for schema compatibility
-            STD: item.STD?.toString() || "",
-            DIV: item.DIV?.toString() || "",
-            ROLLNO: item.ROLLNO?.toString() || "",
+            registrationNumber: item.RegistrationNumber || item.GRNO || `REG-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            name: item.Name || item.name || `${item.FNAME || ""} ${item.MNAME || ""} ${item.LNAME || ""}`.trim(),
+            schoolId: parseInt(item.SchoolId || user.schoolId || "1"),
+            rollNumber: parseInt(item.RollNumber || item.ROLLNO || "0"),
+            GRNO: item.GRNO || item.RegistrationNumber,
+            GENDER: item.Gender || item.GENDER || "Male",
+            DOB: item.DOB || item.DateOfBirth,
+            MOBILE: item.Mobile || item.MOBILE,
+            EMAIL: item.Email || item.EMAIL,
+            ADDRESS: item.Address || item.ADDRESS,
+            MOTHERNAME: item.MotherName || item.MOTHERNAME,
+            aadharcard: item.AadharCard || item.aadharcard,
+            RFID: item.RFID || item.CARDID,
+            DOA: item.DOA || item.AdmissionDate,
+            FATHERNAME: item.FatherName,
+            PEN_No: item.PEN_No || item.NationalId,
+            bankacc: item.BankAcc,
             
             // Map IDs from masters
             StandardId: stdMasterId,
@@ -489,6 +490,7 @@ export default function Students({ user }: { user: UserType }) {
             HouseId: houseMasterId,
             AdmissionTypeId: admissionTypeMasterId,
             CasteId: casteMasterId,
+            CategoryId: categoryMasterId,
 
             // Audit fields
             CreatedBy: user.name || user.email,

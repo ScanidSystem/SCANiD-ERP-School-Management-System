@@ -77,10 +77,99 @@ namespace ScanID.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Student>> PostStudent(Student student)
         {
+            // Set audit fields
+            student.CreatedOn = DateTime.Now;
+            student.ModifiedOn = DateTime.Now;
+            student.IsActive = true;
+            student.IsDeleted = false;
+
             _context.Students.Add(student);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetStudent", new { id = student.Id }, student);
+        }
+
+        /// <summary>
+        /// Exports student records to a CSV file.
+        /// </summary>
+        /// <param name="schoolId">Filter by school filter.</param>
+        /// <returns>A downloadable CSV file.</returns>
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportStudents(int? schoolId)
+        {
+            var query = _context.Students
+                .Include(s => s.Standard)
+                .Include(s => s.Section)
+                .Include(s => s.AcademicYear)
+                .Include(s => s.Caste)
+                .Include(s => s.Religion)
+                .Include(s => s.Category)
+                .Include(s => s.BloodGroup)
+                .Include(s => s.House)
+                .Include(s => s.Shift)
+                .Where(s => !s.IsDeleted);
+
+            if (schoolId.HasValue)
+            {
+                query = query.Where(s => s.SchoolId == schoolId.Value);
+            }
+
+            var students = await query.ToListAsync();
+            
+            var csv = new System.Text.StringBuilder();
+            // Comprehensive Header
+            csv.AppendLine("RegistrationNumber,Name,Standard,Section,AcademicYear,RollNumber,GRNO,Gender,DOB,Category,Religion,Caste,Status,Mobile,Email,Address,MotherName,AadharCard,RFID,Shift,BloodGroup,House,AdmissionDate,FatherName,NationalId,BankAcc");
+
+            foreach (var s in students)
+            {
+                var row = new List<string>
+                {
+                    s.RegistrationNumber,
+                    s.Name,
+                    s.Standard?.Name,
+                    s.Section?.Name,
+                    s.AcademicYear?.Name,
+                    s.RollNumber.ToString(),
+                    s.GRNO,
+                    s.GENDER,
+                    s.DOB,
+                    s.Category?.Name,
+                    s.Religion?.Name,
+                    s.Caste?.Name,
+                    s.Status,
+                    s.MOBILE,
+                    s.EMAIL,
+                    $"\"{s.ADDRESS?.Replace("\"", "\"\"")}\"",
+                    s.MOTHERNAME,
+                    s.aadharcard,
+                    s.RFID,
+                    s.Shift?.Name,
+                    s.BloodGroup?.Name,
+                    s.House?.Name,
+                    s.DOA,
+                    s.FATHERNAME,
+                    s.PEN_No,
+                    s.bankacc
+                };
+                csv.AppendLine(string.Join(",", row));
+            }
+
+            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", $"Students_Export_{DateTime.Now:yyyyMMdd}.csv");
+        }
+
+        /// <summary>
+        /// Generates a comprehensive sample CSV template for bulk student upload.
+        /// </summary>
+        [HttpGet("sample-template")]
+        public IActionResult GetSampleTemplate()
+        {
+            var csv = new System.Text.StringBuilder();
+            // Required Header reflecting all critical table fields
+            csv.AppendLine("RegistrationNumber,Name,SchoolId,StandardId,SectionId,AcademicYearId,RollNumber,GRNO,Gender,DOB,CategoryId,ReligionId,CasteId,Mobile,Email,Address,MotherName,AadharCard,RFID,ShiftId,BloodGroupId,HouseId,DOA,FatherName,PEN_No,BankAcc");
+            // Example data row
+            csv.AppendLine("REG001,John Doe,1,1,1,1,10,1234,Male,2015-05-15,1,1,1,9876543210,john@example.com,City Main Road,Jane Doe,123456789012,RF-123,1,1,1,2024-06-01,Robert Doe,PEN123,ACC12345");
+            
+            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "Student_Upload_Template.csv");
         }
 
         /// <summary>
@@ -122,6 +211,20 @@ namespace ScanID.Api.Controllers
         public async Task<ActionResult<object>> PostBulkStudents(IEnumerable<Student> students)
         {
             if (students == null || !students.Any()) return BadRequest("No student data provided.");
+
+            foreach (var student in students)
+            {
+                student.CreatedOn = DateTime.Now;
+                student.ModifiedOn = DateTime.Now;
+                student.IsActive = true;
+                student.IsDeleted = false;
+                
+                // Ensure RegistrationNumber is set if missing
+                if (string.IsNullOrEmpty(student.RegistrationNumber))
+                {
+                    student.RegistrationNumber = "REG-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper();
+                }
+            }
 
             _context.Students.AddRange(students);
             await _context.SaveChangesAsync();

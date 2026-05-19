@@ -174,7 +174,6 @@ namespace ScanID.Api.Models
         public string? IQLD { get; set; }
         public string? schoolsection { get; set; }
         public string? leftstatus { get; set; }
-        public string? stdstudying { get; set; }
         public string? feesinstallment { get; set; }
         public string? uniformid { get; set; }
         public string? stdstudyingInWords { get; set; }
