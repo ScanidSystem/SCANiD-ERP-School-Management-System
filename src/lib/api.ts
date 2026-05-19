@@ -277,7 +277,11 @@ export const apiService = {
   uploadSchoolPhoto: (id: number, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    return api.post(`/schools/${id}/photo`, formData);
+    return api.post(`/schools/${id}/photo`, formData, {
+      headers: {
+        "Content-Type": undefined,
+      },
+    });
   },
 
   // Teachers
@@ -289,7 +293,11 @@ export const apiService = {
   uploadTeacherPhoto: (id: number, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    return api.post(`/teachers/${id}/photo`, formData);
+    return api.post(`/teachers/${id}/photo`, formData, {
+      headers: {
+        "Content-Type": undefined,
+      },
+    });
   },
 
   // Stats

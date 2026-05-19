@@ -5,7 +5,8 @@ import {
   Plus, 
   Search, 
   MoreHorizontal, 
-  Edit, 
+  Edit,
+  Edit2, 
   Trash2, 
   Mail, 
   Phone, 
@@ -17,6 +18,8 @@ import {
   Filter,
   UserPlus,
   Users,
+  UserCircle,
+  Camera,
   ChevronUp,
   ChevronDown,
   Download,
@@ -218,7 +221,8 @@ export default function Teachers({ user }: { user: any }) {
       standard: "10th",
       section: "A",
       status: "Active",
-      schoolId: user.schoolId || ""
+      schoolId: user.schoolId || "",
+      photo: ""
     });
     setSelectedTeacher(null);
     setIsEditing(false);
@@ -459,44 +463,94 @@ export default function Teachers({ user }: { user: any }) {
                               </SelectContent>
                             </Select>
                           </div>
-                        </div>
+                        </div>                        <div className="flex flex-col md:flex-row gap-8 mt-8">
+                          {/* Left: Identity Image */}
+                          <div className="flex flex-col items-center gap-4">
+                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Faculty Identity Photo</Label>
+                            <div 
+                              className="relative group cursor-pointer"
+                              onClick={() => isEditing && triggerPhotoUpload(selectedTeacher?.id)}
+                            >
+                              <div className="w-44 h-44 rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-100 bg-slate-50 flex items-center justify-center transition-all group-hover:shadow-blue-200/50 group-hover:scale-[1.02]">
+                                 {formData.photo ? (
+                                   <img 
+                                     src={formData.photo} 
+                                     alt="Faculty" 
+                                     className="w-full h-full object-cover"
+                                     onError={(e) => {
+                                       e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.firstName}`;
+                                     }}
+                                   />
+                                 ) : (
+                                   <div className="flex flex-col items-center gap-3 text-slate-300">
+                                     <div className="p-4 bg-slate-100 rounded-2xl">
+                                        <UserCircle size={36} className="opacity-20" />
+                                     </div>
+                                     <span className="text-[10px] font-black tracking-widest">NO IMAGE</span>
+                                   </div>
+                                 )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                          <div className="space-y-2">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.firstName ? "text-red-500" : "text-slate-400")}>First Name {formErrors.firstName && "*"}</Label>
-                            <Input 
-                              ref={el => { inputRefs.current["firstName"] = el; }}
-                              value={formData.firstName} 
-                              onChange={e => {
-                                setFormData({...formData, firstName: e.target.value});
-                                if (formErrors.firstName) setFormErrors(prev => ({ ...prev, firstName: false }));
-                              }} 
-                              placeholder="Robert" 
-                              className={cn(
-                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300",
-                                formErrors.firstName && "border-red-500 ring-2 ring-red-500/10"
+                                 {isEditing && (
+                                   <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
+                                      <div className="p-2 bg-white/20 rounded-full">
+                                        <Camera size={24} />
+                                      </div>
+                                      <span className="text-[10px] font-black uppercase tracking-widest">Update Photo</span>
+                                   </div>
+                                 )}
+                              </div>
+                              
+                              {formData.photo && (
+                                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
+                                   <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
+                                </div>
                               )}
-                            />
+                            </div>
+                            <p className="text-[10px] text-slate-400 font-bold max-w-[150px] text-center leading-relaxed">
+                              {isEditing ? "Click frame to update professional photograph." : "Photo capture available after record creation."}
+                            </p>
                           </div>
-                          <div className="space-y-2">
-                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Middle Name</Label>
-                            <Input value={formData.middleName} onChange={e => setFormData({...formData, middleName: e.target.value})} placeholder="Optional" className="h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.lastName ? "text-red-500" : "text-slate-400")}>Last Name {formErrors.lastName && "*"}</Label>
-                            <Input 
-                              ref={el => { inputRefs.current["lastName"] = el; }}
-                              value={formData.lastName} 
-                              onChange={e => {
-                                setFormData({...formData, lastName: e.target.value});
-                                if (formErrors.lastName) setFormErrors(prev => ({ ...prev, lastName: false }));
-                              }} 
-                              placeholder="Smith" 
-                              className={cn(
-                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300",
-                                formErrors.lastName && "border-red-500 ring-2 ring-red-500/10"
-                              )}
-                            />
+
+                          {/* Right: Primary Bio */}
+                          <div className="flex-1 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="space-y-2">
+                                <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.firstName ? "text-red-500" : "text-slate-400")}>First Name {formErrors.firstName && "*"}</Label>
+                                <Input 
+                                  ref={el => { inputRefs.current["firstName"] = el; }}
+                                  value={formData.firstName} 
+                                  onChange={e => {
+                                    setFormData({...formData, firstName: e.target.value});
+                                    if (formErrors.firstName) setFormErrors(prev => ({ ...prev, firstName: false }));
+                                  }} 
+                                  placeholder="Robert" 
+                                  className={cn(
+                                    "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300",
+                                    formErrors.firstName && "border-red-500 ring-2 ring-red-500/10"
+                                  )}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Middle Name</Label>
+                                <Input value={formData.middleName} onChange={e => setFormData({...formData, middleName: e.target.value})} placeholder="Optional" className="h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300" />
+                              </div>
+                              <div className="md:col-span-2 space-y-2">
+                                <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.lastName ? "text-red-500" : "text-slate-400")}>Last Name {formErrors.lastName && "*"}</Label>
+                                <Input 
+                                  ref={el => { inputRefs.current["lastName"] = el; }}
+                                  value={formData.lastName} 
+                                  onChange={e => {
+                                    setFormData({...formData, lastName: e.target.value});
+                                    if (formErrors.lastName) setFormErrors(prev => ({ ...prev, lastName: false }));
+                                  }} 
+                                  placeholder="Smith" 
+                                  className={cn(
+                                    "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300",
+                                    formErrors.lastName && "border-red-500 ring-2 ring-red-500/10"
+                                  )}
+                                />
+                              </div>
+                            </div>
                           </div>
                         </div>
                     </section>
@@ -771,7 +825,8 @@ export default function Teachers({ user }: { user: any }) {
                                 qualification: teacher.qualification,
                                 subject: teacher.subject,
                                 status: teacher.status,
-                                schoolId: user.schoolId || ""
+                                schoolId: user.schoolId || "",
+                                photo: teacher.photo || ""
                               });
                               setIsAddDialogOpen(true);
                             }}>

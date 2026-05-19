@@ -90,7 +90,8 @@ export default function Schools({ user }: { user: UserType }) {
     address: "",
     phone: "",
     email: "",
-    status: "Active"
+    status: "Active",
+    photo: ""
   });
 
   const fetchSchools = async () => {
@@ -113,10 +114,45 @@ export default function Schools({ user }: { user: UserType }) {
       address: school.address || "",
       phone: school.phone || "",
       email: school.email || "",
-      status: school.status || "Active"
+      status: school.status || "Active",
+      photo: school.photo || ""
     });
     setFormErrors({});
     setIsEditDialogOpen(true);
+  };
+
+  const triggerPhotoUpload = (id: number) => {
+    setUploadingSchoolId(id);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (uploadingSchoolId && e.target.files?.[0]) {
+      const file = e.target.files[0];
+      const schoolId = uploadingSchoolId;
+      
+      const loadingToast = toast.loading("Updating institutional branding...");
+      try {
+        const response = await apiService.uploadSchoolPhoto(schoolId, file);
+        const newPath = response.data.data?.path || response.data.path;
+        
+        // Update both the list and the current form data to reflect change immediately
+        setSchools(prev => prev.map(s => 
+          s.id === schoolId ? { ...s, photo: newPath } : s
+        ));
+        setFormData(prev => ({ ...prev, photo: newPath }));
+        
+        toast.dismiss(loadingToast);
+        toast.success("Institutional photo updated successfully");
+      } catch (error) {
+        toast.dismiss(loadingToast);
+        console.error("Upload failed:", error);
+        toast.error("Failed to upload photo. Please try again.");
+      } finally {
+        setUploadingSchoolId(null);
+      }
+    }
+    e.target.value = '';
   };
 
   const handleUpdateSchool = async () => {
@@ -233,7 +269,7 @@ export default function Schools({ user }: { user: UserType }) {
       });
       toast.success("School registered successfully!");
       setIsAddDialogOpen(false);
-      setFormData({ name: "", address: "", phone: "", email: "", status: "Active" });
+      setFormData({ name: "", address: "", phone: "", email: "", status: "Active", photo: "" });
       fetchSchools();
     } catch (error) {
       toast.error("Failed to register school");
@@ -247,43 +283,6 @@ export default function Schools({ user }: { user: UserType }) {
       fetchSchools();
     }
   }, [user.role]);
-
-  const triggerPhotoUpload = (id: number) => {
-    setUploadingSchoolId(id);
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (uploadingSchoolId && e.target.files?.[0]) {
-      const file = e.target.files[0];
-      const schoolId = uploadingSchoolId;
-      
-      const loadingToast = toast.loading("Uploading school identity image...");
-      try {
-        const response = await apiService.uploadSchoolPhoto(schoolId, file);
-        const newPath = response.data.path;
-        
-        // Update local state with the new photo path
-        setSchools(prev => prev.map(s => 
-          s.id === schoolId ? { ...s, profilePhotoPath: newPath, ProfilePhotoPath: newPath } : s
-        ));
-        
-        toast.dismiss(loadingToast);
-        toast.success("School logo updated successfully.");
-      } catch (error) {
-        toast.dismiss(loadingToast);
-        console.error("Upload failed:", error);
-        toast.error("Failed to upload school logo.");
-      } finally {
-        setUploadingSchoolId(null);
-      }
-    }
-    e.target.value = '';
-  };
-
-  if (user.role !== "superadmin") {
-    return <Navigate to="/" replace />;
-  }
 
   const filteredSchools = schools.filter(s => 
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -492,47 +491,105 @@ export default function Schools({ user }: { user: UserType }) {
             </div>
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-6 bg-white scrollbar-thin scrollbar-thumb-slate-200">
-              <div className="max-w-xl mx-auto space-y-6">
-                <section className="space-y-4">
-                  <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
-                    <div className="w-1.5 h-5 bg-blue-600 rounded-full"></div>
-                    <h3 className="text-sm font-black text-slate-900 tracking-tight">Institution Details</h3>
-                  </div>
-                  
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Official Name</Label>
-                    <Input 
-                      ref={el => { inputRefs.current["name"] = el; }}
-                      value={formData.name} 
-                      onChange={e => {
-                        setFormData({...formData, name: e.target.value});
-                        if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
-                      }} 
-                      placeholder="e.g. St. Xavier's International" 
-                      className={cn(
-                        "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                        formErrors.name && "border-red-500 ring-2 ring-red-500/10"
-                      )} 
-                    />
-                  </div>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handleFileChange} 
+              />
+              
+              <div className="max-w-2xl mx-auto space-y-6">
+                <div className="flex flex-col md:flex-row gap-8 mb-8 pb-8 border-b border-slate-50">
+                   {/* Left: Institution Branding */}
+                   <div className="flex flex-col items-center gap-4">
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Institutional Logo</Label>
+                      <div 
+                        className="relative group cursor-pointer"
+                        onClick={() => triggerPhotoUpload(currentSchool?.id)}
+                      >
+                        <div className="w-44 h-44 rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-100 bg-slate-50 flex items-center justify-center transition-all group-hover:shadow-blue-200/50 group-hover:scale-[1.02]">
+                           {formData.photo ? (
+                             <img 
+                               src={formData.photo} 
+                               alt="School" 
+                               className="w-full h-full object-cover"
+                               onError={(e) => {
+                                 e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.name}`;
+                               }}
+                             />
+                           ) : (
+                             <div className="flex flex-col items-center gap-3 text-slate-300">
+                               <div className="p-4 bg-slate-100 rounded-2xl">
+                                  <Building2 size={36} className="opacity-20" />
+                               </div>
+                               <span className="text-[10px] font-black tracking-widest">NO LOGO</span>
+                             </div>
+                           )}
 
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Primary Address</Label>
-                    <Input 
-                      ref={el => { inputRefs.current["address"] = el; }}
-                      value={formData.address} 
-                      onChange={e => {
-                        setFormData({...formData, address: e.target.value});
-                        if (formErrors.address) setFormErrors(prev => ({ ...prev, address: false }));
-                      }} 
-                      placeholder="Enter full institutional address" 
-                      className={cn(
-                        "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                        formErrors.address && "border-red-500 ring-2 ring-red-500/10"
-                      )} 
-                    />
-                  </div>
-                </section>
+                           <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
+                              <div className="p-2 bg-white/20 rounded-full">
+                                <CameraIcon size={24} />
+                              </div>
+                              <span className="text-[10px] font-black uppercase tracking-widest">Update Photo</span>
+                           </div>
+                        </div>
+                        
+                        {formData.photo && (
+                          <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
+                             <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-bold max-w-[150px] text-center leading-relaxed italic">
+                        Logo appears on student ID cards & official documents.
+                      </p>
+                   </div>
+
+                   {/* Right: Institution Details */}
+                   <div className="flex-1 space-y-6">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-1.5 h-5 bg-blue-600 rounded-full"></div>
+                        <h3 className="text-sm font-black text-slate-900 tracking-tight">Identity Profile</h3>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Official Name</Label>
+                          <Input 
+                            ref={el => { inputRefs.current["name"] = el; }}
+                            value={formData.name} 
+                            onChange={e => {
+                              setFormData({...formData, name: e.target.value});
+                              if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                            }} 
+                            placeholder="e.g. St. Xavier's International" 
+                            className={cn(
+                              "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
+                              formErrors.name && "border-red-500 ring-2 ring-red-500/10"
+                            )} 
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Primary Address</Label>
+                          <Input 
+                            ref={el => { inputRefs.current["address"] = el; }}
+                            value={formData.address} 
+                            onChange={e => {
+                              setFormData({...formData, address: e.target.value});
+                              if (formErrors.address) setFormErrors(prev => ({ ...prev, address: false }));
+                            }} 
+                            placeholder="Enter full institutional address" 
+                            className={cn(
+                              "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
+                              formErrors.address && "border-red-500 ring-2 ring-red-500/10"
+                            )} 
+                          />
+                        </div>
+                      </div>
+                   </div>
+                </div>
 
                 <section className="space-y-4">
                   <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">

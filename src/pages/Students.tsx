@@ -239,6 +239,7 @@ export default function Students({ user }: { user: UserType }) {
   const [deleteInfo, setDeleteInfo] = useState<{ id: string; name: string } | null>(null);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadResults, setUploadResults] = useState<any[]>([]);
   const bulkFileInputRef = useRef<HTMLInputElement>(null);
   const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
   const inputRefs = useRef<Record<string, any>>({});
@@ -327,18 +328,54 @@ export default function Students({ user }: { user: UserType }) {
 
   const handleExport = async () => {
     try {
-      const response = await apiService.exportStudents(parseSafeInt(user.schoolId));
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `Students_Export_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success("Students records exported successfully!");
+      // Prepare data for export including all important student fields
+      const exportData = filteredStudents.map(s => ({
+        "Registration Number": s.grno || s.registrationNumber,
+        "Roll Number": s.roll,
+        "First Name": s.FNAME || s.firstName,
+        "Middle Name": s.MNAME || s.middleName,
+        "Last Name": s.LNAME || s.lastName,
+        "Gender": s.GENDER || s.gender,
+        "Date of Birth": s.DOB || s.birthDate,
+        "Mobile": s.MOBILE || s.contactNumber,
+        "Email": s.EMAIL || s.email,
+        "Standard": s.STD || s.standard,
+        "Division": s.DIV || s.section,
+        "Mother Name": s.MOTHERNAME || s.motherName,
+        "Address": s.ADDRESS || s.address,
+        "Aadhar Card": s.aadharcard || s.aadharCard,
+        "Blood Group ID": s.BLOODGROUP || s.bloodGroupId,
+        "House ID": s.house || s.houseId,
+        "Admission Type ID": s.admissiontype || s.admissionTypeId,
+        "Religion ID": s.RELIGION || s.religionId,
+        "Caste ID": s.CASTE || s.casteId,
+        "Sub-Caste ID": s.subcaste || s.subCasteId,
+        "Academic Year ID": s.academicyear || s.joiningAcademicYearId,
+        "Category ID": s.CATEGORY || s.categoryId,
+        "RFID": s.RFID,
+        "Shift Name": s.SHIFTNAME,
+        "Status": s.status
+      }));
+
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      XLSX.utils.book_append_sheet(wb, ws, "Students Registry");
+
+      // Set column widths for better readability
+      const wscols = [
+        {wch: 20}, {wch: 12}, {wch: 15}, {wch: 15}, {wch: 15},
+        {wch: 10}, {wch: 12}, {wch: 15}, {wch: 25}, {wch: 12},
+        {wch: 10}, {wch: 20}, {wch: 40}, {wch: 15}, {wch: 15}
+      ];
+      ws['!cols'] = wscols;
+
+      // Generate download
+      XLSX.writeFile(wb, `Students_Registry_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success("Students registry exported to Excel successfully!");
     } catch (error) {
       console.error("Export error:", error);
-      toast.error("Failed to export students.");
+      toast.error("Failed to generate Excel export.");
     }
   };
 
@@ -383,18 +420,61 @@ export default function Students({ user }: { user: UserType }) {
 
   const downloadSampleExcel = async () => {
     try {
-      const response = await apiService.getStudentSampleTemplate();
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `Student_Upload_Template.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success("Sample template downloaded successfully.");
+      // Define standard headers based on all current student table fields
+      // Using user-friendly names that the mapper will convert to IDs
+      const headers = [
+        "RegistrationNumber", "RollNumber", "FirstName", "MiddleName", "LastName", 
+        "Gender", "Mobile", "Email", "MotherName", "Address", "AadharCard", "DOB",
+        "GradeName", "SectionName", "BloodGroupName", "HouseName", 
+        "AdmissionType", "ReligionName", "CasteName", "SubCasteName", 
+        "CategoryName", "AcademicYear", "ShiftName", "Status",
+        "RFID", "UniformID", "SecondaryContact", "SecondarySMS"
+      ];
+      
+      const sampleData = [
+        {
+          RegistrationNumber: "REG1001",
+          RollNumber: "1",
+          FirstName: "John",
+          MiddleName: "Doe",
+          LastName: "Smith",
+          Gender: "Male",
+          Mobile: "9876543210",
+          Email: "john.smith@example.com",
+          MotherName: "Jane Smith",
+          Address: "123 Education Lane, Sector 4",
+          AadharCard: "123456789012",
+          DOB: "2010-05-20",
+          GradeName: standardsMaster[0]?.name || "10th",
+          SectionName: sectionsMaster[0]?.name || "A",
+          BloodGroupName: bloodGroups[0]?.name || "O+",
+          HouseName: houses[0]?.name || "Blue House",
+          AdmissionType: admissionTypes[0]?.name || "Regular",
+          ReligionName: religions[0]?.name || "Hindu",
+          CasteName: castes[0]?.name || "General",
+          SubCasteName: subCastes[0]?.name || "None",
+          CategoryName: categories[0]?.name || "General",
+          AcademicYear: academicYears.find(ay => ay.isCurrent)?.name || academicYears[0]?.name || "2024-25",
+          ShiftName: shifts[0]?.name || "Morning",
+          Status: "Active",
+          RFID: "RF99221",
+          UniformID: "UNIF-001",
+          SecondaryContact: "9876543211",
+          SecondarySMS: "Yes"
+        }
+      ];
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(sampleData, { header: headers });
+      
+      // Add a hidden sheet or comments with available master data values to help user
+      XLSX.utils.book_append_sheet(wb, ws, "Students Template");
+      
+      XLSX.writeFile(wb, "Student_Import_Template.xlsx");
+      toast.success("Student import template generated. Please fill actual names for masters.");
     } catch (error) {
       console.error("Template download error:", error);
-      toast.error("Failed to download template.");
+      toast.error("Failed to generate sample template.");
     }
   };
 
@@ -403,6 +483,8 @@ export default function Students({ user }: { user: UserType }) {
     if (!file) return;
 
     setIsProcessing(true);
+    setUploadResults([]);
+    
     const reader = new FileReader();
     reader.onload = async (evt) => {
       try {
@@ -410,103 +492,170 @@ export default function Students({ user }: { user: UserType }) {
         const wb = XLSX.read(bstr, { type: "binary" });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws);
+        const rawData = XLSX.utils.sheet_to_json(ws);
 
-        if (data.length === 0) {
+        if (rawData.length === 0) {
           toast.error("The uploaded file is empty.");
           setIsProcessing(false);
           return;
         }
 
-        const studentsToUpload = data.map((item: any) => {
-          // Internal ID mapping for master tables
-          // Supports both ID-based columns (new template) and Name-based columns (legacy mapping)
-          
-          const stdMasterId = item.StandardId || standardsMaster.find(s => 
-            s.name.toLowerCase() === item.STD?.toString().toLowerCase()
-          )?.id;
-          
-          const divMasterId = item.SectionId || sectionsMaster.find(s => 
-            s.name.toLowerCase() === item.DIV?.toString().toLowerCase()
-          )?.id;
-          
-          const shiftMasterId = item.ShiftId || shifts.find(s => 
-            s.name.toLowerCase() === item.SHIFTNAME?.toString().toLowerCase()
-          )?.id;
+        // Initialize status tracking
+        const initialResults = rawData.map((item: any, index: number) => ({
+          id: index,
+          name: `${item.FirstName || ""} ${item.LastName || ""}`.trim() || item.RegistrationNumber || `Row ${index + 1}`,
+          status: 'pending',
+          error: null
+        }));
+        setUploadResults(initialResults);
 
-          const ayMasterId = item.AcademicYearId || academicYears.find(s => 
-            s.name.toLowerCase() === item.academicyear?.toString().toLowerCase()
-          )?.id;
-
-          const bgMasterId = item.BloodGroupId || bloodGroups.find(bg => 
-            bg.name.toLowerCase() === item.BLOODGROUP?.toString().toLowerCase()
-          )?.id;
-
-          const religionMasterId = item.ReligionId || religions.find(r => 
-            r.name.toLowerCase() === item.RELIGION?.toString().toLowerCase()
-          )?.id;
-
-          const houseMasterId = item.HouseId || houses.find(h => 
-            h.name.toLowerCase() === item.house?.toString().toLowerCase()
-          )?.id;
-
-          const admissionTypeMasterId = item.AdmissionTypeId || admissionTypes.find(at => 
-            at.name.toLowerCase() === item.admissiontype?.toString().toLowerCase()
-          )?.id;
-
-          const casteMasterId = item.CasteId || castes.find(c => 
-            c.name.toLowerCase() === item.CASTE?.toString().toLowerCase()
-          )?.id;
-
-          const categoryMasterId = item.CategoryId || categories.find(c => 
-            c.name.toLowerCase() === item.CATEGORY?.toString().toLowerCase()
-          )?.id;
-
-          return {
-            registrationNumber: item.RegistrationNumber || item.GRNO || `REG-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-            name: item.Name || item.name || `${item.FNAME || ""} ${item.MNAME || ""} ${item.LNAME || ""}`.trim(),
-            schoolId: parseInt(item.SchoolId || user.schoolId || "1"),
-            rollNumber: parseInt(item.RollNumber || item.ROLLNO || "0"),
-            GRNO: item.GRNO || item.RegistrationNumber,
-            GENDER: item.Gender || item.GENDER || "Male",
-            DOB: item.DOB || item.DateOfBirth,
-            MOBILE: item.Mobile || item.MOBILE,
-            EMAIL: item.Email || item.EMAIL,
-            ADDRESS: item.Address || item.ADDRESS,
-            MOTHERNAME: item.MotherName || item.MOTHERNAME,
-            aadharcard: item.AadharCard || item.aadharcard,
-            RFID: item.RFID || item.CARDID,
-            DOA: item.DOA || item.AdmissionDate,
-            FATHERNAME: item.FatherName,
-            PEN_No: item.PEN_No || item.NationalId,
-            bankacc: item.BankAcc,
-            ProfilePhotoPath: item.ProfilePhotoPath || "",
+        const processedStudents = rawData.map((item: any, index: number) => {
+          try {
+            const stdName = item.GradeName || item.STD;
+            const stdMasterId = item.StandardId || (stdName ? standardsMaster.find((s: any) => 
+              s.name.toLowerCase() === stdName.toString().toLowerCase()
+            )?.id : undefined);
             
-            // Map IDs from masters
-            StandardId: stdMasterId,
-            SectionId: divMasterId,
-            ShiftId: shiftMasterId,
-            AcademicYearId: ayMasterId,
-            BloodGroupId: bgMasterId,
-            ReligionId: religionMasterId,
-            HouseId: houseMasterId,
-            AdmissionTypeId: admissionTypeMasterId,
-            CasteId: casteMasterId,
-            CategoryId: categoryMasterId,
+            const divName = item.SectionName || item.DIV;
+            const divMasterId = item.SectionId || (divName ? sectionsMaster.find((s: any) => 
+              s.name.toLowerCase() === divName.toString().toLowerCase()
+            )?.id : undefined);
+            
+            const shiftName = item.ShiftName || item.SHIFTNAME;
+            const shiftMasterId = item.ShiftId || (shiftName ? shifts.find((s: any) => 
+              s.name.toLowerCase() === shiftName.toString().toLowerCase()
+            )?.id : undefined);
 
-            // Audit fields
-            CreatedBy: user.name || user.email,
-            ModifiedBy: user.name || user.email
-          };
+            const ayName = item.AcademicYear || item.academicyear;
+            const ayMasterId = item.AcademicYearId || (ayName ? academicYears.find((s: any) => 
+              s.name.toLowerCase() === ayName.toString().toLowerCase()
+            )?.id : undefined);
+
+            const bgName = item.BloodGroupName || item.BLOODGROUP;
+            const bgMasterId = item.BloodGroupId || (bgName ? bloodGroups.find((bg: any) => 
+              bg.name.toLowerCase() === bgName.toString().toLowerCase()
+            )?.id : undefined);
+
+            const relName = item.ReligionName || item.RELIGION;
+            const religionMasterId = item.ReligionId || (relName ? religions.find((r: any) => 
+              r.name.toLowerCase() === relName.toString().toLowerCase()
+            )?.id : undefined);
+
+            const houseName = item.HouseName || item.house;
+            const houseMasterId = item.HouseId || (houseName ? houses.find((h: any) => 
+              h.name.toLowerCase() === houseName.toString().toLowerCase()
+            )?.id : undefined);
+
+            const atName = item.AdmissionType || item.admissiontype;
+            const admissionTypeMasterId = item.AdmissionTypeId || (atName ? admissionTypes.find((at: any) => 
+              at.name.toLowerCase() === atName.toString().toLowerCase()
+            )?.id : undefined);
+
+            const cName = item.CasteName || item.CASTE;
+            const casteMasterId = item.CasteId || (cName ? castes.find((c: any) => 
+              c.name.toLowerCase() === cName.toString().toLowerCase()
+            )?.id : undefined);
+
+            const catName = item.CategoryName || item.CATEGORY;
+            const categoryMasterId = item.CategoryId || (catName ? categories.find((c: any) => 
+              c.name.toLowerCase() === catName.toString().toLowerCase()
+            )?.id : undefined);
+
+            return {
+              registrationNumber: (item.RegistrationNumber || item.GRNO || item.registrationNumber || `REG-${Date.now()}-${index}`).toString(),
+              name: item.Name || `${item.FirstName || item.FNAME || ""} ${item.MiddleName || item.MNAME || ""} ${item.LastName || item.LNAME || ""}`.trim(),
+              schoolId: parseInt(item.SchoolId || user.schoolId || "1"),
+              rollNumber: parseInt(item.RollNumber || item.ROLLNO || "0"),
+              GRNO: (item.GRNO || item.RegistrationNumber || item.registrationNumber || "").toString(),
+              GENDER: item.Gender || item.GENDER || "Male",
+              DOB: item.DOB || item.DateOfBirth,
+              MOBILE: (item.Mobile || item.MOBILE || item.contactNumber || "").toString(),
+              EMAIL: item.Email || item.EMAIL,
+              ADDRESS: item.Address || item.ADDRESS,
+              MOTHERNAME: item.MotherName || item.MOTHERNAME,
+              aadharcard: (item.AadharCard || item.aadharcard || "").toString(),
+              RFID: (item.RFID || item.CARDID || item.cardId || "").toString(),
+              SHIFTNAME: shiftName,
+              
+              StandardId: stdMasterId,
+              SectionId: divMasterId,
+              ShiftId: shiftMasterId,
+              AcademicYearId: ayMasterId,
+              BloodGroupId: bgMasterId,
+              ReligionId: religionMasterId,
+              HouseId: houseMasterId,
+              AdmissionTypeId: admissionTypeMasterId,
+              CasteId: casteMasterId,
+              CategoryId: categoryMasterId,
+              
+              uniformid: item.UniformID || item.uniformid,
+              contact2: item.SecondaryContact || item.contact2,
+              sms: item.SecondarySMS || item.sms,
+              status: item.Status || "Active",
+              CreatedBy: user.name || user.email,
+              ModifiedBy: user.name || user.email
+            };
+          } catch (e) {
+            console.error(`Row ${index} mapping error:`, e);
+            return null;
+          }
         });
 
-        await apiService.bulkCreateStudents(studentsToUpload as any[]);
-        toast.success(`Successfully imported ${studentsToUpload.length} students.`);
-        setIsBulkUploadOpen(false);
+        // Dynamic upload process: Sequential or Chunked to update UI
+        let successCount = 0;
+        let failCount = 0;
+
+        // Process in chunks of 5 for balance between speed and UI responsiveness
+        const chunkSize = 5;
+        for (let i = 0; i < processedStudents.length; i += chunkSize) {
+          const chunk = processedStudents.slice(i, i + chunkSize);
+          const chunkIndices = Array.from({length: chunk.length}, (_, k) => i + k);
+          
+          // Filter out failed mapping rows
+          const validRows = chunk.filter(s => s !== null);
+          const validIndices = chunkIndices.filter(idx => processedStudents[idx] !== null);
+          
+          setUploadResults(prev => prev.map(res => 
+            chunkIndices.includes(res.id) ? { ...res, status: 'processing' } : res
+          ));
+
+          try {
+            await apiService.bulkCreateStudents(validRows);
+            
+            setUploadResults(prev => prev.map(res => 
+              validIndices.includes(res.id) ? { ...res, status: 'success' } : res
+            ));
+            
+            // Mark failed mapping rows
+            const invalidIndices = chunkIndices.filter(idx => processedStudents[idx] === null);
+            if (invalidIndices.length > 0) {
+              setUploadResults(prev => prev.map(res => 
+                invalidIndices.includes(res.id) ? { ...res, status: 'error', error: 'Invalid data format' } : res
+              ));
+              failCount += invalidIndices.length;
+            }
+
+            successCount += validRows.length;
+          } catch (error: any) {
+            console.error(`Chunk ${i} upload error:`, error);
+            setUploadResults(prev => prev.map(res => 
+              chunkIndices.includes(res.id) ? { ...res, status: 'error', error: error.response?.data?.message || 'Server error' } : res
+            ));
+            failCount += chunk.length;
+          }
+        }
+
+        if (failCount === 0) {
+          toast.success(`Successfully imported all ${successCount} students.`);
+          setTimeout(() => setIsBulkUploadOpen(false), 2000);
+        } else {
+          toast.warning(`Imported ${successCount} students, but ${failCount} failed.`);
+        }
+        
         fetchStudents();
       } catch (error) {
-        console.error("Bulk upload error:", error);
-        toast.error("Failed to process Excel file. Please ensure it follows the sample template.");
+        console.error("Bulk upload reading error:", error);
+        toast.error("Failed to read Excel file.");
       } finally {
         setIsProcessing(false);
         if (bulkFileInputRef.current) bulkFileInputRef.current.value = "";
@@ -685,7 +834,12 @@ export default function Students({ user }: { user: UserType }) {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           {canManage && (
-            <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
+            <Dialog open={isBulkUploadOpen} onOpenChange={(open) => {
+              if (!isProcessing) {
+                setIsBulkUploadOpen(open);
+                if (!open) setUploadResults([]);
+              }
+            }}>
               <SimpleTooltip content="Import students from Excel" side="bottom">
                 <DialogTrigger
                   render={
@@ -695,51 +849,149 @@ export default function Students({ user }: { user: UserType }) {
                   }
                 />
               </SimpleTooltip>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Bulk Student Import</DialogTitle>
-                  <DialogDescription>
-                    Upload an Excel file containing multiple student records to import them at once.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="p-6 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-4 bg-slate-50/50">
-                  <div className="p-3 bg-white rounded-full shadow-sm">
-                    <FileText className="text-blue-500" size={24} />
+              <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-none shadow-3xl rounded-[2rem]">
+                <div className="bg-slate-900 px-8 py-5 text-white shrink-0">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-3">
+                       <div className="p-2 bg-blue-500 rounded-xl">
+                          <Upload size={20} className="text-white" />
+                       </div>
+                       Batch Student Onboarding
+                    </DialogTitle>
+                    <DialogDescription className="text-slate-400 text-xs">
+                      Synchronize your physical register with the digital campus database using our high-speed Excel importer.
+                    </DialogDescription>
+                  </DialogHeader>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-white">
+                  {uploadResults.length === 0 ? (
+                    <div className="p-10 border-4 border-dashed border-slate-100 rounded-[2rem] flex flex-col items-center justify-center gap-6 bg-slate-50/30 transition-all hover:bg-slate-50 hover:border-blue-100 group">
+                      <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                        <FileText className="text-blue-500" size={32} />
+                      </div>
+                      <div className="text-center space-y-2">
+                        <h4 className="text-lg font-black text-slate-900 tracking-tight">Drop your datasheet here</h4>
+                        <p className="text-xs text-slate-400 font-bold max-w-xs leading-relaxed uppercase tracking-widest">
+                          Strictly supports .XLSX and .XLS formats. Follow the system-defined schema for 100% precision.
+                        </p>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+                        <Button 
+                          className="flex-1 bg-slate-900 hover:bg-black text-white font-black rounded-2xl h-12 shadow-xl shadow-slate-200 active:scale-[0.98] transition-all"
+                          onClick={() => bulkFileInputRef.current?.click()}
+                          disabled={isProcessing}
+                        >
+                          {isProcessing ? "Processing Streams..." : "Browse Local Files"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="flex-1 border-slate-200 hover:bg-slate-50 font-black rounded-2xl h-12 transition-all gap-2 text-slate-600"
+                          onClick={downloadSampleExcel}
+                        >
+                          <Download size={18} /> Sample Sheet
+                        </Button>
+                      </div>
+                      <input
+                        type="file"
+                        ref={bulkFileInputRef}
+                        className="hidden"
+                        accept=".xlsx, .xls"
+                        onChange={handleBulkUpload}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between px-2">
+                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">Import Stream Activity</h4>
+                        <div className="flex gap-2">
+                           <Badge className="bg-emerald-500 hover:bg-emerald-600 font-black px-2 py-0.5 rounded-lg text-[10px]">
+                              {uploadResults.filter(r => r.status === 'success').length} SUCCESS
+                           </Badge>
+                           <Badge className="bg-rose-500 hover:bg-rose-600 font-black px-2 py-0.5 rounded-lg text-[10px]">
+                              {uploadResults.filter(r => r.status === 'error').length} FAILED
+                           </Badge>
+                        </div>
+                      </div>
+
+                      <div className="border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+                        <div className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 bg-slate-50/50">
+                          <Table>
+                            <TableHeader className="bg-white sticky top-0 z-10 shadow-sm">
+                              <TableRow className="hover:bg-transparent border-slate-100">
+                                <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-6">Row</TableHead>
+                                <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Entity Signature</TableHead>
+                                <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-right pr-6">Activity State</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {uploadResults.map((result) => (
+                                <TableRow key={result.id} className="group border-slate-100 bg-white/50 hover:bg-slate-50 transition-colors">
+                                  <TableCell className="pl-6 font-mono text-[10px] text-slate-400">{(result.id + 1).toString().padStart(3, '0')}</TableCell>
+                                  <TableCell className="py-3">
+                                    <div className="flex flex-col">
+                                      <span className="text-xs font-bold text-slate-900 truncate max-w-[200px]">{result.name}</span>
+                                      {result.error && (
+                                        <span className="text-[9px] text-rose-500 font-bold uppercase tracking-tight truncate max-w-[200px]">{result.error}</span>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-right pr-6">
+                                    {result.status === 'pending' && <Badge variant="outline" className="text-[9px] font-black tracking-tight border-slate-300 text-slate-400 bg-transparent">QUEUED</Badge>}
+                                    {result.status === 'processing' && (
+                                      <div className="flex items-center justify-end gap-2">
+                                         <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse"></div>
+                                         <span className="text-[9px] font-black text-blue-600 tracking-tight">SYNCING...</span>
+                                      </div>
+                                    )}
+                                    {result.status === 'success' && (
+                                      <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full border border-emerald-100">
+                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                                        <span className="text-[9px] font-black uppercase tracking-tight">VERIFIED</span>
+                                      </div>
+                                    )}
+                                    {result.status === 'error' && (
+                                      <div className="inline-flex items-center gap-1.5 bg-rose-50 text-rose-600 px-2.5 py-1 rounded-full border border-rose-100">
+                                        <div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-bounce"></div>
+                                        <span className="text-[9px] font-black uppercase tracking-tight">FAILED</span>
+                                      </div>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="bg-amber-50/50 border border-amber-100 p-5 rounded-2xl flex gap-4">
+                     <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center shrink-0">
+                        <Filter className="text-amber-500" size={18} />
+                     </div>
+                     <div className="space-y-1">
+                        <p className="text-[10px] font-black text-amber-900 uppercase tracking-widest">Master Data Integrity</p>
+                        <p className="text-xs text-amber-700/80 leading-relaxed font-medium">
+                          The importer automatically maps names (e.g., "10th Standard") to system IDs. Ensure spelling exactly matches the Master Configuration to avoid orphan records.
+                        </p>
+                     </div>
                   </div>
-                  <div className="text-center">
-                    <p className="text-sm font-bold text-slate-900">Upload your student registry</p>
-                    <p className="text-xs text-slate-500 mt-1">Supports XLSX and XLS formats</p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-3 w-full">
+                </div>
+
+                {uploadResults.length > 0 && !isProcessing && (
+                  <div className="p-6 bg-slate-50 border-t border-slate-100 shrink-0">
                     <Button 
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 font-bold rounded-xl h-10 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
-                      onClick={() => bulkFileInputRef.current?.click()}
-                      disabled={isProcessing}
+                      className="w-full bg-slate-900 hover:bg-black font-black rounded-xl h-10 transition-all"
+                      onClick={() => {
+                        setIsBulkUploadOpen(false);
+                        setUploadResults([]);
+                      }}
                     >
-                      {isProcessing ? "Processing..." : "Choose File"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex-1 border-slate-200 hover:bg-slate-50 font-bold rounded-xl h-10 transition-all gap-2"
-                      onClick={downloadSampleExcel}
-                    >
-                      <Download size={16} /> Sample Template
+                      Close Summary
                     </Button>
                   </div>
-                  <input
-                    type="file"
-                    ref={bulkFileInputRef}
-                    className="hidden"
-                    accept=".xlsx, .xls"
-                    onChange={handleBulkUpload}
-                  />
-                </div>
-                <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex gap-3">
-                  <div className="h-2 w-2 rounded-full bg-amber-500 mt-1.5 shrink-0" />
-                  <p className="text-xs text-amber-800 leading-relaxed font-medium">
-                    Ensure your Excel follows the system template. Validation errors will result in skipped rows.
-                  </p>
-                </div>
+                )}
               </DialogContent>
             </Dialog>
           )}
@@ -802,152 +1054,211 @@ export default function Students({ user }: { user: UserType }) {
                         <h3 className="text-sm font-black text-slate-900 tracking-tight">Academic Placement</h3>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-                        <div className="md:col-span-12 space-y-1.5">
-                          <Label htmlFor="school" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned School Branch</Label>
-                            <Select 
-                              value={newStudentFormData.schoolId} 
-                              onValueChange={(v) => {
-                                setNewStudentFormData({...newStudentFormData, schoolId: v});
-                                if (formErrors.schoolId) setFormErrors(prev => ({ ...prev, schoolId: false }));
-                              }}
-                              disabled={user.role !== "superadmin" && !!user.schoolId}
-                            >
-                              <SelectTrigger 
-                                ref={el => { inputRefs.current["schoolId"] = el; }}
-                                id="school" 
-                                className={cn(
-                                  "h-10 border-slate-200 bg-slate-50/50 font-bold text-slate-800 rounded-xl px-4 focus:ring-2 focus:ring-blue-500/5 transition-all text-sm",
-                                  formErrors.schoolId && "border-red-500 ring-2 ring-red-500/10",
-                                  (user.role !== "superadmin" && !!user.schoolId) && "opacity-80 cursor-not-allowed bg-slate-100"
-                                )}
-                              >
-                                {/* Mapping logic to show only school name in trigger */}
-                                <SelectValue placeholder="Select School Branch">
-                                  {newStudentFormData.schoolId ? schools.find(s => s.id.toString() === newStudentFormData.schoolId.toString())?.name : undefined}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent className="max-h-68 rounded-2xl shadow-2xl border-slate-200 p-2">
-                                <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">
-                                  Select School Branch
-                                </SelectItem>
-                                {Array.isArray(schools) && schools.length > 0 ? (
-                                  schools.map(s => (
-                                    <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
-                                      <div className="flex flex-col gap-0.5">
-                                        <span className="text-sm font-bold">{s.name}</span>
-                                        <span className="text-[10px] text-slate-400 font-medium tracking-tight">ID: SCH-{s.id} • {s.address?.split(',')[0]}</span>
-                                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                        {/* Form Fields Column (8/12 width) */}
+                        <div className="md:col-span-8">
+                          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                            <div className="md:col-span-12 space-y-1.5">
+                              <Label htmlFor="school" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned School Branch</Label>
+                                <Select 
+                                  value={newStudentFormData.schoolId} 
+                                  onValueChange={(v) => {
+                                    setNewStudentFormData({...newStudentFormData, schoolId: v});
+                                    if (formErrors.schoolId) setFormErrors(prev => ({ ...prev, schoolId: false }));
+                                  }}
+                                  disabled={user.role !== "superadmin" && !!user.schoolId}
+                                >
+                                  <SelectTrigger 
+                                    ref={el => { inputRefs.current["schoolId"] = el; }}
+                                    id="school" 
+                                    className={cn(
+                                      "h-10 border-slate-200 bg-slate-50/50 font-bold text-slate-800 rounded-xl px-4 focus:ring-2 focus:ring-blue-500/5 transition-all text-sm",
+                                      formErrors.schoolId && "border-red-500 ring-2 ring-red-500/10",
+                                      (user.role !== "superadmin" && !!user.schoolId) && "opacity-80 cursor-not-allowed bg-slate-100"
+                                    )}
+                                  >
+                                    {/* Mapping logic to show only school name in trigger */}
+                                    <SelectValue placeholder="Select School Branch">
+                                      {newStudentFormData.schoolId ? schools.find(s => s.id.toString() === newStudentFormData.schoolId.toString())?.name : undefined}
+                                    </SelectValue>
+                                  </SelectTrigger>
+                                  <SelectContent className="max-h-68 rounded-2xl shadow-2xl border-slate-200 p-2">
+                                    <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">
+                                      Select School Branch
                                     </SelectItem>
-                                  ))
-                                ) : (
-                                  <div className="p-4 text-sm text-slate-500 text-center italic flex flex-col items-center gap-2">
-                                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
-                                    Loading registered branches...
+                                    {Array.isArray(schools) && schools.length > 0 ? (
+                                      schools.map(s => (
+                                        <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
+                                          <div className="flex flex-col gap-0.5">
+                                            <span className="text-sm font-bold">{s.name}</span>
+                                            <span className="text-[10px] text-slate-400 font-medium tracking-tight">ID: SCH-{s.id} • {s.address?.split(',')[0]}</span>
+                                          </div>
+                                        </SelectItem>
+                                      ))
+                                    ) : (
+                                      <div className="p-4 text-sm text-slate-500 text-center italic flex flex-col items-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
+                                        Loading registered branches...
+                                      </div>
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="md:col-span-6 space-y-1.5">
+                              <Label htmlFor="STD" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.STD ? "text-red-500" : "text-slate-500")}>Academic Grade {formErrors.STD && "*"}</Label>
+                              <Select 
+                                value={newStudentFormData.STD} 
+                                onValueChange={(v) => {
+                                  setNewStudentFormData({...newStudentFormData, STD: v});
+                                  if (formErrors.STD) setFormErrors(prev => ({ ...prev, STD: false }));
+                                }}
+                              >
+                                <SelectTrigger 
+                                  ref={el => { inputRefs.current["STD"] = el; }}
+                                  id="STD" 
+                                  className={cn(
+                                    "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
+                                    formErrors.STD && "border-red-500 ring-2 ring-red-500/10"
+                                  )}
+                                >
+                                  <SelectValue placeholder="Select Academic Grade">
+                                    {newStudentFormData.STD || undefined}
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                                  <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Grade</SelectItem>
+                                  {Array.isArray(standardsMaster) && standardsMaster.map(std => (
+                                    <SelectItem key={std.id} value={std.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{std.name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="md:col-span-6 space-y-1.5">
+                              <Label htmlFor="DIV" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.DIV ? "text-red-500" : "text-slate-500")}>Division/Section {formErrors.DIV && "*"}</Label>
+                              <Select 
+                                value={newStudentFormData.DIV} 
+                                onValueChange={(v) => {
+                                  setNewStudentFormData({...newStudentFormData, DIV: v});
+                                  if (formErrors.DIV) setFormErrors(prev => ({ ...prev, DIV: false }));
+                                }}
+                              >
+                                <SelectTrigger 
+                                  ref={el => { inputRefs.current["DIV"] = el; }}
+                                  id="DIV" 
+                                  className={cn(
+                                    "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
+                                    formErrors.DIV && "border-red-500 ring-2 ring-red-500/10"
+                                  )}
+                                >
+                                  <SelectValue placeholder="Select Section/Division">
+                                    {newStudentFormData.DIV ? `Section ${newStudentFormData.DIV}` : undefined}
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                                  <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Section/Division</SelectItem>
+                                  {Array.isArray(sectionsMaster) && sectionsMaster.map(sec => (
+                                    <SelectItem key={sec.id} value={sec.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Section {sec.name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="md:col-span-6 space-y-1.5">
+                              <Label htmlFor="academicyear" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Joining Year</Label>
+                              <Select 
+                                value={newStudentFormData.academicyear} 
+                                onValueChange={(v) => setNewStudentFormData({...newStudentFormData, academicyear: v})}
+                              >
+                                <SelectTrigger id="academicyear" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                                  <SelectValue placeholder="Select Academic Year">
+                                    {newStudentFormData.academicyear ? academicYears.find(y => y.id.toString() === newStudentFormData.academicyear)?.name : undefined}
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                                  <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Year</SelectItem>
+                                  {Array.isArray(academicYears) && academicYears.map(y => (
+                                    <SelectItem key={y.id} value={y.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{y.name} {y.isCurrent ? "(Current)" : ""}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="md:col-span-6 space-y-1.5">
+                              <Label htmlFor="SHIFTNAME" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned Shift</Label>
+                              <Select 
+                                value={newStudentFormData.SHIFTNAME} 
+                                onValueChange={(v) => setNewStudentFormData({...newStudentFormData, SHIFTNAME: v})}
+                              >
+                                <SelectTrigger id="SHIFTNAME" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                                  <SelectValue placeholder="Select Shift">
+                                    {newStudentFormData.SHIFTNAME || undefined}
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                                  <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Shift</SelectItem>
+                                  {Array.isArray(shifts) && shifts.map(s => (
+                                    <SelectItem key={s.id} value={s.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{s.name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Profile Image Display Section (4/12 width) - Only shown in Edit Mode */}
+                        <div className="md:col-span-4 flex flex-col items-center justify-center border-l border-slate-100 pl-6">
+                           <div className="text-center space-y-4">
+                              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Profile Identity Image</Label>
+                              
+                              <div 
+                                className="relative group cursor-pointer"
+                                onClick={() => isEditMode && triggerPhotoUpload(currentStudentId!)}
+                              >
+                                <div className="w-44 h-44 rounded-3xl overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-200 bg-slate-50 flex items-center justify-center transition-all duration-300 group-hover:shadow-blue-200/50 group-hover:scale-[1.02]">
+                                  {newStudentFormData.ProfilePhotoPath ? (
+                                    <img 
+                                      src={newStudentFormData.ProfilePhotoPath} 
+                                      alt="Student Identity" 
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.currentTarget.src = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + newStudentFormData.FNAME;
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="flex flex-col items-center gap-2 text-slate-300">
+                                      <div className="p-4 bg-slate-100 rounded-2xl">
+                                        <Edit2 size={32} className="opacity-20" />
+                                      </div>
+                                      <span className="text-[10px] font-bold uppercase tracking-widest">No Image Found</span>
+                                    </div>
+                                  )}
+
+                                  {/* Update Overlay */}
+                                  {isEditMode && (
+                                    <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
+                                      <div className="p-2 bg-white/20 rounded-full">
+                                        <Edit2 size={24} />
+                                      </div>
+                                      <span className="text-[10px] font-black uppercase tracking-widest">Update Photo</span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {newStudentFormData.ProfilePhotoPath && (
+                                  <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
+                                    <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
                                   </div>
                                 )}
-                              </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="md:col-span-4 space-y-1.5">
-                          <Label htmlFor="STD" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.STD ? "text-red-500" : "text-slate-500")}>Academic Grade {formErrors.STD && "*"}</Label>
-                          <Select 
-                            value={newStudentFormData.STD} 
-                            onValueChange={(v) => {
-                              setNewStudentFormData({...newStudentFormData, STD: v});
-                              setFormErrors(prev => ({ ...prev, STD: false }));
-                            }}
-                          >
-                            <SelectTrigger 
-                              ref={el => { inputRefs.current["STD"] = el; }}
-                              id="STD" 
-                              className={cn(
-                                "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                                formErrors.STD && "border-red-500 ring-2 ring-red-500/10"
-                              )}
-                            >
-                              <SelectValue placeholder="Select Academic Grade">
-                                {newStudentFormData.STD || undefined}
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Grade</SelectItem>
-                              {Array.isArray(standardsMaster) && standardsMaster.map(std => (
-                                <SelectItem key={std.id} value={std.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{std.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="md:col-span-4 space-y-1.5">
-                          <Label htmlFor="DIV" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.DIV ? "text-red-500" : "text-slate-500")}>Division/Section {formErrors.DIV && "*"}</Label>
-                          <Select 
-                            value={newStudentFormData.DIV} 
-                            onValueChange={(v) => {
-                              setNewStudentFormData({...newStudentFormData, DIV: v});
-                              setFormErrors(prev => ({ ...prev, DIV: false }));
-                            }}
-                          >
-                            <SelectTrigger 
-                              ref={el => { inputRefs.current["DIV"] = el; }}
-                              id="DIV" 
-                              className={cn(
-                                "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                                formErrors.DIV && "border-red-500 ring-2 ring-red-500/10"
-                              )}
-                            >
-                              <SelectValue placeholder="Select Section/Division">
-                                {newStudentFormData.DIV ? `Section ${newStudentFormData.DIV}` : undefined}
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Section/Division</SelectItem>
-                              {Array.isArray(sectionsMaster) && sectionsMaster.map(sec => (
-                                <SelectItem key={sec.id} value={sec.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Section {sec.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="md:col-span-4 space-y-1.5">
-                          <Label htmlFor="academicyear" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Joining Year</Label>
-                          <Select 
-                            value={newStudentFormData.academicyear} 
-                            onValueChange={(v) => setNewStudentFormData({...newStudentFormData, academicyear: v})}
-                          >
-                            <SelectTrigger id="academicyear" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                              <SelectValue placeholder="Select Academic Year">
-                                {newStudentFormData.academicyear ? academicYears.find(y => y.id.toString() === newStudentFormData.academicyear)?.name : undefined}
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Year</SelectItem>
-                              {Array.isArray(academicYears) && academicYears.map(y => (
-                                <SelectItem key={y.id} value={y.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{y.name} {y.isCurrent ? "(Current)" : ""}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="md:col-span-4 space-y-1.5">
-                          <Label htmlFor="SHIFTNAME" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned Shift</Label>
-                          <Select 
-                            value={newStudentFormData.SHIFTNAME} 
-                            onValueChange={(v) => setNewStudentFormData({...newStudentFormData, SHIFTNAME: v})}
-                          >
-                            <SelectTrigger id="SHIFTNAME" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                              <SelectValue placeholder="Select Shift">
-                                {newStudentFormData.SHIFTNAME || undefined}
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Shift</SelectItem>
-                              {Array.isArray(shifts) && shifts.map(s => (
-                                <SelectItem key={s.id} value={s.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{s.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                              </div>
+                              
+                              <p className="text-[10px] text-slate-400 font-medium leading-relaxed max-w-[180px] mx-auto">
+                                {isEditMode 
+                                  ? "Click the identity frame to upload or change the physical photograph." 
+                                  : "Identity images can be managed after initial record creation."}
+                              </p>
+                           </div>
                         </div>
                       </div>
                     </section>
