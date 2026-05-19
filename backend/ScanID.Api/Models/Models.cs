@@ -215,6 +215,30 @@ namespace ScanID.Api.Models
 
         [ForeignKey("ShiftId")]
         public Shift? Shift { get; set; }
+
+        [ForeignKey("CasteId")]
+        public Caste? Caste { get; set; }
+
+        [ForeignKey("SubCasteId")]
+        public SubCaste? SubCaste { get; set; }
+
+        [ForeignKey("ReligionId")]
+        public Religion? Religion { get; set; }
+
+        [ForeignKey("BloodGroupId")]
+        public BloodGroup? BloodGroup { get; set; }
+
+        [ForeignKey("HouseId")]
+        public House? House { get; set; }
+
+        [ForeignKey("AdmissionTypeId")]
+        public AdmissionType? AdmissionType { get; set; }
+
+        [ForeignKey("CityId")]
+        public City? City { get; set; }
+
+        [ForeignKey("StateId")]
+        public State? State { get; set; }
     }
 
 
