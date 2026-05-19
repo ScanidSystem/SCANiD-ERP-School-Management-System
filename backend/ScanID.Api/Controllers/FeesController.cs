@@ -38,7 +38,7 @@ namespace ScanID.Api.Controllers
                 query = query.Where(f => f.Student!.SchoolId == schoolId.Value);
 
             if (academicYearId.HasValue)
-                query = query.Where(f => f.Student!.AcademicYearId == academicYearId.Value || f.Student!.academicyear == academicYearId.Value.ToString());
+                query = query.Where(f => f.Student!.AcademicYearId == academicYearId.Value);
 
             return await query.ToListAsync();
         }

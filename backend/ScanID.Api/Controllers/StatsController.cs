@@ -40,9 +40,9 @@ namespace ScanID.Api.Controllers
 
             if (academicYearId.HasValue)
             {
-                studentQuery = studentQuery.Where(s => s.AcademicYearId == academicYearId.Value || s.academicyear == academicYearId.Value.ToString());
+                studentQuery = studentQuery.Where(s => s.AcademicYearId == academicYearId.Value);
                 // Teachers might not be linked directly to academic year in this schema, but students are.
-                attendanceQuery = attendanceQuery.Where(a => a.Student!.AcademicYearId == academicYearId.Value || a.Student!.academicyear == academicYearId.Value.ToString());
+                attendanceQuery = attendanceQuery.Where(a => a.Student!.AcademicYearId == academicYearId.Value);
             }
 
             var totalStudents = await studentQuery.CountAsync();

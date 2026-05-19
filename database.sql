@@ -335,7 +335,7 @@ CREATE TABLE [dbo].[Teachers](
 END
 GO
 
--- 6. Student Table (Depends on Schools and Masters)
+-- 6. Student Table (Modern Schema - Redundant Legacy Columns Removed)
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND type in (N'U'))
 BEGIN
 CREATE TABLE [dbo].[Students](
@@ -353,35 +353,27 @@ CREATE TABLE [dbo].[Students](
 	[FirstName] [nvarchar](200) NULL,
 	[MiddleName] [nvarchar](200) NULL,
 	[LastName] [nvarchar](200) NULL,
-	[STD] [nvarchar](200) NOT NULL,
-	[DIV] [nvarchar](200) NOT NULL,
-	[ROLLNO] [nvarchar](200) NOT NULL,
+	-- Redundant STD, DIV, ROLLNO removed
 	[GRNO] [nvarchar](100) NULL,
 	[GENDER] [nvarchar](10) NULL,
 	[DOB] [nvarchar](200) NULL,
 	[DateOfBirth] [nvarchar](200) NULL,
-	[BLOODGROUP] [nvarchar](100) NULL,
-	[CASTE] [nvarchar](50) NULL,
-	[RELIGION] [nvarchar](50) NULL,
-	[CATEGORY] [nvarchar](50) NULL,
+	-- Redundant BLOODGROUP, CASTE, RELIGION, CATEGORY, CITY, STATE removed
 	[ADDRESS] [nvarchar](500) NULL,
-	[CITY] [nvarchar](100) NULL,
 	[PIN] [nvarchar](100) NULL,
-	[STATE] [nvarchar](50) NULL,
 	[FATHERNAME] [nvarchar](200) NULL,
 	[MOTHERNAME] [nvarchar](200) NULL,
 	[MOBILE] [nvarchar](200) NULL,
 	[EMAIL] [nvarchar](50) NULL,
-	[SHIFTNAME] [nvarchar](200) NULL,
+	-- Redundant SHIFTNAME removed
 	[DOA] [nvarchar](200) NULL,
 	[ProfilePhotoPath] [nvarchar](500) NULL,
 	[CARDID] [nvarchar](500) NULL,
 	[VALIDFROM] [nvarchar](200) NULL,
 	[VALIDTO] [nvarchar](200) NULL,
 	[sms] [nvarchar](10) NULL,
-	[subcaste] [nvarchar](255) NULL,
+	-- Redundant subcaste, photo removed
 	[contact2] [nvarchar](255) NULL,
-	[photo] [varbinary](max) NULL,
 	[ispromoted] [nvarchar](10) NULL,
 	[saralid] [nvarchar](100) NULL,
 	[aadharcard] [nvarchar](100) NULL,
@@ -391,7 +383,7 @@ CREATE TABLE [dbo].[Students](
 	[fingerid] [nvarchar](500) NULL,
 	[freeshiptype] [nvarchar](500) NULL,
 	[otp] [nvarchar](500) NULL,
-	[admissiontype] [nvarchar](500) NULL,
+	-- Redundant admissiontype removed
 	[subjects] [nvarchar](500) NULL,
 	[placeofbirth] [nvarchar](500) NULL,
 	[birthtaluka] [nvarchar](500) NULL,
@@ -413,9 +405,7 @@ CREATE TABLE [dbo].[Students](
 	[IQLD] [nvarchar](10) NULL,
 	[schoolsection] [nvarchar](500) NULL,
 	[leftstatus] [nvarchar](100) NULL,
-	[academicyear] [nvarchar](500) NULL,
-	[stdstudying] [nvarchar](500) NULL,
-	[house] [nvarchar](500) NULL,
+	-- Redundant academicyear, stdstudying, house removed
 	[feesinstallment] [nvarchar](500) NULL,
 	[uniformid] [nvarchar](500) NULL,
 	[stdstudyingInWords] [nvarchar](500) NULL,
@@ -436,6 +426,7 @@ CREATE TABLE [dbo].[Students](
 	[CityId] [int] NULL,
 	[StateId] [int] NULL,
 	[ShiftId] [int] NULL,
+	[CategoryId] [int] NULL,
 
     [IsActive] [bit] NOT NULL DEFAULT (1),
     [IsDeleted] [bit] NOT NULL DEFAULT (0),
@@ -486,6 +477,9 @@ BEGIN
     
     IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_States')
         ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_States] FOREIGN KEY([StateId]) REFERENCES [dbo].[States] ([Id]);
+
+	IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_Categories')
+        ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_Categories] FOREIGN KEY([CategoryId]) REFERENCES [dbo].[Categories] ([Id]);
 END
 GO
 
@@ -764,7 +758,7 @@ CREATE TABLE [dbo].[Notifications](
 END
 GO
 
--- 9. Sample Data
+-- 9. Sample Infrastructure Data
 IF NOT EXISTS (SELECT * FROM [dbo].[ErrorLogs] WHERE [Id] = 1)
 BEGIN
 INSERT INTO [dbo].[ErrorLogs] ([Message], [Level], [Timestamp], [Exception], [Properties])
