@@ -263,7 +263,14 @@ namespace ScanID.Api.Controllers
         {
             if (file == null || file.Length == 0)
             {
-                return BadRequest(new { message = "No image file provided for upload." });
+                // Inspecting the request more closely for diagnostics
+                var contentType = Request.ContentType ?? "null";
+                var bodyLength = Request.ContentLength ?? 0;
+                return BadRequest(new { 
+                    message = "No image file provided for upload.",
+                    details = $"Received Content-Type: {contentType}, Body Length: {bodyLength}. Ensure form key is 'file' and boundary is set.",
+                    id = id
+                });
             }
 
             var student = await _context.Students

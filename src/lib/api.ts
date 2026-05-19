@@ -9,9 +9,7 @@ console.log(`[API] Initialized with Base URL: ${API_BASE_URL}`);
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // Use default axios behavior which handles Content-Type automatically based on data type
 });
 
 // Fallback data for preview mode
@@ -259,7 +257,12 @@ export const apiService = {
   uploadStudentPhoto: (id: number, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    return api.post(`/students/${id}/photo`, formData);
+    // Explicitly set headers to null/undefined to let browser/axios set boundary for multipart
+    return api.post(`/students/${id}/photo`, formData, {
+      headers: {
+        "Content-Type": undefined, 
+      },
+    });
   },
 
   // Marks
