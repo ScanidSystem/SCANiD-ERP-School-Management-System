@@ -146,7 +146,9 @@ async function startServer() {
 
   // Auth
   app.post("/api/auth/login", (req, res) => {
-    const { username, password } = req.body;
+    const username = (req.body.username || "").trim().toLowerCase();
+    const password = (req.body.password || "").trim();
+    
     if (username === "superadmin" && password === "Password123") {
       res.json({
         id: 1,
@@ -154,6 +156,42 @@ async function startServer() {
         email: "admin@scanid.com",
         role: "superadmin",
         schoolName: "System-wide",
+      });
+    } else if (username === "admin" && password === "Admin123") {
+      res.json({
+        id: 2,
+        name: "School Admin",
+        email: "schooladmin@scanid.com",
+        role: "admin",
+        schoolId: "1",
+        schoolName: "Greenwood High",
+      });
+    } else if (username === "teacher1" && password === "Teacher123") {
+      res.json({
+        id: 3,
+        name: "Sarah Wilson",
+        email: "sarah@greenwood.edu",
+        role: "teacher",
+        schoolId: "1",
+        schoolName: "Greenwood High",
+      });
+    } else if (username === "parent1" && password === "Parent123") {
+      res.json({
+        id: 4,
+        name: "Robert Johnson",
+        email: "robert@example.com",
+        role: "parent",
+        schoolId: "1",
+        schoolName: "Greenwood High",
+      });
+    } else if (username === "student1" && password === "Student123") {
+      res.json({
+        id: 5,
+        name: "Alice Johnson",
+        email: "alice@example.com",
+        role: "student",
+        schoolId: "1",
+        schoolName: "Greenwood High",
       });
     } else {
       res.status(401).json({ message: "Invalid credentials" });

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Role, User } from "@/types";
-import { GraduationCap, School, Calendar } from "lucide-react";
+import { GraduationCap, School, Calendar, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/lib/api";
 import { 
@@ -26,6 +26,7 @@ export default function Login({ onLogin }: LoginProps) {
   const [role, setRole] = useState<Role>("admin");
   const [loading, setLoading] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [recoverySuccess, setRecoverySuccess] = useState(false);
   const [errorVisible, setErrorVisible] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -291,18 +292,28 @@ export default function Login({ onLogin }: LoginProps) {
                     Forgot password?
                   </button>
                 </div>
-                <Input 
-                  id="password" 
-                  ref={passwordRef}
-                  type="password" 
-                  placeholder="••••••••" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={cn(
-                    "bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 h-9",
-                    formErrors.password && "border-red-500/50 ring-1 ring-red-500/20"
-                  )}
-                />
+                <div className="relative">
+                  <Input 
+                    id="password" 
+                    ref={passwordRef}
+                    type={showPassword ? "text" : "password"} 
+                    placeholder="••••••••" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={cn(
+                      "bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 h-9 pr-10",
+                      formErrors.password && "border-red-500/50 ring-1 ring-red-500/20"
+                    )}
+                  />
+                  <button
+                    type="button"
+                    title={showPassword ? "Hide password" : "Show password"}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white flex items-center justify-center p-1"
+                  >
+                    {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
