@@ -747,8 +747,10 @@ async function startServer() {
         }
       },
       proxyReq: (proxyReq, req, res) => {
-        // Fix for body consumption issue when express.json() is used before proxy
-        if (req.body) {
+        // Fix for body consumption issue: Only re-stream if it's JSON
+        // Multipart data (file uploads) should NOT be stringified
+        const contentType = req.headers['content-type'] || '';
+        if (req.body && Object.keys(req.body).length > 0 && contentType.includes('application/json')) {
           const bodyData = JSON.stringify(req.body);
           proxyReq.setHeader('Content-Type', 'application/json');
           proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
