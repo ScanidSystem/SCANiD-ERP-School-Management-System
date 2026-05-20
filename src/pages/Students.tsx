@@ -553,7 +553,7 @@ export default function Students({ user }: { user: UserType }) {
       // Define standard headers based on all current student table fields
       // Using user-friendly names that the mapper will convert to IDs
       const headers = [
-        "RegistrationNumber", "RollNumber", "FirstName", "MiddleName", "LastName", 
+        "SchoolName", "RegistrationNumber", "RollNumber", "FirstName", "MiddleName", "LastName", 
         "Gender", "Mobile", "Email", "MotherName", "Address", "AadharCard", "DOB",
         "GradeName", "SectionName", "BloodGroupName", "HouseName", 
         "AdmissionType", "ReligionName", "CasteName", "SubCasteName", 
@@ -563,6 +563,7 @@ export default function Students({ user }: { user: UserType }) {
       
       const sampleData = [
         {
+          SchoolName: schools.find(sch => sch.id?.toString() === user.schoolId?.toString())?.name || schools[0]?.name || "Main Campus",
           RegistrationNumber: "REG1001",
           RollNumber: "1",
           FirstName: "John",
@@ -641,6 +642,12 @@ export default function Students({ user }: { user: UserType }) {
 
         const processedStudents = rawData.map((item: any, index: number) => {
           try {
+            // Find school id by the provided School Name for institutional compliance
+            const schName = item.SchoolName || item.schoolName || item.School;
+            const schMasterId = item.SchoolId || (schName ? schools.find((sch: any) => 
+              sch.name.toLowerCase() === schName.toString().toLowerCase()
+            )?.id : undefined);
+
             const stdName = item.GradeName || item.STD;
             const stdMasterId = item.StandardId || (stdName ? standardsMaster.find((s: any) => 
               s.name.toLowerCase() === stdName.toString().toLowerCase()
@@ -694,7 +701,7 @@ export default function Students({ user }: { user: UserType }) {
             return {
               registrationNumber: (item.RegistrationNumber || item.GRNO || item.registrationNumber || `REG-${Date.now()}-${index}`).toString(),
               name: item.Name || `${item.FirstName || item.FNAME || ""} ${item.MiddleName || item.MNAME || ""} ${item.LastName || item.LNAME || ""}`.trim(),
-              schoolId: parseInt(item.SchoolId || user.schoolId || "1"),
+              schoolId: parseInt(schMasterId || item.SchoolId || user.schoolId || "1"),
               rollNumber: parseInt(item.RollNumber || item.ROLLNO || "0"),
               GRNO: (item.GRNO || item.RegistrationNumber || item.registrationNumber || "").toString(),
               GENDER: item.Gender || item.GENDER || "Male",

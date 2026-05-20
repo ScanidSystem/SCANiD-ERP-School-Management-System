@@ -161,3 +161,34 @@ During Excel exports in the student management dashboard, columns representing c
 ```
 - Standardized file system generation and confirmed zero compilation or structural warnings during production runs.
 
+---
+
+## 7. School Name Integration in Student Bulk Upload template & Parsing
+### Issue
+During mass enrollments via the **Student Bulk Upload** panel, the downloadable Excel file did not include the `SchoolName` column as a template header. The upload logic did not support mapping human-readable school names back to physical `schoolId` integer references in the database, requiring users to hardcode integer IDs.
+
+### Solution & Code Changes
+- Updated the downloadable sample XLSX template generator in `src/pages/Students.tsx` to automatically inject `"SchoolName"` into the headers list and pre-populate it with the user's active campus or fallback to the master listed schools:
+```typescript
+const headers = [
+  "SchoolName", "RegistrationNumber", "RollNumber", "FirstName", "MiddleName", "LastName", 
+  ...
+];
+const sampleData = [
+  {
+    SchoolName: schools.find(sch => sch.id?.toString() === user.schoolId?.toString())?.name || schools[0]?.name || "Main Campus",
+    RegistrationNumber: "REG1001",
+    ...
+  }
+];
+```
+- Integrated dynamic name-to-ID mapping inside `handleBulkUpload` to lookup the respective `schoolId` based on the provided school name and fall back perfectly to the user's current session parameters:
+```typescript
+const schName = item.SchoolName || item.schoolName || item.School;
+const schMasterId = item.SchoolId || (schName ? schools.find((sch: any) => 
+  sch.name.toLowerCase() === schName.toString().toLowerCase()
+)?.id : undefined);
+```
+- Bound the parsed `schoolId` safely into the database payload, ensuring pristine cross-institution stability and a flawless user experience.
+
+
