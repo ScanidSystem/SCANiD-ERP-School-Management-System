@@ -179,9 +179,45 @@ const mockFallbacks: Record<string, any> = {
   }
 };
 
+// Add request interceptor to automatically inject Authorization header
+api.interceptors.request.use(
+  (config) => {
+    try {
+      const savedUserStr = localStorage.getItem("user");
+      let token = localStorage.getItem("token");
+      
+      if (savedUserStr) {
+        const savedUser = JSON.parse(savedUserStr);
+        if (savedUser && savedUser.token) {
+          token = savedUser.token;
+        }
+      }
+      
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (err) {
+      console.error("Error setting Authorization header:", err);
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Check for 401 Unauthorized - Session expired or invalid token
+    if (error.response && error.response.status === 401) {
+      console.warn("Session expired or unauthorized (401). Redirecting to login...");
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login?expired=true";
+      }
+      return Promise.reject(error);
+    }
+
     const isNetworkError = error.message?.includes("Network Error") || 
                            error.code === "ECONNABORTED" || 
                            error.message?.includes("ERR_CONNECTION_REFUSED");

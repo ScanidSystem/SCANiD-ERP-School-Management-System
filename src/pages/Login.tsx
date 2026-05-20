@@ -64,6 +64,11 @@ export default function Login({ onLogin }: LoginProps) {
 
   useEffect(() => {
     fetchLookups();
+    // Check if redirect occurred because of an expired session / unauthorized response
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("expired") === "true") {
+      setErrorVisible("Your session has expired. Please login again to continue.");
+    }
   }, [fetchLookups]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -102,6 +107,11 @@ export default function Login({ onLogin }: LoginProps) {
       
       // Handle both { token, user } structure and flat user object
       const userData = response.data.user || response.data;
+      const userToken = response.data.token || response.data.accessToken || "";
+      if (userToken) {
+        userData.token = userToken;
+        localStorage.setItem("token", userToken);
+      }
       
       // Map roles to numeric IDs if not provided by backend
       const ROLE_MAP: Record<string, number> = {
