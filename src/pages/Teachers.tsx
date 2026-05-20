@@ -87,6 +87,7 @@ interface Teacher {
   joiningDate?: string;
   employeeId?: string;
   photo?: string;
+  schoolId?: string;
 }
 
 export default function Teachers({ user }: { user: any }) {
@@ -193,7 +194,8 @@ export default function Teachers({ user }: { user: any }) {
           section: getVal("section") || getVal("sectionId")?.toString() || "N/A",
           status: getVal("status") || "Active",
           employeeId: getVal("employeeId") || "N/A",
-          photo: getVal("photo") || getVal("profilePhotoPath") || getVal("ProfilePhotoPath") || ""
+          photo: getVal("photo") || getVal("profilePhotoPath") || getVal("ProfilePhotoPath") || "",
+          schoolId: getVal("schoolId") || t.schoolId?.toString() || ""
         };
       });
 
@@ -268,7 +270,9 @@ export default function Teachers({ user }: { user: any }) {
   }, [fetchTeachers]);
 
   useEffect(() => {
-    if (!isAddDialogOpen) {
+    if (isAddDialogOpen) {
+      fetchSchools();
+    } else {
       setSelectedPhotoFile(null);
       if (localPhotoPreview) {
         URL.revokeObjectURL(localPhotoPreview);
@@ -942,6 +946,7 @@ export default function Teachers({ user }: { user: any }) {
                               setSelectedTeacher(teacher);
                               setIsEditing(true);
                               const names = (teacher.name || "").split(' ');
+                              // Populate all required master properties, including standard/section/experience details and exact school branches
                               setFormData({
                                 firstName: names[0],
                                 lastName: names.slice(-1)[0],
@@ -949,9 +954,12 @@ export default function Teachers({ user }: { user: any }) {
                                 email: teacher.email,
                                 phone: teacher.phone,
                                 qualification: teacher.qualification,
+                                experience: teacher.experience,
                                 subject: teacher.subject,
+                                standard: teacher.standard,
+                                section: teacher.section,
                                 status: teacher.status,
-                                schoolId: user.schoolId || "",
+                                schoolId: teacher.schoolId || user.schoolId || "",
                                 photo: teacher.photo || ""
                               });
                               setIsAddDialogOpen(true);

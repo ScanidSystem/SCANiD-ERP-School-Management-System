@@ -396,6 +396,8 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
         payload.address = formData.address;
         payload.phone = formData.phone;
         payload.email = formData.email;
+        // Keep school branding path aligned to avoid clearing it during name/address updates
+        payload.profilePhotoPath = formData.profilePhotoPath;
       } else if (activeTab === "role-assignment") {
         // Map common 'name' field back to 'fullName' for User API
         payload.fullName = formData.name;

@@ -222,7 +222,8 @@ export default function Schools({ user }: { user: UserType }) {
       phone: school.phone || "",
       email: school.email || "",
       status: school.status || "Active",
-      photo: school.photo || ""
+      // Map both camelCase and Capitalized server properties to preserve original branding details on form entry
+      photo: school.profilePhotoPath || school.ProfilePhotoPath || school.photo || ""
     });
     setFormErrors({});
     setIsEditDialogOpen(true);
@@ -302,6 +303,8 @@ export default function Schools({ user }: { user: UserType }) {
       // Audit fields: Ensure ModifiedBy is captured for backend audit logging
       await apiService.updateSchool(currentSchool.id, { 
         ...formData, 
+        // Pass photo path explicitly as profilePhotoPath to prevent backend wiping it out
+        profilePhotoPath: formData.photo,
         id: currentSchool.id,
         ModifiedBy: user.name || user.email
       });
@@ -374,6 +377,7 @@ export default function Schools({ user }: { user: UserType }) {
       // Audit fields: Ensure CreatedBy and ModifiedBy are captured for backend audit logging
       const response = await apiService.createSchool({
         ...formData,
+        profilePhotoPath: formData.photo,
         CreatedBy: user.name || user.email,
         ModifiedBy: user.name || user.email
       });

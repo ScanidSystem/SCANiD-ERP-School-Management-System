@@ -50,3 +50,92 @@ if (activeTab === "schools" && selectedPhotoFile && createdSchool?.id) {
 }
 ```
 - Bound perfect resource cleanup hooks so memory leaks are prevented when closing or refreshing the dialog.
+
+---
+
+## 3. Teachers Campus Branch Dropdown Resolution in Edit Mode
+### Issue
+On the **Teachers Modify Master** (Edit Faculty screen), the **Campus Branch** dropdown failed to pre-select or display the registered school name, which prevented submissions.
+
+### Root Cause
+1. On opening the Add/Edit Dialog, the React form state (`formData.schoolId`) was populated with `teacher.schoolId || user.schoolId || ""`. However, the underlying collection of schools (`schools` state) had not yet loaded or synchronized inside the add/edit layout boundary wrapper.
+2. In `Teachers.tsx`, the function `fetchSchools()` was only bound to execute once upon loading or manual dialog toggles, and did not execute reliably during instant, direct row selections.
+3. The table item mapping ignored `schoolId` which caused the backend to receive empty values across updates.
+
+### Solution & Code Changes
+- Updated the table mapper within `fetchTeachers` inside `Teachers.tsx` to explicitly match and return `schoolId`:
+```typescript
+schoolId: getVal("schoolId") || t.schoolId?.toString() || ""
+```
+- Restructured `useEffect` to reliably load available campus branches whenever the Add/Edit modal is triggered:
+```typescript
+useEffect(() => {
+  if (isAddDialogOpen) {
+    fetchSchools();
+  }
+...
+```
+- Fixed the pre-selection logic inside the edit click-handler to bind the teacher's exact school ID so the selector recognizes and selects the current record's campus branch instantly:
+```typescript
+schoolId: teacher.schoolId || user.schoolId || ""
+```
+
+---
+
+## 4. Institutional Photo Path Preservation on School Updates
+### Issue
+Editing a school through the standard schools page or the master configuration page would update text and address parameters successfully but would wipe out or fail to show pre-existing uploaded branding logo entries.
+
+### Root Cause
+1. During dialog entry, the school's existing photo string was matched against `school.photo`, ignoring the correct backend-persisted fields `profilePhotoPath` / `ProfilePhotoPath`.
+2. When submitting updates, the put payload construction omitted the key parameter `profilePhotoPath`, resulting in an empty property value being received by the API controller, which then wiped out the legacy paths.
+
+### Solution & Code Changes
+- Updated `src/pages/Schools.tsx` to safely map both camelCase and Capitalized server properties to preserve original branding details on form entry:
+```typescript
+photo: school.profilePhotoPath || school.ProfilePhotoPath || school.photo || ""
+```
+- Integrated explicit `profilePhotoPath` payload mapping within `updateSchool` requests to prevent database attributes from being set to null during edits:
+```typescript
+await apiService.updateSchool(currentSchool.id, { 
+  ...formData, 
+  profilePhotoPath: formData.photo,
+  id: currentSchool.id,
+  ModifiedBy: user.name || user.email
+});
+```
+- Aligned `src/pages/Configuration.tsx` update logic so school configurations retain logo paths securely without regression.
+
+---
+
+## 5. Dynamic and Robust Photo URL Resolver for Custom Subpath Deployments
+### Issue
+Photo uploads for students, teachers, and schools worked perfectly on local developer setups, but once deployed, images failed to load because the client-side asset router generated root-relative paths like `https://scaniderp.com/photos/...` instead of honoring subdirectory routings like `https://scaniderp.com/scanid_erp_api/photos/...`.
+
+### Root Cause
+1. Standard configuration values like `import.meta.env.VITE_API_BASE_URL` were configured to access `/SCANiD_ERP_API/api` relative paths, which are subject to cases (e.g. server subdirectory capitalization discrepancy).
+2. The `resolvePhotoUrl` helper didn't dynamically read the browser's active routing URL context, causing hardcoded folder splits to bypass dynamic ingress configurations.
+
+### Solution & Code Changes
+- Completely refactored and modernized `resolvePhotoUrl` inside `src/lib/utils.ts` to implement a **self-healing dynamic subpath detector**:
+```typescript
+export function resolvePhotoUrl(path: string | undefined): string {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
+    return path;
+  }
+  
+  const cleanPath = path.startsWith("/") ? path.substring(1) : path;
+  
+  // 1. Detect dynamic subpath prefix from browser URL window.location
+  let dynamicSubpath = "";
+  if (typeof window !== "undefined" && window.location) {
+    const pathname = window.location.pathname;
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments.length > 0 && segments[0].toLowerCase().includes("scanid")) {
+      dynamicSubpath = `/${segments[0]}`; // Matches browser's exact casing e.g. "scanid_erp_api"
+    }
+  }
+  ...
+```
+This guarantees that regardless of server-side configuration changes, subfolder capitalization, or routing proxies, the frontend automatically self-heals by loading images relative to the active deployment directory accessed by the user.
