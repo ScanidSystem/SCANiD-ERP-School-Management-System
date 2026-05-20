@@ -146,6 +146,8 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
   // Dialog states
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any | null>(null);
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
+  const [localPhotoPreview, setLocalPhotoPreview] = useState<string | null>(null);
   
   const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
   const inputRefs = useRef<Record<string, any>>({});
@@ -161,7 +163,8 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
     stateId: "",
     address: "",
     phone: "",
-    email: ""
+    email: "",
+    profilePhotoPath: ""
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -174,25 +177,50 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || uploadingSchoolId === null) return;
+    if (!file) return;
 
-    const loadingToast = toast.loading("Uploading institutional logo...");
-    try {
-      const response = await apiService.uploadSchoolPhoto(uploadingSchoolId, file);
-      // Access path from potential data wrapper
-      const _newPath = response.data.data?.path || response.data.path;
-      
-      toast.dismiss(loadingToast);
-      toast.success("Institutional identity updated physically.");
-      fetchData(); // Refresh to see the new logo
-    } catch (error) {
-      toast.dismiss(loadingToast);
-      toast.error("Failed to update logo physically. Check server permissions.");
-      console.error(error);
-    } finally {
-      setUploadingSchoolId(null);
-      if (e.target) e.target.value = "";
+    if (uploadingSchoolId !== null) {
+      // Direct list row interaction
+      const loadingToast = toast.loading("Uploading institutional logo...");
+      try {
+        const response = await apiService.uploadSchoolPhoto(uploadingSchoolId, file);
+        const _newPath = response.data.data?.path || response.data.path;
+        toast.dismiss(loadingToast);
+        toast.success("Institutional identity updated physically.");
+        fetchData(); // Refresh to see the new logo
+      } catch (error) {
+        toast.dismiss(loadingToast);
+        toast.error("Failed to update logo physically. Check server permissions.");
+        console.error(error);
+      } finally {
+        setUploadingSchoolId(null);
+      }
+    } else {
+      // Dialog interaction
+      if (!editingItem) {
+        // Adding a new school: keep in local state preview
+        setSelectedPhotoFile(file);
+        setLocalPhotoPreview(URL.createObjectURL(file));
+        toast.success("School branding photo selected. Click Create Master to save.");
+      } else {
+        // Editing an existing school in the dialog: upload immediately
+        const loadingToast = toast.loading("Uploading institutional logo...");
+        try {
+          const response = await apiService.uploadSchoolPhoto(editingItem.id, file);
+          const newPath = response.data.data?.path || response.data.path;
+          setFormData(prev => ({ ...prev, profilePhotoPath: newPath }));
+          toast.dismiss(loadingToast);
+          toast.success("Institutional photo updated successfully");
+          fetchData(); // Refresh to reflect in the grid
+        } catch (error) {
+          toast.dismiss(loadingToast);
+          toast.error("Failed to upload photo. Please try again.");
+          console.error(error);
+        }
+      }
     }
+
+    if (e.target) e.target.value = "";
   };
 
   /**
@@ -257,9 +285,24 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
     fetchData();
   }, [activeTab]);
 
+  useEffect(() => {
+    if (!isDialogOpen) {
+      setSelectedPhotoFile(null);
+      if (localPhotoPreview) {
+        URL.revokeObjectURL(localPhotoPreview);
+        setLocalPhotoPreview(null);
+      }
+    }
+  }, [isDialogOpen]);
+
   const handleOpenDialog = (item: any = null) => {
     setEditingItem(item);
     setFormErrors({});
+    setSelectedPhotoFile(null);
+    if (localPhotoPreview) {
+      URL.revokeObjectURL(localPhotoPreview);
+      setLocalPhotoPreview(null);
+    }
     setFormData({
       name: item?.name || item?.fullName || "",
       description: item?.description || "",
@@ -276,7 +319,8 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       icon: item?.icon || "",
       parentId: item?.parentId?.toString() || "",
       sortOrder: item?.sortOrder || 0,
-      roles: item?.roles || ["superadmin"]
+      roles: item?.roles || ["superadmin"],
+      profilePhotoPath: item?.profilePhotoPath || item?.ProfilePhotoPath || ""
     });
     setIsDialogOpen(true);
   };
@@ -362,13 +406,24 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       }
 
       if (editingItem) {
+        payload.id = parseSafeInt(editingItem.id);
         // @ts-ignore
         await apiService[updateMethod](editingItem.id, payload);
         toast.success(`${typeConfig.label} updated successfully`);
       } else {
         // @ts-ignore
-        await apiService[createMethod](payload);
+        const response = await apiService[createMethod](payload);
         toast.success(`${typeConfig.label} created successfully`);
+
+        // Handle delayed photo upload for schools if selectedPhotoFile is present
+        const createdSchool = response.data.data || response.data;
+        if (activeTab === "schools" && selectedPhotoFile && createdSchool?.id) {
+          try {
+            await apiService.uploadSchoolPhoto(createdSchool.id, selectedPhotoFile);
+          } catch (uploadErr) {
+            console.error("Delayed school photo upload failed:", uploadErr);
+          }
+        }
       }
       
       setIsDialogOpen(false);
@@ -886,6 +941,42 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
 
             {activeTab === "schools" && (
               <>
+                <div className="flex flex-col items-center gap-2 pb-4 border-b border-slate-50">
+                  <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">School Logo / Branding</Label>
+                  <div 
+                    className="relative group cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-white shadow-md ring-1 ring-slate-100 bg-slate-50 flex items-center justify-center transition-all group-hover:scale-[1.03]">
+                      {(localPhotoPreview || formData.profilePhotoPath) ? (
+                        <img 
+                          src={localPhotoPreview || resolvePhotoUrl(formData.profilePhotoPath)} 
+                          alt="Logo Preview" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.name}`;
+                          }}
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center gap-1 text-slate-300">
+                          <School size={24} className="opacity-40" />
+                          <span className="text-[9px] font-black tracking-wider uppercase text-slate-400">NO LOGO</span>
+                        </div>
+                      )}
+
+                      <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1 backdrop-blur-[1px]">
+                        <Camera size={16} />
+                        <span className="text-[8px] font-black uppercase tracking-widest">Upload</span>
+                      </div>
+                    </div>
+                    
+                    {(localPhotoPreview || formData.profilePhotoPath) && (
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center shadow">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="address" className={cn("text-xs font-black uppercase tracking-wider", formErrors.address ? "text-red-500" : "text-slate-400")}>Institutional Address {formErrors.address && "*"}</Label>
                   <Input 

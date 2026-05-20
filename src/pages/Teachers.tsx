@@ -448,6 +448,7 @@ export default function Teachers({ user }: { user: any }) {
         setTeachers(prev => prev.map(t => 
           t.id.toString() === teacherId.toString() ? { ...t, photo: newPath, profilePhotoPath: newPath, ProfilePhotoPath: newPath } : t
         ));
+        setFormData(prev => ({ ...prev, photo: newPath }));
         if (selectedTeacher && selectedTeacher.id.toString() === teacherId.toString()) {
           setSelectedTeacher(prev => prev ? { ...prev, photo: newPath } : null);
         }
@@ -885,12 +886,23 @@ export default function Teachers({ user }: { user: any }) {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-4">
-                        <Avatar className="h-11 w-11 ring-4 ring-white shadow-lg shadow-slate-200 transition-transform group-hover:scale-105">
-                          <AvatarImage src={resolvePhotoUrl(teacher.photo)} />
-                          <AvatarFallback className="bg-indigo-600 text-white font-black uppercase text-sm">
-                            {(teacher.name || "U")[0]}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="relative shrink-0">
+                          <Avatar className="h-11 w-11 ring-4 ring-white shadow-lg shadow-slate-200 transition-transform group-hover:scale-105">
+                            <AvatarImage src={resolvePhotoUrl(teacher.photo)} />
+                            <AvatarFallback className="bg-indigo-600 text-white font-black uppercase text-sm">
+                              {(teacher.name || "U")[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <SimpleTooltip content="Update photo" side="top">
+                            <button 
+                              onClick={() => triggerPhotoUpload(teacher.id)}
+                              className="absolute -bottom-1 -right-1 bg-white p-1.5 rounded-full border border-slate-100 shadow-md opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95 cursor-pointer z-10"
+                              aria-label="Change teacher photo"
+                            >
+                              <Camera size={10} className="text-blue-600" />
+                            </button>
+                          </SimpleTooltip>
+                        </div>
                         <div className="flex flex-col truncate max-w-[180px]">
                           <span className="font-black text-slate-900 leading-none text-sm tracking-tight mb-1">{teacher.name}</span>
                           <span className="text-[10px] text-slate-400 font-bold italic truncate">{teacher.email}</span>
