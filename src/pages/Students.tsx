@@ -173,97 +173,151 @@ export default function Students({ user }: { user: UserType }) {
       );
       
       const responseData = response.data;
-      const studentData = Array.isArray(responseData.data) ? responseData.data : [];
       
-      if (responseData.pagination) {
+      // Support both { data: [...], pagination: {...} } envelope and raw array [...] formats
+      const rawStudentsList = Array.isArray(responseData) 
+        ? responseData 
+        : (responseData && Array.isArray(responseData.data) ? responseData.data : []);
+      
+      const formatted = rawStudentsList.map((s: any) => {
+        // Helper to fetch data by ensuring case-insensitive property access for specific schema fields
+        const getVal = (prop: string, fallback?: any) => {
+          if (!s) return fallback;
+          const keys = Object.keys(s);
+          const match = keys.find(k => k.toLowerCase() === prop.toLowerCase());
+          return match ? s[match] : fallback;
+        };
+
+        return {
+          id: s.id?.toString() || "",
+          grno: getVal("GRNO") || s.registrationNumber || s.grno || getVal("registrationNumber") || "",
+          schoolId: (s.schoolId || s.SchoolId)?.toString() || "",
+          firstName: getVal("FNAME") || s.firstName || (s.name || s.fullName)?.split(" ")[0] || "",
+          lastName: getVal("LNAME") || s.lastName || (s.name || s.fullName)?.split(" ").slice(-1)[0] || "",
+          middleName: getVal("MNAME") || s.middleName || ((s.name || s.fullName)?.split(" ").length > 2 ? (s.name || s.fullName)?.split(" ").slice(1, -1).join(" ") : ""),
+          name: s.name || s.fullName || s.FullName || getVal("FullName") || getVal("Name") || "",
+          standard: typeof getVal("STD") === "object" ? getVal("STD")?.name : (getVal("STD") || s.standard?.name || s.Standard?.name || s.standard || ""),
+          section: typeof getVal("DIV") === "object" ? getVal("DIV")?.name : (getVal("DIV") || s.section?.name || s.Section?.name || s.section || ""),
+          bloodGroupId: typeof getVal("bloodGroupId") === "object" ? getVal("bloodGroupId")?.id?.toString() : (getVal("BLOODGROUP") || s.bloodGroupId?.toString() || ""),
+          houseId: typeof getVal("houseId") === "object" ? getVal("houseId")?.id?.toString() : (getVal("house") || s.houseId?.toString() || ""),
+          admissionTypeId: typeof getVal("admissionTypeId") === "object" ? getVal("admissionTypeId")?.id?.toString() : (getVal("admissiontype") || s.admissionTypeId?.toString() || ""),
+          religionId: typeof getVal("religionId") === "object" ? getVal("religionId")?.id?.toString() : (getVal("RELIGION") || s.religionId?.toString() || ""),
+          casteId: typeof getVal("casteId") === "object" ? getVal("casteId")?.id?.toString() : (getVal("CASTE") || s.casteId?.toString() || ""),
+          subCasteId: typeof getVal("subCasteId") === "object" ? getVal("subCasteId")?.id?.toString() : (getVal("subcaste") || s.subCasteId?.toString() || ""),
+          joiningAcademicYearId: typeof getVal("academicYearId") === "object" ? getVal("academicYearId")?.id?.toString() : (getVal("academicyear") || s.joiningAcademicYearId?.toString() || ""),
+          roll: getVal("ROLLNO") || s.rollNumber?.toString() || s.roll?.toString() || "0",
+          address: getVal("ADDRESS") || s.address || "N/A",
+          birthDate: getVal("DOB") || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
+          gender: getVal("GENDER") || s.gender || "male",
+          contactNumber: getVal("MOBILE") || s.contactNumber || s.mobile || "",
+          motherName: getVal("MOTHERNAME") || s.motherName || "",
+          aadharCard: getVal("aadharcard") || s.aadharCard || "",
+          profilePhotoPath: getVal("ProfilePhotoPath") || s.profilePhotoPath || "",
+          photo: getVal("ProfilePhotoPath") || s.profilePhotoPath || s.photo || s.Photo || "", 
+          attendance: "100%", 
+          performance: "Excellent", 
+          // Schema properties explicitly mapped for forms and legacy compat
+          STUDENTID: getVal("STUDENTID") || s.registrationNumber,
+          FNAME: getVal("FNAME") || s.firstName,
+          MNAME: getVal("MNAME") || s.middleName,
+          LNAME: getVal("LNAME") || s.lastName,
+          STD: typeof getVal("STD") === "object" ? getVal("STD")?.name : (getVal("STD") || s.standard?.name || s.standard || ""),
+          DIV: typeof getVal("DIV") === "object" ? getVal("DIV")?.name : (getVal("DIV") || s.section?.name || s.section || ""),
+          ROLLNO: getVal("ROLLNO") || s.rollNumber?.toString(),
+          GRNO: getVal("GRNO") || s.registrationNumber,
+          RELIGION: typeof getVal("religionId") === "object" ? getVal("religionId")?.id?.toString() : (getVal("RELIGION") || s.religionId?.toString()),
+          CASTE: typeof getVal("casteId") === "object" ? getVal("casteId")?.id?.toString() : (getVal("CASTE") || s.casteId?.toString()),
+          subcaste: typeof getVal("subCasteId") === "object" ? getVal("subCasteId")?.id?.toString() : (getVal("subcaste") || s.subCasteId?.toString()),
+          BLOODGROUP: typeof getVal("bloodGroupId") === "object" ? getVal("bloodGroupId")?.id?.toString() : (getVal("BLOODGROUP") || s.bloodGroupId?.toString()),
+          house: typeof getVal("houseId") === "object" ? getVal("houseId")?.id?.toString() : (getVal("house") || s.houseId?.toString()),
+          admissiontype: typeof getVal("admissionTypeId") === "object" ? getVal("admissionTypeId")?.id?.toString() : (getVal("admissiontype") || s.admissionTypeId?.toString()),
+          academicyear: typeof getVal("academicYearId") === "object" ? getVal("academicYearId")?.id?.toString() : (getVal("academicyear") || s.joiningAcademicYearId?.toString()),
+          CATEGORY: typeof getVal("categoryId") === "object" ? getVal("categoryId")?.id?.toString() : (getVal("CATEGORY") || s.categoryId?.toString()),
+          DOB: getVal("DOB") || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
+          MOBILE: getVal("MOBILE") || s.contactNumber || s.mobile,
+          EMAIL: getVal("EMAIL") || s.email,
+          ADDRESS: getVal("ADDRESS") || s.address,
+          MOTHERNAME: getVal("MOTHERNAME") || s.motherName,
+          aadharcard: getVal("aadharcard") || s.aadharCard,
+          RFID: getVal("RFID") || s.rfid || s.CARDID || s.cardId,
+          SHIFTNAME: typeof getVal("shiftId") === "object" ? getVal("shiftId")?.name : (getVal("SHIFTNAME") || s.shiftName || shifts.find(sh => sh.id === s.shiftId)?.name || ""),
+          uniformid: getVal("uniformid") || s.uniformid || "",
+          contact2: getVal("contact2") || s.contact2 || "",
+          sms: getVal("sms") || s.sms || "",
+          ProfilePhotoPath: getVal("ProfilePhotoPath") || s.profilePhotoPath || ""
+        };
+      });
+
+      const isServerPaged = responseData && !!responseData.pagination;
+      
+      if (!isServerPaged) {
+        // Apply robust client-side filters, search, sorting and pagination
+        let filtered = [...formatted];
+        
+        // Search
+        const searchLower = search.trim().toLowerCase();
+        if (searchLower) {
+          filtered = filtered.filter(item => 
+            item.name.toLowerCase().includes(searchLower) ||
+            item.grno.toLowerCase().includes(searchLower) ||
+            item.roll.toLowerCase().includes(searchLower) ||
+            item.standard.toLowerCase().includes(searchLower) ||
+            item.section.toLowerCase().includes(searchLower)
+          );
+        }
+        
+        // Standard (Grade) Filter
+        if (standardFilter !== "all") {
+          filtered = filtered.filter(item => item.standard === standardFilter);
+        }
+        
+        // Section Filter
+        if (sectionFilter !== "all") {
+          filtered = filtered.filter(item => item.section === sectionFilter);
+        }
+        
+        // Sort
+        if (sortBy) {
+          filtered.sort((a: any, b: any) => {
+            const valA = a[sortBy] || "";
+            const valB = b[sortBy] || "";
+            
+            if (valA === valB) return 0;
+            let comparison = 0;
+            if (typeof valA === "string" && typeof valB === "string") {
+              comparison = valA.localeCompare(valB);
+            } else {
+              comparison = valA < valB ? -1 : 1;
+            }
+            return sortOrder === "desc" ? comparison * -1 : comparison;
+          });
+        }
+        
+        // Paginate
+        const total = filtered.length;
+        setTotalCount(total);
+        setTotalPages(Math.ceil(total / pageSize));
+        
+        const startIndex = (page - 1) * pageSize;
+        setStudents(filtered.slice(startIndex, startIndex + pageSize));
+      } else {
+        // Server-side did paging and filtering
         setTotalCount(responseData.pagination.totalCount);
         setTotalPages(responseData.pagination.totalPages);
-      } else {
-        setTotalCount(studentData.length);
-        setTotalPages(Math.ceil(studentData.length / pageSize));
+        setStudents(formatted);
       }
-
-      const formatted = studentData.map((s: any) => {
-      // Helper to fetch data by ensuring case-insensitive property access for specific schema fields
-      const getVal = (prop: string, fallback?: any) => {
-        if (!s) return fallback;
-        const keys = Object.keys(s);
-        const match = keys.find(k => k.toLowerCase() === prop.toLowerCase());
-        return match ? s[match] : fallback;
-      };
-
-      return {
-        id: s.id.toString(),
-        grno: getVal("GRNO") || s.registrationNumber || s.grno || getVal("registrationNumber"),
-        schoolId: (s.schoolId || s.SchoolId)?.toString() || "",
-        firstName: getVal("FNAME") || s.firstName || (s.name || s.fullName)?.split(" ")[0] || "",
-        lastName: getVal("LNAME") || s.lastName || (s.name || s.fullName)?.split(" ").slice(-1)[0] || "",
-        middleName: getVal("MNAME") || s.middleName || ((s.name || s.fullName)?.split(" ").length > 2 ? (s.name || s.fullName)?.split(" ").slice(1, -1).join(" ") : ""),
-        name: s.name || s.fullName || s.FullName || getVal("FullName") || getVal("Name"),
-        standard: typeof getVal("STD") === "object" ? getVal("STD")?.name : (getVal("STD") || s.standard?.name || s.Standard?.name || ""),
-        section: typeof getVal("DIV") === "object" ? getVal("DIV")?.name : (getVal("DIV") || s.section?.name || s.Section?.name || ""),
-        bloodGroupId: typeof getVal("bloodGroupId") === "object" ? getVal("bloodGroupId")?.id?.toString() : (getVal("BLOODGROUP") || s.bloodGroupId?.toString() || ""),
-        houseId: typeof getVal("houseId") === "object" ? getVal("houseId")?.id?.toString() : (getVal("house") || s.houseId?.toString() || ""),
-        admissionTypeId: typeof getVal("admissionTypeId") === "object" ? getVal("admissionTypeId")?.id?.toString() : (getVal("admissiontype") || s.admissionTypeId?.toString() || ""),
-        religionId: typeof getVal("religionId") === "object" ? getVal("religionId")?.id?.toString() : (getVal("RELIGION") || s.religionId?.toString() || ""),
-        casteId: typeof getVal("casteId") === "object" ? getVal("casteId")?.id?.toString() : (getVal("CASTE") || s.casteId?.toString() || ""),
-        subCasteId: typeof getVal("subCasteId") === "object" ? getVal("subCasteId")?.id?.toString() : (getVal("subcaste") || s.subCasteId?.toString() || ""),
-        joiningAcademicYearId: typeof getVal("academicYearId") === "object" ? getVal("academicYearId")?.id?.toString() : (getVal("academicyear") || s.joiningAcademicYearId?.toString() || ""),
-        roll: getVal("ROLLNO") || s.rollNumber?.toString() || s.roll?.toString() || "0",
-        address: getVal("ADDRESS") || s.address || "N/A",
-        birthDate: getVal("DOB") || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
-        gender: getVal("GENDER") || s.gender || "male",
-        contactNumber: getVal("MOBILE") || s.contactNumber || s.mobile || "",
-        motherName: getVal("MOTHERNAME") || s.motherName || "",
-        aadharCard: getVal("aadharcard") || s.aadharCard || "",
-        profilePhotoPath: getVal("ProfilePhotoPath") || "",
-        photo: getVal("ProfilePhotoPath") || s.photo || s.Photo || "", 
-        attendance: "100%", 
-        performance: "Excellent", 
-        // Schema properties explicitly mapped for forms and legacy compat
-        STUDENTID: getVal("STUDENTID") || s.registrationNumber,
-        FNAME: getVal("FNAME") || s.firstName,
-        MNAME: getVal("MNAME") || s.middleName,
-        LNAME: getVal("LNAME") || s.lastName,
-        STD: typeof getVal("STD") === "object" ? getVal("STD")?.name : (getVal("STD") || s.standard?.name || ""),
-        DIV: typeof getVal("DIV") === "object" ? getVal("DIV")?.name : (getVal("DIV") || s.section?.name || ""),
-        ROLLNO: getVal("ROLLNO") || s.rollNumber?.toString(),
-        GRNO: getVal("GRNO") || s.registrationNumber,
-        RELIGION: typeof getVal("religionId") === "object" ? getVal("religionId")?.id?.toString() : (getVal("RELIGION") || s.religionId?.toString()),
-        CASTE: typeof getVal("casteId") === "object" ? getVal("casteId")?.id?.toString() : (getVal("CASTE") || s.casteId?.toString()),
-        subcaste: typeof getVal("subCasteId") === "object" ? getVal("subCasteId")?.id?.toString() : (getVal("subcaste") || s.subCasteId?.toString()),
-        BLOODGROUP: typeof getVal("bloodGroupId") === "object" ? getVal("bloodGroupId")?.id?.toString() : (getVal("BLOODGROUP") || s.bloodGroupId?.toString()),
-        house: typeof getVal("houseId") === "object" ? getVal("houseId")?.id?.toString() : (getVal("house") || s.houseId?.toString()),
-        admissiontype: typeof getVal("admissionTypeId") === "object" ? getVal("admissionTypeId")?.id?.toString() : (getVal("admissiontype") || s.admissionTypeId?.toString()),
-        academicyear: typeof getVal("academicYearId") === "object" ? getVal("academicYearId")?.id?.toString() : (getVal("academicyear") || s.joiningAcademicYearId?.toString()),
-        CATEGORY: typeof getVal("categoryId") === "object" ? getVal("categoryId")?.id?.toString() : (getVal("CATEGORY") || s.categoryId?.toString()),
-        DOB: getVal("DOB") || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
-        MOBILE: getVal("MOBILE") || s.contactNumber || s.mobile,
-        EMAIL: getVal("EMAIL") || s.email,
-        ADDRESS: getVal("ADDRESS") || s.address,
-        MOTHERNAME: getVal("MOTHERNAME") || s.motherName,
-        aadharcard: getVal("aadharcard") || s.aadharCard,
-        RFID: getVal("RFID") || s.rfid || s.CARDID || s.cardId,
-        SHIFTNAME: typeof getVal("shiftId") === "object" ? getVal("shiftId")?.name : (getVal("SHIFTNAME") || s.shiftName || shifts.find(sh => sh.id === s.shiftId)?.name || ""),
-        uniformid: getVal("uniformid") || s.uniformid || "",
-        contact2: getVal("contact2") || s.contact2 || "",
-        sms: getVal("sms") || s.sms || "",
-        ProfilePhotoPath: getVal("ProfilePhotoPath") || ""
-      };
-    });
-      setStudents(formatted);
     } catch (error) {
       console.error("Fetch error:", error);
       toast.error("Could not connect to database API.");
     } finally {
       setLoading(false);
     }
-  }, [user.schoolId, user.academicYearId]);
+  }, [user.schoolId, user.academicYearId, page, pageSize, sortBy, sortOrder, search, standardFilter, sectionFilter, shifts]);
 
   useEffect(() => {
     fetchStudents();
     fetchMasters();
-  }, [fetchStudents, fetchMasters, page, pageSize, sortBy, sortOrder, search, standardFilter, sectionFilter]);
+  }, [fetchStudents, fetchMasters]);
   
   const handleSort = (column: string) => {
     if (sortBy === column) {

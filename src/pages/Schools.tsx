@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { apiService } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -105,7 +105,7 @@ export default function Schools({ user }: { user: UserType }) {
     photo: ""
   });
 
-  const fetchSchools = async () => {
+  const fetchSchools = useCallback(async () => {
     setLoading(true);
     try {
       const res = await apiService.getSchools({
@@ -117,29 +117,70 @@ export default function Schools({ user }: { user: UserType }) {
       });
       
       const resData = res.data;
-      const schoolData = Array.isArray(resData.data) ? resData.data : [];
+      const rawSchoolsList = Array.isArray(resData) 
+        ? resData 
+        : (resData && Array.isArray(resData.data) ? resData.data : []);
       
-      if (resData.pagination) {
+      const isServerPaged = resData && !!resData.pagination;
+      
+      if (!isServerPaged) {
+        // Robust client-side filters, search, sorting and pagination
+        let filtered = [...rawSchoolsList];
+        
+        // Search Filter
+        const searchLower = searchQuery.trim().toLowerCase();
+        if (searchLower) {
+          filtered = filtered.filter(item => 
+            (item.name || "").toLowerCase().includes(searchLower) ||
+            (item.address || "").toLowerCase().includes(searchLower) ||
+            (item.email || "").toLowerCase().includes(searchLower) ||
+            (item.phone || "").toLowerCase().includes(searchLower) ||
+            (item.code || "").toLowerCase().includes(searchLower)
+          );
+        }
+        
+        // Sorting
+        if (sortBy) {
+          filtered.sort((a: any, b: any) => {
+            const valA = a[sortBy] || "";
+            const valB = b[sortBy] || "";
+            
+            if (valA === valB) return 0;
+            let comparison = 0;
+            if (typeof valA === "string" && typeof valB === "string") {
+              comparison = valA.localeCompare(valB);
+            } else {
+              comparison = valA < valB ? -1 : 1;
+            }
+            return sortOrder === "desc" ? comparison * -1 : comparison;
+          });
+        }
+        
+        // Pagination
+        const total = filtered.length;
+        setTotalCount(total);
+        setTotalPages(Math.ceil(total / pageSize));
+        
+        const startIndex = (page - 1) * pageSize;
+        setSchools(filtered.slice(startIndex, startIndex + pageSize));
+      } else {
+        // Server-side loaded correctly
         setTotalCount(resData.pagination.totalCount);
         setTotalPages(resData.pagination.totalPages);
-      } else {
-        setTotalCount(schoolData.length);
-        setTotalPages(Math.ceil(schoolData.length / pageSize));
+        setSchools(rawSchoolsList);
       }
-      
-      setSchools(schoolData);
     } catch (error) {
       console.error("Schools error:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, sortBy, sortOrder, searchQuery]);
 
   useEffect(() => {
     if (user.role === "superadmin") {
       fetchSchools();
     }
-  }, [user.role, page, pageSize, sortBy, sortOrder, searchQuery]);
+  }, [user.role, fetchSchools]);
 
   const handleSort = (key: string) => {
     if (sortBy === key) {

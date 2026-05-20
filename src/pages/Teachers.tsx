@@ -156,17 +156,11 @@ export default function Teachers({ user }: { user: any }) {
       );
       
       const resData = res.data;
-      const teacherData = Array.isArray(resData.data) ? resData.data : [];
+      const rawTeachersList = Array.isArray(resData) 
+        ? resData 
+        : (resData && Array.isArray(resData.data) ? resData.data : []);
       
-      if (resData.pagination) {
-        setTotalCount(resData.pagination.totalCount);
-        setTotalPages(resData.pagination.totalPages);
-      } else {
-        setTotalCount(teacherData.length);
-        setTotalPages(Math.ceil(teacherData.length / pageSize));
-      }
-      
-      setTeachers(teacherData.map((t: any) => {
+      const formatted = rawTeachersList.map((t: any) => {
         const getVal = (prop: string, fallback?: any) => {
           if (!t) return fallback;
           const userObj = t.user || {};
@@ -197,7 +191,67 @@ export default function Teachers({ user }: { user: any }) {
           employeeId: getVal("employeeId") || "N/A",
           photo: getVal("photo") || getVal("profilePhotoPath") || getVal("ProfilePhotoPath") || ""
         };
-      }));
+      });
+
+      const isServerPaged = resData && !!resData.pagination;
+      
+      if (!isServerPaged) {
+        // Robust client-side search, status and subject filters, sorting, and pagination
+        let filtered = [...formatted];
+        
+        // Search Filter
+        const searchLower = searchQuery.trim().toLowerCase();
+        if (searchLower) {
+          filtered = filtered.filter(item => 
+            item.name.toLowerCase().includes(searchLower) ||
+            item.email.toLowerCase().includes(searchLower) ||
+            item.phone.toLowerCase().includes(searchLower) ||
+            item.employeeId.toLowerCase().includes(searchLower) ||
+            item.qualification.toLowerCase().includes(searchLower) ||
+            item.subject.toLowerCase().includes(searchLower)
+          );
+        }
+        
+        // Status Filter
+        if (filterStatus !== "all") {
+          filtered = filtered.filter(item => item.status === filterStatus);
+        }
+        
+        // Subject Filter
+        if (filterSubject !== "all") {
+          filtered = filtered.filter(item => item.subject === filterSubject);
+        }
+        
+        // Sorting
+        if (sortBy) {
+          filtered.sort((a: any, b: any) => {
+            const valA = a[sortBy] || "";
+            const valB = b[sortBy] || "";
+            
+            if (valA === valB) return 0;
+            let comparison = 0;
+            if (typeof valA === "string" && typeof valB === "string") {
+              comparison = valA.localeCompare(valB);
+            } else {
+              comparison = valA < valB ? -1 : 1;
+            }
+            return sortOrder === "desc" ? comparison * -1 : comparison;
+          });
+        }
+        
+        // Pagination
+        const total = filtered.length;
+        setTotalCount(total);
+        setTotalPages(Math.ceil(total / pageSize));
+        
+        const startIndex = (page - 1) * pageSize;
+        setTeachers(filtered.slice(startIndex, startIndex + pageSize));
+      } else {
+        // Server paved the way
+        setTotalCount(resData.pagination.totalCount);
+        setTotalPages(resData.pagination.totalPages);
+        setTeachers(formatted);
+      }
     } catch (error) {
       toast.error("Could not connect to database");
     } finally {
@@ -207,7 +261,7 @@ export default function Teachers({ user }: { user: any }) {
 
   useEffect(() => {
     fetchTeachers();
-  }, [fetchTeachers, searchQuery, sortBy, sortOrder, page, pageSize, filterStatus, filterSubject]);
+  }, [fetchTeachers]);
 
   const handleSort = (key: string) => {
     if (sortBy === key) {

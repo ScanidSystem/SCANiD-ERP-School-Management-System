@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   Users as UsersIcon, 
   UserPlus, 
@@ -91,7 +91,7 @@ export default function Users() {
     isActive: true
   });
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [usersRes, rolesRes] = await Promise.all([
@@ -107,17 +107,66 @@ export default function Users() {
       ]);
       
       const resData = usersRes.data;
-      const userData = Array.isArray(resData.data) ? resData.data : [];
+      const rawUsersList = Array.isArray(resData) 
+        ? resData 
+        : (resData && Array.isArray(resData.data) ? resData.data : []);
       
-      if (resData.pagination) {
+      const isServerPaged = resData && !!resData.pagination;
+      
+      if (!isServerPaged) {
+        // Robust client-side filters, search, sorting and pagination
+        let filtered = [...rawUsersList];
+        
+        // Search Filter
+        const searchLower = searchQuery.trim().toLowerCase();
+        if (searchLower) {
+          filtered = filtered.filter(item => 
+            (item.fullName || "").toLowerCase().includes(searchLower) ||
+            (item.username || "").toLowerCase().includes(searchLower) ||
+            (item.email || "").toLowerCase().includes(searchLower) ||
+            (item.role || "").toLowerCase().includes(searchLower)
+          );
+        }
+        
+        // Selected Role Filter
+        if (selectedRole !== "all") {
+          filtered = filtered.filter(item => {
+            const roleVal = item.roleId?.toString() || item.role?.toString() || "";
+            return roleVal === selectedRole;
+          });
+        }
+        
+        // Sorting
+        if (sortBy) {
+          filtered.sort((a: any, b: any) => {
+            const valA = a[sortBy] || "";
+            const valB = b[sortBy] || "";
+            
+            if (valA === valB) return 0;
+            let comparison = 0;
+            if (typeof valA === "string" && typeof valB === "string") {
+              comparison = valA.localeCompare(valB);
+            } else {
+              comparison = valA < valB ? -1 : 1;
+            }
+            return sortOrder === "desc" ? comparison * -1 : comparison;
+          });
+        }
+        
+        // Pagination
+        const total = filtered.length;
+        setTotalCount(total);
+        setTotalPages(Math.ceil(total / pageSize));
+        
+        const startIndex = (page - 1) * pageSize;
+        setUsers(filtered.slice(startIndex, startIndex + pageSize));
+      } else {
+        // Server-side loaded correctly
         setTotalCount(resData.pagination.totalCount);
         setTotalPages(resData.pagination.totalPages);
-      } else {
-        setTotalCount(userData.length);
-        setTotalPages(Math.ceil(userData.length / pageSize));
+        setUsers(rawUsersList);
       }
       
-      setUsers(userData);
       setRoles(rolesRes.data.data || rolesRes.data || []);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -125,11 +174,11 @@ export default function Users() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, sortBy, sortOrder, searchQuery, selectedRole]);
 
   useEffect(() => {
     fetchData();
-  }, [page, pageSize, sortBy, sortOrder, searchQuery, selectedRole]);
+  }, [fetchData]);
 
   const handleSort = (key: string) => {
     if (sortBy === key) {
