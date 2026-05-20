@@ -122,7 +122,7 @@ namespace ScanID.Api.Controllers
 
             foreach (var s in students)
             {
-                var row = new List<string>
+                var row = new List<string?>
                 {
                     s.RegistrationNumber,
                     s.Name,
