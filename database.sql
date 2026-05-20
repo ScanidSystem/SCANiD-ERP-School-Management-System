@@ -140,6 +140,22 @@ CREATE TABLE [dbo].[Religions](
 END
 GO
 
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Categories]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [dbo].[Categories](
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Name] [nvarchar](100) NOT NULL,
+    [IsActive] [bit] NOT NULL DEFAULT (1),
+    [IsDeleted] [bit] NOT NULL DEFAULT (0),
+    [CreatedBy] [nvarchar](max) NULL,
+    [CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+    [ModifiedBy] [nvarchar](max) NULL,
+    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+ CONSTRAINT [PK_Categories] PRIMARY KEY CLUSTERED ([Id] ASC)
+)
+END
+GO
+
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[States]') AND type in (N'U'))
 BEGIN
 CREATE TABLE [dbo].[States](
@@ -601,22 +617,6 @@ END
 GO
 
 -- 8. Other Application Master Tables
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Categories]') AND type in (N'U'))
-BEGIN
-CREATE TABLE [dbo].[Categories](
-    [Id] [int] IDENTITY(1,1) NOT NULL,
-    [Name] [nvarchar](100) NOT NULL,
-    [IsActive] [bit] NOT NULL DEFAULT (1),
-    [IsDeleted] [bit] NOT NULL DEFAULT (0),
-    [CreatedBy] [nvarchar](max) NULL,
-    [CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
-    [ModifiedBy] [nvarchar](max) NULL,
-    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
- CONSTRAINT [PK_Categories] PRIMARY KEY CLUSTERED ([Id] ASC)
-)
-END
-GO
-
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Sessions]') AND type in (N'U'))
 BEGIN
 CREATE TABLE [dbo].[Sessions](

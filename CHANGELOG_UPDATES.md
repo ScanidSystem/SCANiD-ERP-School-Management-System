@@ -192,4 +192,15 @@ const schMasterId = item.SchoolId || (schName ? schools.find((sch: any) =>
 - Standardized the secondary telephone numbers to map as `"SecondaryMobile"` across both the template headers and our cleaner parser helpers, conforming exactly to institutional data layout constraints.
 - Bound the parsed `schoolId` safely into the database payload, ensuring pristine cross-institution stability and a flawless user experience.
 
+---
+
+## 8. Database Definition Order Correction for SSMS/MS SQL Compatibility
+### Issue
+Running the `database.sql` script on an MS SQL Server instance threw an error (Msg 1767, Foreign key 'FK_Students_Categories' references invalid table 'dbo.Categories'). This occurred because the `dbo.Students` table definition and its foreign keys were declared before the `dbo.Categories` table was defined, creating an unresolved forward-reference dependency.
+
+### Solution & Code Changes
+- Reordered `database.sql` to move the independent `dbo.Categories` master table definition up under `-- 2. Master Tables (Independent)`, directly succeeding the `dbo.Religions` table definition.
+- This ensures `dbo.Categories` is compiled and successfully present before the `dbo.Students` foreign key clause execution takes place, ensuring clean database bootstrap operations without any structural constraints failing.
+
+
 
