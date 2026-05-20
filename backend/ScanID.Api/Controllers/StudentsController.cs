@@ -213,8 +213,91 @@ namespace ScanID.Api.Controllers
         {
             if (students == null || !students.Any()) return BadRequest("No student data provided.");
 
+            // Load existing non-deleted student unique identifiers from the database for validation
+            var dbStudents = await _context.Students
+                .Where(s => !s.IsDeleted)
+                .Select(s => new { s.RegistrationNumber, s.GRNO, s.aadharcard, s.RFID, s.uniformid })
+                .AsNoTracking()
+                .ToListAsync();
+
+            var dbRegs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var dbAadhars = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var dbRfids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var dbUniforms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var dbs in dbStudents)
+            {
+                if (!string.IsNullOrEmpty(dbs.RegistrationNumber)) dbRegs.Add(dbs.RegistrationNumber.Trim());
+                if (!string.IsNullOrEmpty(dbs.GRNO)) dbRegs.Add(dbs.GRNO.Trim());
+                if (!string.IsNullOrEmpty(dbs.aadharcard)) dbAadhars.Add(dbs.aadharcard.Trim());
+                if (!string.IsNullOrEmpty(dbs.RFID)) dbRfids.Add(dbs.RFID.Trim());
+                if (!string.IsNullOrEmpty(dbs.uniformid)) dbUniforms.Add(dbs.uniformid.Trim());
+            }
+
+            // Keep track of sets within the incoming batch
+            var batchRegs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var batchAadhars = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var batchRfids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var batchUniforms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            int index = 1;
             foreach (var student in students)
             {
+                // a) RegistrationNumber/GRNO
+                var reg = (student.RegistrationNumber ?? student.GRNO ?? "").Trim();
+                if (!string.IsNullOrEmpty(reg))
+                {
+                    if (batchRegs.Contains(reg) || dbRegs.Contains(reg))
+                    {
+                        return BadRequest(new { message = $"Row {index}: Duplicate Registration Number/GRNO '{reg}' detected." });
+                    }
+                    batchRegs.Add(reg);
+                }
+
+                // If GRNO is passed separately and differs from RegistrationNumber
+                var grno = (student.GRNO ?? "").Trim();
+                if (!string.IsNullOrEmpty(grno))
+                {
+                    if (batchRegs.Contains(grno) || dbRegs.Contains(grno))
+                    {
+                        return BadRequest(new { message = $"Row {index}: Duplicate Registration Number/GRNO '{grno}' detected." });
+                    }
+                    batchRegs.Add(grno);
+                }
+
+                // b) AadharCard
+                var aadhar = (student.aadharcard ?? "").Trim();
+                if (!string.IsNullOrEmpty(aadhar))
+                {
+                    if (batchAadhars.Contains(aadhar) || dbAadhars.Contains(aadhar))
+                    {
+                        return BadRequest(new { message = $"Row {index}: Duplicate Aadhar Card '{aadhar}' detected." });
+                    }
+                    batchAadhars.Add(aadhar);
+                }
+
+                // c) RFID
+                var rfid = (student.RFID ?? "").Trim();
+                if (!string.IsNullOrEmpty(rfid))
+                {
+                    if (batchRfids.Contains(rfid) || dbRfids.Contains(rfid))
+                    {
+                        return BadRequest(new { message = $"Row {index}: Duplicate RFID/CardID '{rfid}' detected." });
+                    }
+                    batchRfids.Add(rfid);
+                }
+
+                // d) UniformID
+                var uniform = (student.uniformid ?? "").Trim();
+                if (!string.IsNullOrEmpty(uniform))
+                {
+                    if (batchUniforms.Contains(uniform) || dbUniforms.Contains(uniform))
+                    {
+                        return BadRequest(new { message = $"Row {index}: Duplicate UniformID '{uniform}' detected." });
+                    }
+                    batchUniforms.Add(uniform);
+                }
+
                 student.CreatedOn = DateTime.Now;
                 student.ModifiedOn = DateTime.Now;
                 student.IsActive = true;
@@ -225,6 +308,8 @@ namespace ScanID.Api.Controllers
                 {
                     student.RegistrationNumber = "REG-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper();
                 }
+
+                index++;
             }
 
             _context.Students.AddRange(students);

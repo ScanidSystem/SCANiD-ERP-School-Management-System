@@ -765,6 +765,127 @@ export default function Students({ user }: { user: UserType }) {
           }
         });
 
+        // 1) Fetch existing students from the database for comprehensive pre-validation checks
+        let existingStudentsDbList: any[] = [];
+        try {
+          const allRes = await apiService.getStudents(
+            parseSafeInt(user.schoolId),
+            parseSafeInt(user.academicYearId),
+            { page: 1, pageSize: 100000 }
+          );
+          const allData = allRes.data;
+          existingStudentsDbList = Array.isArray(allData) 
+            ? allData 
+            : (allData && Array.isArray(allData.data) ? allData.data : []);
+        } catch (fetchErr) {
+          console.error("Could not load existing records for pre-validation:", fetchErr);
+        }
+
+        // Build Sets of existing unique identifiers for fast O(1) lookup
+        const existingRegs = new Set<string>();
+        const existingAadhars = new Set<string>();
+        const existingRfids = new Set<string>();
+        const existingUniforms = new Set<string>();
+
+        existingStudentsDbList.forEach((s: any) => {
+          const getVal = (prop: string, fallback?: any) => {
+            if (!s) return fallback;
+            const keys = Object.keys(s);
+            const match = keys.find(k => k.toLowerCase() === prop.toLowerCase());
+            return match ? s[match] : fallback;
+          };
+          const reg = (getVal("GRNO") || s.registrationNumber || s.grno || "").toString().trim().toLowerCase();
+          const aadhar = (getVal("aadharcard") || s.aadharCard || "").toString().trim().toLowerCase();
+          const rfidVal = (getVal("RFID") || s.rfid || s.CARDID || s.cardId || "").toString().trim().toLowerCase();
+          const uniformVal = (getVal("uniformid") || s.uniformid || "").toString().trim().toLowerCase();
+
+          if (reg) existingRegs.add(reg);
+          if (aadhar) existingAadhars.add(aadhar);
+          if (rfidVal) existingRfids.add(rfidVal);
+          if (uniformVal) existingUniforms.add(uniformVal);
+        });
+
+        // Set up sets for in-batch duplicates check
+        const batchRegs = new Set<string>();
+        const batchAadhars = new Set<string>();
+        const batchRfids = new Set<string>();
+        const batchUniforms = new Set<string>();
+
+        let totalValidationErrorsFound = 0;
+        const validatedResults = initialResults.map((result: any, idx: number) => {
+          const s = processedStudents[idx];
+          if (!s) return { ...result, status: 'error', error: 'Invalid record format' };
+
+          const reg = (s.registrationNumber || s.GRNO || "").toString().trim().toLowerCase();
+          const aadhar = (s.aadharcard || "").toString().trim().toLowerCase();
+          const rfid = (s.RFID || "").toString().trim().toLowerCase();
+          const uniform = (s.uniformid || "").toString().trim().toLowerCase();
+
+          let rowError = "";
+
+          // a) RegistrationNumber/GRNO
+          if (reg) {
+            if (batchRegs.has(reg)) {
+              rowError = `Duplicate Registration Number/GRNO '${s.registrationNumber}' in uploaded file.`;
+            } else if (existingRegs.has(reg)) {
+              rowError = `Registration Number/GRNO '${s.registrationNumber}' already exists in database.`;
+            } else {
+              batchRegs.add(reg);
+            }
+          }
+
+          // b) AadharCard
+          if (!rowError && aadhar) {
+            if (batchAadhars.has(aadhar)) {
+              rowError = `Duplicate Aadhar Card '${s.aadharcard}' in uploaded file.`;
+            } else if (existingAadhars.has(aadhar)) {
+              rowError = `Aadhar Card '${s.aadharcard}' already exists in database.`;
+            } else {
+              batchAadhars.add(aadhar);
+            }
+          }
+
+          // c) RFID
+          if (!rowError && rfid) {
+            if (batchRfids.has(rfid)) {
+              rowError = `Duplicate RFID/CardID '${s.RFID}' in uploaded file.`;
+            } else if (existingRfids.has(rfid)) {
+              rowError = `RFID/CardID '${s.RFID}' already exists in database.`;
+            } else {
+              batchRfids.add(rfid);
+            }
+          }
+
+          // d) UniformID
+          if (!rowError && uniform) {
+            if (batchUniforms.has(uniform)) {
+              rowError = `Duplicate UniformID '${s.uniformid}' in uploaded file.`;
+            } else if (existingUniforms.has(uniform)) {
+              rowError = `UniformID '${s.uniformid}' already exists in database.`;
+            } else {
+              batchUniforms.add(uniform);
+            }
+          }
+
+          if (rowError) {
+            totalValidationErrorsFound++;
+            return {
+              ...result,
+              status: 'error',
+              error: rowError
+            };
+          }
+          return { ...result, status: 'pending' };
+        });
+
+        if (totalValidationErrorsFound > 0) {
+          setUploadResults(validatedResults);
+          setIsProcessing(false);
+          toast.error(`Validation failed: ${totalValidationErrorsFound} unique field conflict(s) detected. Please correct the fields in your datasheet and try again.`);
+          if (bulkFileInputRef.current) bulkFileInputRef.current.value = "";
+          return;
+        }
+
         // Dynamic upload process: Sequential or Chunked to update UI
         let successCount = 0;
         let failCount = 0;

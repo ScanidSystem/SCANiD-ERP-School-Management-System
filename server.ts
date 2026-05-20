@@ -46,7 +46,7 @@ async function startServer() {
     }
   ];
 
-  let students = [
+  let students: any[] = [
     { 
       id: 1, 
       grno: "REG1001", 
@@ -456,10 +456,69 @@ async function startServer() {
   });
 
   app.post("/api/students/bulk", (req, res) => {
-    const newItems = (req.body || []).map((s: any, idx: number) => ({
-      id: students.length + idx + 1,
+    const incoming = req.body || [];
+    if (!Array.isArray(incoming) || incoming.length === 0) {
+      return res.status(400).json({ message: "No student data provided." });
+    }
+
+    // Uniqueness tracking sets for current incoming batch
+    const batchRegs = new Set<string>();
+    const batchAadhars = new Set<string>();
+    const batchRfids = new Set<string>();
+    const batchUniforms = new Set<string>();
+
+    // Sets of identifiers currently registered in simulated database (existing students, case-insensitive checks)
+    const dbRegs = new Set<string>(students.map(s => (s.registrationNumber || s.grno || s.GRNO || s.registration_number || "").toString().trim().toLowerCase()).filter(Boolean));
+    const dbAadhars = new Set<string>(students.map(s => (s.aadharcard || s.aadharCard || s.aadhar_card || "").toString().trim().toLowerCase()).filter(Boolean));
+    const dbRfids = new Set<string>(students.map(s => (s.RFID || s.rfid || s.CARDID || s.card_id || "").toString().trim().toLowerCase()).filter(Boolean));
+    const dbUniforms = new Set<string>(students.map(s => (s.uniformid || s.uniformId || s.uniform_id || "").toString().trim().toLowerCase()).filter(Boolean));
+
+    for (let idx = 0; idx < incoming.length; idx++) {
+      const s = incoming[idx];
+      const index = idx + 1; // 1-based index representation for error display
+
+      // a) RegistrationNumber / GRNO
+      const reg = (s.registrationNumber || s.grno || s.GRNO || s.registration_number || "").toString().trim().toLowerCase();
+      if (reg) {
+        if (batchRegs.has(reg) || dbRegs.has(reg)) {
+          return res.status(400).json({ message: `Row ${index}: Duplicate Registration Number/GRNO '${s.registrationNumber || s.grno || s.GRNO || s.registration_number}' detected.` });
+        }
+        batchRegs.add(reg);
+      }
+
+      // b) AadharCard
+      const aadhar = (s.aadharcard || s.aadharCard || s.aadhar_card || "").toString().trim().toLowerCase();
+      if (aadhar) {
+        if (batchAadhars.has(aadhar) || dbAadhars.has(aadhar)) {
+          return res.status(400).json({ message: `Row ${index}: Duplicate Aadhar Card '${s.aadharcard || s.aadharCard || s.aadhar_card}' detected.` });
+        }
+        batchAadhars.add(aadhar);
+      }
+
+      // c) RFID
+      const rfid = (s.RFID || s.rfid || s.CARDID || s.card_id || "").toString().trim().toLowerCase();
+      if (rfid) {
+        if (batchRfids.has(rfid) || dbRfids.has(rfid)) {
+          return res.status(400).json({ message: `Row ${index}: Duplicate RFID/CardID '${s.RFID || s.rfid || s.CARDID || s.card_id}' detected.` });
+        }
+        batchRfids.add(rfid);
+      }
+
+      // d) UniformID
+      const uniform = (s.uniformid || s.uniformId || s.uniform_id || "").toString().trim().toLowerCase();
+      if (uniform) {
+        if (batchUniforms.has(uniform) || dbUniforms.has(uniform)) {
+          return res.status(400).json({ message: `Row ${index}: Duplicate UniformID '${s.uniformid || s.uniformId || s.uniform_id}' detected.` });
+        }
+        batchUniforms.add(uniform);
+      }
+    }
+
+    const newItems = incoming.map((s: any, idx: number) => ({
+      id: students.length > 0 ? Math.max(...students.map(item => item.id)) + idx + 1 : idx + 1,
       ...s
     }));
+
     students = [...students, ...newItems];
     res.status(201).json({ success: true, count: newItems.length });
   });
