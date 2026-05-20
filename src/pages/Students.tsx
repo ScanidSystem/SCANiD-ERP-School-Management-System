@@ -321,7 +321,7 @@ export default function Students({ user }: { user: UserType }) {
     } finally {
       setLoading(false);
     }
-  }, [user.schoolId, user.academicYearId, page, pageSize, sortBy, sortOrder, search, standardFilter, sectionFilter, shifts]);
+  }, [user.schoolId, user.academicYearId, page, pageSize, sortBy, sortOrder, search, standardFilter, sectionFilter, shifts.length]);
 
   useEffect(() => {
     fetchMasters();
@@ -835,19 +835,17 @@ export default function Students({ user }: { user: UserType }) {
     setIsProcessing(true);
     try {
       const payload = {
-        ...newStudentFormData,
         schoolId: parseSafeInt(newStudentFormData.schoolId) || 1,
         rollNumber: parseSafeInt(newStudentFormData.ROLLNO) || 0,
         registrationNumber: newStudentFormData.registrationNumber || `REG/${new Date().getFullYear()}/${Math.floor(Math.random() * 900) + 100}`,
         name: `${newStudentFormData.FNAME} ${newStudentFormData.MNAME} ${newStudentFormData.LNAME}`.trim(),
-        // Schema fields mapping
+        status: newStudentFormData.status || "Active",
+        
+        // Schema database fields mapping
         STUDENTID: newStudentFormData.registrationNumber,
         FNAME: newStudentFormData.FNAME,
         MNAME: newStudentFormData.MNAME,
         LNAME: newStudentFormData.LNAME,
-        STD: newStudentFormData.STD,
-        DIV: newStudentFormData.DIV,
-        ROLLNO: newStudentFormData.ROLLNO,
         GRNO: newStudentFormData.registrationNumber,
         GENDER: newStudentFormData.GENDER,
         DOB: newStudentFormData.DOB,
@@ -855,11 +853,8 @@ export default function Students({ user }: { user: UserType }) {
         MOTHERNAME: newStudentFormData.MOTHERNAME,
         ADDRESS: newStudentFormData.ADDRESS,
         aadharcard: newStudentFormData.aadharcard,
-        academicyear: newStudentFormData.academicyear,
         RFID: newStudentFormData.RFID,
-        SHIFTNAME: newStudentFormData.SHIFTNAME,
         uniformid: newStudentFormData.uniformid,
-        contact2: newStudentFormData.contact2,
         sms: newStudentFormData.sms,
         ProfilePhotoPath: newStudentFormData.ProfilePhotoPath,
 

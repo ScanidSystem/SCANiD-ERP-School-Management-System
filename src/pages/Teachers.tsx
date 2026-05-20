@@ -74,6 +74,7 @@ import { toast } from "sonner";
 
 interface Teacher {
   id: string;
+  userId?: string;
   name: string;
   email: string;
   phone: string;
@@ -181,6 +182,7 @@ export default function Teachers({ user }: { user: any }) {
 
         return {
           id: t.id?.toString() || "",
+          userId: t.userId?.toString() || t.user?.id?.toString() || "",
           name: getVal("name") || getVal("fullName") || "Unnamed Teacher",
           email: getVal("email") || "N/A",
           phone: getVal("contactNumber") || getVal("phone") || "N/A",
@@ -342,13 +344,16 @@ export default function Teachers({ user }: { user: any }) {
     }
 
     try {
-      const payload = {
+      const payload: any = {
         schoolId: parseSafeInt(formData.schoolId) || 1,
         employeeId: isEditing ? selectedTeacher?.employeeId : `EMP-${Date.now()}`,
         designation: "Faculty",
         department: formData.subject,
         qualification: formData.qualification,
         status: formData.status,
+        contactNumber: formData.phone,
+        profilePhotoPath: formData.photo || "",
+        ProfilePhotoPath: formData.photo || "",
         user: {
            username: formData.email.split('@')[0] + Date.now(),
            name: `${formData.firstName} ${formData.lastName}`.trim(),
@@ -362,6 +367,13 @@ export default function Teachers({ user }: { user: any }) {
         CreatedBy: isEditing ? undefined : (user.name || user.email),
         ModifiedBy: user.name || user.email
       };
+
+      if (isEditing && selectedTeacher) {
+        payload.id = parseSafeInt(selectedTeacher.id) || 0;
+        if (payload.user && selectedTeacher.userId) {
+          payload.user.id = parseSafeInt(selectedTeacher.userId) || 0;
+        }
+      }
 
       if (isEditing && selectedTeacher) {
         await apiService.updateTeacher(parseSafeInt(selectedTeacher.id) || 0, payload as any);

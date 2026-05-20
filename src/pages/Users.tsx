@@ -225,7 +225,7 @@ export default function Users() {
           toast.error("Invalid user ID for update");
           return;
         }
-        await apiService.updateUser(userId, formData);
+        await apiService.updateUser(userId, { ...formData, id: userId });
         toast.success("User updated successfully");
       } else {
         await apiService.createUser(formData);
