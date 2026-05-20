@@ -307,87 +307,144 @@ GO
 -- 4. NAVIGATION DESIGN AND ROLE-BASED ACCESS (RBAC)
 -- ===================================================
 
--- 4.1. NAVIGATION ITEMS
+-- 4.1. NAVIGATION ITEMS (Strictly Sequential IDs: 1 to 30)
 SET IDENTITY_INSERT [dbo].[NavigationItems] ON;
+
 IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 1)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
     VALUES (1, N'Dashboard', N'LayoutDashboard', N'/', NULL, 1, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
-IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 1000)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 2)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (1000, N'Academic Operations', N'BookOpen', NULL, NULL, 2, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (2, N'Academic Operations', N'BookOpen', NULL, NULL, 2, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
-IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 2000)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 3)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (2000, N'Staff & HR', N'Users', NULL, NULL, 3, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (3, N'Staff & HR', N'Users', NULL, NULL, 3, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
-IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 3000)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 4)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (3000, N'Administrative', N'ShieldCheck', NULL, NULL, 4, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (4, N'Administrative', N'ShieldCheck', NULL, NULL, 4, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
-IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 4000)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 5)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (4000, N'Configuration', N'Database', N'/configuration', NULL, 5, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (5, N'Masters & Config', N'Database', N'/configuration', NULL, 5, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
-IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 5000)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 6)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (5000, N'System Audit', N'Terminal', N'/system-logs', NULL, 6, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (6, N'System Audit', N'Terminal', N'/system-logs', NULL, 6, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
--- Sub-items for Academic Operations (1000)
+-- Sub-items for Academic Operations (ParentId: 2)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 7)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
+    VALUES (7, N'Student Registry', N'GraduationCap', N'/students', 2, 1, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 8)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
+    VALUES (8, N'Attendance Tracking', N'CalendarCheck', N'/attendance', 2, 2, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 9)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
+    VALUES (9, N'Examination & Marks', N'BarChart3', N'/marks', 2, 3, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+
+-- Sub-items for Staff & HR (ParentId: 3)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 10)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
+    VALUES (10, N'Teacher Catalog', N'UserCheck', N'/teachers', 3, 1, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+
+-- Sub-items for Administrative (ParentId: 4)
 IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 11)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (11, N'Student Registry', N'GraduationCap', N'/students', 1000, 1, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (11, N'Fee Management', N'CreditCard', N'/fees', 4, 1, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
 IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 12)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (12, N'Attendance Tracking', N'CalendarCheck', N'/attendance', 1000, 2, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (12, N'Communication Hub', N'MessageSquare', N'/messages', 4, 2, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
+-- Sub-items for Configuration (ParentId: 5)
 IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 13)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (13, N'Examination & Marks', N'BarChart3', N'/marks', 1000, 3, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (13, N'Global Schools', N'School', N'/configuration/schools', 5, 1, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
--- Sub-items for Staff & HR (2000)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 14)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
+    VALUES (14, N'Access Control (RBAC)', N'Key', NULL, 5, 2, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 15)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
+    VALUES (15, N'Menu Designer', N'Layout', NULL, 5, 3, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 16)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
+    VALUES (16, N'Academic Masters', N'BookOpen', NULL, 5, 4, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 17)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
+    VALUES (17, N'General Masters', N'Database', NULL, 5, 5, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+
+-- Sub-items for Access Control (RBAC) (ParentId: 14)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 18)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
+    VALUES (18, N'Role Master', N'Shield', N'/configuration/role-master', 14, 1, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 19)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
+    VALUES (19, N'Role Assignment', N'UserCheck', N'/configuration/role-assignment', 14, 2, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+
+-- Sub-items for Menu Designer (ParentId: 15)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 20)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
+    VALUES (20, N'Navigation Builder', N'LayoutGrid', N'/configuration/navigation', 15, 1, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+
+-- Sub-items for Academic Masters (ParentId: 16)
 IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 21)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (21, N'Teacher Catalog', N'UserCheck', N'/teachers', 2000, 1, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (21, N'Standards & Grades', N'Layers', N'/configuration/standards', 16, 1, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
--- Sub-items for Administrative (3000)
-IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 31)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 22)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (31, N'Fee Management', N'CreditCard', N'/fees', 3000, 1, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (22, N'Divisions/Sections', N'Hash', N'/configuration/sections', 16, 2, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
-IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 32)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 23)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (32, N'Communication Hub', N'MessageSquare', N'/messages', 3000, 2, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (23, N'Academic Years', N'Calendar', N'/configuration/academic-years', 16, 3, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
--- Sub-items for Configuration (4000)
-IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 41)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 24)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (41, N'Global Schools', N'School', N'/configuration/schools', 4000, 1, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (24, N'Subject Registry', N'BookOpen', N'/configuration/subjects', 16, 4, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
-IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 42)
+-- Sub-items for General Masters (ParentId: 17)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 25)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (42, N'Access Control (RBAC)', N'Key', N'/configuration/role-assignment', 4000, 2, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (25, N'Religions', N'Heart', N'/configuration/religions', 17, 1, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
-IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 43)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 26)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (43, N'Menu Designer', N'Layout', N'/configuration/navigation', 4000, 3, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (26, N'Blood Group', N'Droplets', N'/configuration/blood-groups', 17, 2, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
--- Sub-items for Configuration Tabular Master Sub-Panels
-IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 44)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 27)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (44, N'Address Masters', N'MapPin', N'/configuration/cities', 4000, 4, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (27, N'Caste Category', N'Users', N'/configuration/castes', 17, 3, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
-IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 45)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 28)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (45, N'Classification Masters', N'Tags', N'/configuration/castes', 4000, 5, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (28, N'Sub-Caste', N'UserCircle', N'/configuration/sub-castes', 17, 4, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 29)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
+    VALUES (29, N'School House', N'Home', N'/configuration/houses', 17, 5, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 30)
+    INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
+    VALUES (30, N'Admission Types', N'UserCheck', N'/configuration/admission-types', 17, 6, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+
 SET IDENTITY_INSERT [dbo].[NavigationItems] OFF;
 GO
 
 -- 4.2. NAVIGATION ROLES MAPPING
 IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationRoles])
 BEGIN
-    DECLARE @SRoleId INT = (SELECT Id FROM [dbo].[Roles] WHERE [Name] = 'SuperAdmin');
+    DECLARE @SRoleId INT = (SELECT Id FROM [dbo].[Roles] WHERE [Name] = 'SuperAdmin' OR [Name] = 'Super Admin');
     DECLARE @ARoleId INT = (SELECT Id FROM [dbo].[Roles] WHERE [Name] = 'Admin');
     DECLARE @TRoleId INT = (SELECT Id FROM [dbo].[Roles] WHERE [Name] = 'Teacher');
 
@@ -397,12 +454,12 @@ BEGIN
 
     -- Admin maps to most administrative operations (excluding deep system audit/RBAC mapping)
     IF @ARoleId IS NOT NULL
-        INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId]) SELECT Id, @ARoleId FROM [dbo].[NavigationItems] WHERE Id NOT IN (5000, 42, 43);
+        INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId]) SELECT Id, @ARoleId FROM [dbo].[NavigationItems] WHERE Id NOT IN (6, 14, 15, 18, 19, 20);
 
     -- Teacher maps to relevant teaching and communications interfaces
     IF @TRoleId IS NOT NULL
         INSERT INTO [dbo].[NavigationRoles] ([NavigationItemId], [RoleId]) VALUES 
-        (1, @TRoleId), (1000, @TRoleId), (11, @TRoleId), (12, @TRoleId), (13, @TRoleId), (2000, @TRoleId), (21, @TRoleId), (3000, @TRoleId), (32, @TRoleId);
+        (1, @TRoleId), (2, @TRoleId), (7, @TRoleId), (8, @TRoleId), (9, @TRoleId), (3, @TRoleId), (10, @TRoleId), (4, @TRoleId), (12, @TRoleId);
 END
 GO
 
