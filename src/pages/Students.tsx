@@ -188,6 +188,15 @@ export default function Students({ user }: { user: UserType }) {
           return match ? s[match] : fallback;
         };
 
+        // Robust helper to safely extract an ID from standard values, numbers or nested objects to avoid leaks
+        const getSafeId = (val: any): string => {
+          if (!val) return "";
+          if (typeof val === "object") {
+            return val.id?.toString() || val.id || "";
+          }
+          return val.toString();
+        };
+
         return {
           id: s.id?.toString() || "",
           grno: getVal("GRNO") || s.registrationNumber || s.grno || getVal("registrationNumber") || "",
@@ -198,13 +207,13 @@ export default function Students({ user }: { user: UserType }) {
           name: s.name || s.fullName || s.FullName || getVal("FullName") || getVal("Name") || "",
           standard: typeof getVal("STD") === "object" ? getVal("STD")?.name : (getVal("STD") || s.standard?.name || s.Standard?.name || s.standard || ""),
           section: typeof getVal("DIV") === "object" ? getVal("DIV")?.name : (getVal("DIV") || s.section?.name || s.Section?.name || s.section || ""),
-          bloodGroupId: typeof getVal("bloodGroupId") === "object" ? getVal("bloodGroupId")?.id?.toString() : (getVal("BLOODGROUP") || s.bloodGroupId?.toString() || ""),
-          houseId: typeof getVal("houseId") === "object" ? getVal("houseId")?.id?.toString() : (getVal("house") || s.houseId?.toString() || ""),
-          admissionTypeId: typeof getVal("admissionTypeId") === "object" ? getVal("admissionTypeId")?.id?.toString() : (getVal("admissiontype") || s.admissionTypeId?.toString() || ""),
-          religionId: typeof getVal("religionId") === "object" ? getVal("religionId")?.id?.toString() : (getVal("RELIGION") || s.religionId?.toString() || ""),
-          casteId: typeof getVal("casteId") === "object" ? getVal("casteId")?.id?.toString() : (getVal("CASTE") || s.casteId?.toString() || ""),
-          subCasteId: typeof getVal("subCasteId") === "object" ? getVal("subCasteId")?.id?.toString() : (getVal("subcaste") || s.subCasteId?.toString() || ""),
-          joiningAcademicYearId: typeof getVal("academicYearId") === "object" ? getVal("academicYearId")?.id?.toString() : (getVal("academicyear") || s.joiningAcademicYearId?.toString() || ""),
+          bloodGroupId: getSafeId(getVal("bloodGroupId") || getVal("BLOODGROUP") || s.bloodGroupId),
+          houseId: getSafeId(getVal("houseId") || getVal("house") || s.houseId),
+          admissionTypeId: getSafeId(getVal("admissionTypeId") || getVal("admissiontype") || s.admissionTypeId),
+          religionId: getSafeId(getVal("religionId") || getVal("RELIGION") || s.religionId),
+          casteId: getSafeId(getVal("casteId") || getVal("CASTE") || s.casteId),
+          subCasteId: getSafeId(getVal("subCasteId") || getVal("subcaste") || s.subCasteId),
+          joiningAcademicYearId: getSafeId(getVal("academicYearId") || getVal("academicyear") || s.joiningAcademicYearId),
           roll: getVal("ROLLNO") || s.rollNumber?.toString() || s.roll?.toString() || "0",
           address: getVal("ADDRESS") || s.address || "N/A",
           birthDate: getVal("DOB") || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
@@ -225,14 +234,14 @@ export default function Students({ user }: { user: UserType }) {
           DIV: typeof getVal("DIV") === "object" ? getVal("DIV")?.name : (getVal("DIV") || s.section?.name || s.section || ""),
           ROLLNO: getVal("ROLLNO") || s.rollNumber?.toString(),
           GRNO: getVal("GRNO") || s.registrationNumber,
-          RELIGION: typeof getVal("religionId") === "object" ? getVal("religionId")?.id?.toString() : (getVal("RELIGION") || s.religionId?.toString()),
-          CASTE: typeof getVal("casteId") === "object" ? getVal("casteId")?.id?.toString() : (getVal("CASTE") || s.casteId?.toString()),
-          subcaste: typeof getVal("subCasteId") === "object" ? getVal("subCasteId")?.id?.toString() : (getVal("subcaste") || s.subCasteId?.toString()),
-          BLOODGROUP: typeof getVal("bloodGroupId") === "object" ? getVal("bloodGroupId")?.id?.toString() : (getVal("BLOODGROUP") || s.bloodGroupId?.toString()),
-          house: typeof getVal("houseId") === "object" ? getVal("houseId")?.id?.toString() : (getVal("house") || s.houseId?.toString()),
-          admissiontype: typeof getVal("admissionTypeId") === "object" ? getVal("admissionTypeId")?.id?.toString() : (getVal("admissiontype") || s.admissionTypeId?.toString()),
-          academicyear: typeof getVal("academicYearId") === "object" ? getVal("academicYearId")?.id?.toString() : (getVal("academicyear") || s.joiningAcademicYearId?.toString()),
-          CATEGORY: typeof getVal("categoryId") === "object" ? getVal("categoryId")?.id?.toString() : (getVal("CATEGORY") || s.categoryId?.toString()),
+          RELIGION: getSafeId(getVal("religionId") || getVal("RELIGION") || s.religionId),
+          CASTE: getSafeId(getVal("casteId") || getVal("CASTE") || s.casteId),
+          subcaste: getSafeId(getVal("subCasteId") || getVal("subcaste") || s.subCasteId),
+          BLOODGROUP: getSafeId(getVal("bloodGroupId") || getVal("BLOODGROUP") || s.bloodGroupId),
+          house: getSafeId(getVal("houseId") || getVal("house") || s.houseId),
+          admissiontype: getSafeId(getVal("admissionTypeId") || getVal("admissiontype") || s.admissionTypeId),
+          academicyear: getSafeId(getVal("academicYearId") || getVal("academicyear") || s.joiningAcademicYearId),
+          CATEGORY: getSafeId(getVal("categoryId") || getVal("CATEGORY") || s.categoryId),
           DOB: getVal("DOB") || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
           MOBILE: getVal("MOBILE") || s.contactNumber || s.mobile,
           EMAIL: getVal("EMAIL") || s.email,
@@ -315,9 +324,12 @@ export default function Students({ user }: { user: UserType }) {
   }, [user.schoolId, user.academicYearId, page, pageSize, sortBy, sortOrder, search, standardFilter, sectionFilter, shifts]);
 
   useEffect(() => {
-    fetchStudents();
     fetchMasters();
-  }, [fetchStudents, fetchMasters]);
+  }, [fetchMasters]);
+
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
   
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -333,6 +345,8 @@ export default function Students({ user }: { user: UserType }) {
   
   const [uploadingStudentId, setUploadingStudentId] = useState<string | number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
+  const [localPhotoPreview, setLocalPhotoPreview] = useState<string | null>(null);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -383,6 +397,8 @@ export default function Students({ user }: { user: UserType }) {
     setCurrentStudentId(null);
     setNewStudentFormData(initialFormState);
     setFormErrors({});
+    setSelectedPhotoFile(null);
+    setLocalPhotoPreview(null);
     setIsAddDialogOpen(true);
     fetchMasters();
   };
@@ -391,6 +407,8 @@ export default function Students({ user }: { user: UserType }) {
     setIsEditMode(true);
     setCurrentStudentId(student.id);
     setFormErrors({});
+    setSelectedPhotoFile(null);
+    setLocalPhotoPreview(null);
     setNewStudentFormData({
       registrationNumber: student.grno || "",
       schoolId: (student.schoolId || user.schoolId || "").toString(),
@@ -491,19 +509,31 @@ export default function Students({ user }: { user: UserType }) {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (uploadingStudentId !== null && e.target.files?.[0]) {
       const file = e.target.files[0];
-      const studentId = uploadingStudentId;
       
+      if (uploadingStudentId === "new") {
+        setSelectedPhotoFile(file);
+        setLocalPhotoPreview(URL.createObjectURL(file));
+        toast.success("Image selected. It will be uploaded when you enroll the student.");
+        setUploadingStudentId(null);
+        e.target.value = '';
+        return;
+      }
+
+      const studentId = uploadingStudentId;
       const loadingToast = toast.loading("Storing identity image on server...");
       try {
         const response = await apiService.uploadStudentPhoto(Number(studentId), file);
-        // Correctly access path from nested data wrapper used by API
         const newPath = response.data.data?.path || response.data.path;
         
-        // Update local state with the new physical path from server
-        // This ensures the image persists and uses the industry standard naming
+        // Update both the list and the form data immediately to reflect the change
         setStudents(prev => prev.map(s => 
           s.id.toString() === studentId.toString() ? { ...s, photo: newPath, profilePhotoPath: newPath, ProfilePhotoPath: newPath } : s
         ));
+        setNewStudentFormData(prev => ({
+          ...prev,
+          profilePhotoPath: newPath,
+          ProfilePhotoPath: newPath
+        }));
         
         toast.dismiss(loadingToast);
         toast.success("Profile picture stored and path updated successfully.");
@@ -861,11 +891,23 @@ export default function Students({ user }: { user: UserType }) {
         await apiService.updateStudent(studentId, { ...payload, id: studentId });
         toast.success("Student updated successfully!");
       } else {
-        await apiService.createStudent(payload);
+        const response = await apiService.createStudent(payload);
+        const createdStudent = response.data.data || response.data;
+        const studentId = createdStudent?.id;
+        
+        if (selectedPhotoFile && studentId) {
+          try {
+            await apiService.uploadStudentPhoto(studentId, selectedPhotoFile);
+          } catch (uploadErr) {
+            console.error("Delayed student photo upload failed:", uploadErr);
+          }
+        }
         toast.success("Student registered successfully!");
       }
       
       setIsAddDialogOpen(false);
+      setSelectedPhotoFile(null);
+      setLocalPhotoPreview(null);
       fetchStudents();
     } catch (error) {
       toast.error(isEditMode ? "Failed to update record" : "Failed to register student");
@@ -1298,19 +1340,19 @@ export default function Students({ user }: { user: UserType }) {
                           </div>
                         </div>
 
-                        {/* Profile Image Display Section (4/12 width) - Only shown in Edit Mode */}
+                        {/* Profile Image Display Section (4/12 width) - Available in Add & Edit Mode */}
                         <div className="md:col-span-4 flex flex-col items-center justify-center border-l border-slate-100 pl-6">
                            <div className="text-center space-y-4">
                               <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Profile Identity Image</Label>
                               
                               <div 
                                 className="relative group cursor-pointer"
-                                onClick={() => isEditMode && triggerPhotoUpload(currentStudentId!)}
+                                onClick={() => triggerPhotoUpload(isEditMode ? currentStudentId! : "new")}
                               >
                                 <div className="w-44 h-44 rounded-3xl overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-200 bg-slate-50 flex items-center justify-center transition-all duration-300 group-hover:shadow-blue-200/50 group-hover:scale-[1.02]">
-                                  {newStudentFormData.ProfilePhotoPath ? (
+                                  {(localPhotoPreview || newStudentFormData.ProfilePhotoPath) ? (
                                     <img 
-                                      src={resolvePhotoUrl(newStudentFormData.ProfilePhotoPath)} 
+                                      src={localPhotoPreview || resolvePhotoUrl(newStudentFormData.ProfilePhotoPath)} 
                                       alt="Student Identity" 
                                       className="w-full h-full object-cover"
                                       onError={(e) => {
@@ -1327,17 +1369,15 @@ export default function Students({ user }: { user: UserType }) {
                                   )}
 
                                   {/* Update Overlay */}
-                                  {isEditMode && (
-                                    <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
-                                      <div className="p-2 bg-white/20 rounded-full">
-                                        <Edit2 size={24} />
-                                      </div>
-                                      <span className="text-[10px] font-black uppercase tracking-widest">Update Photo</span>
+                                  <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
+                                    <div className="p-2 bg-white/20 rounded-full">
+                                      <Edit2 size={24} />
                                     </div>
-                                  )}
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Update Photo</span>
+                                  </div>
                                 </div>
                                 
-                                {newStudentFormData.ProfilePhotoPath && (
+                                {(localPhotoPreview || newStudentFormData.ProfilePhotoPath) && (
                                   <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
                                     <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
                                   </div>
@@ -1345,9 +1385,7 @@ export default function Students({ user }: { user: UserType }) {
                               </div>
                               
                               <p className="text-[10px] text-slate-400 font-medium leading-relaxed max-w-[180px] mx-auto">
-                                {isEditMode 
-                                  ? "Click the identity frame to upload or change the physical photograph." 
-                                  : "Identity images can be managed after initial record creation."}
+                                Click the identity frame to upload or change the physical photograph.
                               </p>
                            </div>
                         </div>

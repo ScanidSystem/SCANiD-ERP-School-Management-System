@@ -106,6 +106,8 @@ export default function Teachers({ user }: { user: any }) {
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [uploadingTeacherId, setUploadingTeacherId] = useState<string | null>(null);
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
+  const [localPhotoPreview, setLocalPhotoPreview] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterSubject, setFilterSubject] = useState<string>("all");
@@ -263,6 +265,16 @@ export default function Teachers({ user }: { user: any }) {
     fetchTeachers();
   }, [fetchTeachers]);
 
+  useEffect(() => {
+    if (!isAddDialogOpen) {
+      setSelectedPhotoFile(null);
+      if (localPhotoPreview) {
+        URL.revokeObjectURL(localPhotoPreview);
+        setLocalPhotoPreview(null);
+      }
+    }
+  }, [isAddDialogOpen]);
+
   const handleSort = (key: string) => {
     if (sortBy === key) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -355,7 +367,15 @@ export default function Teachers({ user }: { user: any }) {
         await apiService.updateTeacher(parseSafeInt(selectedTeacher.id) || 0, payload as any);
         toast.success("Teacher profile updated successfully");
       } else {
-        await apiService.createTeacher(payload as any);
+        const response = await apiService.createTeacher(payload as any);
+        const newTeacher = response.data.data || response.data;
+        if (selectedPhotoFile && newTeacher?.id) {
+          try {
+            await apiService.uploadTeacherPhoto(Number(newTeacher.id), selectedPhotoFile);
+          } catch (uploadErr) {
+            console.error("Delayed teacher photo upload failed:", uploadErr);
+          }
+        }
         toast.success("Teacher profile saved to database");
       }
       
@@ -388,7 +408,7 @@ export default function Teachers({ user }: { user: any }) {
     }
   };
 
-  const triggerPhotoUpload = (id: string) => {
+  const triggerPhotoUpload = (id: string | "new") => {
     setUploadingTeacherId(id);
     fileInputRef.current?.click();
   };
@@ -396,16 +416,29 @@ export default function Teachers({ user }: { user: any }) {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (uploadingTeacherId && e.target.files?.[0]) {
       const file = e.target.files[0];
-      const teacherId = uploadingTeacherId;
       
+      if (uploadingTeacherId === "new") {
+        setSelectedPhotoFile(file);
+        setLocalPhotoPreview(URL.createObjectURL(file));
+        toast.success("Profile photo selected. It will be uploaded on registration.");
+        setUploadingTeacherId(null);
+        e.target.value = '';
+        return;
+      }
+
+      const teacherId = uploadingTeacherId;
       const loadingToast = toast.loading("Uploading identity image...");
       try {
         const response = await apiService.uploadTeacherPhoto(Number(teacherId), file);
         const newPath = response.data.data?.path || response.data.path;
         
+        // Update list and the selected teacher's image binding with all key variants
         setTeachers(prev => prev.map(t => 
-          t.id.toString() === teacherId.toString() ? { ...t, photo: newPath } : t
+          t.id.toString() === teacherId.toString() ? { ...t, photo: newPath, profilePhotoPath: newPath, ProfilePhotoPath: newPath } : t
         ));
+        if (selectedTeacher && selectedTeacher.id.toString() === teacherId.toString()) {
+          setSelectedTeacher(prev => prev ? { ...prev, photo: newPath } : null);
+        }
         
         toast.dismiss(loadingToast);
         toast.success("Profile photo updated successfully");
@@ -536,12 +569,12 @@ export default function Teachers({ user }: { user: any }) {
                             <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Faculty Identity Photo</Label>
                             <div 
                               className="relative group cursor-pointer"
-                              onClick={() => isEditing && triggerPhotoUpload(selectedTeacher?.id)}
+                              onClick={() => triggerPhotoUpload(isEditing ? selectedTeacher?.id!.toString() : "new")}
                             >
                               <div className="w-44 h-44 rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-100 bg-slate-50 flex items-center justify-center transition-all group-hover:shadow-blue-200/50 group-hover:scale-[1.02]">
-                                 {formData.photo ? (
+                                 {(localPhotoPreview || formData.photo) ? (
                                    <img 
-                                     src={resolvePhotoUrl(formData.photo)} 
+                                     src={localPhotoPreview || resolvePhotoUrl(formData.photo)} 
                                      alt="Faculty" 
                                      className="w-full h-full object-cover"
                                      onError={(e) => {
@@ -557,24 +590,22 @@ export default function Teachers({ user }: { user: any }) {
                                    </div>
                                  )}
 
-                                 {isEditing && (
-                                   <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
-                                      <div className="p-2 bg-white/20 rounded-full">
-                                        <Camera size={24} />
-                                      </div>
-                                      <span className="text-[10px] font-black uppercase tracking-widest">Update Photo</span>
-                                   </div>
-                                 )}
+                                 <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
+                                    <div className="p-2 bg-white/20 rounded-full">
+                                      <Camera size={24} />
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Update Photo</span>
+                                 </div>
                               </div>
                               
-                              {formData.photo && (
+                              {(localPhotoPreview || formData.photo) && (
                                 <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
                                    <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
                                 </div>
                               )}
                             </div>
                             <p className="text-[10px] text-slate-400 font-bold max-w-[150px] text-center leading-relaxed">
-                              {isEditing ? "Click frame to update professional photograph." : "Photo capture available after record creation."}
+                              Click frame to select or update professional photograph.
                             </p>
                           </div>
 
