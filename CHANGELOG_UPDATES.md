@@ -182,13 +182,14 @@ const sampleData = [
   }
 ];
 ```
-- Integrated dynamic name-to-ID mapping inside `handleBulkUpload` to lookup the respective `schoolId` based on the provided school name and fall back perfectly to the user's current session parameters:
+- Integrated dynamic name-to-ID mapping inside `handleBulkUpload` to lookup the respective `schoolId` based on the provided school name and fall back perfectly to the user's current session parameters. Specifically refined to run case-insensitive, trailing/leading whitespace trimmed lookup, ensuring robust matching:
 ```typescript
-const schName = item.SchoolName || item.schoolName || item.School;
+const schName = getFieldCleanVal(["SchoolName", "School", "school_name"]);
 const schMasterId = item.SchoolId || (schName ? schools.find((sch: any) => 
-  sch.name.toLowerCase() === schName.toString().toLowerCase()
+  sch.name.toLowerCase().trim() === schName.toLowerCase()
 )?.id : undefined);
 ```
+- Standardized the secondary telephone numbers to map as `"SecondaryMobile"` across both the template headers and our cleaner parser helpers, conforming exactly to institutional data layout constraints.
 - Bound the parsed `schoolId` safely into the database payload, ensuring pristine cross-institution stability and a flawless user experience.
 
 

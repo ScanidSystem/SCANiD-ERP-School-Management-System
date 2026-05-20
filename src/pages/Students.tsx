@@ -558,7 +558,7 @@ export default function Students({ user }: { user: UserType }) {
         "GradeName", "SectionName", "BloodGroupName", "HouseName", 
         "AdmissionType", "ReligionName", "CasteName", "SubCasteName", 
         "CategoryName", "AcademicYear", "ShiftName", "Status",
-        "RFID", "UniformID", "SecondaryContact", "SecondarySMS"
+        "RFID", "UniformID", "SecondaryMobile", "SecondarySMS"
       ];
       
       const sampleData = [
@@ -590,7 +590,7 @@ export default function Students({ user }: { user: UserType }) {
           Status: "Active",
           RFID: "RF99221",
           UniformID: "UNIF-001",
-          SecondaryContact: "9876543211",
+          SecondaryMobile: "9876543211",
           SecondarySMS: "Yes"
         }
       ];
@@ -642,76 +642,103 @@ export default function Students({ user }: { user: UserType }) {
 
         const processedStudents = rawData.map((item: any, index: number) => {
           try {
-            // Find school id by the provided School Name for institutional compliance
-            const schName = item.SchoolName || item.schoolName || item.School;
+            // Helper helper to dynamically lookup keys case-insensitively and trim spaces
+            const getFieldCleanVal = (keysToSearch: string[]): string => {
+              for (const key of keysToSearch) {
+                const matchKey = Object.keys(item).find(k => k.toLowerCase() === key.toLowerCase());
+                if (matchKey && item[matchKey] !== undefined && item[matchKey] !== null) {
+                  return item[matchKey].toString().trim();
+                }
+              }
+              return "";
+            };
+
+            // 1. School Name Resolution
+            const schName = getFieldCleanVal(["SchoolName", "School", "school_name"]);
             const schMasterId = item.SchoolId || (schName ? schools.find((sch: any) => 
-              sch.name.toLowerCase() === schName.toString().toLowerCase()
+              sch.name.toLowerCase().trim() === schName.toLowerCase()
             )?.id : undefined);
 
-            const stdName = item.GradeName || item.STD;
+            // 2. Class/Grade/Standard Resolution
+            const stdName = getFieldCleanVal(["GradeName", "STD", "standard", "grade"]);
             const stdMasterId = item.StandardId || (stdName ? standardsMaster.find((s: any) => 
-              s.name.toLowerCase() === stdName.toString().toLowerCase()
+              s.name.toLowerCase().trim() === stdName.toLowerCase()
             )?.id : undefined);
             
-            const divName = item.SectionName || item.DIV;
+            // 3. Section/Division Resolution
+            const divName = getFieldCleanVal(["SectionName", "DIV", "section", "division"]);
             const divMasterId = item.SectionId || (divName ? sectionsMaster.find((s: any) => 
-              s.name.toLowerCase() === divName.toString().toLowerCase()
+              s.name.toLowerCase().trim() === divName.toLowerCase()
             )?.id : undefined);
             
-            const shiftName = item.ShiftName || item.SHIFTNAME;
+            // 4. Shift Resolution
+            const shiftName = getFieldCleanVal(["ShiftName", "SHIFTNAME", "shift"]);
             const shiftMasterId = item.ShiftId || (shiftName ? shifts.find((s: any) => 
-              s.name.toLowerCase() === shiftName.toString().toLowerCase()
+               s.name.toLowerCase().trim() === shiftName.toLowerCase()
             )?.id : undefined);
 
-            const ayName = item.AcademicYear || item.academicyear;
+            // 5. Academic Year Resolution
+            const ayName = getFieldCleanVal(["AcademicYear", "academicyear", "academic_year"]);
             const ayMasterId = item.AcademicYearId || (ayName ? academicYears.find((s: any) => 
-              s.name.toLowerCase() === ayName.toString().toLowerCase()
+              s.name.toLowerCase().trim() === ayName.toLowerCase()
             )?.id : undefined);
 
-            const bgName = item.BloodGroupName || item.BLOODGROUP;
+            // 6. Blood Group Resolution
+            const bgName = getFieldCleanVal(["BloodGroupName", "BLOODGROUP", "blood_group"]);
             const bgMasterId = item.BloodGroupId || (bgName ? bloodGroups.find((bg: any) => 
-              bg.name.toLowerCase() === bgName.toString().toLowerCase()
+              bg.name.toLowerCase().trim() === bgName.toLowerCase()
             )?.id : undefined);
 
-            const relName = item.ReligionName || item.RELIGION;
+            // 7. Religion Resolution
+            const relName = getFieldCleanVal(["ReligionName", "RELIGION", "religion"]);
             const religionMasterId = item.ReligionId || (relName ? religions.find((r: any) => 
-              r.name.toLowerCase() === relName.toString().toLowerCase()
+              r.name.toLowerCase().trim() === relName.toLowerCase()
             )?.id : undefined);
 
-            const houseName = item.HouseName || item.house;
+            // 8. House Resolution
+            const houseName = getFieldCleanVal(["HouseName", "house"]);
             const houseMasterId = item.HouseId || (houseName ? houses.find((h: any) => 
-              h.name.toLowerCase() === houseName.toString().toLowerCase()
+              h.name.toLowerCase().trim() === houseName.toLowerCase()
             )?.id : undefined);
 
-            const atName = item.AdmissionType || item.admissiontype;
+            // 9. Admission Type Resolution
+            const atName = getFieldCleanVal(["AdmissionType", "admissiontype", "admission_type"]);
             const admissionTypeMasterId = item.AdmissionTypeId || (atName ? admissionTypes.find((at: any) => 
-              at.name.toLowerCase() === atName.toString().toLowerCase()
+              at.name.toLowerCase().trim() === atName.toLowerCase()
             )?.id : undefined);
 
-            const cName = item.CasteName || item.CASTE;
+            // 10. Caste Resolution
+            const cName = getFieldCleanVal(["CasteName", "CASTE", "caste"]);
             const casteMasterId = item.CasteId || (cName ? castes.find((c: any) => 
-              c.name.toLowerCase() === cName.toString().toLowerCase()
+              c.name.toLowerCase().trim() === cName.toLowerCase()
             )?.id : undefined);
 
-            const catName = item.CategoryName || item.CATEGORY;
+            // 11. Category Resolution
+            const catName = getFieldCleanVal(["CategoryName", "CATEGORY", "category"]);
             const categoryMasterId = item.CategoryId || (catName ? categories.find((c: any) => 
-              c.name.toLowerCase() === catName.toString().toLowerCase()
+              c.name.toLowerCase().trim() === catName.toLowerCase()
             )?.id : undefined);
+
+            // Map standard fields for DB persistence
+            const regNum = getFieldCleanVal(["RegistrationNumber", "GRNO", "registration_number", "student_id"]);
+            const fName = getFieldCleanVal(["FirstName", "FNAME", "first_name"]);
+            const mName = getFieldCleanVal(["MiddleName", "MNAME", "middle_name"]);
+            const lName = getFieldCleanVal(["LastName", "LNAME", "last_name"]);
 
             return {
-              registrationNumber: (item.RegistrationNumber || item.GRNO || item.registrationNumber || `REG-${Date.now()}-${index}`).toString(),
-              name: item.Name || `${item.FirstName || item.FNAME || ""} ${item.MiddleName || item.MNAME || ""} ${item.LastName || item.LNAME || ""}`.trim(),
+              registrationNumber: regNum || `REG-${Date.now()}-${index}`,
+              name: `${fName} ${mName} ${lName}`.trim() || item.Name || `Student ${index + 1}`,
               schoolId: parseInt(schMasterId || item.SchoolId || user.schoolId || "1"),
-              rollNumber: parseInt(item.RollNumber || item.ROLLNO || "0"),
-              GRNO: (item.GRNO || item.RegistrationNumber || item.registrationNumber || "").toString(),
-              GENDER: item.Gender || item.GENDER || "Male",
-              DOB: item.DOB || item.DateOfBirth,
-              MOBILE: (item.Mobile || item.MOBILE || item.contactNumber || "").toString(),
-              EMAIL: item.Email || item.EMAIL,
-              ADDRESS: item.Address || item.ADDRESS,
-              MOTHERNAME: item.MotherName || item.MOTHERNAME,
-              aadharcard: (item.AadharCard || item.aadharcard || "").toString(),
-              RFID: (item.RFID || item.CARDID || item.cardId || "").toString(),
+              rollNumber: parseInt(getFieldCleanVal(["RollNumber", "ROLLNO", "roll_number"]) || "0"),
+              GRNO: regNum,
+              GENDER: getFieldCleanVal(["Gender", "GENDER"]) || "Male",
+              DOB: getFieldCleanVal(["DOB", "DateOfBirth", "dob", "birth_date"]),
+              MOBILE: getFieldCleanVal(["Mobile", "MOBILE", "contact_number"]),
+              EMAIL: getFieldCleanVal(["Email", "EMAIL"]),
+              ADDRESS: getFieldCleanVal(["Address", "ADDRESS"]),
+              MOTHERNAME: getFieldCleanVal(["MotherName", "MOTHERNAME"]),
+              aadharcard: getFieldCleanVal(["AadharCard", "aadharcard", "aadhar_card"]),
+              RFID: getFieldCleanVal(["RFID", "CARDID", "card_id"]),
               SHIFTNAME: shiftName,
               
               StandardId: stdMasterId,
@@ -725,10 +752,10 @@ export default function Students({ user }: { user: UserType }) {
               CasteId: casteMasterId,
               CategoryId: categoryMasterId,
               
-              uniformid: item.UniformID || item.uniformid,
-              contact2: item.SecondaryContact || item.contact2,
-              sms: item.SecondarySMS || item.sms,
-              status: item.Status || "Active",
+              uniformid: getFieldCleanVal(["UniformID", "uniformid", "uniform_id"]),
+              contact2: getFieldCleanVal(["SecondaryMobile", "SecondaryContact", "SecondaryPhone", "contact2"]),
+              sms: getFieldCleanVal(["SecondarySMS", "sms"]),
+              status: getFieldCleanVal(["Status", "status"]) || "Active",
               CreatedBy: user.name || user.email,
               ModifiedBy: user.name || user.email
             };
