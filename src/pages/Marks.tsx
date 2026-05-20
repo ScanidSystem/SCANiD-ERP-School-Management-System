@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, parseSafeInt } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import ReportBuilder from "@/components/reports/ReportBuilder";
@@ -49,7 +49,8 @@ export default function Marks({ user }: { user: UserType }) {
       if (user.role === "superadmin") {
         try {
           const res = await apiService.getSchools();
-          setSchools(res.data);
+          const schoolData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+          setSchools(schoolData);
         } catch (error) {
           console.error("Failed to fetch schools", error);
         }
@@ -62,9 +63,11 @@ export default function Marks({ user }: { user: UserType }) {
     const fetchMarks = async () => {
       setLoading(true);
       try {
-        const schoolIdToUse = user.role === "superadmin" ? (selectedSchoolId ? parseInt(selectedSchoolId) : undefined) : (user.schoolId ? parseInt(user.schoolId) : undefined);
-        const res = await apiService.getMarks(schoolIdToUse);
-        setMarks(res.data);
+        const schoolIdToUse = user.role === "superadmin" ? parseSafeInt(selectedSchoolId) : parseSafeInt(user.schoolId);
+        const academicYearIdToUse = parseSafeInt(user.academicYearId);
+        const res = await apiService.getMarks(schoolIdToUse, academicYearIdToUse);
+        const marksData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        setMarks(marksData);
       } catch (error) {
         console.error("Marks error:", error);
       } finally {
@@ -72,7 +75,7 @@ export default function Marks({ user }: { user: UserType }) {
       }
     };
     fetchMarks();
-  }, [user.schoolId, user.role, selectedSchoolId]);
+  }, [user.schoolId, user.academicYearId, user.role, selectedSchoolId]);
 
   const requestSort = (key: string) => {
     let direction: "asc" | "desc" = "asc";
@@ -84,7 +87,7 @@ export default function Marks({ user }: { user: UserType }) {
 
   const filteredMarks = marks.filter(m => {
     const s = m.student || {};
-    const studentName = s.fullName || s.FullName || `${s.FNAME || ''} ${s.LNAME || ''}`.trim() || "";
+    const studentName = s.name || s.fullName || s.FullName || `${s.FNAME || ''} ${s.LNAME || ''}`.trim() || "";
     const regNo = s.registrationNumber || s.RegistrationNumber || s.GRNO || "";
     const rollNo = s.rollNumber?.toString() || s.RollNumber?.toString() || s.ROLLNO?.toString() || "";
     
@@ -101,8 +104,8 @@ export default function Marks({ user }: { user: UserType }) {
     let aValue, bValue;
     
     if (key === 'studentName') {
-      aValue = a.student?.fullName || a.student?.FullName || `${a.student?.FNAME || ''} ${a.student?.LNAME || ''}`.trim() || "";
-      bValue = b.student?.fullName || b.student?.FullName || `${b.student?.FNAME || ''} ${b.student?.LNAME || ''}`.trim() || "";
+      aValue = a.student?.name || a.student?.fullName || a.student?.FullName || `${a.student?.FNAME || ''} ${a.student?.LNAME || ''}`.trim() || "";
+      bValue = b.student?.name || b.student?.fullName || b.student?.FullName || `${b.student?.FNAME || ''} ${b.student?.LNAME || ''}`.trim() || "";
     } else if (key === 'performance') {
       aValue = a.obtMarks / a.totalMarks;
       bValue = b.obtMarks / b.totalMarks;
@@ -179,7 +182,7 @@ export default function Marks({ user }: { user: UserType }) {
                     </SelectTrigger>
                     <SelectContent className="rounded-[2rem] border-slate-100 shadow-3xl p-3 max-h-80">
                       <SelectItem value="" className="font-bold py-3 px-4 rounded-xl text-slate-400 italic">Select Academic Branch</SelectItem>
-                      {schools.map(s => (
+                      {Array.isArray(schools) && schools.map(s => (
                         <SelectItem key={s.id} value={s.id.toString()} className="font-black py-4 px-4 rounded-2xl focus:bg-indigo-50 focus:text-indigo-700 cursor-pointer">
                           <div className="flex flex-col gap-1">
                             <span className="text-sm uppercase tracking-tight">{s.name}</span>
@@ -260,11 +263,11 @@ export default function Marks({ user }: { user: UserType }) {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {sortedMarks.map((result) => (
+                        {Array.isArray(sortedMarks) && sortedMarks.map((result) => (
                           <TableRow key={result.id} className="group hover:bg-slate-50/50 transition-all border-b border-slate-50/80 h-20">
                             <TableCell className="pl-8">
                               <div className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors tracking-tight text-sm mb-1">
-                                {result.student?.fullName || result.student?.FullName || 
+                                {result.student?.name || result.student?.fullName || result.student?.FullName || 
                                  (result.student?.FNAME ? `${result.student.FNAME} ${result.student.LNAME || ''}`.trim() : "Student")}
                               </div>
                               <div className="font-mono text-[9px] font-black text-slate-400 bg-slate-100/50 px-2 py-0.5 rounded border border-slate-200/50 inline-block italic tracking-tighter uppercase">
@@ -412,7 +415,7 @@ export default function Marks({ user }: { user: UserType }) {
         </TabsContent>
 
         <TabsContent value="entry" className="focus-visible:outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <MarksEntry user={user} forcedSchoolId={user.role === "superadmin" ? (selectedSchoolId ? parseInt(selectedSchoolId) : undefined) : undefined} />
+          <MarksEntry user={user} forcedSchoolId={user.role === "superadmin" ? parseSafeInt(selectedSchoolId) : undefined} />
         </TabsContent>
       </Tabs>
     </div>
@@ -459,7 +462,7 @@ function MarksheetView({ student }: { student: any }) {
         <div className="space-y-1 col-span-2">
           <p className="text-[10px] uppercase font-bold text-slate-400">Student Name</p>
           <p className="font-extrabold text-xl text-slate-900">
-            {student.student?.fullName || student.student?.FullName || 
+            {student.student?.name || student.student?.fullName || student.student?.FullName || 
              (student.student?.FNAME ? `${student.student.FNAME} ${student.student.LNAME || ''}`.trim() : "")}
           </p>
         </div>

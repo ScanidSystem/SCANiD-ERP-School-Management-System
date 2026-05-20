@@ -59,6 +59,7 @@ namespace ScanID.Api.Models
         public string? Phone { get; set; }
         public int TotalStudents { get; set; }
         public string Status { get; set; } = "Active";
+        public string? ProfilePhotoPath { get; set; }
     }
 
     /// <summary>
@@ -69,12 +70,41 @@ namespace ScanID.Api.Models
         public int Id { get; set; }
         public string Username { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
-        public string? FullName { get; set; }
+        public string? Name { get; set; }
         public string? Email { get; set; }
-        public string Role { get; set; } = "student";
+        public string? Role { get; set; } = "student";
+        public int? RoleId { get; set; }
+        [ForeignKey("RoleId")]
+        public Role? RoleEntity { get; set; }
         public int? SchoolId { get; set; }
         [ForeignKey("SchoolId")]
         public School? School { get; set; }
+    }
+
+    /// <summary>
+    /// Represents a dynamic navigation menu item.
+    /// </summary>
+    public class NavigationItem
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string? Icon { get; set; }
+        public string? Path { get; set; }
+        public int? ParentId { get; set; }
+        public int SortOrder { get; set; }
+        public bool IsActive { get; set; } = true;
+        public ICollection<NavigationRole> NavigationRoles { get; set; } = new List<NavigationRole>();
+    }
+
+    /// <summary>
+    /// Junction table for role-based navigation access.
+    /// </summary>
+    public class NavigationRole
+    {
+        public int NavigationItemId { get; set; }
+        public NavigationItem? NavigationItem { get; set; }
+        public int RoleId { get; set; }
+        public Role? Role { get; set; }
     }
 
     /// <summary>
@@ -88,7 +118,7 @@ namespace ScanID.Api.Models
         public string RegistrationNumber { get; set; } = string.Empty;
         
         [Required]
-        public string FullName { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
         
         public int SchoolId { get; set; }
         public string Status { get; set; } = "Active";
@@ -100,41 +130,21 @@ namespace ScanID.Api.Models
         public string? MNAME { get; set; }
         public string? LNAME { get; set; }
         
-        [Required]
-        public string STD { get; set; } = string.Empty;
-        
-        [Required]
-        public string DIV { get; set; } = string.Empty;
-        
-        [Required]
-        public string ROLLNO { get; set; } = string.Empty;
-        
         public string? GRNO { get; set; }
         public string? GENDER { get; set; }
         public string? DOB { get; set; }
-        public string? BLOODGROUP { get; set; }
-        public string? CASTE { get; set; }
-        public string? RELIGION { get; set; }
-        public string? CATEGORY { get; set; }
         public string? ADDRESS { get; set; }
-        public string? CITY { get; set; }
         public string? PIN { get; set; }
-        public string? STATE { get; set; }
         public string? FATHERNAME { get; set; }
         public string? MOTHERNAME { get; set; }
         public string? MOBILE { get; set; }
         public string? EMAIL { get; set; }
-        public string? SHIFTNAME { get; set; }
         public string? DOA { get; set; }
         public string? ProfilePhotoPath { get; set; }
         public string? CARDID { get; set; }
         public string? VALIDFROM { get; set; }
         public string? VALIDTO { get; set; }
         public string? sms { get; set; }
-        public string? subcaste { get; set; }
-        public string? contact2 { get; set; }
-        public byte[]? photo { get; set; } // image type in SQL
-        public string? ispromoted { get; set; }
         public string? saralid { get; set; }
         public string? aadharcard { get; set; }
         public string? bankname { get; set; }
@@ -143,7 +153,6 @@ namespace ScanID.Api.Models
         public string? fingerid { get; set; }
         public string? freeshiptype { get; set; }
         public string? otp { get; set; }
-        public string? admissiontype { get; set; }
         public string? subjects { get; set; }
         public string? placeofbirth { get; set; }
         public string? birthtaluka { get; set; }
@@ -165,9 +174,6 @@ namespace ScanID.Api.Models
         public string? IQLD { get; set; }
         public string? schoolsection { get; set; }
         public string? leftstatus { get; set; }
-        public string? academicyear { get; set; }
-        public string? stdstudying { get; set; }
-        public string? house { get; set; }
         public string? feesinstallment { get; set; }
         public string? uniformid { get; set; }
         public string? stdstudyingInWords { get; set; }
@@ -180,6 +186,14 @@ namespace ScanID.Api.Models
         public int? StandardId { get; set; }
         public int? SectionId { get; set; }
         public int? AcademicYearId { get; set; }
+        public int? CategoryId { get; set; }
+        
+        [ForeignKey("AcademicYearId")]
+        public AcademicYear? AcademicYear { get; set; }
+
+        [ForeignKey("CategoryId")]
+        public Category? Category { get; set; }
+        
         public int? CasteId { get; set; }
         public int? SubCasteId { get; set; }
         public int? ReligionId { get; set; }
@@ -201,6 +215,30 @@ namespace ScanID.Api.Models
 
         [ForeignKey("ShiftId")]
         public Shift? Shift { get; set; }
+
+        [ForeignKey("CasteId")]
+        public Caste? Caste { get; set; }
+
+        [ForeignKey("SubCasteId")]
+        public SubCaste? SubCaste { get; set; }
+
+        [ForeignKey("ReligionId")]
+        public Religion? Religion { get; set; }
+
+        [ForeignKey("BloodGroupId")]
+        public BloodGroup? BloodGroup { get; set; }
+
+        [ForeignKey("HouseId")]
+        public House? House { get; set; }
+
+        [ForeignKey("AdmissionTypeId")]
+        public AdmissionType? AdmissionType { get; set; }
+
+        [ForeignKey("CityId")]
+        public City? City { get; set; }
+
+        [ForeignKey("StateId")]
+        public State? State { get; set; }
     }
 
 
@@ -268,6 +306,7 @@ namespace ScanID.Api.Models
         public string? Qualification { get; set; }
         public string? ContactNumber { get; set; }
         public string Status { get; set; } = "Active";
+        public string? ProfilePhotoPath { get; set; }
 
         [ForeignKey("UserId")]
         public User? User { get; set; }
@@ -288,6 +327,21 @@ namespace ScanID.Api.Models
         public string Content { get; set; } = string.Empty;
         public bool IsRead { get; set; }
         public string Type { get; set; } = "Alert";
+    }
+
+    /// <summary>
+    /// Represnets a system notification for a specific user or role.
+    /// </summary>
+    public class Notification : BaseEntity
+    {
+        public int Id { get; set; }
+        public int? UserId { get; set; }
+        public int? RoleId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public string Type { get; set; } = "info"; // info, success, warning, error
+        public bool IsRead { get; set; } = false;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 
     // --- Master Data Models ---

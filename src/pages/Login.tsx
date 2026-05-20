@@ -8,6 +8,7 @@ import { Role, User } from "@/types";
 import { GraduationCap, School, Calendar, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/lib/api";
+import { Logo } from "@/components/shared/Logo";
 import { 
   Select, 
   SelectContent, 
@@ -47,8 +48,12 @@ export default function Login({ onLogin }: LoginProps) {
         apiService.getSchools(),
         apiService.getAcademicYears()
       ]);
-      setSchools(schoolsRes.data || []);
-      setAcademicYears(yearsRes.data || []);
+      
+      const schoolData = schoolsRes.data && Array.isArray(schoolsRes.data) ? schoolsRes.data : (schoolsRes.data && Array.isArray(schoolsRes.data.data) ? schoolsRes.data.data : []);
+      const yearData = yearsRes.data && Array.isArray(yearsRes.data) ? yearsRes.data : (yearsRes.data && Array.isArray(yearsRes.data.data) ? yearsRes.data.data : []);
+      
+      setSchools(schoolData);
+      setAcademicYears(yearData);
       
       // We don't default to current year anymore as per user request "show Select by default"
       setSelectedYear("");
@@ -99,24 +104,34 @@ export default function Login({ onLogin }: LoginProps) {
       // Handle both { token, user } structure and flat user object
       const userData = response.data.user || response.data;
       
-      // Ensure name and role are present
+      // Map roles to numeric IDs if not provided by backend
+      const ROLE_MAP: Record<string, number> = {
+        "superadmin": 1,
+        "admin": 2,
+        "teacher": 3,
+        "student": 4,
+        "parent": 5
+      };
+
+      // Ensure name, role, and roleId are present
       if (!userData.name && userData.fullName) userData.name = userData.fullName;
       if (!userData.name) userData.name = username.split("@")[0] || "User";
       if (!userData.role) userData.role = role;
+      if (!userData.roleId) userData.roleId = ROLE_MAP[role as string] || 0;
 
       // PERSIST LOGIN SELECTIONS TO USER OBJECT
       // This ensures the Navbar and other components reflect the choices made during login
       userData.academicYearId = selectedYear;
-      const year = academicYears.find(y => y.id.toString() === selectedYear);
+      const year = (Array.isArray(academicYears) ? academicYears : []).find(y => y.id.toString() === selectedYear);
       if (year) userData.academicYearName = year.name;
 
       if (selectedSchool && selectedSchool !== "all") {
         userData.schoolId = selectedSchool;
-        userData.schoolName = schools.find(s => s.id.toString() === selectedSchool)?.name;
+        userData.schoolName = (Array.isArray(schools) ? schools : []).find(s => s.id.toString() === selectedSchool)?.name;
       } else if (selectedSchool === "all") {
         userData.schoolId = "all";
         userData.schoolName = "All Schools";
-      } else if (role !== "superadmin" && schools.length > 0) {
+      } else if (role !== "superadmin" && Array.isArray(schools) && schools.length > 0) {
         // For non-superadmin, they are locked to their primary school
         userData.schoolId = schools[0].id.toString();
         userData.schoolName = schools[0].name;
@@ -135,13 +150,23 @@ export default function Login({ onLogin }: LoginProps) {
       if (import.meta.env.DEV && (!err.response || err.response.status >= 500)) {
         console.warn("API Error/Offline - Using dev fallback");
         const isAll = selectedSchool === "all";
-        const school = schools.find(s => s.id.toString() === selectedSchool);
-        const year = academicYears.find(y => y.id.toString() === selectedYear);
+        const school = (Array.isArray(schools) ? schools : []).find(s => s.id.toString() === selectedSchool);
+        const year = (Array.isArray(academicYears) ? academicYears : []).find(y => y.id.toString() === selectedYear);
+        
+        const ROLE_MAP: Record<string, number> = {
+          "superadmin": 1,
+          "admin": 2,
+          "teacher": 3,
+          "student": 4,
+          "parent": 5
+        };
+
         const mockUser: User = {
           id: "demo-" + Math.random().toString(36).substr(2, 4),
           name: username.split("@")[0] || "Demo User",
           email: username.includes("@") ? username : `${username}@school.com`,
           role: role,
+          roleId: ROLE_MAP[role as string] || 0,
           schoolId: isAll ? undefined : selectedSchool,
           schoolName: isAll ? "All Schools" : school?.name,
           academicYearId: selectedYear,
@@ -188,12 +213,7 @@ export default function Login({ onLogin }: LoginProps) {
       <Card className="w-full max-w-md border-slate-800 bg-slate-900/50 backdrop-blur-xl relative z-10 shadow-2xl">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-full flex items-center justify-center p-2">
-            <img 
-              src="https://ais-dev-qbyadn55tzqynrpuxuan4r-416405542511.asia-southeast1.run.app/artifact/logo_scanid_logo.png" 
-              alt="SCANID Logo" 
-              className="h-auto w-full max-w-[200px]"
-              referrerPolicy="no-referrer"
-            />
+            <Logo size="lg" />
           </div>
           <div className="space-y-1">
             <CardTitle className="text-white text-xl font-bold tracking-tight">
@@ -338,8 +358,8 @@ export default function Login({ onLogin }: LoginProps) {
                       <SelectContent className="bg-slate-900 border-slate-800 text-white">
                         <SelectItem value="" className="text-xs italic text-slate-400">Select Current School</SelectItem>
                         <SelectItem value="all" className="text-xs font-bold text-blue-400">All Schools (System-wide)</SelectItem>
-                        {schools.map(s => (
-                          <SelectItem key={s.id} value={s.id.toString()} className="text-xs">{s.name}</SelectItem>
+                        {Array.isArray(schools) && schools.map(s => (
+                          <SelectItem key={s.id || Math.random()} value={s.id ? s.id.toString() : ""} className="text-xs">{s.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -350,7 +370,7 @@ export default function Login({ onLogin }: LoginProps) {
                       <School size={12} /> Current School
                     </Label>
                     <div className="h-9 flex items-center px-3 rounded-md bg-slate-800/30 border border-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-wider overflow-hidden truncate">
-                      {schools.length > 0 ? schools[0].name : "No Schools Configured"}
+                      {Array.isArray(schools) && schools.length > 0 ? schools[0].name : "No Schools Configured"}
                     </div>
                   </div>
                 )}
@@ -371,9 +391,9 @@ export default function Login({ onLogin }: LoginProps) {
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-slate-800 text-white">
                       <SelectItem value="" className="text-xs italic text-slate-400">Select Academic Year</SelectItem>
-                      {academicYears.map(y => (
-                        <SelectItem key={y.id} value={y.id.toString()} className="text-xs">{y.name}</SelectItem>
-                      ))}
+                        {Array.isArray(academicYears) && academicYears.map(y => (
+                          <SelectItem key={y.id || Math.random()} value={y.id ? y.id.toString() : ""} className="text-xs">{y.name}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>

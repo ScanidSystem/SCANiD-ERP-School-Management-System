@@ -36,10 +36,22 @@ namespace ScanID.Api.Controllers
                 return Unauthorized("Invalid username or password");
             }
 
+            // Helper to get RoleId from Role name string if not explicitly set
+            int roleId = user.RoleId ?? (user.Role?.ToLower() switch
+            {
+                "superadmin" => 1,
+                "admin" => 2,
+                "teacher" => 3,
+                "student" => 4,
+                "parent" => 5,
+                _ => 4 // Default to student
+            });
+
             return Ok(new {
                 id = user.Id.ToString(),
-                name = user.FullName,
-                role = user.Role,
+                name = user.Name,
+                role = user.Role ?? "student",
+                roleId = roleId,
                 schoolId = user.SchoolId?.ToString(),
                 schoolName = user.School?.Name
             });

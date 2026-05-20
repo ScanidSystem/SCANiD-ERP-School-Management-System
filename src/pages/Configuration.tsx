@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import * as LucideIcons from "lucide-react";
 import { 
   Database, 
   Layers, 
@@ -28,7 +29,8 @@ import {
   Award,
   Briefcase,
   UserRound,
-  Hammer
+  Hammer,
+  Camera
 } from "lucide-react";
 import { 
   Card, 
@@ -76,12 +78,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { apiService } from "@/lib/api";
 import { Navigate } from "react-router-dom";
 import { User } from "@/types";
 import { motion } from "motion/react";
-import { cn } from "@/lib/utils";
+import { cn, parseSafeInt, resolvePhotoUrl } from "@/lib/utils";
 import { SimpleTooltip } from "@/components/shared/SimpleTooltip";
 
 interface ConfigurationProps {
@@ -117,11 +120,12 @@ const MASTER_TYPES: Record<string, { label: string, icon: any, description: stri
   "exam-types": { label: "Exam Types", icon: Award, description: "Manage examination categories", apiPrefix: "ExamType" },
   "designations": { label: "Designations", icon: Briefcase, description: "Manage staff designations", apiPrefix: "Designation" },
   "occupations": { label: "Occupations", icon: Hammer, description: "Manage parent occupations", apiPrefix: "Occupation" },
+  "navigation": { label: "Navigation Master", icon: LayoutGrid, description: "Manage hierarchical sidebar menu", apiPrefix: "Navigation" },
 };
 
 export default function Configuration({ user, defaultTab = "schools" }: ConfigurationProps) {
-  // INTERNAL RBAC CHECK: Secondary layer of protection for superadmin-only page
-  if (user.role !== "superadmin") {
+  // INTERNAL RBAC CHECK: Secondary layer of protection for superadmin and admin roles
+  if (user.role !== "superadmin" && user.role !== "admin") {
     return <Navigate to="/" replace />;
   }
 
@@ -142,6 +146,8 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
   // Dialog states
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any | null>(null);
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
+  const [localPhotoPreview, setLocalPhotoPreview] = useState<string | null>(null);
   
   const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
   const inputRefs = useRef<Record<string, any>>({});
@@ -157,8 +163,65 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
     stateId: "",
     address: "",
     phone: "",
-    email: ""
+    email: "",
+    profilePhotoPath: ""
   });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingSchoolId, setUploadingSchoolId] = useState<number | null>(null);
+
+  const triggerPhotoUpload = (id: number) => {
+    setUploadingSchoolId(id);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (uploadingSchoolId !== null) {
+      // Direct list row interaction
+      const loadingToast = toast.loading("Uploading institutional logo...");
+      try {
+        const response = await apiService.uploadSchoolPhoto(uploadingSchoolId, file);
+        const _newPath = response.data.data?.path || response.data.path;
+        toast.dismiss(loadingToast);
+        toast.success("Institutional identity updated physically.");
+        fetchData(); // Refresh to see the new logo
+      } catch (error) {
+        toast.dismiss(loadingToast);
+        toast.error("Failed to update logo physically. Check server permissions.");
+        console.error(error);
+      } finally {
+        setUploadingSchoolId(null);
+      }
+    } else {
+      // Dialog interaction
+      if (!editingItem) {
+        // Adding a new school: keep in local state preview
+        setSelectedPhotoFile(file);
+        setLocalPhotoPreview(URL.createObjectURL(file));
+        toast.success("School branding photo selected. Click Create Master to save.");
+      } else {
+        // Editing an existing school in the dialog: upload immediately
+        const loadingToast = toast.loading("Uploading institutional logo...");
+        try {
+          const response = await apiService.uploadSchoolPhoto(editingItem.id, file);
+          const newPath = response.data.data?.path || response.data.path;
+          setFormData(prev => ({ ...prev, profilePhotoPath: newPath }));
+          toast.dismiss(loadingToast);
+          toast.success("Institutional photo updated successfully");
+          fetchData(); // Refresh to reflect in the grid
+        } catch (error) {
+          toast.dismiss(loadingToast);
+          toast.error("Failed to upload photo. Please try again.");
+          console.error(error);
+        }
+      }
+    }
+
+    if (e.target) e.target.value = "";
+  };
 
   /**
    * FETCH MASTER DATA
@@ -174,22 +237,39 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       if (activeTab === "role-assignment") {
         const usersRes = await apiService.getUsers();
         const rolesRes = await apiService.getRoles();
-        setMasterData(usersRes.data || []);
-        setDependencies(prev => ({ ...prev, roles: rolesRes.data || [] }));
+        const usersData = usersRes.data?.data || usersRes.data || [];
+        const rolesData = rolesRes.data?.data || rolesRes.data || [];
+        setMasterData(Array.isArray(usersData) ? usersData : []);
+        setDependencies(prev => ({ ...prev, roles: Array.isArray(rolesData) ? rolesData : [] }));
       } else {
         const getMethodName = `get${typeConfig.apiPrefix}s`;
         // @ts-ignore
         const response = await apiService[getMethodName]();
-        setMasterData(response.data || []);
+        // Handle potential { data: [...] } wrapper from interceptor or raw array
+        const extractedData = response.data?.data || response.data || [];
+        setMasterData(Array.isArray(extractedData) ? extractedData : []);
 
         // Fetch dependencies if needed
         if (activeTab === "sub-castes") {
           const castesRes = await apiService.getCastes();
-          setDependencies(prev => ({ ...prev, castes: castesRes.data || [] }));
+          const castesData = castesRes.data?.data || castesRes.data || [];
+          setDependencies(prev => ({ ...prev, castes: Array.isArray(castesData) ? castesData : [] }));
         }
         if (activeTab === "cities") {
           const statesRes = await apiService.getStates();
-          setDependencies(prev => ({ ...prev, states: statesRes.data || [] }));
+          const statesData = statesRes.data?.data || statesRes.data || [];
+          setDependencies(prev => ({ ...prev, states: Array.isArray(statesData) ? statesData : [] }));
+        }
+        if (activeTab === "navigation") {
+          const rolesRes = await apiService.getRoles();
+          const navsRes = await apiService.getNavigations();
+          const rolesData = rolesRes.data?.data || rolesRes.data || [];
+          const navsData = navsRes.data?.data || navsRes.data || [];
+          setDependencies(prev => ({ 
+            ...prev, 
+            roles: Array.isArray(rolesData) ? rolesData : [],
+            parentNavs: (Array.isArray(navsData) ? navsData : []).filter((n: any) => !n.parentId)
+          }));
         }
       }
     } catch (error) {
@@ -205,9 +285,24 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
     fetchData();
   }, [activeTab]);
 
+  useEffect(() => {
+    if (!isDialogOpen) {
+      setSelectedPhotoFile(null);
+      if (localPhotoPreview) {
+        URL.revokeObjectURL(localPhotoPreview);
+        setLocalPhotoPreview(null);
+      }
+    }
+  }, [isDialogOpen]);
+
   const handleOpenDialog = (item: any = null) => {
     setEditingItem(item);
     setFormErrors({});
+    setSelectedPhotoFile(null);
+    if (localPhotoPreview) {
+      URL.revokeObjectURL(localPhotoPreview);
+      setLocalPhotoPreview(null);
+    }
     setFormData({
       name: item?.name || item?.fullName || "",
       description: item?.description || "",
@@ -218,7 +313,14 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       stateId: item?.stateId?.toString() || "",
       address: item?.address || "",
       phone: item?.phone || "",
-      email: item?.email || ""
+      email: item?.email || "",
+      title: item?.title || "",
+      path: item?.path || "",
+      icon: item?.icon || "",
+      parentId: item?.parentId?.toString() || "",
+      sortOrder: item?.sortOrder || 0,
+      roles: item?.roles || ["superadmin"],
+      profilePhotoPath: item?.profilePhotoPath || item?.ProfilePhotoPath || ""
     });
     setIsDialogOpen(true);
   };
@@ -230,7 +332,13 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
    */
   const handleSave = async () => {
     const newErrors: Record<string, boolean> = {};
-    if (!formData.name.trim()) newErrors.name = true;
+    if (activeTab === "navigation") {
+      if (!formData.title?.trim()) newErrors.title = true;
+      // Path is only required for leaf nodes (items without children in common use, 
+      // but here we allow empty path for parent items which act as containers)
+    } else {
+      if (!formData.name?.trim()) newErrors.name = true;
+    }
     
     if (activeTab === "sub-castes" && !formData.casteId) newErrors.casteId = true;
     if (activeTab === "cities" && !formData.stateId) newErrors.stateId = true;
@@ -256,11 +364,24 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       const updateMethod = `update${prefix}`;
 
       // Prepare payload based on the active master type to avoid sending irrelevant data
-      const payload: any = {
-        name: formData.name,
-        description: formData.description,
+      let payload: any = {
         isActive: formData.isActive
       };
+
+      if (activeTab === "navigation") {
+        payload = {
+          ...payload,
+          title: formData.title,
+          path: formData.path,
+          icon: formData.icon,
+          parentId: formData.parentId ? parseSafeInt(formData.parentId) : null,
+          sortOrder: parseSafeInt(formData.sortOrder) || 0,
+          roles: formData.roles
+        };
+      } else {
+        payload.name = formData.name;
+        payload.description = formData.description;
+      }
 
       // Add type-specific fields with proper type conversion
       if (activeTab === "academic-years") {
@@ -268,13 +389,15 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       } else if (activeTab === "houses") {
         payload.color = formData.color;
       } else if (activeTab === "sub-castes") {
-        payload.casteId = parseInt(formData.casteId);
+        payload.casteId = parseSafeInt(formData.casteId);
       } else if (activeTab === "cities") {
-        payload.stateId = parseInt(formData.stateId);
+        payload.stateId = parseSafeInt(formData.stateId);
       } else if (activeTab === "schools") {
         payload.address = formData.address;
         payload.phone = formData.phone;
         payload.email = formData.email;
+        // Keep school branding path aligned to avoid clearing it during name/address updates
+        payload.profilePhotoPath = formData.profilePhotoPath;
       } else if (activeTab === "role-assignment") {
         // Map common 'name' field back to 'fullName' for User API
         payload.fullName = formData.name;
@@ -285,13 +408,24 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       }
 
       if (editingItem) {
+        payload.id = parseSafeInt(editingItem.id);
         // @ts-ignore
         await apiService[updateMethod](editingItem.id, payload);
         toast.success(`${typeConfig.label} updated successfully`);
       } else {
         // @ts-ignore
-        await apiService[createMethod](payload);
+        const response = await apiService[createMethod](payload);
         toast.success(`${typeConfig.label} created successfully`);
+
+        // Handle delayed photo upload for schools if selectedPhotoFile is present
+        const createdSchool = response.data.data || response.data;
+        if (activeTab === "schools" && selectedPhotoFile && createdSchool?.id) {
+          try {
+            await apiService.uploadSchoolPhoto(createdSchool.id, selectedPhotoFile);
+          } catch (uploadErr) {
+            console.error("Delayed school photo upload failed:", uploadErr);
+          }
+        }
       }
       
       setIsDialogOpen(false);
@@ -318,8 +452,8 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
   };
 
   const filteredData = masterData.filter(item => 
-    item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    (item.name || item.title || item.fullName)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.description || item.path)?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const activeConfig = MASTER_TYPES[activeTab];
@@ -358,6 +492,13 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       </div>
 
       <Card className="dashboard-card border-none overflow-hidden">
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          accept="image/*" 
+          onChange={handleFileChange} 
+        />
         <div className="w-full">
           <div className="px-6 sm:px-8 py-8 border-b border-slate-50 bg-white/50 backdrop-blur-sm flex flex-col xl:flex-row xl:items-center justify-between gap-6">
             <div>
@@ -409,7 +550,15 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                         <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Contact</TableHead>
                       </>
                     )}
-                    {activeTab !== "role-assignment" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Description</TableHead>}
+                    {activeTab === "navigation" && (
+                      <>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Path</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Parent</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Roles</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Order</TableHead>
+                      </>
+                    )}
+                    {activeTab !== "role-assignment" && activeTab !== "navigation" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Description</TableHead>}
                     <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Status</TableHead>
                     <TableHead className="w-20 pr-8 text-right text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Manage</TableHead>
                   </TableRow>
@@ -426,7 +575,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                         </TableCell>
                       </TableRow>
                     ))
-                  ) : filteredData.length === 0 ? (
+                  ) : (Array.isArray(filteredData) && filteredData.length === 0) ? (
                     <TableRow>
                       <TableCell colSpan={10} className="h-64 text-center">
                         <div className="flex flex-col items-center justify-center gap-3">
@@ -438,7 +587,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredData.map((item) => (
+                    Array.isArray(filteredData) && filteredData.map((item) => (
                       <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors border-slate-50/50 h-20 group">
                         <TableCell className="pl-8">
                            <span className="font-mono text-[11px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
@@ -446,7 +595,33 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                            </span>
                         </TableCell>
                         <TableCell className="font-black text-slate-900 text-sm tracking-tight truncate max-w-[200px]">
-                          {item.name || item.fullName}
+                          <div className="flex items-center gap-3">
+                            {activeTab === "schools" && (
+                              <div className="relative group shrink-0">
+                                <Avatar className="h-10 w-10 border-2 border-white shadow-sm ring-1 ring-slate-100 group-hover:ring-blue-400 group-hover:scale-105 transition-all">
+                                  <AvatarImage src={resolvePhotoUrl(item.profilePhotoPath || item.ProfilePhotoPath)} alt={item.name} className="object-cover" />
+                                  <AvatarFallback className="bg-slate-100 text-slate-400 text-[10px] font-black uppercase">
+                                    {(item.name || "S").split(' ').map((n: any) => n[0]).join('').substring(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <button 
+                                  onClick={() => triggerPhotoUpload(item.id)}
+                                  className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full shadow-md border border-slate-100 opacity-0 group-hover:opacity-100 transition-all hover:bg-blue-600 hover:text-white"
+                                >
+                                  <Camera size={8} />
+                                </button>
+                              </div>
+                            )}
+                            {activeTab === "navigation" && item.icon && (
+                              <span className="mr-2 inline-flex items-center">
+                                {(() => {
+                                  const IconComp = (LucideIcons as any)[item.icon];
+                                  return IconComp ? <IconComp size={16} className="text-blue-500" /> : null;
+                                })()}
+                              </span>
+                            )}
+                            <span className="truncate">{item.name || item.title || item.fullName}</span>
+                          </div>
                         </TableCell>
 
                         {activeTab === "role-assignment" && (
@@ -477,7 +652,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                                   </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
-                                  {dependencies.roles?.map((role: any) => (
+                                  {Array.isArray(dependencies.roles) && dependencies.roles.map((role: any) => (
                                     <SelectItem key={role.id} value={role.name.toLowerCase().replace(' ', '')} className="text-[10px] font-black py-2.5 rounded-xl uppercase tracking-widest">
                                       {role.name}
                                     </SelectItem>
@@ -541,7 +716,30 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                           </>
                         )}
 
-                        {activeTab !== "role-assignment" && (
+                        {activeTab === "navigation" && (
+                          <>
+                            <TableCell className="text-xs font-mono font-bold text-slate-500">{item.path}</TableCell>
+                            <TableCell className="text-xs font-bold text-slate-600">
+                              {item.parentId ? (
+                                <Badge variant="outline" className="text-[10px] font-black uppercase text-slate-400">
+                                  {masterData.find(m => m.id === parseSafeInt(item.parentId))?.title || "Parent Hidden"}
+                                </Badge>
+                              ) : <span className="text-slate-300">—</span>}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1 max-w-[150px]">
+                                {Array.isArray(item.roles) && item.roles.map((r: string) => (
+                                  <Badge key={r} className="bg-slate-100 text-slate-500 rounded-md text-[9px] font-black uppercase px-1.5 py-0.5">
+                                    {r}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-xs font-black text-slate-400">{item.sortOrder}</TableCell>
+                          </>
+                        )}
+
+                        {activeTab !== "role-assignment" && activeTab !== "navigation" && (
                           <TableCell className="text-xs font-bold text-slate-400 max-w-[200px] truncate leading-relaxed italic">
                             {item.description || "No metadata found"}
                           </TableCell>
@@ -568,6 +766,11 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                               <DropdownMenuItem onClick={() => handleOpenDialog(item)} className="rounded-xl py-3 px-4 font-black transition-all text-xs uppercase tracking-widest text-slate-600 focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
                                 <Edit3 size={14} className="mr-3" /> Update Record
                               </DropdownMenuItem>
+                              {activeTab === "schools" && (
+                                <DropdownMenuItem onClick={() => triggerPhotoUpload(item.id)} className="rounded-xl py-3 px-4 font-black transition-all text-xs uppercase tracking-widest text-slate-600 focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
+                                  <Camera size={14} className="mr-3" /> Update Logo
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem onClick={() => handleDelete(item.id)} className="rounded-xl py-3 px-4 font-black transition-all text-xs uppercase tracking-widest text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer">
                                 <Trash2 size={14} className="mr-3" /> {activeTab === "role-assignment" ? "Deactivate User" : "Purge Entry"}
                               </DropdownMenuItem>
@@ -586,7 +789,10 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
 
       {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="rounded-3xl border-none shadow-2xl max-w-md p-0 overflow-hidden">
+        <DialogContent className={cn(
+          "rounded-3xl border-none shadow-2xl p-0 overflow-hidden transition-all duration-300",
+          activeTab === "navigation" ? "max-w-2xl" : "max-w-md"
+        )}>
           <div className="bg-blue-600 p-8 text-white">
             <DialogTitle className="text-2xl font-black tracking-tight flex items-center gap-2">
               {editingItem ? <Edit3 size={24} /> : <Plus size={24} />}
@@ -599,24 +805,128 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
           
           <div className="p-8 space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="name" className={cn("text-xs font-black uppercase tracking-wider", formErrors.name ? "text-red-500" : "text-slate-400")}>
-                {activeTab === "schools" ? "School Name" : activeTab === "role-assignment" ? "Full Name" : "Name / Label"} {formErrors.name && "*"}
+              <Label htmlFor="name" className={cn("text-xs font-black uppercase tracking-wider", (formErrors.name || formErrors.title) ? "text-red-500" : "text-slate-400")}>
+                {activeTab === "schools" ? "School Name" : activeTab === "role-assignment" ? "Full Name" : activeTab === "navigation" ? "Navigation Title" : "Name / Label"} {(formErrors.name || formErrors.title) && "*"}
               </Label>
               <Input 
-                ref={el => inputRefs.current["name"] = el}
+                ref={el => { inputRefs.current[activeTab === "navigation" ? "title" : "name"] = el; }}
                 id="name" 
-                placeholder={`Enter ${activeTab === "schools" ? "school name" : activeTab === "role-assignment" ? "user's full name" : "name"}...`}
+                placeholder={`Enter ${activeTab === "schools" ? "school name" : activeTab === "role-assignment" ? "user's full name" : activeTab === "navigation" ? "menu title" : "name"}...`}
                 className={cn(
                   "h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold",
-                  formErrors.name && "border-red-500 ring-2 ring-red-500/10"
+                  (formErrors.name || formErrors.title) && "border-red-500 ring-2 ring-red-500/10"
                 )}
-                value={formData.name}
+                value={activeTab === "navigation" ? formData.title : formData.name}
                 onChange={(e) => {
-                  setFormData({...formData, name: e.target.value});
-                  if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                  if (activeTab === "navigation") {
+                    setFormData({...formData, title: e.target.value});
+                    if (formErrors.title) setFormErrors(prev => ({ ...prev, title: false }));
+                  } else {
+                    setFormData({...formData, name: e.target.value});
+                    if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                  }
                 }}
               />
             </div>
+
+            {activeTab === "navigation" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="path" className={cn("text-xs font-black uppercase tracking-wider", formErrors.path ? "text-red-500" : "text-slate-400")}>Navigation Path {formErrors.path && "*"}</Label>
+                  <Input 
+                    id="path" 
+                    placeholder="e.g. /students or /configuration/schools"
+                    className={cn(
+                      "h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold",
+                      formErrors.path && "border-red-500 ring-2 ring-red-500/10"
+                    )}
+                    value={formData.path}
+                    onChange={(e) => {
+                      setFormData({...formData, path: e.target.value});
+                      if (formErrors.path) setFormErrors(prev => ({ ...prev, path: false }));
+                    }}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-black uppercase tracking-wider text-slate-400">Lucide Icon</Label>
+                    <Select 
+                      value={formData.icon} 
+                      onValueChange={(v) => setFormData({...formData, icon: v})}
+                    >
+                      <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white font-bold px-4">
+                        <SelectValue placeholder="No Icon" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-200 shadow-xl max-h-60">
+                        <SelectItem value="" className="font-semibold py-2">None</SelectItem>
+                        {["LayoutDashboard", "Users", "GraduationCap", "CalendarCheck", "CreditCard", "MessageSquare", "UserCheck", "Terminal", "Database", "School", "Bell", "Settings", "Award", "Briefcase", "BookOpen", "Hammer"].map(icon => (
+                          <SelectItem key={icon} value={icon} className="font-semibold py-2 flex items-center gap-2">
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                const IconComp = (LucideIcons as any)[icon];
+                                return IconComp ? <IconComp size={14} className="text-slate-400" /> : null;
+                              })()}
+                              {icon}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-black uppercase tracking-wider text-slate-400">Parent Menu</Label>
+                    <Select 
+                      value={formData.parentId} 
+                      onValueChange={(v) => setFormData({...formData, parentId: v})}
+                    >
+                      <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white font-bold px-4">
+                        <SelectValue placeholder="Root" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-200 shadow-xl max-h-60">
+                        <SelectItem value="" className="font-semibold py-2">None (Root)</SelectItem>
+                        {Array.isArray(dependencies.parentNavs) && dependencies.parentNavs.filter((n: any) => n.id !== editingItem?.id).map(n => (
+                          <SelectItem key={n.id} value={n.id.toString()} className="font-semibold py-2">
+                            {n.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sortOrder" className="text-xs font-black uppercase tracking-wider text-slate-400">Sort Order</Label>
+                  <Input 
+                    id="sortOrder" 
+                    type="number"
+                    className="h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
+                    value={formData.sortOrder}
+                    onChange={(e) => setFormData({...formData, sortOrder: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-black uppercase tracking-wider text-slate-400">Visible for Roles</Label>
+                  <div className="grid grid-cols-2 gap-2 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    {["superadmin", "admin", "teacher", "parent", "student"].map(role => (
+                      <div key={role} className="flex items-center gap-2">
+                        <input 
+                          type="checkbox" 
+                          id={`role-${role}`}
+                          checked={formData.roles?.includes(role)}
+                          onChange={(e) => {
+                            const newRoles = e.target.checked 
+                              ? [...(formData.roles || []), role]
+                              : (formData.roles || []).filter((r: string) => r !== role);
+                            setFormData({...formData, roles: newRoles});
+                          }}
+                          className="w-4 h-4 rounded border-slate-300 text-blue-600"
+                        />
+                        <label htmlFor={`role-${role}`} className="text-xs font-bold text-slate-600 capitalize">{role}</label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
 
             {(activeTab === "schools" || activeTab === "role-assignment") && (
               <div className="space-y-2">
@@ -633,6 +943,42 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
 
             {activeTab === "schools" && (
               <>
+                <div className="flex flex-col items-center gap-2 pb-4 border-b border-slate-50">
+                  <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">School Logo / Branding</Label>
+                  <div 
+                    className="relative group cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-white shadow-md ring-1 ring-slate-100 bg-slate-50 flex items-center justify-center transition-all group-hover:scale-[1.03]">
+                      {(localPhotoPreview || formData.profilePhotoPath) ? (
+                        <img 
+                          src={localPhotoPreview || resolvePhotoUrl(formData.profilePhotoPath)} 
+                          alt="Logo Preview" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.name}`;
+                          }}
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center gap-1 text-slate-300">
+                          <School size={24} className="opacity-40" />
+                          <span className="text-[9px] font-black tracking-wider uppercase text-slate-400">NO LOGO</span>
+                        </div>
+                      )}
+
+                      <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1 backdrop-blur-[1px]">
+                        <Camera size={16} />
+                        <span className="text-[8px] font-black uppercase tracking-widest">Upload</span>
+                      </div>
+                    </div>
+                    
+                    {(localPhotoPreview || formData.profilePhotoPath) && (
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center shadow">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="address" className={cn("text-xs font-black uppercase tracking-wider", formErrors.address ? "text-red-500" : "text-slate-400")}>Institutional Address {formErrors.address && "*"}</Label>
                   <Input 
@@ -707,7 +1053,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                   }}
                 >
                   <SelectTrigger 
-                    ref={el => inputRefs.current["casteId"] = el}
+                    ref={el => { inputRefs.current["casteId"] = el; }}
                     className={cn(
                       "h-12 rounded-xl border-slate-200 bg-white font-bold px-4",
                       formErrors.casteId && "border-red-500 ring-2 ring-red-500/10"
@@ -720,7 +1066,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-200 shadow-xl">
                     <SelectItem value="" className="font-semibold py-2 text-slate-400 italic">Select Parent Caste</SelectItem>
-                    {dependencies.castes?.map(c => (
+                    {Array.isArray(dependencies.castes) && dependencies.castes.map(c => (
                       <SelectItem key={c.id} value={c.id.toString()} className="font-semibold py-2">
                         {c.name}
                       </SelectItem>
@@ -741,7 +1087,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                   }}
                 >
                   <SelectTrigger 
-                    ref={el => inputRefs.current["stateId"] = el}
+                    ref={el => { inputRefs.current["stateId"] = el; }}
                     className={cn(
                       "h-12 rounded-xl border-slate-200 bg-white font-bold px-4",
                       formErrors.stateId && "border-red-500 ring-2 ring-red-500/10"
@@ -754,7 +1100,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-200 shadow-xl">
                     <SelectItem value="" className="font-semibold py-2 text-slate-400 italic">Select State Name</SelectItem>
-                    {dependencies.states?.map(s => (
+                    {Array.isArray(dependencies.states) && dependencies.states.map(s => (
                       <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2">
                         {s.name}
                       </SelectItem>

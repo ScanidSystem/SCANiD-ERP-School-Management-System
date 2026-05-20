@@ -5,7 +5,8 @@ import {
   Plus, 
   Search, 
   MoreHorizontal, 
-  Edit, 
+  Edit,
+  Edit2, 
   Trash2, 
   Mail, 
   Phone, 
@@ -17,8 +18,14 @@ import {
   Filter,
   UserPlus,
   Users,
+  UserCircle,
+  Camera,
   ChevronUp,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Download,
   Loader2
 } from "lucide-react";
@@ -62,12 +69,13 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { cn, parseSafeInt, resolvePhotoUrl } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface Teacher {
   id: string;
-  fullName: string;
+  userId?: string;
+  name: string;
   email: string;
   phone: string;
   qualification: string;
@@ -78,6 +86,8 @@ interface Teacher {
   status: "Active" | "On Leave" | "Resigned";
   joiningDate?: string;
   employeeId?: string;
+  photo?: string;
+  schoolId?: string;
 }
 
 export default function Teachers({ user }: { user: any }) {
@@ -91,7 +101,16 @@ export default function Teachers({ user }: { user: any }) {
   const [deleteInfo, setDeleteInfo] = useState<{ id: string; name: string } | null>(null);
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [sortConfig, setSortConfig] = useState<{ key: keyof Teacher; direction: "asc" | "desc" } | null>(null);
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [uploadingTeacherId, setUploadingTeacherId] = useState<string | null>(null);
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
+  const [localPhotoPreview, setLocalPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterSubject, setFilterSubject] = useState<string>("all");
   const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
@@ -115,7 +134,8 @@ export default function Teachers({ user }: { user: any }) {
   const fetchSchools = async () => {
     try {
       const res = await apiService.getSchools();
-      setSchools(res.data);
+      const schoolData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+      setSchools(schoolData);
     } catch (error) {
       console.error("Failed to fetch schools", error);
     }
@@ -124,57 +144,154 @@ export default function Teachers({ user }: { user: any }) {
   const fetchTeachers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiService.getTeachers(user?.schoolId ? parseInt(user.schoolId) : undefined);
-      setTeachers(res.data.map((t: any) => ({
-        id: t.id.toString(),
-        fullName: t.user?.fullName || "Unnamed",
-        email: t.user?.email || "N/A",
-        phone: t.phone || "N/A",
-        qualification: t.qualification || "N/A",
-        experience: "5+ Years",
-        subject: t.department || "General",
-        standard: "Mixed",
-        section: "Mixed",
-        status: t.status || "Active",
-        employeeId: t.employeeId
-      })));
+      const res = await apiService.getTeachers(
+        parseSafeInt(user?.schoolId),
+        parseSafeInt(user?.academicYearId),
+        {
+          search: searchQuery,
+          sortBy,
+          sortOrder,
+          page,
+          pageSize,
+          // @ts-ignore
+          status: filterStatus === "all" ? undefined : filterStatus,
+          subject: filterSubject === "all" ? undefined : filterSubject
+        }
+      );
+      
+      const resData = res.data;
+      const rawTeachersList = Array.isArray(resData) 
+        ? resData 
+        : (resData && Array.isArray(resData.data) ? resData.data : []);
+      
+      const formatted = rawTeachersList.map((t: any) => {
+        const getVal = (prop: string, fallback?: any) => {
+          if (!t) return fallback;
+          const userObj = t.user || {};
+          // Search in both teacher object and nested user object
+          const tKeys = Object.keys(t);
+          const uKeys = Object.keys(userObj);
+          
+          const tMatch = tKeys.find(k => k.toLowerCase() === prop.toLowerCase());
+          if (tMatch) return t[tMatch];
+          
+          const uMatch = uKeys.find(k => k.toLowerCase() === prop.toLowerCase());
+          if (uMatch) return userObj[uMatch];
+          
+          return fallback;
+        };
+
+        return {
+          id: t.id?.toString() || "",
+          userId: t.userId?.toString() || t.user?.id?.toString() || "",
+          name: getVal("name") || getVal("fullName") || "Unnamed Teacher",
+          email: getVal("email") || "N/A",
+          phone: getVal("contactNumber") || getVal("phone") || "N/A",
+          qualification: getVal("qualification") || "N/A",
+          experience: getVal("experience") || "N/A",
+          subject: getVal("subject") || getVal("department") || "N/A",
+          standard: getVal("standard") || getVal("standardId")?.toString() || "N/A",
+          section: getVal("section") || getVal("sectionId")?.toString() || "N/A",
+          status: getVal("status") || "Active",
+          employeeId: getVal("employeeId") || "N/A",
+          photo: getVal("photo") || getVal("profilePhotoPath") || getVal("ProfilePhotoPath") || "",
+          schoolId: getVal("schoolId") || t.schoolId?.toString() || ""
+        };
+      });
+
+      const isServerPaged = resData && !!resData.pagination;
+      
+      if (!isServerPaged) {
+        // Robust client-side search, status and subject filters, sorting, and pagination
+        let filtered = [...formatted];
+        
+        // Search Filter
+        const searchLower = searchQuery.trim().toLowerCase();
+        if (searchLower) {
+          filtered = filtered.filter(item => 
+            item.name.toLowerCase().includes(searchLower) ||
+            item.email.toLowerCase().includes(searchLower) ||
+            item.phone.toLowerCase().includes(searchLower) ||
+            item.employeeId.toLowerCase().includes(searchLower) ||
+            item.qualification.toLowerCase().includes(searchLower) ||
+            item.subject.toLowerCase().includes(searchLower)
+          );
+        }
+        
+        // Status Filter
+        if (filterStatus !== "all") {
+          filtered = filtered.filter(item => item.status === filterStatus);
+        }
+        
+        // Subject Filter
+        if (filterSubject !== "all") {
+          filtered = filtered.filter(item => item.subject === filterSubject);
+        }
+        
+        // Sorting
+        if (sortBy) {
+          filtered.sort((a: any, b: any) => {
+            const valA = a[sortBy] || "";
+            const valB = b[sortBy] || "";
+            
+            if (valA === valB) return 0;
+            let comparison = 0;
+            if (typeof valA === "string" && typeof valB === "string") {
+              comparison = valA.localeCompare(valB);
+            } else {
+              comparison = valA < valB ? -1 : 1;
+            }
+            return sortOrder === "desc" ? comparison * -1 : comparison;
+          });
+        }
+        
+        // Pagination
+        const total = filtered.length;
+        setTotalCount(total);
+        setTotalPages(Math.ceil(total / pageSize));
+        
+        const startIndex = (page - 1) * pageSize;
+        setTeachers(filtered.slice(startIndex, startIndex + pageSize));
+      } else {
+        // Server paved the way
+        setTotalCount(resData.pagination.totalCount);
+        setTotalPages(resData.pagination.totalPages);
+        setTeachers(formatted);
+      }
     } catch (error) {
       toast.error("Could not connect to database");
     } finally {
       setLoading(false);
     }
-  }, [user?.schoolId]);
+  }, [user?.schoolId, user?.academicYearId, searchQuery, sortBy, sortOrder, page, pageSize, filterStatus, filterSubject]);
 
   useEffect(() => {
     fetchTeachers();
   }, [fetchTeachers]);
 
-  const handleSort = (key: keyof Teacher) => {
-    let direction: "asc" | "desc" = "asc";
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
+  useEffect(() => {
+    if (isAddDialogOpen) {
+      fetchSchools();
+    } else {
+      setSelectedPhotoFile(null);
+      if (localPhotoPreview) {
+        URL.revokeObjectURL(localPhotoPreview);
+        setLocalPhotoPreview(null);
+      }
     }
-    setSortConfig({ key, direction });
+  }, [isAddDialogOpen]);
+
+  const handleSort = (key: string) => {
+    if (sortBy === key) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(key);
+      setSortOrder("asc");
+    }
+    setPage(1);
   };
 
-  const filteredTeachers = teachers
-    .filter(t => {
-      const matchesSearch = t.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          t.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          t.subject.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = filterStatus === "all" || t.status === filterStatus;
-      const matchesSubject = filterSubject === "all" || t.subject === filterSubject;
-      return matchesSearch && matchesStatus && matchesSubject;
-    })
-    .sort((a, b) => {
-      if (!sortConfig) return 0;
-      const { key, direction } = sortConfig;
-      const valA = (a as any)[key] || "";
-      const valB = (b as any)[key] || "";
-      if (valA < valB) return direction === "asc" ? -1 : 1;
-      if (valA > valB) return direction === "asc" ? 1 : -1;
-      return 0;
-    });
+  const filteredTeachers = teachers;
 
   const resetForm = () => {
     setFormData({
@@ -189,7 +306,8 @@ export default function Teachers({ user }: { user: any }) {
       standard: "10th",
       section: "A",
       status: "Active",
-      schoolId: user.schoolId || ""
+      schoolId: user.schoolId || "",
+      photo: ""
     });
     setSelectedTeacher(null);
     setIsEditing(false);
@@ -230,20 +348,23 @@ export default function Teachers({ user }: { user: any }) {
     }
 
     try {
-      const payload = {
-        schoolId: parseInt(formData.schoolId),
+      const payload: any = {
+        schoolId: parseSafeInt(formData.schoolId) || 1,
         employeeId: isEditing ? selectedTeacher?.employeeId : `EMP-${Date.now()}`,
         designation: "Faculty",
         department: formData.subject,
         qualification: formData.qualification,
         status: formData.status,
+        contactNumber: formData.phone,
+        profilePhotoPath: formData.photo || "",
+        ProfilePhotoPath: formData.photo || "",
         user: {
            username: formData.email.split('@')[0] + Date.now(),
-           fullName: `${formData.firstName} ${formData.lastName}`.trim(),
+           name: `${formData.firstName} ${formData.lastName}`.trim(),
            passwordHash: "temp123",
            email: formData.email,
            role: "teacher",
-           schoolId: parseInt(formData.schoolId)
+           schoolId: parseSafeInt(formData.schoolId) || 1
         },
         // Audit fields: Ensure CreatedBy and ModifiedBy are captured for backend audit logging
         // CreatedBy is only set for new records, ModifiedBy is updated for every modification
@@ -252,10 +373,25 @@ export default function Teachers({ user }: { user: any }) {
       };
 
       if (isEditing && selectedTeacher) {
-        await apiService.updateTeacher(parseInt(selectedTeacher.id), payload as any);
+        payload.id = parseSafeInt(selectedTeacher.id) || 0;
+        if (payload.user && selectedTeacher.userId) {
+          payload.user.id = parseSafeInt(selectedTeacher.userId) || 0;
+        }
+      }
+
+      if (isEditing && selectedTeacher) {
+        await apiService.updateTeacher(parseSafeInt(selectedTeacher.id) || 0, payload as any);
         toast.success("Teacher profile updated successfully");
       } else {
-        await apiService.createTeacher(payload as any);
+        const response = await apiService.createTeacher(payload as any);
+        const newTeacher = response.data.data || response.data;
+        if (selectedPhotoFile && newTeacher?.id) {
+          try {
+            await apiService.uploadTeacherPhoto(Number(newTeacher.id), selectedPhotoFile);
+          } catch (uploadErr) {
+            console.error("Delayed teacher photo upload failed:", uploadErr);
+          }
+        }
         toast.success("Teacher profile saved to database");
       }
       
@@ -276,7 +412,7 @@ export default function Teachers({ user }: { user: any }) {
     if (!deleteInfo) return;
     setLoading(true);
     try {
-      await apiService.deleteTeacher(parseInt(deleteInfo.id));
+      await apiService.deleteTeacher(parseSafeInt(deleteInfo.id) || 0);
       setTeachers(prev => prev.filter(t => t.id !== deleteInfo.id));
       toast.success(`${deleteInfo.name} removed successfully`);
       setIsDeleteDialogOpen(false);
@@ -288,8 +424,61 @@ export default function Teachers({ user }: { user: any }) {
     }
   };
 
+  const triggerPhotoUpload = (id: string | "new") => {
+    setUploadingTeacherId(id);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (uploadingTeacherId && e.target.files?.[0]) {
+      const file = e.target.files[0];
+      
+      if (uploadingTeacherId === "new") {
+        setSelectedPhotoFile(file);
+        setLocalPhotoPreview(URL.createObjectURL(file));
+        toast.success("Profile photo selected. It will be uploaded on registration.");
+        setUploadingTeacherId(null);
+        e.target.value = '';
+        return;
+      }
+
+      const teacherId = uploadingTeacherId;
+      const loadingToast = toast.loading("Uploading identity image...");
+      try {
+        const response = await apiService.uploadTeacherPhoto(Number(teacherId), file);
+        const newPath = response.data.data?.path || response.data.path;
+        
+        // Update list and the selected teacher's image binding with all key variants
+        setTeachers(prev => prev.map(t => 
+          t.id.toString() === teacherId.toString() ? { ...t, photo: newPath, profilePhotoPath: newPath, ProfilePhotoPath: newPath } : t
+        ));
+        setFormData(prev => ({ ...prev, photo: newPath }));
+        if (selectedTeacher && selectedTeacher.id.toString() === teacherId.toString()) {
+          setSelectedTeacher(prev => prev ? { ...prev, photo: newPath } : null);
+        }
+        
+        toast.dismiss(loadingToast);
+        toast.success("Profile photo updated successfully");
+      } catch (error) {
+        toast.dismiss(loadingToast);
+        console.error("Upload failed:", error);
+        toast.error("Failed to upload photo. Please try again.");
+      } finally {
+        setUploadingTeacherId(null);
+      }
+    }
+    e.target.value = '';
+  };
+
   return (
     <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-500">
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        className="hidden" 
+        accept="image/*"
+      />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
            <div className="bg-blue-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:-rotate-3">
@@ -357,7 +546,7 @@ export default function Teachers({ user }: { user: any }) {
                               disabled={user.role !== "superadmin" && !!user.schoolId}
                             >
                               <SelectTrigger 
-                                ref={el => inputRefs.current["schoolId"] = el}
+                                ref={el => { inputRefs.current["schoolId"] = el; }}
                                 className={cn(
                                   "h-12 border-slate-100 bg-slate-50/50 font-black text-slate-800 rounded-2xl px-5 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm",
                                   formErrors.schoolId && "border-red-500 ring-2 ring-red-500/10",
@@ -373,7 +562,7 @@ export default function Teachers({ user }: { user: any }) {
                                 <SelectItem value="" className="font-bold py-3 px-4 rounded-xl focus:bg-slate-50 text-slate-400 italic">
                                   Select Campus
                                 </SelectItem>
-                                {schools.length > 0 ? (
+                                {Array.isArray(schools) && schools.length > 0 ? (
                                   schools.map(s => (
                                     <SelectItem key={s.id} value={s.id.toString()} className="font-black py-4 px-4 rounded-2xl focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
                                       <div className="flex flex-col gap-1">
@@ -391,44 +580,92 @@ export default function Teachers({ user }: { user: any }) {
                               </SelectContent>
                             </Select>
                           </div>
-                        </div>
+                        </div>                        <div className="flex flex-col md:flex-row gap-8 mt-8">
+                          {/* Left: Identity Image */}
+                          <div className="flex flex-col items-center gap-4">
+                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Faculty Identity Photo</Label>
+                            <div 
+                              className="relative group cursor-pointer"
+                              onClick={() => triggerPhotoUpload(isEditing ? selectedTeacher?.id!.toString() : "new")}
+                            >
+                              <div className="w-44 h-44 rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-100 bg-slate-50 flex items-center justify-center transition-all group-hover:shadow-blue-200/50 group-hover:scale-[1.02]">
+                                 {(localPhotoPreview || formData.photo) ? (
+                                   <img 
+                                     src={localPhotoPreview || resolvePhotoUrl(formData.photo)} 
+                                     alt="Faculty" 
+                                     className="w-full h-full object-cover"
+                                     onError={(e) => {
+                                       e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.firstName}`;
+                                     }}
+                                   />
+                                 ) : (
+                                   <div className="flex flex-col items-center gap-3 text-slate-300">
+                                     <div className="p-4 bg-slate-100 rounded-2xl">
+                                        <UserCircle size={36} className="opacity-20" />
+                                     </div>
+                                     <span className="text-[10px] font-black tracking-widest">NO IMAGE</span>
+                                   </div>
+                                 )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                          <div className="space-y-2">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.firstName ? "text-red-500" : "text-slate-400")}>First Name {formErrors.firstName && "*"}</Label>
-                            <Input 
-                              ref={el => inputRefs.current["firstName"] = el}
-                              value={formData.firstName} 
-                              onChange={e => {
-                                setFormData({...formData, firstName: e.target.value});
-                                if (formErrors.firstName) setFormErrors(prev => ({ ...prev, firstName: false }));
-                              }} 
-                              placeholder="Robert" 
-                              className={cn(
-                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300",
-                                formErrors.firstName && "border-red-500 ring-2 ring-red-500/10"
+                                 <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
+                                    <div className="p-2 bg-white/20 rounded-full">
+                                      <Camera size={24} />
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Update Photo</span>
+                                 </div>
+                              </div>
+                              
+                              {(localPhotoPreview || formData.photo) && (
+                                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
+                                   <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
+                                </div>
                               )}
-                            />
+                            </div>
+                            <p className="text-[10px] text-slate-400 font-bold max-w-[150px] text-center leading-relaxed">
+                              Click frame to select or update professional photograph.
+                            </p>
                           </div>
-                          <div className="space-y-2">
-                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Middle Name</Label>
-                            <Input value={formData.middleName} onChange={e => setFormData({...formData, middleName: e.target.value})} placeholder="Optional" className="h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.lastName ? "text-red-500" : "text-slate-400")}>Last Name {formErrors.lastName && "*"}</Label>
-                            <Input 
-                              ref={el => inputRefs.current["lastName"] = el}
-                              value={formData.lastName} 
-                              onChange={e => {
-                                setFormData({...formData, lastName: e.target.value});
-                                if (formErrors.lastName) setFormErrors(prev => ({ ...prev, lastName: false }));
-                              }} 
-                              placeholder="Smith" 
-                              className={cn(
-                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300",
-                                formErrors.lastName && "border-red-500 ring-2 ring-red-500/10"
-                              )}
-                            />
+
+                          {/* Right: Primary Bio */}
+                          <div className="flex-1 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="space-y-2">
+                                <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.firstName ? "text-red-500" : "text-slate-400")}>First Name {formErrors.firstName && "*"}</Label>
+                                <Input 
+                                  ref={el => { inputRefs.current["firstName"] = el; }}
+                                  value={formData.firstName} 
+                                  onChange={e => {
+                                    setFormData({...formData, firstName: e.target.value});
+                                    if (formErrors.firstName) setFormErrors(prev => ({ ...prev, firstName: false }));
+                                  }} 
+                                  placeholder="Robert" 
+                                  className={cn(
+                                    "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300",
+                                    formErrors.firstName && "border-red-500 ring-2 ring-red-500/10"
+                                  )}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Middle Name</Label>
+                                <Input value={formData.middleName} onChange={e => setFormData({...formData, middleName: e.target.value})} placeholder="Optional" className="h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300" />
+                              </div>
+                              <div className="md:col-span-2 space-y-2">
+                                <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.lastName ? "text-red-500" : "text-slate-400")}>Last Name {formErrors.lastName && "*"}</Label>
+                                <Input 
+                                  ref={el => { inputRefs.current["lastName"] = el; }}
+                                  value={formData.lastName} 
+                                  onChange={e => {
+                                    setFormData({...formData, lastName: e.target.value});
+                                    if (formErrors.lastName) setFormErrors(prev => ({ ...prev, lastName: false }));
+                                  }} 
+                                  placeholder="Smith" 
+                                  className={cn(
+                                    "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300",
+                                    formErrors.lastName && "border-red-500 ring-2 ring-red-500/10"
+                                  )}
+                                />
+                              </div>
+                            </div>
                           </div>
                         </div>
                     </section>
@@ -443,7 +680,7 @@ export default function Teachers({ user }: { user: any }) {
                           <div className="space-y-2">
                             <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.email ? "text-red-500" : "text-slate-400")}>Email Protocol {formErrors.email && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["email"] = el}
+                              ref={el => { inputRefs.current["email"] = el; }}
                               type="email" 
                               value={formData.email} 
                               onChange={e => {
@@ -460,7 +697,7 @@ export default function Teachers({ user }: { user: any }) {
                           <div className="space-y-2">
                             <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.phone ? "text-red-500" : "text-slate-400")}>Direct Line {formErrors.phone && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["phone"] = el}
+                              ref={el => { inputRefs.current["phone"] = el; }}
                               value={formData.phone} 
                               maxLength={10}
                               onChange={e => {
@@ -487,7 +724,7 @@ export default function Teachers({ user }: { user: any }) {
                           <div className="space-y-2">
                             <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.qualification ? "text-red-500" : "text-slate-400")}>Education Deck {formErrors.qualification && "*"}</Label>
                             <Input 
-                              ref={el => inputRefs.current["qualification"] = el}
+                              ref={el => { inputRefs.current["qualification"] = el; }}
                               value={formData.qualification} 
                               onChange={e => {
                                 setFormData({...formData, qualification: e.target.value});
@@ -517,7 +754,7 @@ export default function Teachers({ user }: { user: any }) {
                         <div className="space-y-2">
                           <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.subject ? "text-red-500" : "text-slate-400")}>Primary Domain {formErrors.subject && "*"}</Label>
                           <Input 
-                            ref={el => inputRefs.current["subject"] = el}
+                            ref={el => { inputRefs.current["subject"] = el; }}
                             value={formData.subject} 
                             onChange={e => {
                               setFormData({...formData, subject: e.target.value});
@@ -587,7 +824,7 @@ export default function Teachers({ user }: { user: any }) {
                   <Download size={16} className="mr-2" /> Export
                 </Button>
                 <div className="h-6 w-px bg-slate-100 mx-2" />
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Total Records: {filteredTeachers.length}</p>
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Total Records: {Array.isArray(filteredTeachers) ? filteredTeachers.length : 0}</p>
             </div>
           </div>
         </CardHeader>
@@ -605,22 +842,26 @@ export default function Teachers({ user }: { user: any }) {
                 <TableRow className="h-16 border-slate-50">
                   <TableHead className="w-[140px] pl-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('employeeId')}>
                     <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                      Index ID <ChevronDown size={14} className={cn("transition-all opacity-0 group-hover:opacity-100", sortConfig?.key === 'employeeId' && sortConfig.direction === 'desc' && "rotate-180 opacity-100 text-blue-600")} />
+                      Index ID 
+                      {sortBy === 'employeeId' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
-                  <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('fullName')}>
+                  <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('name')}>
                     <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                      Faculty Entity <ChevronDown size={14} className={cn("transition-all opacity-0 group-hover:opacity-100", sortConfig?.key === 'fullName' && sortConfig.direction === 'desc' && "rotate-180 opacity-100 text-blue-600")} />
+                      Faculty Entity 
+                      {sortBy === 'name' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('subject')}>
                     <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                      Core Expertise <ChevronDown size={14} className={cn("transition-all opacity-0 group-hover:opacity-100", sortConfig?.key === 'subject' && sortConfig.direction === 'desc' && "rotate-180 opacity-100 text-blue-600")} />
+                      Core Expertise 
+                      {sortBy === 'subject' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('qualification')}>
                     <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                      Credentials <ChevronDown size={14} className={cn("transition-all opacity-0 group-hover:opacity-100", sortConfig?.key === 'qualification' && sortConfig.direction === 'desc' && "rotate-180 opacity-100 text-blue-600")} />
+                      Credentials 
+                      {sortBy === 'qualification' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Operational Status</TableHead>
@@ -628,7 +869,7 @@ export default function Teachers({ user }: { user: any }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTeachers.length === 0 ? (
+                {(!Array.isArray(filteredTeachers) || filteredTeachers.length === 0) ? (
                   <TableRow>
                      <TableCell colSpan={6} className="h-64 text-center">
                         <div className="flex flex-col items-center justify-center gap-3">
@@ -640,7 +881,7 @@ export default function Teachers({ user }: { user: any }) {
                      </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTeachers.map((teacher) => (
+                  Array.isArray(filteredTeachers) && filteredTeachers.map((teacher) => (
                   <TableRow key={teacher.id} className="hover:bg-slate-50/50 transition-all group border-b border-slate-50/80 h-20">
                     <TableCell className="pl-8">
                        <span className="font-mono text-[11px] font-black text-blue-600 bg-blue-50/50 px-2.5 py-1 rounded-lg border border-blue-100/50 italic tracking-tighter">
@@ -649,13 +890,25 @@ export default function Teachers({ user }: { user: any }) {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-4">
-                        <Avatar className="h-11 w-11 ring-4 ring-white shadow-lg shadow-slate-200 transition-transform group-hover:scale-105">
-                          <AvatarFallback className="bg-indigo-600 text-white font-black uppercase text-sm">
-                            {teacher.fullName[0]}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="relative shrink-0">
+                          <Avatar className="h-11 w-11 ring-4 ring-white shadow-lg shadow-slate-200 transition-transform group-hover:scale-105">
+                            <AvatarImage src={resolvePhotoUrl(teacher.photo)} />
+                            <AvatarFallback className="bg-indigo-600 text-white font-black uppercase text-sm">
+                              {(teacher.name || "U")[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <SimpleTooltip content="Update photo" side="top">
+                            <button 
+                              onClick={() => triggerPhotoUpload(teacher.id)}
+                              className="absolute -bottom-1 -right-1 bg-white p-1.5 rounded-full border border-slate-100 shadow-md opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95 cursor-pointer z-10"
+                              aria-label="Change teacher photo"
+                            >
+                              <Camera size={10} className="text-blue-600" />
+                            </button>
+                          </SimpleTooltip>
+                        </div>
                         <div className="flex flex-col truncate max-w-[180px]">
-                          <span className="font-black text-slate-900 leading-none text-sm tracking-tight mb-1">{teacher.fullName}</span>
+                          <span className="font-black text-slate-900 leading-none text-sm tracking-tight mb-1">{teacher.name}</span>
                           <span className="text-[10px] text-slate-400 font-bold italic truncate">{teacher.email}</span>
                         </div>
                       </div>
@@ -692,7 +945,8 @@ export default function Teachers({ user }: { user: any }) {
                             <DropdownMenuItem className="gap-4 py-3 px-4 rounded-xl cursor-pointer focus:bg-indigo-50 group/item" onClick={() => {
                               setSelectedTeacher(teacher);
                               setIsEditing(true);
-                              const names = teacher.fullName.split(' ');
+                              const names = (teacher.name || "").split(' ');
+                              // Populate all required master properties, including standard/section/experience details and exact school branches
                               setFormData({
                                 firstName: names[0],
                                 lastName: names.slice(-1)[0],
@@ -700,9 +954,13 @@ export default function Teachers({ user }: { user: any }) {
                                 email: teacher.email,
                                 phone: teacher.phone,
                                 qualification: teacher.qualification,
+                                experience: teacher.experience,
                                 subject: teacher.subject,
+                                standard: teacher.standard,
+                                section: teacher.section,
                                 status: teacher.status,
-                                schoolId: user.schoolId || ""
+                                schoolId: teacher.schoolId || user.schoolId || "",
+                                photo: teacher.photo || ""
                               });
                               setIsAddDialogOpen(true);
                             }}>
@@ -714,7 +972,16 @@ export default function Teachers({ user }: { user: any }) {
                                  <span className="text-[9px] text-slate-400 font-bold uppercase italic">Update qualifications</span>
                               </div>
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-4 py-3 px-4 rounded-xl cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50 group/del" onClick={() => handleDeleteTeacher(teacher.id, teacher.fullName)}>
+                            <DropdownMenuItem className="gap-4 py-3 px-4 rounded-xl cursor-pointer focus:bg-blue-50 group/photo" onClick={() => triggerPhotoUpload(teacher.id)}>
+                              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl group-hover/photo:bg-blue-600 group-hover/photo:text-white transition-colors">
+                                <Plus size={16} />
+                              </div>
+                              <div className="flex flex-col">
+                                 <span className="font-black text-slate-800 text-xs uppercase tracking-widest">Update Photo</span>
+                                 <span className="text-[9px] text-slate-400 font-bold uppercase italic">Upload official identity portrait</span>
+                              </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-4 py-3 px-4 rounded-xl cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50 group/del" onClick={() => handleDeleteTeacher(teacher.id, teacher.name)}>
                               <div className="p-2.5 bg-red-50 text-red-600 rounded-xl group-hover/del:bg-red-600 group-hover/del:text-white transition-colors">
                                 <Trash2 size={16} />
                               </div>
@@ -732,6 +999,75 @@ export default function Teachers({ user }: { user: any }) {
                 )}
               </TableBody>
             </Table>
+          )}
+
+          {/* Pagination Footer */}
+          {!loading && (
+            <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 bg-slate-50/50 border-t border-slate-100 gap-4">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-widest text-[10px]">
+                Showing <span className="text-slate-900 font-black">{teachers.length > 0 ? (page - 1) * pageSize + 1 : 0}</span> to <span className="text-slate-900 font-black">{Math.min(page * pageSize, totalCount)}</span> of <span className="text-slate-900 font-black">{totalCount}</span> entries
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 mr-4">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rows per page</span>
+                  <Select value={pageSize.toString()} onValueChange={(v) => { setPageSize(parseInt(v)); setPage(1); }}>
+                    <SelectTrigger className="w-[70px] h-8 bg-white border-slate-200 rounded-lg text-xs font-bold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                      {[10, 25, 50, 100].map(size => (
+                        <SelectItem key={size} value={size.toString()} className="text-xs font-bold">{size}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(1)}
+                    disabled={page === 1}
+                  >
+                    <ChevronsLeft size={14} />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft size={14} />
+                  </Button>
+
+                  <div className="flex items-center px-3 h-8 bg-white border border-slate-200 rounded-lg text-xs font-black text-slate-900 mx-1">
+                    Page {page} of {totalPages || 1}
+                  </div>
+
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={page >= totalPages}
+                  >
+                    <ChevronRight size={14} />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(totalPages)}
+                    disabled={page >= totalPages}
+                  >
+                    <ChevronsRight size={14} />
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

@@ -1,6 +1,8 @@
 {
-  "name": "SCANID",
+  "name": "SCANiD",
   "description": "Comprehensive school management system with marksheet generation, attendance tracking, fee management, and parent-teacher collaboration.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

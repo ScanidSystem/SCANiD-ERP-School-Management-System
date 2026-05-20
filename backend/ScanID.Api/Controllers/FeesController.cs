@@ -20,13 +20,14 @@ namespace ScanID.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves fee records, optionally filtered by student or school.
+        /// Retrieves fee records, optionally filtered by student, school, or academic year.
         /// </summary>
         /// <param name="studentId">Optional student filter.</param>
         /// <param name="schoolId">Optional school filter.</param>
+        /// <param name="academicYearId">Optional academic year filter.</param>
         /// <returns>A list of fee entries.</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Fee>>> GetFees(int? studentId, int? schoolId)
+        public async Task<ActionResult<IEnumerable<Fee>>> GetFees(int? studentId, int? schoolId, int? academicYearId)
         {
             var query = _context.Fees.Include(f => f.Student).AsNoTracking().AsQueryable();
             
@@ -35,6 +36,9 @@ namespace ScanID.Api.Controllers
             
             if (schoolId.HasValue)
                 query = query.Where(f => f.Student!.SchoolId == schoolId.Value);
+
+            if (academicYearId.HasValue)
+                query = query.Where(f => f.Student!.AcademicYearId == academicYearId.Value);
 
             return await query.ToListAsync();
         }

@@ -1,4 +1,4 @@
--- SCANID Database Setup Script (SQL Server)
+-- SCANiD Database Setup Script (SQL Server)
 -- Create Database
 IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'ScanID_DB')
 BEGIN
@@ -27,7 +27,7 @@ CREATE TABLE Users (
     Id INT PRIMARY KEY IDENTITY(1,1),
     Username NVARCHAR(100) NOT NULL UNIQUE,
     PasswordHash NVARCHAR(MAX) NOT NULL,
-    FullName NVARCHAR(200),
+    Name NVARCHAR(200),
     Email NVARCHAR(200) UNIQUE,
     Role NVARCHAR(50) NOT NULL, -- superadmin, admin, teacher, student
     SchoolId INT NULL,
@@ -54,7 +54,7 @@ CREATE TABLE Teachers (
 CREATE TABLE Students (
     Id INT PRIMARY KEY IDENTITY(1,1),
     RegistrationNumber NVARCHAR(50) UNIQUE,
-    FullName NVARCHAR(200) NOT NULL,
+    Name NVARCHAR(200) NOT NULL,
     SchoolId INT,
     Standard NVARCHAR(20), -- e.g., 10th
     Section NVARCHAR(10),  -- e.g., A
@@ -131,15 +131,15 @@ VALUES ('Greenwood High', 'GWH001', '123 Academic Way', 'admin@greenwood.edu', 1
 
 -- Insert Users (Passwords are 'Pass123' hashed for this example)
 -- SuperAdmin
-INSERT INTO Users (Username, PasswordHash, FullName, Email, Role)
+INSERT INTO Users (Username, PasswordHash, Name, Email, Role)
 VALUES ('superadmin', 'hashed_pass_here', 'Devendra Parte', 'superadmin@scanid.com', 'superadmin');
 
 -- School Admin
-INSERT INTO Users (Username, PasswordHash, FullName, Email, Role, SchoolId)
+INSERT INTO Users (Username, PasswordHash, Name, Email, Role, SchoolId)
 VALUES ('schooladmin', 'hashed_pass_here', 'John Doe', 'admin@greenwood.edu', 'admin', 1);
 
 -- Teacher
-INSERT INTO Users (Username, PasswordHash, FullName, Email, Role, SchoolId)
+INSERT INTO Users (Username, PasswordHash, Name, Email, Role, SchoolId)
 VALUES ('teacher1', 'hashed_pass_here', 'Sarah Wilson', 'sarah@greenwood.edu', 'teacher', 1);
 
 -- Insert Teachers
@@ -147,7 +147,7 @@ INSERT INTO Teachers (UserId, SchoolId, EmployeeId, Designation, Department, Qua
 VALUES (3, 1, 'EMP001', 'Senior Faculty', 'Mathematics', 'PhD in Applied Math', '2020-01-15');
 
 -- Insert Students
-INSERT INTO Students (RegistrationNumber, FullName, SchoolId, Standard, Section, DateOfBirth, FatherName, RollNumber)
+INSERT INTO Students (RegistrationNumber, Name, SchoolId, Standard, Section, DateOfBirth, FatherName, RollNumber)
 VALUES ('REG2024001', 'Alice Johnson', 1, '10th', 'A', '2009-05-12', 'Robert Johnson', 1),
        ('REG2024002', 'Bob Smith', 1, '10th', 'A', '2009-08-22', 'Michael Smith', 2);
 

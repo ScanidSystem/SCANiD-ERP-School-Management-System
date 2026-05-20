@@ -21,7 +21,7 @@ import {
 import { Calendar as CalendarIcon, Check, X, Clock, Save, Loader2, CalendarCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, parseSafeInt } from "@/lib/utils";
 
 export default function Attendance({ user }: { user: any }) {
   const [students, setStudents] = useState<any[]>([]);
@@ -49,12 +49,18 @@ export default function Attendance({ user }: { user: any }) {
           apiService.getStandards(),
           apiService.getSections()
         ]);
-        setSchools(schoolsRes.data || []);
-        setStandardsMaster(standardsRes.data || []);
-        setSectionsMaster(sectionsRes.data || []);
         
-        if (user.role === "superadmin" && !selectedSchoolId && schoolsRes.data.length > 0) {
-          setSelectedSchoolId(schoolsRes.data[0].id.toString());
+        const normalize = (res: any) => Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        const schoolData = normalize(schoolsRes);
+        const standardData = normalize(standardsRes);
+        const sectionData = normalize(sectionsRes);
+        
+        setSchools(schoolData);
+        setStandardsMaster(standardData);
+        setSectionsMaster(sectionData);
+        
+        if (user.role === "superadmin" && !selectedSchoolId && schoolData.length > 0) {
+          setSelectedSchoolId(schoolData[0].id.toString());
         }
       } catch (error) {
         console.error("Failed to fetch masters", error);
@@ -67,16 +73,18 @@ export default function Attendance({ user }: { user: any }) {
     const fetchStudents = async () => {
       setLoading(true);
       try {
-        const schoolIdToUse = user.role === "superadmin" ? (selectedSchoolId ? parseInt(selectedSchoolId) : undefined) : (user.schoolId ? parseInt(user.schoolId) : undefined);
-        const res = await apiService.getStudents(schoolIdToUse);
-        setStudents(res.data.map((s: any) => {
+        const schoolIdToUse = user.role === "superadmin" ? parseSafeInt(selectedSchoolId) : parseSafeInt(user.schoolId);
+        const academicYearIdToUse = parseSafeInt(user.academicYearId);
+        const res = await apiService.getStudents(schoolIdToUse, academicYearIdToUse);
+        const studentData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        setStudents(studentData.map((s: any) => {
           const getVal = (prop: string, fallback?: any) => {
             return s[prop] ?? s[prop.toLowerCase()] ?? s[prop.toUpperCase()] ?? fallback;
           };
           return {
             id: s.id,
             grno: getVal("GRNO") || s.registrationNumber || s.grno,
-            name: s.fullName || s.FullName || `${getVal("FNAME", "")} ${getVal("LNAME", "")}`.trim() || `Student ${s.id}`,
+            name: s.name || s.fullName || s.FullName || `${getVal("FNAME", "")} ${getVal("LNAME", "")}`.trim() || `Student ${s.id}`,
             roll: getVal("ROLLNO") || s.rollNumber?.toString() || "0",
             status: "present" // Default to present
           };
@@ -88,7 +96,7 @@ export default function Attendance({ user }: { user: any }) {
       }
     };
     fetchStudents();
-  }, [user.schoolId, user.role, selectedSchoolId]);
+  }, [user.schoolId, user.academicYearId, user.role, selectedSchoolId]);
 
   const updateStatus = (id: string, status: string) => {
     if (!canManage) return;
@@ -104,7 +112,7 @@ export default function Attendance({ user }: { user: any }) {
         studentId: s.id,
         date: date.toISOString(),
         status: s.status.charAt(0).toUpperCase() + s.status.slice(1),
-        markedByUserId: parseInt(user.id),
+        markedByUserId: parseSafeInt(user.id),
         CreatedBy: user.name || user.email,
         ModifiedBy: user.name || user.email
       }));
@@ -170,7 +178,7 @@ export default function Attendance({ user }: { user: any }) {
                     <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">
                       Select School Branch
                     </SelectItem>
-                    {schools.map(s => (
+                    {Array.isArray(schools) && schools.map(s => (
                       <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
                         <div className="flex flex-col gap-0.5">
                           <span className="text-sm font-bold">{s.name}</span>
@@ -193,7 +201,7 @@ export default function Attendance({ user }: { user: any }) {
                 </SelectTrigger>
                 <SelectContent className="rounded-xl shadow-2xl border-slate-200 p-2">
                   <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Standard</SelectItem>
-                  {standardsMaster.map(std => (
+                  {Array.isArray(standardsMaster) && standardsMaster.map(std => (
                     <SelectItem key={std.id} value={std.name} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{std.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -210,7 +218,7 @@ export default function Attendance({ user }: { user: any }) {
                 </SelectTrigger>
                 <SelectContent className="rounded-xl shadow-2xl border-slate-200 p-2">
                   <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Class Section</SelectItem>
-                  {sectionsMaster.map(sec => (
+                  {Array.isArray(sectionsMaster) && sectionsMaster.map(sec => (
                     <SelectItem key={sec.id} value={sec.name} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Section {sec.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -259,7 +267,7 @@ export default function Attendance({ user }: { user: any }) {
                   </TableRow>
               </TableHeader>
                 <TableBody>
-                  {students.map((student) => (
+                  {Array.isArray(students) && students.map((student) => (
                     <TableRow key={student.id} className="hover:bg-slate-50/50 transition-colors group border-b border-slate-50/50 h-20">
                       <TableCell className="pl-8 font-mono text-xs font-black text-blue-600 bg-blue-50/50 px-2.5 py-1.5 rounded-lg border border-blue-100/50 mx-4 my-2 block sm:inline-block">{(student as any).grno || `GR-${student.id}`}</TableCell>
                       <TableCell className="font-mono text-xs font-bold text-slate-400 hidden sm:table-cell">{student.roll}</TableCell>

@@ -7,6 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.Configure<RouteOptions>(options => 
+{
+    options.LowercaseUrls = true;
+    options.LowercaseQueryStrings = true;
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -48,18 +53,33 @@ app.Use(async (context, next) =>
         // Log to Filesystem
         FileLogger.LogError(ex);
 
-        // Log to Database
-        var db = context.RequestServices.GetRequiredService<ApplicationDbContext>();
-        db.ErrorLogs.Add(new ErrorLog
+        // Log to Database (optional, don't crash if DB is down)
+        try 
         {
-            Message = ex.Message,
-            Exception = ex.ToString(),
-            Level = "Error",
-            Timestamp = DateTime.Now,
-            Properties = $"Path: {context.Request.Path}"
+            var db = context.RequestServices.GetRequiredService<ApplicationDbContext>();
+            db.ErrorLogs.Add(new ErrorLog
+            {
+                Message = ex.Message,
+                Exception = ex.ToString(),
+                Level = "Error",
+                Timestamp = DateTime.Now,
+                Properties = $"Path: {context.Request.Path}"
+            });
+            await db.SaveChangesAsync();
+        }
+        catch (Exception dbEx)
+        {
+            FileLogger.LogError(new Exception("Failed to log error to database. " + dbEx.Message, dbEx));
+        }
+        
+        // Return a cleaner 500 error instead of throwing a raw exception that might leak info
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new { 
+            error = "Internal Server Error", 
+            message = ex.Message,
+            details = "Check server logs for more information."
         });
-        await db.SaveChangesAsync();
-        throw; // Re-throw to let standard handlers work
     }
 });
 
@@ -74,10 +94,13 @@ app.UseSwaggerUI(c =>
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    // development-only features can go here
+    // In development, we might not have SSL certificates configured locally, 
+    // so we skip redirection to prevent "Empty Response" errors.
 }
-
-app.UseHttpsRedirection();
+else 
+{
+    app.UseHttpsRedirection();
+}
 app.UseStaticFiles(); // Enable serving of static files from wwwroot
 app.UseCors("AllowReactApp");
 

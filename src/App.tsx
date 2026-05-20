@@ -22,6 +22,8 @@ import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
 import SystemLogs from "@/pages/SystemLogs";
 import Configuration from "@/pages/Configuration";
+import Notifications from "@/pages/Notifications";
+import UsersPage from "@/pages/Users";
 
 import { Role, User } from "@/types";
 
@@ -103,11 +105,13 @@ export default function App() {
                 {/* 
                   RBAC (Role Based Access Control) check:
                   Only render routes that the current user has permission to view.
-                  All superadmin-only routes are grouped together here.
+                  Superadmin and Admin can access configuration.
                 */}
-                {user.role === "superadmin" && (
+                {(user.role === "superadmin" || user.role === "admin") && (
                   <>
                     <Route path="/schools" element={<Navigate to="/configuration/schools" replace />} />
+                    <Route path="/role-assignment" element={<Navigate to="/configuration/role-assignment" replace />} />
+                    <Route path="/navigation-management" element={<Navigate to="/configuration/navigation" replace />} />
                     <Route path="/configuration" element={<Configuration user={user} />} />
                     <Route path="/configuration/schools" element={<Configuration user={user} defaultTab="schools" />} />
                     <Route path="/configuration/role-master" element={<Configuration user={user} defaultTab="role-master" />} />
@@ -131,6 +135,9 @@ export default function App() {
                     <Route path="/configuration/exam-types" element={<Configuration user={user} defaultTab="exam-types" />} />
                     <Route path="/configuration/designations" element={<Configuration user={user} defaultTab="designations" />} />
                     <Route path="/configuration/occupations" element={<Configuration user={user} defaultTab="occupations" />} />
+                    <Route path="/configuration/navigation" element={<Configuration user={user} defaultTab="navigation" />} />
+                    <Route path="/configuration/users" element={<UsersPage />} />
+                    <Route path="/notifications" element={<Notifications />} />
                     <Route path="/system-logs" element={<SystemLogs user={user} />} />
                   </>
                 )}

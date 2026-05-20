@@ -1,4 +1,4 @@
-# Local Setup Instructions for SCANID
+# Local Setup Instructions for SCANiD
 
 Follow these steps to set up the application on your local machine with a .NET Core backend and SQL Server.
 
@@ -38,8 +38,10 @@ Follow these steps to set up the application on your local machine with a .NET C
    ```
 3. Create a `.env` file in the root directory (if not present) and add your API URL:
    ```env
-   VITE_API_BASE_URL=http://localhost:5000/api
+   # For local development (using Vite proxy to localhost:5000)
+   VITE_API_BASE_URL=/api
    ```
+   *Note: I have pre-configured `vite.config.ts` to proxy all `/api` and `/SCANiD_ERP_API/api` requests to `http://localhost:5000` during both `npm run dev` and `npm run preview`.*
 4. Start the development server:
    ```bash
    npm run dev
@@ -59,6 +61,11 @@ I have added a `.vscode` folder with `launch.json` and `tasks.json` to make debu
    - If you already ran `dotnet run`, use the **.NET Core Attach** configuration.
 
 ## Troubleshooting
-- **CORS Errors**: If you see CORS errors in the browser, ensure your current React URL (e.g., `http://localhost:4173`) is listed in `Program.cs` under `.WithOrigins(...)`.
-- **Database Connection**: Ensure you have updated the `DefaultConnection` in `appsettings.json` and that your SQL Server is running.
-- **Backend Port**: The project is configured to run on `http://localhost:5000` via `Properties/launchSettings.json`. Ensure this matches your `VITE_API_BASE_URL` in the frontend `.env`.
+- **DirectoryNotFoundException (wwwroot)**: If you get an error saying `wwwroot` is missing, create an empty folder named `wwwroot` in the `/backend/ScanID.Api/` directory. ASP.NET Core expects this folder for static assets even if you aren't serving any yet.
+- **CORS Errors**: If you see CORS errors in the browser, ensure your current React URL (e.g., `http://localhost:3000` or `http://localhost:4173`) is listed in your .NET `Program.cs` under `.WithOrigins(...)`.
+- **Backend Port & URL**: 
+  - For **Local Development**: The `.env.development` file should have `VITE_API_BASE_URL=/api`. The Vite dev server will proxy these requests to `http://localhost:5000`.
+  - For **Production Deployment**: The `.env.production` file should have `VITE_API_BASE_URL=/SCANiD_ERP_API/api`.
+- **500 Internal Server Error**: I have improved the backend exception handler in `Program.cs`. Check the backend console or `error_logs.txt` in the API directory.
+- **Port 5000 ERR_EMPTY_RESPONSE**: If browsing `http://localhost:5000` gives an empty response, I have disabled mandatory HTTPS redirection in `Program.cs` for development mode. Restart your .NET API to apply this change.
+- **Dropdowns Blank?**: The application fallback to demo data if the API is unreachable OR returns a 500 error.

@@ -29,7 +29,7 @@ import {
   Loader2
 } from "lucide-react";
 import { Navigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { cn, parseSafeInt } from "@/lib/utils";
 
 export default function Fees({ user }: { user: any }) {
   const [fees, setFees] = useState<any[]>([]);
@@ -44,7 +44,8 @@ export default function Fees({ user }: { user: any }) {
       if (user.role === "superadmin") {
         try {
           const res = await apiService.getSchools();
-          setSchools(res.data);
+          const schoolData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+          setSchools(schoolData);
         } catch (error) {
           console.error("Failed to fetch schools", error);
         }
@@ -57,8 +58,9 @@ export default function Fees({ user }: { user: any }) {
     const fetchFees = async () => {
       setLoading(true);
       try {
-        const schoolIdToUse = user.role === "superadmin" ? (selectedSchoolId ? parseInt(selectedSchoolId) : undefined) : (user.schoolId ? parseInt(user.schoolId) : undefined);
-        const res = await apiService.getFees(schoolIdToUse);
+        const schoolIdToUse = user.role === "superadmin" ? parseSafeInt(selectedSchoolId) : parseSafeInt(user.schoolId);
+        const academicYearIdToUse = parseSafeInt(user.academicYearId);
+        const res = await apiService.getFees(schoolIdToUse, academicYearIdToUse);
         setFees(res.data);
       } catch (error) {
         console.error("Fees error:", error);
@@ -67,7 +69,7 @@ export default function Fees({ user }: { user: any }) {
       }
     };
     if (isManagement) fetchFees();
-  }, [user.schoolId, isManagement, selectedSchoolId, user.role]);
+  }, [user.schoolId, user.academicYearId, isManagement, selectedSchoolId, user.role]);
 
   if (!isManagement && !isParent) {
     return <Navigate to="/" replace />;
@@ -98,7 +100,7 @@ export default function Fees({ user }: { user: any }) {
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-slate-200 shadow-2xl p-2">
                   <SelectItem value="" className="font-semibold py-2 px-3 rounded-lg text-slate-400 italic">Select School Branch</SelectItem>
-                  {schools.map(s => (
+                  {Array.isArray(schools) && schools.map(s => (
                     <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2 px-3 rounded-lg">
                       {s.name}
                     </SelectItem>
@@ -129,7 +131,7 @@ export default function Fees({ user }: { user: any }) {
           <CardContent>
             <div className="flex items-end justify-between">
                 <div>
-                    <h2 className="text-4xl font-black">${fees.reduce((acc, curr) => acc + curr.paidAmount, 0).toLocaleString()}</h2>
+                    <h2 className="text-4xl font-black">${(Array.isArray(fees) ? fees : []).reduce((acc, curr) => acc + curr.paidAmount, 0).toLocaleString()}</h2>
                     <p className="text-blue-200 text-sm mt-1 flex items-center gap-1">
                         <ArrowUpRight size={14} /> 12% increase from last term
                     </p>
@@ -148,8 +150,8 @@ export default function Fees({ user }: { user: any }) {
           <CardContent>
             <div className="flex items-end justify-between">
                 <div>
-                    <h2 className="text-4xl font-black text-amber-400">${fees.reduce((acc, curr) => acc + (curr.totalAmount - curr.paidAmount), 0).toLocaleString()}</h2>
-                    <p className="text-slate-400 text-sm mt-1">From {fees.length} students</p>
+                    <h2 className="text-4xl font-black text-amber-400">${(Array.isArray(fees) ? fees : []).reduce((acc, curr) => acc + (curr.totalAmount - curr.paidAmount), 0).toLocaleString()}</h2>
+                    <p className="text-slate-400 text-sm mt-1">From {Array.isArray(fees) ? fees.length : 0} students</p>
                 </div>
                 <div className="p-3 bg-slate-800 rounded-xl">
                     <AlertCircle size={24} className="text-amber-400" />
@@ -205,7 +207,7 @@ export default function Fees({ user }: { user: any }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {fees.map((fee) => (
+                {Array.isArray(fees) && fees.map((fee) => (
                   <TableRow key={fee.id} className="hover:bg-slate-50/80 transition-colors group border-b border-slate-50">
                     <TableCell className="pl-8 font-mono text-xs font-black text-blue-600 italic">GR-{fee.studentId}</TableCell>
                     <TableCell className="font-black text-slate-900 group-hover:text-blue-700 transition-colors">{fee.student?.fullName || "Student"}</TableCell>

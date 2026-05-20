@@ -13,22 +13,29 @@ namespace ScanID.Api.Controllers
     public class TeachersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public TeachersController(ApplicationDbContext context)
+        public TeachersController(ApplicationDbContext context, IWebHostEnvironment environment)
         {
             _context = context;
+            _environment = environment;
         }
 
         /// <summary>
-        /// Retrieves a list of teachers, optionally filtered by school.
+        /// Retrieves a list of teachers, optionally filtered by school and academic year.
         /// </summary>
         /// <param name="schoolId">The school ID (optional).</param>
+        /// <param name="academicYearId">The academic year ID (optional).</param>
         /// <returns>A list of teachers with their linked user profiles.</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Teacher>>> GetTeachers(int? schoolId)
+        public async Task<ActionResult<IEnumerable<Teacher>>> GetTeachers(int? schoolId, int? academicYearId)
         {
             var query = _context.Teachers.Include(t => t.User).AsNoTracking().AsQueryable();
             if (schoolId.HasValue) query = query.Where(t => t.SchoolId == schoolId.Value);
+            
+            // Note: In some schemas, teachers are linked to academic years via classes or assignments.
+            // If the model is extended with such links, add the filter here.
+            
             return await query.ToListAsync();
         }
 
@@ -67,7 +74,7 @@ namespace ScanID.Api.Controllers
 
             if (teacher.User != null && existingTeacher.User != null)
             {
-                existingTeacher.User.FullName = teacher.User.FullName;
+                existingTeacher.User.Name = teacher.User.Name;
                 existingTeacher.User.Email = teacher.User.Email;
             }
 
@@ -105,6 +112,60 @@ namespace ScanID.Api.Controllers
 
             return NoContent();
         }
-    }
 
+        /// <summary>
+        /// Handles physical storage of teacher photos.
+        /// </summary>
+        [HttpPost("{id}/photo")]
+        public async Task<IActionResult> UploadPhoto(int id, [FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0) return BadRequest(new { message = "Empty payload" });
+
+            try
+            {
+                var teacher = await _context.Teachers.FindAsync(id);
+                if (teacher == null) return NotFound(new { message = "Teacher not found" });
+
+                // Enhanced path resolution for robust folder creation
+                string webRootPath = _environment.WebRootPath;
+                if (string.IsNullOrEmpty(webRootPath))
+                {
+                    webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                }
+                
+                if (!Directory.Exists(webRootPath))
+                {
+                    Directory.CreateDirectory(webRootPath);
+                }
+
+                var relativeFolder = Path.Combine("uploads", "teachers");
+                var uploadsFolder = Path.Combine(webRootPath, relativeFolder);
+                
+                if (!Directory.Exists(uploadsFolder)) 
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                var extension = Path.GetExtension(file.FileName);
+                var fileName = $"teacher_{id}_{DateTime.Now.Ticks}{extension}";
+                var filePath = Path.Combine(uploadsFolder, fileName);
+                var relativePath = $"/{relativeFolder.Replace("\\", "/")}/{fileName}";
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                teacher.ProfilePhotoPath = relativePath;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { data = new { path = relativePath } });
+            }
+            catch (Exception ex)
+            {
+                ScanID.Api.Utilities.FileLogger.LogError(ex);
+                return StatusCode(500, new { message = "Physical storage failed: " + ex.Message });
+            }
+        }
+    }
 }

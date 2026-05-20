@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { apiService } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,8 +26,18 @@ import {
   FileText,
   ArrowUpDown,
   Edit,
-  Trash2
+  Trash2,
+  Camera,
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react";
+import { Import, Download, Camera as CameraIcon } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -57,7 +67,7 @@ import {
 import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 import { User as UserType } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, resolvePhotoUrl } from "@/lib/utils";
 import { DeleteConfirmation } from "@/components/shared/DeleteConfirmation";
 
 export default function Schools({ user }: { user: UserType }) {
@@ -77,26 +87,131 @@ export default function Schools({ user }: { user: UserType }) {
   const [currentSchool, setCurrentSchool] = useState<any>(null);
   const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
   const inputRefs = useRef<Record<string, any>>({});
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingSchoolId, setUploadingSchoolId] = useState<number | "new" | null>(null);
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
+  const [localPhotoPreview, setLocalPhotoPreview] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
     address: "",
     phone: "",
     email: "",
-    status: "Active"
+    status: "Active",
+    photo: ""
   });
 
-  const fetchSchools = async () => {
+  const fetchSchools = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiService.getSchools();
-      setSchools(res.data);
+      const res = await apiService.getSchools({
+        page,
+        pageSize,
+        sortBy,
+        sortOrder,
+        search: searchQuery
+      });
+      
+      const resData = res.data;
+      const rawSchoolsList = Array.isArray(resData) 
+        ? resData 
+        : (resData && Array.isArray(resData.data) ? resData.data : []);
+      
+      const isServerPaged = resData && !!resData.pagination;
+      
+      if (!isServerPaged) {
+        // Robust client-side filters, search, sorting and pagination
+        let filtered = [...rawSchoolsList];
+        
+        // Search Filter
+        const searchLower = searchQuery.trim().toLowerCase();
+        if (searchLower) {
+          filtered = filtered.filter(item => 
+            (item.name || "").toLowerCase().includes(searchLower) ||
+            (item.address || "").toLowerCase().includes(searchLower) ||
+            (item.email || "").toLowerCase().includes(searchLower) ||
+            (item.phone || "").toLowerCase().includes(searchLower) ||
+            (item.code || "").toLowerCase().includes(searchLower)
+          );
+        }
+        
+        // Sorting
+        if (sortBy) {
+          filtered.sort((a: any, b: any) => {
+            const valA = a[sortBy] || "";
+            const valB = b[sortBy] || "";
+            
+            if (valA === valB) return 0;
+            let comparison = 0;
+            if (typeof valA === "string" && typeof valB === "string") {
+              comparison = valA.localeCompare(valB);
+            } else {
+              comparison = valA < valB ? -1 : 1;
+            }
+            return sortOrder === "desc" ? comparison * -1 : comparison;
+          });
+        }
+        
+        // Pagination
+        const total = filtered.length;
+        setTotalCount(total);
+        setTotalPages(Math.ceil(total / pageSize));
+        
+        const startIndex = (page - 1) * pageSize;
+        setSchools(filtered.slice(startIndex, startIndex + pageSize));
+      } else {
+        // Server-side loaded correctly
+        setTotalCount(resData.pagination.totalCount);
+        setTotalPages(resData.pagination.totalPages);
+        setSchools(rawSchoolsList);
+      }
     } catch (error) {
       console.error("Schools error:", error);
     } finally {
       setLoading(false);
     }
+  }, [page, pageSize, sortBy, sortOrder, searchQuery]);
+
+  useEffect(() => {
+    if (user.role === "superadmin") {
+      fetchSchools();
+    }
+  }, [user.role, fetchSchools]);
+
+  useEffect(() => {
+    if (!isAddDialogOpen) {
+      setSelectedPhotoFile(null);
+      if (localPhotoPreview) {
+        URL.revokeObjectURL(localPhotoPreview);
+        setLocalPhotoPreview(null);
+      }
+    }
+  }, [isAddDialogOpen]);
+
+  useEffect(() => {
+    if (!isEditDialogOpen) {
+      setSelectedPhotoFile(null);
+      if (localPhotoPreview) {
+        URL.revokeObjectURL(localPhotoPreview);
+        setLocalPhotoPreview(null);
+      }
+    }
+  }, [isEditDialogOpen]);
+
+  const handleSort = (key: string) => {
+    if (sortBy === key) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(key);
+      setSortOrder("asc");
+    }
+    setPage(1);
   };
 
   const handleEditClick = (school: any) => {
@@ -106,10 +221,55 @@ export default function Schools({ user }: { user: UserType }) {
       address: school.address || "",
       phone: school.phone || "",
       email: school.email || "",
-      status: school.status || "Active"
+      status: school.status || "Active",
+      // Map both camelCase and Capitalized server properties to preserve original branding details on form entry
+      photo: school.profilePhotoPath || school.ProfilePhotoPath || school.photo || ""
     });
     setFormErrors({});
     setIsEditDialogOpen(true);
+  };
+
+  const triggerPhotoUpload = (id: number | "new") => {
+    setUploadingSchoolId(id);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (uploadingSchoolId && e.target.files?.[0]) {
+      const file = e.target.files[0];
+      
+      if (uploadingSchoolId === "new") {
+        setSelectedPhotoFile(file);
+        setLocalPhotoPreview(URL.createObjectURL(file));
+        toast.success("Branding photo selected. It will be uploaded on registration.");
+        setUploadingSchoolId(null);
+        e.target.value = '';
+        return;
+      }
+
+      const schoolId = uploadingSchoolId;
+      const loadingToast = toast.loading("Updating institutional branding...");
+      try {
+        const response = await apiService.uploadSchoolPhoto(schoolId, file);
+        const newPath = response.data.data?.path || response.data.path;
+        
+        // Update both the list and the current form data to reflect change immediately
+        setSchools(prev => prev.map(s => 
+          s.id === schoolId ? { ...s, photo: newPath, profilePhotoPath: newPath, ProfilePhotoPath: newPath } : s
+        ));
+        setFormData(prev => ({ ...prev, photo: newPath }));
+        
+        toast.dismiss(loadingToast);
+        toast.success("Institutional photo updated successfully");
+      } catch (error) {
+        toast.dismiss(loadingToast);
+        console.error("Upload failed:", error);
+        toast.error("Failed to upload photo. Please try again.");
+      } finally {
+        setUploadingSchoolId(null);
+      }
+    }
+    e.target.value = '';
   };
 
   const handleUpdateSchool = async () => {
@@ -143,6 +303,8 @@ export default function Schools({ user }: { user: UserType }) {
       // Audit fields: Ensure ModifiedBy is captured for backend audit logging
       await apiService.updateSchool(currentSchool.id, { 
         ...formData, 
+        // Pass photo path explicitly as profilePhotoPath to prevent backend wiping it out
+        profilePhotoPath: formData.photo,
         id: currentSchool.id,
         ModifiedBy: user.name || user.email
       });
@@ -178,13 +340,7 @@ export default function Schools({ user }: { user: UserType }) {
     }
   };
 
-  const requestSort = (key: string) => {
-    let direction: "asc" | "desc" = "asc";
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-  };
+
 
   const handleCreateSchool = async () => {
     const newErrors: Record<string, boolean> = {};
@@ -219,14 +375,25 @@ export default function Schools({ user }: { user: UserType }) {
     setIsProcessing(true);
     try {
       // Audit fields: Ensure CreatedBy and ModifiedBy are captured for backend audit logging
-      await apiService.createSchool({
+      const response = await apiService.createSchool({
         ...formData,
+        profilePhotoPath: formData.photo,
         CreatedBy: user.name || user.email,
         ModifiedBy: user.name || user.email
       });
+      const newSchool = response.data.data || response.data;
+      if (selectedPhotoFile && newSchool?.id) {
+        try {
+          await apiService.uploadSchoolPhoto(newSchool.id, selectedPhotoFile);
+        } catch (uploadErr) {
+          console.error("Delayed school photo upload failed:", uploadErr);
+        }
+      }
       toast.success("School registered successfully!");
       setIsAddDialogOpen(false);
-      setFormData({ name: "", address: "", phone: "", email: "", status: "Active" });
+      setFormData({ name: "", address: "", phone: "", email: "", status: "Active", photo: "" });
+      setSelectedPhotoFile(null);
+      setLocalPhotoPreview(null);
       fetchSchools();
     } catch (error) {
       toast.error("Failed to register school");
@@ -235,33 +402,7 @@ export default function Schools({ user }: { user: UserType }) {
     }
   };
 
-  useEffect(() => {
-    if (user.role === "superadmin") {
-      fetchSchools();
-    }
-  }, [user.role]);
-
-  if (user.role !== "superadmin") {
-    return <Navigate to="/" replace />;
-  }
-
-  const filteredSchools = schools.filter(s => 
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.id.toString().includes(searchQuery)
-  );
-
-  const sortedSchools = [...filteredSchools].sort((a, b) => {
-    if (!sortConfig) return 0;
-    const { key, direction } = sortConfig;
-    
-    const aValue = a[key] || "";
-    const bValue = b[key] || "";
-
-    if (aValue < bValue) return direction === "asc" ? -1 : 1;
-    if (aValue > bValue) return direction === "asc" ? 1 : -1;
-    return 0;
-  });
+  const sortedSchools = schools;
 
   return (
     <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
@@ -303,47 +444,105 @@ export default function Schools({ user }: { user: UserType }) {
             </div>
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-6 bg-white scrollbar-thin scrollbar-thumb-slate-200">
-              <div className="max-w-xl mx-auto space-y-6">
-                <section className="space-y-4">
-                  <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
-                    <div className="w-1.5 h-5 bg-blue-600 rounded-full"></div>
-                    <h3 className="text-sm font-black text-slate-900 tracking-tight">Institution Details</h3>
-                  </div>
-                  
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Official Name</Label>
-                    <Input 
-                      ref={el => inputRefs.current["name"] = el}
-                      value={formData.name} 
-                      onChange={e => {
-                        setFormData({...formData, name: e.target.value});
-                        if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
-                      }} 
-                      placeholder="e.g. St. Xavier's International" 
-                      className={cn(
-                        "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                        formErrors.name && "border-red-500 ring-2 ring-red-500/10"
-                      )} 
-                    />
-                  </div>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handleFileChange} 
+              />
+              
+              <div className="max-w-2xl mx-auto space-y-6">
+                <div className="flex flex-col md:flex-row gap-8 mb-8 pb-8 border-b border-slate-50">
+                   {/* Left: Institution Branding */}
+                   <div className="flex flex-col items-center gap-4">
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Institutional Logo</Label>
+                      <div 
+                        className="relative group cursor-pointer"
+                        onClick={() => triggerPhotoUpload("new")}
+                      >
+                        <div className="w-44 h-44 rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-100 bg-slate-50 flex items-center justify-center transition-all group-hover:shadow-blue-200/50 group-hover:scale-[1.02]">
+                           {(localPhotoPreview || formData.photo) ? (
+                             <img 
+                               src={localPhotoPreview || resolvePhotoUrl(formData.photo)} 
+                               alt="School" 
+                               className="w-full h-full object-cover"
+                               onError={(e) => {
+                                 e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.name}`;
+                               }}
+                             />
+                           ) : (
+                             <div className="flex flex-col items-center gap-3 text-slate-300">
+                               <div className="p-4 bg-slate-100 rounded-2xl">
+                                  <Building2 size={36} className="opacity-20" />
+                               </div>
+                               <span className="text-[10px] font-black tracking-widest">NO LOGO</span>
+                             </div>
+                           )}
 
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Primary Address</Label>
-                    <Input 
-                      ref={el => inputRefs.current["address"] = el}
-                      value={formData.address} 
-                      onChange={e => {
-                        setFormData({...formData, address: e.target.value});
-                        if (formErrors.address) setFormErrors(prev => ({ ...prev, address: false }));
-                      }} 
-                      placeholder="Enter full institutional address" 
-                      className={cn(
-                        "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                        formErrors.address && "border-red-500 ring-2 ring-red-500/10"
-                      )} 
-                    />
-                  </div>
-                </section>
+                           <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
+                               <div className="p-2 bg-white/20 rounded-full">
+                                 <CameraIcon size={24} />
+                               </div>
+                               <span className="text-[10px] font-black uppercase tracking-widest">Update Photo</span>
+                           </div>
+                        </div>
+                        
+                        {(localPhotoPreview || formData.photo) && (
+                          <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
+                             <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-bold max-w-[150px] text-center leading-relaxed italic">
+                        Logo appears on student ID cards & official documents.
+                      </p>
+                   </div>
+
+                   {/* Right: Institution Details */}
+                   <div className="flex-1 space-y-6">
+                     <section className="space-y-4">
+                       <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
+                         <div className="w-1.5 h-5 bg-blue-600 rounded-full"></div>
+                         <h3 className="text-sm font-black text-slate-900 tracking-tight">Institution Details</h3>
+                       </div>
+                       
+                       <div className="space-y-1.5">
+                         <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Official Name</Label>
+                         <Input 
+                           ref={el => { inputRefs.current["name"] = el; }}
+                           value={formData.name} 
+                           onChange={e => {
+                             setFormData({...formData, name: e.target.value});
+                             if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                           }} 
+                           placeholder="e.g. St. Xavier's International" 
+                           className={cn(
+                             "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
+                             formErrors.name && "border-red-500 ring-2 ring-red-500/10"
+                           )} 
+                         />
+                       </div>
+
+                       <div className="space-y-1.5">
+                         <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Primary Address</Label>
+                         <Input 
+                           ref={el => { inputRefs.current["address"] = el; }}
+                           value={formData.address} 
+                           onChange={e => {
+                             setFormData({...formData, address: e.target.value});
+                             if (formErrors.address) setFormErrors(prev => ({ ...prev, address: false }));
+                           }} 
+                           placeholder="Enter full institutional address" 
+                           className={cn(
+                             "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
+                             formErrors.address && "border-red-500 ring-2 ring-red-500/10"
+                           )} 
+                         />
+                       </div>
+                     </section>
+                   </div>
+                </div>
 
                 <section className="space-y-4">
                   <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
@@ -354,7 +553,7 @@ export default function Schools({ user }: { user: UserType }) {
                     <div className="space-y-1.5">
                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Office Phone</Label>
                       <Input 
-                        ref={el => inputRefs.current["phone"] = el}
+                        ref={el => { inputRefs.current["phone"] = el; }}
                         value={formData.phone} 
                         maxLength={12}
                         onChange={e => {
@@ -372,7 +571,7 @@ export default function Schools({ user }: { user: UserType }) {
                     <div className="space-y-1.5">
                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Direct Email</Label>
                       <Input 
-                        ref={el => inputRefs.current["email"] = el}
+                        ref={el => { inputRefs.current["email"] = el; }}
                         value={formData.email} 
                         onChange={e => {
                           setFormData({...formData, email: e.target.value});
@@ -393,7 +592,9 @@ export default function Schools({ user }: { user: UserType }) {
                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">System Status</Label>
                     <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
                       <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
-                        <SelectValue placeholder="Select System Status" />
+                        <SelectValue placeholder="Select System Status">
+                          {formData.status || undefined}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-slate-200">
                         <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select System Status</SelectItem>
@@ -450,47 +651,105 @@ export default function Schools({ user }: { user: UserType }) {
             </div>
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-6 bg-white scrollbar-thin scrollbar-thumb-slate-200">
-              <div className="max-w-xl mx-auto space-y-6">
-                <section className="space-y-4">
-                  <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
-                    <div className="w-1.5 h-5 bg-blue-600 rounded-full"></div>
-                    <h3 className="text-sm font-black text-slate-900 tracking-tight">Institution Details</h3>
-                  </div>
-                  
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Official Name</Label>
-                    <Input 
-                      ref={el => inputRefs.current["name"] = el}
-                      value={formData.name} 
-                      onChange={e => {
-                        setFormData({...formData, name: e.target.value});
-                        if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
-                      }} 
-                      placeholder="e.g. St. Xavier's International" 
-                      className={cn(
-                        "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                        formErrors.name && "border-red-500 ring-2 ring-red-500/10"
-                      )} 
-                    />
-                  </div>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handleFileChange} 
+              />
+              
+              <div className="max-w-2xl mx-auto space-y-6">
+                <div className="flex flex-col md:flex-row gap-8 mb-8 pb-8 border-b border-slate-50">
+                   {/* Left: Institution Branding */}
+                   <div className="flex flex-col items-center gap-4">
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Institutional Logo</Label>
+                      <div 
+                        className="relative group cursor-pointer"
+                        onClick={() => triggerPhotoUpload(currentSchool?.id)}
+                      >
+                        <div className="w-44 h-44 rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-100 bg-slate-50 flex items-center justify-center transition-all group-hover:shadow-blue-200/50 group-hover:scale-[1.02]">
+                           {formData.photo ? (
+                             <img 
+                               src={resolvePhotoUrl(formData.photo)} 
+                               alt="School" 
+                               className="w-full h-full object-cover"
+                               onError={(e) => {
+                                 e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.name}`;
+                               }}
+                             />
+                           ) : (
+                             <div className="flex flex-col items-center gap-3 text-slate-300">
+                               <div className="p-4 bg-slate-100 rounded-2xl">
+                                  <Building2 size={36} className="opacity-20" />
+                               </div>
+                               <span className="text-[10px] font-black tracking-widest">NO LOGO</span>
+                             </div>
+                           )}
 
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Primary Address</Label>
-                    <Input 
-                      ref={el => inputRefs.current["address"] = el}
-                      value={formData.address} 
-                      onChange={e => {
-                        setFormData({...formData, address: e.target.value});
-                        if (formErrors.address) setFormErrors(prev => ({ ...prev, address: false }));
-                      }} 
-                      placeholder="Enter full institutional address" 
-                      className={cn(
-                        "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                        formErrors.address && "border-red-500 ring-2 ring-red-500/10"
-                      )} 
-                    />
-                  </div>
-                </section>
+                           <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
+                              <div className="p-2 bg-white/20 rounded-full">
+                                <CameraIcon size={24} />
+                              </div>
+                              <span className="text-[10px] font-black uppercase tracking-widest">Update Photo</span>
+                           </div>
+                        </div>
+                        
+                        {formData.photo && (
+                          <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
+                             <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-bold max-w-[150px] text-center leading-relaxed italic">
+                        Logo appears on student ID cards & official documents.
+                      </p>
+                   </div>
+
+                   {/* Right: Institution Details */}
+                   <div className="flex-1 space-y-6">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-1.5 h-5 bg-blue-600 rounded-full"></div>
+                        <h3 className="text-sm font-black text-slate-900 tracking-tight">Identity Profile</h3>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Official Name</Label>
+                          <Input 
+                            ref={el => { inputRefs.current["name"] = el; }}
+                            value={formData.name} 
+                            onChange={e => {
+                              setFormData({...formData, name: e.target.value});
+                              if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                            }} 
+                            placeholder="e.g. St. Xavier's International" 
+                            className={cn(
+                              "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
+                              formErrors.name && "border-red-500 ring-2 ring-red-500/10"
+                            )} 
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Primary Address</Label>
+                          <Input 
+                            ref={el => { inputRefs.current["address"] = el; }}
+                            value={formData.address} 
+                            onChange={e => {
+                              setFormData({...formData, address: e.target.value});
+                              if (formErrors.address) setFormErrors(prev => ({ ...prev, address: false }));
+                            }} 
+                            placeholder="Enter full institutional address" 
+                            className={cn(
+                              "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
+                              formErrors.address && "border-red-500 ring-2 ring-red-500/10"
+                            )} 
+                          />
+                        </div>
+                      </div>
+                   </div>
+                </div>
 
                 <section className="space-y-4">
                   <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
@@ -501,7 +760,7 @@ export default function Schools({ user }: { user: UserType }) {
                     <div className="space-y-1.5">
                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Office Phone</Label>
                       <Input 
-                        ref={el => inputRefs.current["phone"] = el}
+                        ref={el => { inputRefs.current["phone"] = el; }}
                         value={formData.phone} 
                         maxLength={12}
                         onChange={e => {
@@ -519,7 +778,7 @@ export default function Schools({ user }: { user: UserType }) {
                     <div className="space-y-1.5">
                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Direct Email</Label>
                       <Input 
-                        ref={el => inputRefs.current["email"] = el}
+                        ref={el => { inputRefs.current["email"] = el; }}
                         value={formData.email} 
                         onChange={e => {
                           setFormData({...formData, email: e.target.value});
@@ -540,7 +799,9 @@ export default function Schools({ user }: { user: UserType }) {
                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">System Status</Label>
                     <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
                       <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
-                        <SelectValue placeholder="Select System Status" />
+                        <SelectValue placeholder="Select System Status">
+                          {formData.status || undefined}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-slate-200">
                         <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select System Status</SelectItem>
@@ -576,6 +837,13 @@ export default function Schools({ user }: { user: UserType }) {
       </div>
 
       <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          accept="image/*" 
+          onChange={handleFileChange} 
+        />
         <CardHeader className="pb-6 border-b border-slate-100 bg-white px-8 pt-8">
           <div className="flex items-center justify-between">
             <div className="relative max-w-md w-full">
@@ -600,43 +868,62 @@ export default function Schools({ user }: { user: UserType }) {
                 <TableRow className="bg-slate-50/50 h-14">
                   <TableHead 
                     className="w-[150px] pl-8 text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
-                    onClick={() => requestSort('id')}
+                    onClick={() => handleSort('id')}
                   >
                     <div className="flex items-center gap-2">
-                      School ID <ArrowUpDown size={12} />
+                      School ID 
+                      {sortBy === 'id' ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={12} className="opacity-30" />}
                     </div>
                   </TableHead>
                   <TableHead 
                     className="text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
-                    onClick={() => requestSort('name')}
+                    onClick={() => handleSort('name')}
                   >
                     <div className="flex items-center gap-2">
-                      Institution Profile <ArrowUpDown size={12} />
+                      Institution Profile 
+                      {sortBy === 'name' ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={12} className="opacity-30" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Digital Registry</TableHead>
                   <TableHead 
                     className="text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
-                    onClick={() => requestSort('status')}
+                    onClick={() => handleSort('status')}
                   >
                     <div className="flex items-center gap-2">
-                      Status <ArrowUpDown size={12} />
+                      Status 
+                      {sortBy === 'status' ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={12} className="opacity-30" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-right pr-8 text-xs font-black text-slate-500 uppercase tracking-widest">Management</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedSchools.map((school) => (
+                {Array.isArray(sortedSchools) && sortedSchools.map((school) => (
                   <TableRow key={school.id} className="hover:bg-slate-50/80 transition-colors group border-b border-slate-50">
                     <TableCell className="pl-8 font-mono text-xs font-black text-blue-600 italic">SCH-{school.id}</TableCell>
                     <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-slate-900 leading-tight">{school.name}</span>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                            <MapPin size={10} /> {school.address || "Main Branch"}
-                          </span>
+                      <div className="flex items-center gap-4">
+                        <div className="relative group">
+                          <Avatar className="h-12 w-12 border-2 border-white shadow-md ring-1 ring-slate-100 group-hover:ring-blue-400 group-hover:scale-105 transition-all duration-300">
+                            <AvatarImage src={resolvePhotoUrl(school.profilePhotoPath || school.ProfilePhotoPath)} alt={school.name} className="object-cover" />
+                            <AvatarFallback className="bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 font-black text-xs">
+                              {school.name.split(' ').map((n: any) => n[0]).join('').toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <button 
+                            onClick={() => triggerPhotoUpload(school.id)}
+                            className="absolute -bottom-1 -right-1 bg-white p-1.5 rounded-full shadow-lg border border-slate-100 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-blue-600 hover:text-white"
+                          >
+                            <Camera size={10} />
+                          </button>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-900 leading-tight">{school.name}</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                              <MapPin size={10} /> {school.address || "Main Branch"}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </TableCell>
@@ -663,6 +950,9 @@ export default function Schools({ user }: { user: UserType }) {
                         />
                         <DropdownMenuContent align="end">
                           <DropdownMenuGroup>
+                            <DropdownMenuItem className="gap-2" onClick={() => triggerPhotoUpload(school.id)}>
+                              <CameraIcon size={14} /> Update Logo
+                            </DropdownMenuItem>
                             <DropdownMenuItem className="gap-2" onClick={() => handleEditClick(school)}>
                               <Edit size={14} /> Edit School
                             </DropdownMenuItem>
@@ -677,6 +967,75 @@ export default function Schools({ user }: { user: UserType }) {
                 ))}
               </TableBody>
             </Table>
+          )}
+
+          {/* Pagination Footer */}
+          {!loading && (
+            <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 bg-slate-50/50 border-t border-slate-100 gap-4">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                Showing <span className="text-slate-900 font-black">{schools.length > 0 ? (page - 1) * pageSize + 1 : 0}</span> to <span className="text-slate-900 font-black">{Math.min(page * pageSize, totalCount)}</span> of <span className="text-slate-900 font-black">{totalCount}</span> entries
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 mr-4">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rows per page</span>
+                  <UISelect value={pageSize.toString()} onValueChange={(v) => { setPageSize(parseInt(v)); setPage(1); }}>
+                    <SelectTrigger className="w-[70px] h-8 bg-white border-slate-200 rounded-lg text-xs font-bold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                      {[10, 25, 50, 100].map(size => (
+                        <SelectItem key={size} value={size.toString()} className="text-xs font-bold">{size}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </UISelect>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(1)}
+                    disabled={page === 1}
+                  >
+                    <ChevronsLeft size={14} />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft size={14} />
+                  </Button>
+
+                  <div className="flex items-center px-3 h-8 bg-white border border-slate-200 rounded-lg text-xs font-black text-slate-900 mx-1">
+                    Page {page} of {totalPages || 1}
+                  </div>
+
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={page >= totalPages}
+                  >
+                    <ChevronRight size={14} />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(totalPages)}
+                    disabled={page >= totalPages}
+                  >
+                    <ChevronsRight size={14} />
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

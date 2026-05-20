@@ -4,8 +4,11 @@ dist/
 coverage/
 .DS_Store
 *.log
-.env*
+# Environment Files
+!.env
 !.env.example
+!.env.development
+!.env.production
 
 # Ignore IDE, build, and local runtime artifacts
 **/.vs/

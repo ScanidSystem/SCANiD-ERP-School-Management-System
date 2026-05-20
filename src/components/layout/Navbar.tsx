@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Bell, Search, User, Settings as SettingsIcon, LogOut, School, Calendar, Menu } from "lucide-react";
+import { Bell, Search, User, Settings as SettingsIcon, LogOut, School, Calendar, Menu, Info, AlertTriangle, CheckCircle, X } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -47,15 +47,44 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
 
   const [schools, setSchools] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchLookups = useCallback(async () => {
     try {
-      const [schoolsRes, yearsRes] = await Promise.all([
+      const [schoolsRes, yearsRes, notifsRes] = await Promise.all([
         apiService.getSchools(),
-        apiService.getAcademicYears()
+        apiService.getAcademicYears(),
+        apiService.getNotifications()
       ]);
-      setSchools(schoolsRes.data || []);
-      setAcademicYears(yearsRes.data || []);
+      
+      const schoolData = schoolsRes.data && Array.isArray(schoolsRes.data) ? schoolsRes.data : (schoolsRes.data && Array.isArray(schoolsRes.data.data) ? schoolsRes.data.data : []);
+      const yearData = yearsRes.data && Array.isArray(yearsRes.data) ? yearsRes.data : (yearsRes.data && Array.isArray(yearsRes.data.data) ? yearsRes.data.data : []);
+      const notifData = notifsRes.data && Array.isArray(notifsRes.data) ? notifsRes.data : (notifsRes.data && Array.isArray(notifsRes.data.data) ? notifsRes.data.data : []);
+      
+      setSchools(schoolData);
+      setAcademicYears(yearData);
+      setNotifications(notifData);
+      setUnreadCount(Array.isArray(notifData) ? notifData.filter((n: any) => !n.isRead).length : 0);
+
+      // Auto-initialize school if not set
+      if (!user.schoolId && schoolData.length > 0) {
+        onUserUpdate({
+          ...user,
+          schoolId: schoolData[0].id.toString(),
+          schoolName: schoolData[0].name
+        });
+      }
+
+      // Auto-initialize academic year if not set
+      if (!user.academicYearId && yearData.length > 0) {
+        const currentYear = yearData.find((y: any) => y.isCurrent) || yearData[0];
+        onUserUpdate({
+          ...user,
+          academicYearId: currentYear.id.toString(),
+          academicYearName: currentYear.name
+        });
+      }
     } catch (error) {
       console.error("Navbar lookups error:", error);
     }
@@ -144,14 +173,34 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
     });
   };
 
-  const showNotification = () => {
-    toast.success("New Announcement", {
-      description: "Teacher training scheduled for next Friday at 3:00 PM.",
-      action: {
-        label: "View",
-        onClick: () => console.log("View announcement"),
-      },
-    });
+  const handleMarkAsRead = async (id: number) => {
+    try {
+      await apiService.markNotificationRead(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error("Failed to mark as read:", error);
+    }
+  };
+
+  const deleteNotification = async (id: number) => {
+    try {
+      await apiService.deleteNotification(id);
+      const wasUnread = notifications.find(n => n.id === id)?.isRead === false;
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      if (wasUnread) setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error("Failed to delete notification:", error);
+    }
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'warning': return <AlertTriangle size={14} className="text-amber-500" />;
+      case 'success': return <CheckCircle size={14} className="text-emerald-500" />;
+      case 'error': return <X size={14} className="text-red-500" />;
+      default: return <Info size={14} className="text-blue-500" />;
+    }
   };
 
   return (
@@ -183,8 +232,8 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
         <SelectContent className="rounded-xl border-slate-100 shadow-xl">
           <SelectItem value="" className="text-xs italic text-slate-400">Select School Branch</SelectItem>
                   <SelectItem value="all" className="text-xs font-black text-blue-600">Global Admin View</SelectItem>
-                  {schools.map(s => (
-                    <SelectItem key={s.id} value={s.id.toString()} className="text-xs font-medium">{s.name}</SelectItem>
+                  {Array.isArray(schools) && schools.map(s => (
+                    <SelectItem key={s.id || Math.random()} value={s.id ? s.id.toString() : ""} className="text-xs font-medium">{s.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -211,8 +260,8 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
         </SelectTrigger>
         <SelectContent className="rounded-xl border-slate-100 shadow-xl">
           <SelectItem value="" className="text-xs italic text-slate-400">Select Academic Year</SelectItem>
-                {academicYears.map(y => (
-                  <SelectItem key={y.id} value={y.id.toString()} className="text-xs font-bold">
+                {Array.isArray(academicYears) && academicYears.map(y => (
+                  <SelectItem key={y.id || Math.random()} value={y.id ? y.id.toString() : ""} className="text-xs font-bold">
                     {y.name} {y.isCurrent ? "★" : ""}
                   </SelectItem>
                 ))}
@@ -279,27 +328,119 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
     </div>
 
     <div className="flex items-center gap-4">
-        <SimpleTooltip content="Notifications" side="bottom">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="relative text-slate-600 hover:bg-slate-50"
-            onClick={showNotification}
-            aria-label="View notifications"
-          >
-            <Bell size={20} />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-          </Button>
-        </SimpleTooltip>
+        <DropdownMenu>
+          <SimpleTooltip content="Notifications" side="bottom" nativeButton={true}>
+            <DropdownMenuTrigger asChild nativeButton={true}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="relative text-slate-600 hover:bg-slate-50 outline-none"
+              >
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+          </SimpleTooltip>
+          
+          <DropdownMenuContent align="end" className="w-80 p-0 overflow-hidden">
+            <div className="flex items-center justify-between p-4 bg-slate-50/50 border-b border-slate-100">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
+                <p className="text-[10px] text-slate-500 font-medium">You have {unreadCount} unread alerts</p>
+              </div>
+              {unreadCount > 0 && (
+                <button 
+                  onClick={() => notifications.forEach(n => !n.isRead && handleMarkAsRead(n.id))}
+                  className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase"
+                >
+                  Mark all as read
+                </button>
+              )}
+            </div>
+            
+            <div className="max-h-[350px] overflow-y-auto">
+              {Array.isArray(notifications) && notifications.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center mb-2">
+                    <Bell size={18} className="text-slate-400" />
+                  </div>
+                  <p className="text-xs font-medium text-slate-500">All caught up!</p>
+                  <p className="text-[10px] text-slate-400 mt-1">No new notifications at the moment.</p>
+                </div>
+              ) : (
+                Array.isArray(notifications) && notifications.map((notif) => (
+                  <div 
+                    key={notif.id}
+                    className={cn(
+                      "p-4 border-b border-slate-50 transition-colors relative group hover:bg-slate-50/50",
+                      !notif.isRead && "bg-blue-50/20"
+                    )}
+                  >
+                    <div className="flex gap-3">
+                      <div className={cn(
+                        "w-8 h-8 rounded-lg shrink-0 flex items-center justify-center",
+                        notif.type === 'warning' ? "bg-amber-100/50" :
+                        notif.type === 'success' ? "bg-emerald-100/50" :
+                        notif.type === 'error' ? "bg-red-100/50" : "bg-blue-100/50"
+                      )}>
+                        {getNotificationIcon(notif.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className={cn("text-xs leading-none mb-1", notif.isRead ? "font-semibold text-slate-700" : "font-bold text-slate-900")}>
+                            {notif.title}
+                          </p>
+                          <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">
+                            1h ago
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                          {notif.message}
+                        </p>
+                        <div className="mt-2 flex items-center gap-3">
+                          {!notif.isRead && (
+                            <button 
+                              onClick={() => handleMarkAsRead(notif.id)}
+                              className="text-[10px] font-bold text-blue-600 hover:underline"
+                            >
+                              Mark as read
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => deleteNotification(notif.id)}
+                            className="text-[10px] font-bold text-slate-400 hover:text-red-500"
+                          >
+                            Dismiss
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            <div className="p-2 border-t border-slate-50 bg-slate-50/30 text-center">
+              <button 
+                onClick={() => navigate("/notifications")}
+                className="text-[10px] font-bold text-slate-500 hover:text-slate-700 uppercase"
+              >
+                View all notifications
+              </button>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <DropdownMenu>
-          <SimpleTooltip content="User Menu" side="bottom">
+            <SimpleTooltip content="User Menu" side="bottom" nativeButton={false}>
             <DropdownMenuTrigger
+              nativeButton={false}
               render={
                 <div className={cn("flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-50 transition-colors text-slate-600 cursor-pointer border-none bg-transparent outline-none")}>
                   <div className="text-right hidden sm:block">
-                    <p className="text-sm font-medium text-slate-900 leading-tight">{user.name}</p>
-                    <p className="text-xs text-slate-500 capitalize">{user.role}</p>
+                    <p className="text-sm font-bold text-slate-900 leading-tight">{user.name}</p>
                   </div>
                   <Avatar className="h-8 w-8 border border-slate-200">
                     <AvatarFallback className="bg-slate-900 text-white text-xs">

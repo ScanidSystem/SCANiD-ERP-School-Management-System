@@ -27,7 +27,7 @@ IF NOT EXISTS (SELECT 1 FROM Schools WHERE Id = 1)
 BEGIN
     PRINT 'Seeding sample School...';
     SET IDENTITY_INSERT Schools ON;
-    INSERT INTO Schools (Id, Name, Code, Address, Email, TotalStudents, Status, CreatedAt)
+    INSERT INTO Schools (Id, Name, Code, Address, Email, TotalStudents, Status, CreatedOn)
     VALUES (1, 'ScanID Excellence Academy', 'SEA001', '456 Innovation Drive, Tech City', 'admin@scanid.edu', 1200, 'Active', GETUTCDATE());
     SET IDENTITY_INSERT Schools OFF;
 END
