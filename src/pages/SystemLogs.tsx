@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { User, AuditLog, ErrorLog } from "@/types";
 import { apiService } from "@/lib/api";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, RefreshCw, Trash2, Database, AlertCircle, History, Copy, Check, ChevronRight, Home, Terminal } from "lucide-react";
+import { Loader2, RefreshCw, Trash2, Database, AlertCircle, History, Copy, Check, ChevronRight, Home, Terminal, ChevronLeft, ChevronsLeft, ChevronsRight, ChevronUp, ChevronDown, ArrowUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { Link, Navigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,20 @@ export default function SystemLogs({ user }: SystemLogsProps) {
 
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
+  const [auditPage, setAuditPage] = useState(1);
+  const [auditPageSize, setAuditPageSize] = useState(10);
+  const [auditSortBy, setAuditSortBy] = useState("timestamp");
+  const [auditSortOrder, setAuditSortOrder] = useState<"asc" | "desc">("desc");
+  const [auditTotalCount, setAuditTotalCount] = useState(0);
+  const [auditTotalPages, setAuditTotalPages] = useState(0);
+
+  const [errorPage, setErrorPage] = useState(1);
+  const [errorPageSize, setErrorPageSize] = useState(10);
+  const [errorSortBy, setErrorSortBy] = useState("timestamp");
+  const [errorSortOrder, setErrorSortOrder] = useState<"asc" | "desc">("desc");
+  const [errorTotalCount, setErrorTotalCount] = useState(0);
+  const [errorTotalPages, setErrorTotalPages] = useState(0);
+
   const [appLogs, setAppLogs] = useState<string>("");
   const [dbScript, setDbScript] = useState<string>("");
   const [seedScript, setSeedScript] = useState<string>("");
@@ -37,39 +52,58 @@ export default function SystemLogs({ user }: SystemLogsProps) {
     try {
       // Use Promise.allSettled to ensure one failing endpoint doesn't block the whole page
       const results = await Promise.allSettled([
-        apiService.getAuditLogs(),
-        apiService.getErrorLogs(),
+        apiService.getAuditLogs({
+          page: auditPage,
+          pageSize: auditPageSize,
+          sortBy: auditSortBy,
+          sortOrder: auditSortOrder
+        }),
+        apiService.getErrorLogs({
+          page: errorPage,
+          pageSize: errorPageSize,
+          sortBy: errorSortBy,
+          sortOrder: errorSortOrder
+        }),
         apiService.getDbScript(),
         apiService.getFileSystemLogs(),
         apiService.getSeedScript()
       ]);
 
       // Helper to extract data from settled promise
-      const getData = (result: any) => {
+      const getResBody = (result: any) => {
         if (result.status === 'fulfilled') {
           return result.value.data;
         }
         return null;
       };
 
-      const auditData = getData(results[0]);
-      const errorData = getData(results[1]);
-      const scriptData = getData(results[2]);
-      const appLogsData = getData(results[3]);
-      const seedData = getData(results[4]);
+      const auditRes = getResBody(results[0]);
+      const errorRes = getResBody(results[1]);
+      const scriptData = getResBody(results[2]);
+      const appLogsData = getResBody(results[3]);
+      const seedData = getResBody(results[4]);
 
       // Normalize data (handle array in property or PascalCase)
-      const normalizeArray = (data: any): any[] => {
-        if (!data) return [];
-        if (Array.isArray(data)) return data;
-        if (data.items && Array.isArray(data.items)) return data.items;
-        if (data.$values && Array.isArray(data.$values)) return data.$values;
-        if (data.data && Array.isArray(data.data)) return data.data;
-        return [];
+      const normalizeData = (res: any) => {
+        if (!res) return { items: [], total: 0, pages: 0 };
+        const data = res.data || res;
+        const items = Array.isArray(data) ? data : (data.items || data.$values || []);
+        const total = res.pagination?.totalCount || items.length;
+        const pages = res.pagination?.totalPages || Math.ceil(total / 10);
+        return { items, total, pages };
       };
 
-      setAuditLogs(normalizeArray(auditData));
-      setErrorLogs(normalizeArray(errorData));
+      const normAudit = normalizeData(auditRes);
+      const normError = normalizeData(errorRes);
+
+      setAuditLogs(normAudit.items);
+      setAuditTotalCount(normAudit.total);
+      setAuditTotalPages(normAudit.pages);
+
+      setErrorLogs(normError.items);
+      setErrorTotalCount(normError.total);
+      setErrorTotalPages(normError.pages);
+
       setDbScript(scriptData?.content || "");
       setAppLogs(appLogsData?.content || "");
       setSeedScript(seedData?.content || "");
@@ -88,7 +122,27 @@ export default function SystemLogs({ user }: SystemLogsProps) {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [auditPage, auditPageSize, auditSortBy, auditSortOrder, errorPage, errorPageSize, errorSortBy, errorSortOrder]);
+
+  const handleAuditSort = (key: string) => {
+    if (auditSortBy === key) {
+      setAuditSortOrder(auditSortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setAuditSortBy(key);
+      setAuditSortOrder("asc");
+    }
+    setAuditPage(1);
+  };
+
+  const handleErrorSort = (key: string) => {
+    if (errorSortBy === key) {
+      setErrorSortOrder(errorSortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setErrorSortBy(key);
+      setErrorSortOrder("asc");
+    }
+    setErrorPage(1);
+  };
 
   const clearErrorLogs = async () => {
     if (!confirm("Are you sure you want to clear all error logs?")) return;
@@ -183,10 +237,25 @@ export default function SystemLogs({ user }: SystemLogsProps) {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50/50 border-y border-slate-100">
-                      <TableHead className="pl-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Timestamp</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Event Type</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Entity Affected</TableHead>
+                    <TableRow className="bg-slate-50/50 border-y border-slate-100 h-14">
+                      <TableHead className="pl-8 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleAuditSort('timestamp')}>
+                        <div className="flex items-center gap-1">
+                          Timestamp
+                          {auditSortBy === 'timestamp' ? (auditSortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleAuditSort('type')}>
+                        <div className="flex items-center gap-1">
+                          Event Type
+                          {auditSortBy === 'type' ? (auditSortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleAuditSort('tableName')}>
+                        <div className="flex items-center gap-1">
+                          Entity Affected
+                          {auditSortBy === 'tableName' ? (auditSortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                        </div>
+                      </TableHead>
                       <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">UID</TableHead>
                       <TableHead className="pr-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Operation Context</TableHead>
                     </TableRow>
@@ -232,6 +301,47 @@ export default function SystemLogs({ user }: SystemLogsProps) {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Audit Pagination */}
+              <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 bg-slate-50/50 border-t border-slate-100 gap-4">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest text-[10px]">
+                  Showing <span className="text-slate-900 font-black">{auditLogs.length > 0 ? (auditPage - 1) * auditPageSize + 1 : 0}</span> to <span className="text-slate-900 font-black">{Math.min(auditPage * auditPageSize, auditTotalCount)}</span> of <span className="text-slate-900 font-black">{auditTotalCount}</span> entries
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 mr-4">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rows</span>
+                    <Select value={auditPageSize.toString()} onValueChange={(v) => { setAuditPageSize(parseInt(v)); setAuditPage(1); }}>
+                      <SelectTrigger className="w-[70px] h-8 bg-white border-slate-200 rounded-lg text-xs font-bold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                        {[10, 25, 50, 100].map(size => (
+                          <SelectItem key={size} value={size.toString()} className="text-xs font-bold">{size}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setAuditPage(1)} disabled={auditPage === 1}>
+                      <ChevronsLeft size={14} />
+                    </Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setAuditPage(prev => Math.max(1, prev - 1))} disabled={auditPage === 1}>
+                      <ChevronLeft size={14} />
+                    </Button>
+                    <div className="flex items-center px-3 h-8 bg-white border border-slate-200 rounded-lg text-xs font-black mx-1">
+                      {auditPage} / {auditTotalPages || 1}
+                    </div>
+                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setAuditPage(prev => Math.min(auditTotalPages, prev + 1))} disabled={auditPage >= auditTotalPages}>
+                      <ChevronRight size={14} />
+                    </Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setAuditPage(auditTotalPages)} disabled={auditPage >= auditTotalPages}>
+                      <ChevronsRight size={14} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -258,9 +368,19 @@ export default function SystemLogs({ user }: SystemLogsProps) {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50/50 border-y border-slate-100">
-                      <TableHead className="pl-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Event Time</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Severity</TableHead>
+                    <TableRow className="bg-slate-50/50 border-y border-slate-100 h-14">
+                      <TableHead className="pl-8 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleErrorSort('timestamp')}>
+                        <div className="flex items-center gap-1">
+                          Event Time
+                          {errorSortBy === 'timestamp' ? (errorSortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleErrorSort('level')}>
+                        <div className="flex items-center gap-1">
+                          Severity
+                          {errorSortBy === 'level' ? (errorSortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                        </div>
+                      </TableHead>
                       <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Error Origin</TableHead>
                       <TableHead className="pr-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Message Detail</TableHead>
                     </TableRow>
@@ -297,6 +417,47 @@ export default function SystemLogs({ user }: SystemLogsProps) {
                     )}
                   </TableBody>
                 </Table>
+              </div>
+
+              {/* Error Pagination */}
+              <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 bg-slate-50/50 border-t border-slate-100 gap-4">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest text-[10px]">
+                  Showing <span className="text-slate-900 font-black">{errorLogs.length > 0 ? (errorPage - 1) * errorPageSize + 1 : 0}</span> to <span className="text-slate-900 font-black">{Math.min(errorPage * errorPageSize, errorTotalCount)}</span> of <span className="text-slate-900 font-black">{errorTotalCount}</span> entries
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 mr-4">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rows</span>
+                    <Select value={errorPageSize.toString()} onValueChange={(v) => { setErrorPageSize(parseInt(v)); setErrorPage(1); }}>
+                      <SelectTrigger className="w-[70px] h-8 bg-white border-slate-200 rounded-lg text-xs font-bold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                        {[10, 25, 50, 100].map(size => (
+                          <SelectItem key={size} value={size.toString()} className="text-xs font-bold">{size}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setErrorPage(1)} disabled={errorPage === 1}>
+                      <ChevronsLeft size={14} />
+                    </Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setErrorPage(prev => Math.max(1, prev - 1))} disabled={errorPage === 1}>
+                      <ChevronLeft size={14} />
+                    </Button>
+                    <div className="flex items-center px-3 h-8 bg-white border border-slate-200 rounded-lg text-xs font-black mx-1">
+                      {errorPage} / {errorTotalPages || 1}
+                    </div>
+                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setErrorPage(prev => Math.min(errorTotalPages, prev + 1))} disabled={errorPage >= errorTotalPages}>
+                      <ChevronRight size={14} />
+                    </Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setErrorPage(errorTotalPages)} disabled={errorPage >= errorTotalPages}>
+                      <ChevronsRight size={14} />
+                    </Button>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

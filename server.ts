@@ -311,17 +311,75 @@ async function startServer() {
     { id: 2, fullName: "Teacher One", username: "teacher01", email: "teacher01@scanid.com", role: "teacher", status: "Active" }
   ];
 
+  const applySortingAndPagination = (data: any[], query: any) => {
+    let result = [...data];
+    const { sortBy, sortOrder, page, pageSize, search } = query;
+
+    // Apply Search if applicable (generic search)
+    if (search) {
+      const searchLower = search.toLowerCase();
+      result = result.filter(item => 
+        Object.values(item).some(val => 
+          val && val.toString().toLowerCase().includes(searchLower)
+        )
+      );
+    }
+
+    // Apply Sorting
+    if (sortBy) {
+      result.sort((a, b) => {
+        const valA = a[sortBy];
+        const valB = b[sortBy];
+        
+        if (valA === valB) return 0;
+        
+        let comparison = 0;
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          comparison = valA.localeCompare(valB);
+        } else {
+          comparison = valA < valB ? -1 : 1;
+        }
+        
+        return sortOrder === 'desc' ? comparison * -1 : comparison;
+      });
+    }
+
+    // Apply Pagination
+    const totalCount = result.length;
+    const pageNum = parseInt(page as string) || 1;
+    const size = parseInt(pageSize as string) || 10;
+    
+    const startIndex = (pageNum - 1) * size;
+    const paginatedData = result.slice(startIndex, startIndex + size);
+
+    return {
+      data: paginatedData,
+      pagination: {
+        totalCount,
+        page: pageNum,
+        pageSize: size,
+        totalPages: Math.ceil(totalCount / size)
+      }
+    };
+  };
+
   // API Routes
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", message: "SCANiD Dev Server is running." });
   });
 
   // Audit Logs
-  app.get("/api/auditlogs", (req, res) => res.json({ data: auditLogs }));
+  app.get("/api/auditlogs", (req, res) => {
+    res.json(applySortingAndPagination(auditLogs, req.query));
+  });
 
   // Error Logs
-  app.get("/api/errorlogs", (req, res) => res.json({ data: errorLogs }));
-  app.get("/api/errorlogs/filesystem", (req, res) => res.json({ data: errorLogs }));
+  app.get("/api/errorlogs", (req, res) => {
+    res.json(applySortingAndPagination(errorLogs, req.query));
+  });
+  app.get("/api/errorlogs/filesystem", (req, res) => {
+    res.json(applySortingAndPagination(errorLogs, req.query));
+  });
   app.delete("/api/errorlogs/clear", (req, res) => {
     errorLogs = [];
     res.status(204).send();
@@ -353,27 +411,37 @@ async function startServer() {
   });
 
   // Schools
-  app.get("/api/schools", (req, res) => res.json({ data: schools }));
+  app.get("/api/schools", (req, res) => {
+    res.json(applySortingAndPagination(schools, req.query));
+  });
   app.post("/api/schools", (req, res) => {
     const newItem = { id: schools.length + 1, ...req.body };
     schools.push(newItem);
     res.status(201).json({ data: newItem });
   });
 
-  /* 
   // Students
   app.get("/api/students", (req, res) => {
     const schoolId = req.query.schoolId ? parseInt(req.query.schoolId as string) : null;
     const academicYearId = req.query.academicYearId ? parseInt(req.query.academicYearId as string) : null;
+    const standard = req.query.standard as string;
+    const section = req.query.section as string;
     
-    let filtered = students;
+    let filtered = [...students];
     if (schoolId) {
       filtered = filtered.filter(s => s.schoolId === schoolId);
     }
     if (academicYearId) {
       filtered = filtered.filter(s => s.academicYearId === academicYearId || s.academicyear === academicYearId.toString());
     }
-    res.json({ data: filtered });
+    if (standard) {
+      filtered = filtered.filter(s => s.standard === standard || s.STD === standard);
+    }
+    if (section) {
+      filtered = filtered.filter(s => s.section === section || s.DIV === section);
+    }
+    
+    res.json(applySortingAndPagination(filtered, req.query));
   });
 
   app.post("/api/students", (req, res) => {
@@ -425,7 +493,6 @@ async function startServer() {
     }
     res.json({ data: { path: mockPath } });
   });
-  */
 
   app.post("/api/schools/:id/photo", (req, res) => {
     const id = parseInt(req.params.id);
@@ -501,13 +568,21 @@ async function startServer() {
   app.get("/api/teachers", (req, res) => {
     const schoolId = req.query.schoolId ? parseInt(req.query.schoolId as string) : null;
     const academicYearId = req.query.academicYearId ? parseInt(req.query.academicYearId as string) : null;
+    const status = req.query.status as string;
+    const subject = req.query.subject as string;
     
-    let filtered = teachers;
+    let filtered = [...teachers];
     if (schoolId) {
       filtered = filtered.filter(t => t.schoolId === schoolId);
     }
-    // Teachers might not be filtered by academic year in this simple mock
-    res.json({ data: filtered });
+    if (status) {
+      filtered = filtered.filter(t => t.status === status);
+    }
+    if (subject) {
+      filtered = filtered.filter(t => t.subject === subject || t.department === subject);
+    }
+    
+    res.json(applySortingAndPagination(filtered, req.query));
   });
 
   app.post("/api/teachers", (req, res) => {
@@ -541,7 +616,9 @@ async function startServer() {
   Object.keys(mastersMap).forEach(resourceName => {
     const dataArray = mastersMap[resourceName];
     
-    app.get(`/api/masters/${resourceName}`, (req, res) => res.json({ data: dataArray }));
+    app.get(`/api/masters/${resourceName}`, (req, res) => {
+      res.json(applySortingAndPagination(dataArray, req.query));
+    });
     
     app.post(`/api/masters/${resourceName}`, (req, res) => {
       const newItem = { id: dataArray.length + 1, ...req.body, isActive: true };
@@ -573,7 +650,14 @@ async function startServer() {
   });
 
   // Users
-  app.get("/api/users", (req, res) => res.json({ data: users }));
+  app.get("/api/users", (req, res) => {
+    const roleId = req.query.roleId as string;
+    let filtered = [...users];
+    if (roleId) {
+      filtered = filtered.filter(u => u.role === roleId);
+    }
+    res.json(applySortingAndPagination(filtered, req.query));
+  });
   app.post("/api/users", (req, res) => {
     const newItem = { id: users.length + 1, ...req.body, status: "Active" };
     users.push(newItem);

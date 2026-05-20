@@ -30,7 +30,14 @@ import {
   Camera,
   UserCircle,
   FileText,
-  GraduationCap
+  GraduationCap,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -65,7 +72,7 @@ import {
 } from "@/components/ui/select";
 
 import { User as UserType } from "@/types";
-import { cn, parseSafeInt } from "@/lib/utils";
+import { cn, parseSafeInt, resolvePhotoUrl } from "@/lib/utils";
 
 export default function Students({ user }: { user: UserType }) {
   const [students, setStudents] = useState<any[]>([]);
@@ -73,6 +80,14 @@ export default function Students({ user }: { user: UserType }) {
   const [search, setSearch] = useState("");
   const [standardFilter, setStandardFilter] = useState("all");
   const [sectionFilter, setSectionFilter] = useState("all");
+
+  // Pagination & Sorting State
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortBy, setSortBy] = useState("fullName");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const [schools, setSchools] = useState<any[]>([]);
   const [standardsMaster, setStandardsMaster] = useState<any[]>([]);
@@ -144,10 +159,31 @@ export default function Students({ user }: { user: UserType }) {
     try {
       const response = await apiService.getStudents(
         parseSafeInt(user.schoolId),
-        parseSafeInt(user.academicYearId)
+        parseSafeInt(user.academicYearId),
+        {
+          page,
+          pageSize,
+          sortBy,
+          sortOrder,
+          search,
+          // @ts-ignore - adding filters to params
+          standard: standardFilter === "all" ? undefined : standardFilter,
+          section: sectionFilter === "all" ? undefined : sectionFilter
+        }
       );
-    const studentData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
-    const formatted = studentData.map((s: any) => {
+      
+      const responseData = response.data;
+      const studentData = Array.isArray(responseData.data) ? responseData.data : [];
+      
+      if (responseData.pagination) {
+        setTotalCount(responseData.pagination.totalCount);
+        setTotalPages(responseData.pagination.totalPages);
+      } else {
+        setTotalCount(studentData.length);
+        setTotalPages(Math.ceil(studentData.length / pageSize));
+      }
+
+      const formatted = studentData.map((s: any) => {
       // Helper to fetch data by ensuring case-insensitive property access for specific schema fields
       const getVal = (prop: string, fallback?: any) => {
         if (!s) return fallback;
@@ -227,8 +263,18 @@ export default function Students({ user }: { user: UserType }) {
   useEffect(() => {
     fetchStudents();
     fetchMasters();
-  }, [fetchStudents, fetchMasters]);
+  }, [fetchStudents, fetchMasters, page, pageSize, sortBy, sortOrder, search, standardFilter, sectionFilter]);
   
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setSortOrder("asc");
+    }
+    setPage(1); // Reset to first page on sort
+  };
+
   const canManage = user.role === "superadmin" || user.role === "admin";
   
   const [uploadingStudentId, setUploadingStudentId] = useState<string | number | null>(null);
@@ -802,16 +848,7 @@ export default function Students({ user }: { user: UserType }) {
     }
   };
 
-  const filteredStudents = students.filter(s => {
-    const matchesSearch = 
-      s.name.toLowerCase().includes(search.toLowerCase()) || 
-      s.roll.toLowerCase().includes(search.toLowerCase()) || 
-      (s.grno && s.grno.toLowerCase().includes(search.toLowerCase())) ||
-      (s.registrationNumber && s.registrationNumber.toLowerCase().includes(search.toLowerCase()));
-    const matchesStandard = standardFilter === "all" || s.standard === standardFilter;
-    const matchesSection = sectionFilter === "all" || s.section === sectionFilter;
-    return matchesSearch && matchesStandard && matchesSection;
-  });
+  const filteredStudents = students; // Server now handles filtering, sorting and pagination
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-in slide-in-from-bottom-2 duration-500">
@@ -1219,7 +1256,7 @@ export default function Students({ user }: { user: UserType }) {
                                 <div className="w-44 h-44 rounded-3xl overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-200 bg-slate-50 flex items-center justify-center transition-all duration-300 group-hover:shadow-blue-200/50 group-hover:scale-[1.02]">
                                   {newStudentFormData.ProfilePhotoPath ? (
                                     <img 
-                                      src={newStudentFormData.ProfilePhotoPath} 
+                                      src={resolvePhotoUrl(newStudentFormData.ProfilePhotoPath)} 
                                       alt="Student Identity" 
                                       className="w-full h-full object-cover"
                                       onError={(e) => {
@@ -1734,10 +1771,42 @@ export default function Students({ user }: { user: UserType }) {
             <Table>
             <TableHeader>
               <TableRow className="bg-slate-50/30 h-16 border-b border-slate-50">
-                <TableHead className="w-[140px] pl-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Registry #</TableHead>
-                <TableHead className="w-[80px] hidden md:table-cell text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Roll</TableHead>
-                <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Profile Information</TableHead>
-                <TableHead className="hidden lg:table-cell text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Placement</TableHead>
+                <TableHead 
+                  className="w-[140px] pl-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  onClick={() => handleSort("grno")}
+                >
+                  <div className="flex items-center gap-1">
+                    Registry #
+                    {sortBy === "grno" ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="w-[80px] hidden md:table-cell text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  onClick={() => handleSort("roll")}
+                >
+                  <div className="flex items-center gap-1">
+                    Roll
+                    {sortBy === "roll" ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  onClick={() => handleSort("fullName")}
+                >
+                  <div className="flex items-center gap-1">
+                    Profile Information
+                    {sortBy === "fullName" ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="hidden lg:table-cell text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  onClick={() => handleSort("standard")}
+                >
+                  <div className="flex items-center gap-1">
+                    Placement
+                    {sortBy === "standard" ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                  </div>
+                </TableHead>
                 <TableHead className="hidden xl:table-cell text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Identity Details</TableHead>
                 <TableHead className="hidden sm:table-cell text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Academic Status</TableHead>
                 <TableHead className="text-right pr-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Management</TableHead>
@@ -1759,7 +1828,7 @@ export default function Students({ user }: { user: UserType }) {
                       <div className="flex items-center gap-4">
                         <div className="relative shrink-0">
                           <Avatar className="h-11 w-11 border-2 border-white shadow-sm ring-1 ring-slate-100">
-                            <AvatarImage src={student.profilePhotoPath} alt={student.name} />
+                            <AvatarImage src={resolvePhotoUrl(student.profilePhotoPath)} alt={student.name} />
                             <AvatarFallback className="bg-gradient-to-br from-slate-100 to-slate-200 text-slate-700 text-xs font-black">
                               {student.name ? student.name.split(" ").map((n: string) => n[0]).join("") : "S"}
                             </AvatarFallback>
@@ -1881,7 +1950,74 @@ export default function Students({ user }: { user: UserType }) {
                 </TableRow>
               )}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
+
+          {/* Pagination Footer */}
+          <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 bg-slate-50/50 border-t border-slate-100 gap-4">
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+              Showing <span className="text-slate-900 font-black">{students.length > 0 ? (page - 1) * pageSize + 1 : 0}</span> to <span className="text-slate-900 font-black">{Math.min(page * pageSize, totalCount)}</span> of <span className="text-slate-900 font-black">{totalCount}</span> entries
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 mr-4">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rows per page</span>
+                <Select value={pageSize.toString()} onValueChange={(v) => { setPageSize(parseInt(v)); setPage(1); }}>
+                  <SelectTrigger className="w-[70px] h-8 bg-white border-slate-200 rounded-lg text-xs font-bold">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                    {[10, 25, 50, 100].map(size => (
+                      <SelectItem key={size} value={size.toString()} className="text-xs font-bold">{size}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                  onClick={() => setPage(1)}
+                  disabled={page === 1}
+                >
+                  <ChevronsLeft size={14} />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                  onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                  disabled={page === 1}
+                >
+                  <ChevronLeft size={14} />
+                </Button>
+
+                <div className="flex items-center px-3 h-8 bg-white border border-slate-200 rounded-lg text-xs font-black text-slate-900 mx-1">
+                  Page {page} of {totalPages || 1}
+                </div>
+
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                  onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={page >= totalPages}
+                >
+                  <ChevronRight size={14} />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                  onClick={() => setPage(totalPages)}
+                  disabled={page >= totalPages}
+                >
+                  <ChevronsRight size={14} />
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

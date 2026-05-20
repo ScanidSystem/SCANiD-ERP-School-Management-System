@@ -11,7 +11,14 @@ import {
   Phone, 
   MoreHorizontal,
   LayoutGrid,
-  List
+  List,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ChevronUp,
+  ChevronDown,
+  ArrowUpDown
 } from "lucide-react";
 import { 
   Card, 
@@ -67,6 +74,12 @@ export default function Users() {
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("all");
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -82,14 +95,33 @@ export default function Users() {
     setLoading(true);
     try {
       const [usersRes, rolesRes] = await Promise.all([
-        apiService.getUsers(),
+        apiService.getUsers({
+          page,
+          pageSize,
+          sortBy,
+          sortOrder,
+          search: searchQuery,
+          roleId: selectedRole === "all" ? undefined : selectedRole
+        }),
         apiService.getRoles()
       ]);
-      setUsers(usersRes.data.data || usersRes.data || []);
+      
+      const resData = usersRes.data;
+      const userData = Array.isArray(resData.data) ? resData.data : [];
+      
+      if (resData.pagination) {
+        setTotalCount(resData.pagination.totalCount);
+        setTotalPages(resData.pagination.totalPages);
+      } else {
+        setTotalCount(userData.length);
+        setTotalPages(Math.ceil(userData.length / pageSize));
+      }
+      
+      setUsers(userData);
       setRoles(rolesRes.data.data || rolesRes.data || []);
     } catch (error) {
-      console.error("Error fetching users:", error);
-      toast.error("Failed to load users");
+      console.error("Error fetching data:", error);
+      toast.error("Failed to load registry data");
     } finally {
       setLoading(false);
     }
@@ -97,7 +129,17 @@ export default function Users() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [page, pageSize, sortBy, sortOrder, searchQuery, selectedRole]);
+
+  const handleSort = (key: string) => {
+    if (sortBy === key) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(key);
+      setSortOrder("asc");
+    }
+    setPage(1);
+  };
 
   const handleOpenDialog = (user: User | null = null) => {
     setEditingUser(user);
@@ -163,13 +205,7 @@ export default function Users() {
     }
   };
 
-  const filteredUsers = users.filter(u => {
-    const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         u.username?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = selectedRole === "all" || u.role === selectedRole;
-    return matchesSearch && matchesRole;
-  });
+  const filteredUsers = users;
 
   const getRoleBadge = (role: string) => {
     switch (role) {
@@ -263,9 +299,24 @@ export default function Users() {
                         <TableHeader>
                             <TableRow className="hover:bg-transparent border-slate-100 h-14 bg-slate-50/30">
                                 <TableHead className="pl-6 w-12"></TableHead>
-                                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">User Identity</TableHead>
-                                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Username</TableHead>
-                                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">System Role</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleSort('name')}>
+                                    <div className="flex items-center gap-1">
+                                        User Identity
+                                        {sortBy === 'name' ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                                    </div>
+                                </TableHead>
+                                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleSort('username')}>
+                                    <div className="flex items-center gap-1">
+                                        Username
+                                        {sortBy === 'username' ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                                    </div>
+                                </TableHead>
+                                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleSort('role')}>
+                                    <div className="flex items-center gap-1">
+                                        System Role
+                                        {sortBy === 'role' ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                                    </div>
+                                </TableHead>
                                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</TableHead>
                                 <TableHead className="text-right pr-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Actions</TableHead>
                             </TableRow>
@@ -391,6 +442,75 @@ export default function Users() {
                         ))
                     )}
                 </div>
+            )}
+
+            {/* Pagination Footer */}
+            {!loading && (
+              <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 bg-slate-50/50 border-t border-slate-100 gap-4">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  Showing <span className="text-slate-900 font-black">{users.length > 0 ? (page - 1) * pageSize + 1 : 0}</span> to <span className="text-slate-900 font-black">{Math.min(page * pageSize, totalCount)}</span> of <span className="text-slate-900 font-black">{totalCount}</span> entries
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 mr-4">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rows per page</span>
+                    <Select value={pageSize.toString()} onValueChange={(v) => { setPageSize(parseInt(v)); setPage(1); }}>
+                      <SelectTrigger className="w-[70px] h-8 bg-white border-slate-200 rounded-lg text-xs font-bold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                        {[10, 25, 50, 100].map(size => (
+                          <SelectItem key={size} value={size.toString()} className="text-xs font-bold">{size}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                      onClick={() => setPage(1)}
+                      disabled={page === 1}
+                    >
+                      <ChevronsLeft size={14} />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                      onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                      disabled={page === 1}
+                    >
+                      <ChevronLeft size={14} />
+                    </Button>
+
+                    <div className="flex items-center px-3 h-8 bg-white border border-slate-200 rounded-lg text-xs font-black text-slate-900 mx-1">
+                      Page {page} of {totalPages || 1}
+                    </div>
+
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                      onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={page >= totalPages}
+                    >
+                      <ChevronRight size={14} />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                      onClick={() => setPage(totalPages)}
+                      disabled={page >= totalPages}
+                    >
+                      <ChevronsRight size={14} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             )}
         </CardContent>
       </Card>

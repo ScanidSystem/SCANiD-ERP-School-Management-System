@@ -28,7 +28,13 @@ import {
   Edit,
   Trash2,
   Camera,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react";
 import { Import, Download, Camera as CameraIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -61,7 +67,7 @@ import {
 import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 import { User as UserType } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, resolvePhotoUrl } from "@/lib/utils";
 import { DeleteConfirmation } from "@/components/shared/DeleteConfirmation";
 
 export default function Schools({ user }: { user: UserType }) {
@@ -81,7 +87,12 @@ export default function Schools({ user }: { user: UserType }) {
   const [currentSchool, setCurrentSchool] = useState<any>(null);
   const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
   const inputRefs = useRef<Record<string, any>>({});
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingSchoolId, setUploadingSchoolId] = useState<number | null>(null);
 
@@ -97,14 +108,47 @@ export default function Schools({ user }: { user: UserType }) {
   const fetchSchools = async () => {
     setLoading(true);
     try {
-      const res = await apiService.getSchools();
-      const schoolData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+      const res = await apiService.getSchools({
+        page,
+        pageSize,
+        sortBy,
+        sortOrder,
+        search: searchQuery
+      });
+      
+      const resData = res.data;
+      const schoolData = Array.isArray(resData.data) ? resData.data : [];
+      
+      if (resData.pagination) {
+        setTotalCount(resData.pagination.totalCount);
+        setTotalPages(resData.pagination.totalPages);
+      } else {
+        setTotalCount(schoolData.length);
+        setTotalPages(Math.ceil(schoolData.length / pageSize));
+      }
+      
       setSchools(schoolData);
     } catch (error) {
       console.error("Schools error:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (user.role === "superadmin") {
+      fetchSchools();
+    }
+  }, [user.role, page, pageSize, sortBy, sortOrder, searchQuery]);
+
+  const handleSort = (key: string) => {
+    if (sortBy === key) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(key);
+      setSortOrder("asc");
+    }
+    setPage(1);
   };
 
   const handleEditClick = (school: any) => {
@@ -221,13 +265,7 @@ export default function Schools({ user }: { user: UserType }) {
     }
   };
 
-  const requestSort = (key: string) => {
-    let direction: "asc" | "desc" = "asc";
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-  };
+
 
   const handleCreateSchool = async () => {
     const newErrors: Record<string, boolean> = {};
@@ -278,29 +316,7 @@ export default function Schools({ user }: { user: UserType }) {
     }
   };
 
-  useEffect(() => {
-    if (user.role === "superadmin") {
-      fetchSchools();
-    }
-  }, [user.role]);
-
-  const filteredSchools = schools.filter(s => 
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.id.toString().includes(searchQuery)
-  );
-
-  const sortedSchools = [...filteredSchools].sort((a, b) => {
-    if (!sortConfig) return 0;
-    const { key, direction } = sortConfig;
-    
-    const aValue = a[key] || "";
-    const bValue = b[key] || "";
-
-    if (aValue < bValue) return direction === "asc" ? -1 : 1;
-    if (aValue > bValue) return direction === "asc" ? 1 : -1;
-    return 0;
-  });
+  const sortedSchools = schools;
 
   return (
     <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
@@ -511,7 +527,7 @@ export default function Schools({ user }: { user: UserType }) {
                         <div className="w-44 h-44 rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-100 bg-slate-50 flex items-center justify-center transition-all group-hover:shadow-blue-200/50 group-hover:scale-[1.02]">
                            {formData.photo ? (
                              <img 
-                               src={formData.photo} 
+                               src={resolvePhotoUrl(formData.photo)} 
                                alt="School" 
                                className="w-full h-full object-cover"
                                onError={(e) => {
@@ -708,27 +724,30 @@ export default function Schools({ user }: { user: UserType }) {
                 <TableRow className="bg-slate-50/50 h-14">
                   <TableHead 
                     className="w-[150px] pl-8 text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
-                    onClick={() => requestSort('id')}
+                    onClick={() => handleSort('id')}
                   >
                     <div className="flex items-center gap-2">
-                      School ID <ArrowUpDown size={12} />
+                      School ID 
+                      {sortBy === 'id' ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={12} className="opacity-30" />}
                     </div>
                   </TableHead>
                   <TableHead 
                     className="text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
-                    onClick={() => requestSort('name')}
+                    onClick={() => handleSort('name')}
                   >
                     <div className="flex items-center gap-2">
-                      Institution Profile <ArrowUpDown size={12} />
+                      Institution Profile 
+                      {sortBy === 'name' ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={12} className="opacity-30" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Digital Registry</TableHead>
                   <TableHead 
                     className="text-xs font-black text-slate-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
-                    onClick={() => requestSort('status')}
+                    onClick={() => handleSort('status')}
                   >
                     <div className="flex items-center gap-2">
-                      Status <ArrowUpDown size={12} />
+                      Status 
+                      {sortBy === 'status' ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={12} className="opacity-30" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-right pr-8 text-xs font-black text-slate-500 uppercase tracking-widest">Management</TableHead>
@@ -742,7 +761,7 @@ export default function Schools({ user }: { user: UserType }) {
                       <div className="flex items-center gap-4">
                         <div className="relative group">
                           <Avatar className="h-12 w-12 border-2 border-white shadow-md ring-1 ring-slate-100 group-hover:ring-blue-400 group-hover:scale-105 transition-all duration-300">
-                            <AvatarImage src={school.profilePhotoPath || school.ProfilePhotoPath} alt={school.name} className="object-cover" />
+                            <AvatarImage src={resolvePhotoUrl(school.profilePhotoPath || school.ProfilePhotoPath)} alt={school.name} className="object-cover" />
                             <AvatarFallback className="bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 font-black text-xs">
                               {school.name.split(' ').map((n: any) => n[0]).join('').toUpperCase()}
                             </AvatarFallback>
@@ -804,6 +823,75 @@ export default function Schools({ user }: { user: UserType }) {
                 ))}
               </TableBody>
             </Table>
+          )}
+
+          {/* Pagination Footer */}
+          {!loading && (
+            <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 bg-slate-50/50 border-t border-slate-100 gap-4">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                Showing <span className="text-slate-900 font-black">{schools.length > 0 ? (page - 1) * pageSize + 1 : 0}</span> to <span className="text-slate-900 font-black">{Math.min(page * pageSize, totalCount)}</span> of <span className="text-slate-900 font-black">{totalCount}</span> entries
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 mr-4">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rows per page</span>
+                  <UISelect value={pageSize.toString()} onValueChange={(v) => { setPageSize(parseInt(v)); setPage(1); }}>
+                    <SelectTrigger className="w-[70px] h-8 bg-white border-slate-200 rounded-lg text-xs font-bold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                      {[10, 25, 50, 100].map(size => (
+                        <SelectItem key={size} value={size.toString()} className="text-xs font-bold">{size}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </UISelect>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(1)}
+                    disabled={page === 1}
+                  >
+                    <ChevronsLeft size={14} />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft size={14} />
+                  </Button>
+
+                  <div className="flex items-center px-3 h-8 bg-white border border-slate-200 rounded-lg text-xs font-black text-slate-900 mx-1">
+                    Page {page} of {totalPages || 1}
+                  </div>
+
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={page >= totalPages}
+                  >
+                    <ChevronRight size={14} />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(totalPages)}
+                    disabled={page >= totalPages}
+                  >
+                    <ChevronsRight size={14} />
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

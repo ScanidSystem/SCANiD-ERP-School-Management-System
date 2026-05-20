@@ -22,6 +22,10 @@ import {
   Camera,
   ChevronUp,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Download,
   Loader2
 } from "lucide-react";
@@ -65,7 +69,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { cn, parseSafeInt } from "@/lib/utils";
+import { cn, parseSafeInt, resolvePhotoUrl } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface Teacher {
@@ -95,7 +99,12 @@ export default function Teachers({ user }: { user: any }) {
   const [deleteInfo, setDeleteInfo] = useState<{ id: string; name: string } | null>(null);
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [sortConfig, setSortConfig] = useState<{ key: keyof Teacher; direction: "asc" | "desc" } | null>(null);
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [uploadingTeacherId, setUploadingTeacherId] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -133,10 +142,29 @@ export default function Teachers({ user }: { user: any }) {
     try {
       const res = await apiService.getTeachers(
         parseSafeInt(user?.schoolId),
-        parseSafeInt(user?.academicYearId)
+        parseSafeInt(user?.academicYearId),
+        {
+          search: searchQuery,
+          sortBy,
+          sortOrder,
+          page,
+          pageSize,
+          // @ts-ignore
+          status: filterStatus === "all" ? undefined : filterStatus,
+          subject: filterSubject === "all" ? undefined : filterSubject
+        }
       );
       
-      const teacherData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+      const resData = res.data;
+      const teacherData = Array.isArray(resData.data) ? resData.data : [];
+      
+      if (resData.pagination) {
+        setTotalCount(resData.pagination.totalCount);
+        setTotalPages(resData.pagination.totalPages);
+      } else {
+        setTotalCount(teacherData.length);
+        setTotalPages(Math.ceil(teacherData.length / pageSize));
+      }
       
       setTeachers(teacherData.map((t: any) => {
         const getVal = (prop: string, fallback?: any) => {
@@ -175,38 +203,23 @@ export default function Teachers({ user }: { user: any }) {
     } finally {
       setLoading(false);
     }
-  }, [user?.schoolId, user?.academicYearId]);
+  }, [user?.schoolId, user?.academicYearId, searchQuery, sortBy, sortOrder, page, pageSize, filterStatus, filterSubject]);
 
   useEffect(() => {
     fetchTeachers();
-  }, [fetchTeachers]);
+  }, [fetchTeachers, searchQuery, sortBy, sortOrder, page, pageSize, filterStatus, filterSubject]);
 
-  const handleSort = (key: keyof Teacher) => {
-    let direction: "asc" | "desc" = "asc";
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
+  const handleSort = (key: string) => {
+    if (sortBy === key) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(key);
+      setSortOrder("asc");
     }
-    setSortConfig({ key, direction });
+    setPage(1);
   };
 
-  const filteredTeachers = teachers
-    .filter(t => {
-      const matchesSearch = (t.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          t.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          t.subject.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = filterStatus === "all" || t.status === filterStatus;
-      const matchesSubject = filterSubject === "all" || t.subject === filterSubject;
-      return matchesSearch && matchesStatus && matchesSubject;
-    })
-    .sort((a, b) => {
-      if (!sortConfig) return 0;
-      const { key, direction } = sortConfig;
-      const valA = (a as any)[key] || "";
-      const valB = (b as any)[key] || "";
-      if (valA < valB) return direction === "asc" ? -1 : 1;
-      if (valA > valB) return direction === "asc" ? 1 : -1;
-      return 0;
-    });
+  const filteredTeachers = teachers;
 
   const resetForm = () => {
     setFormData({
@@ -474,7 +487,7 @@ export default function Teachers({ user }: { user: any }) {
                               <div className="w-44 h-44 rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-100 bg-slate-50 flex items-center justify-center transition-all group-hover:shadow-blue-200/50 group-hover:scale-[1.02]">
                                  {formData.photo ? (
                                    <img 
-                                     src={formData.photo} 
+                                     src={resolvePhotoUrl(formData.photo)} 
                                      alt="Faculty" 
                                      className="w-full h-full object-cover"
                                      onError={(e) => {
@@ -727,22 +740,26 @@ export default function Teachers({ user }: { user: any }) {
                 <TableRow className="h-16 border-slate-50">
                   <TableHead className="w-[140px] pl-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('employeeId')}>
                     <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                      Index ID <ChevronDown size={14} className={cn("transition-all opacity-0 group-hover:opacity-100", sortConfig?.key === 'employeeId' && sortConfig.direction === 'desc' && "rotate-180 opacity-100 text-blue-600")} />
+                      Index ID 
+                      {sortBy === 'employeeId' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('name')}>
                     <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                      Faculty Entity <ChevronDown size={14} className={cn("transition-all opacity-0 group-hover:opacity-100", sortConfig?.key === 'name' && sortConfig.direction === 'desc' && "rotate-180 opacity-100 text-blue-600")} />
+                      Faculty Entity 
+                      {sortBy === 'name' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('subject')}>
                     <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                      Core Expertise <ChevronDown size={14} className={cn("transition-all opacity-0 group-hover:opacity-100", sortConfig?.key === 'subject' && sortConfig.direction === 'desc' && "rotate-180 opacity-100 text-blue-600")} />
+                      Core Expertise 
+                      {sortBy === 'subject' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('qualification')}>
                     <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                      Credentials <ChevronDown size={14} className={cn("transition-all opacity-0 group-hover:opacity-100", sortConfig?.key === 'qualification' && sortConfig.direction === 'desc' && "rotate-180 opacity-100 text-blue-600")} />
+                      Credentials 
+                      {sortBy === 'qualification' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Operational Status</TableHead>
@@ -772,7 +789,7 @@ export default function Teachers({ user }: { user: any }) {
                     <TableCell>
                       <div className="flex items-center gap-4">
                         <Avatar className="h-11 w-11 ring-4 ring-white shadow-lg shadow-slate-200 transition-transform group-hover:scale-105">
-                          <AvatarImage src={teacher.photo} />
+                          <AvatarImage src={resolvePhotoUrl(teacher.photo)} />
                           <AvatarFallback className="bg-indigo-600 text-white font-black uppercase text-sm">
                             {(teacher.name || "U")[0]}
                           </AvatarFallback>
@@ -865,6 +882,75 @@ export default function Teachers({ user }: { user: any }) {
                 )}
               </TableBody>
             </Table>
+          )}
+
+          {/* Pagination Footer */}
+          {!loading && (
+            <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 bg-slate-50/50 border-t border-slate-100 gap-4">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-widest text-[10px]">
+                Showing <span className="text-slate-900 font-black">{teachers.length > 0 ? (page - 1) * pageSize + 1 : 0}</span> to <span className="text-slate-900 font-black">{Math.min(page * pageSize, totalCount)}</span> of <span className="text-slate-900 font-black">{totalCount}</span> entries
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 mr-4">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rows per page</span>
+                  <Select value={pageSize.toString()} onValueChange={(v) => { setPageSize(parseInt(v)); setPage(1); }}>
+                    <SelectTrigger className="w-[70px] h-8 bg-white border-slate-200 rounded-lg text-xs font-bold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                      {[10, 25, 50, 100].map(size => (
+                        <SelectItem key={size} value={size.toString()} className="text-xs font-bold">{size}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(1)}
+                    disabled={page === 1}
+                  >
+                    <ChevronsLeft size={14} />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft size={14} />
+                  </Button>
+
+                  <div className="flex items-center px-3 h-8 bg-white border border-slate-200 rounded-lg text-xs font-black text-slate-900 mx-1">
+                    Page {page} of {totalPages || 1}
+                  </div>
+
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={page >= totalPages}
+                  >
+                    <ChevronRight size={14} />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                    onClick={() => setPage(totalPages)}
+                    disabled={page >= totalPages}
+                  >
+                    <ChevronsRight size={14} />
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

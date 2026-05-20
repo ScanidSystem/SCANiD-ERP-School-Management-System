@@ -84,7 +84,7 @@ import { apiService } from "@/lib/api";
 import { Navigate } from "react-router-dom";
 import { User } from "@/types";
 import { motion } from "motion/react";
-import { cn, parseSafeInt } from "@/lib/utils";
+import { cn, parseSafeInt, resolvePhotoUrl } from "@/lib/utils";
 import { SimpleTooltip } from "@/components/shared/SimpleTooltip";
 
 interface ConfigurationProps {
@@ -542,7 +542,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                             {activeTab === "schools" && (
                               <div className="relative group shrink-0">
                                 <Avatar className="h-10 w-10 border-2 border-white shadow-sm ring-1 ring-slate-100 group-hover:ring-blue-400 group-hover:scale-105 transition-all">
-                                  <AvatarImage src={item.profilePhotoPath || item.ProfilePhotoPath} alt={item.name} className="object-cover" />
+                                  <AvatarImage src={resolvePhotoUrl(item.profilePhotoPath || item.ProfilePhotoPath)} alt={item.name} className="object-cover" />
                                   <AvatarFallback className="bg-slate-100 text-slate-400 text-[10px] font-black uppercase">
                                     {(item.name || "S").split(' ').map((n: any) => n[0]).join('').substring(0, 2)}
                                   </AvatarFallback>
