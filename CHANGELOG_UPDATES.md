@@ -139,3 +139,25 @@ export function resolvePhotoUrl(path: string | undefined): string {
   ...
 ```
 This guarantees that regardless of server-side configuration changes, subfolder capitalization, or routing proxies, the frontend automatically self-heals by loading images relative to the active deployment directory accessed by the user.
+
+---
+
+## 6. Actual Master Registry Display Names in Student Export
+### Issue
+During Excel exports in the student management dashboard, columns representing core social classifications and administrative indices (e.g., Blood Group, House, Religion, Caste, Sub-Caste, Academic Session, Admission Type, and Category) outputted database integer identifiers instead of real, human-friendly names.
+
+### Solution & Code Changes
+- Refactored `handleExport` inside `src/pages/Students.tsx` to dynamically query active local master array references (`bloodGroups`, `houses`, `admissionTypes`, `religions`, `castes`, `subCastes`, `academicYears`, and `categories`).
+- Substituted root integer IDs with resolved display names fallback-guarded by their original attributes if specific lookups yield unmapped:
+```typescript
+"Blood Group": s.BLOODGROUP || s.bloodGroupId ? (bloodGroups.find(bg => bg.id?.toString() === (s.BLOODGROUP || s.bloodGroupId)?.toString())?.name || s.BLOODGROUP || s.bloodGroupId) : "",
+"House": s.house || s.houseId ? (houses.find(h => h.id?.toString() === (s.house || s.houseId)?.toString())?.name || s.house || s.houseId) : "",
+"Admission Type": s.admissiontype || s.admissionTypeId ? (admissionTypes.find(at => at.id?.toString() === (s.admissiontype || s.admissionTypeId)?.toString())?.name || s.admissiontype || s.admissionTypeId) : "",
+"Religion": s.RELIGION || s.religionId ? (religions.find(r => r.id?.toString() === (s.RELIGION || s.religionId)?.toString())?.name || s.RELIGION || s.religionId) : "",
+"Caste": s.CASTE || s.casteId ? (castes.find(c => c.id?.toString() === (s.CASTE || s.casteId)?.toString())?.name || s.CASTE || s.casteId) : "",
+"Sub-Caste": s.subcaste || s.subCasteId ? (subCastes.find(sc => sc.id?.toString() === (s.subcaste || s.subCasteId)?.toString())?.name || s.subcaste || s.subCasteId) : "",
+"Academic Year": s.academicyear || s.joiningAcademicYearId ? (academicYears.find(ay => ay.id?.toString() === (s.academicyear || s.joiningAcademicYearId)?.toString())?.name || s.academicyear || s.joiningAcademicYearId) : "",
+"Category": s.CATEGORY || s.categoryId ? (categories.find(c => c.id?.toString() === (s.CATEGORY || s.categoryId)?.toString())?.name || s.CATEGORY || s.categoryId) : "",
+```
+- Standardized file system generation and confirmed zero compilation or structural warnings during production runs.
+
