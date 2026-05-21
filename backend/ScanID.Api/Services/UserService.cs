@@ -1,3 +1,4 @@
+#pragma warning disable CS8604 // Disable warning for possible null reference argument for parameter 'parameters' in SqlQueryRaw
 using Microsoft.EntityFrameworkCore;
 using ScanID.Api.Data;
 using ScanID.Api.Interfaces;
