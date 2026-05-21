@@ -28,6 +28,7 @@ namespace ScanID.Api.Services
         {
             // Execute high-performance sp_GetErrorLogs Stored Procedure and materialize safely in-memory
             var logs = await _context.ErrorLogs
+                .IgnoreQueryFilters()
                 .FromSqlRaw("EXEC dbo.sp_GetErrorLogs")
                 .AsNoTracking()
                 .ToListAsync();

@@ -26,6 +26,7 @@ namespace ScanID.Api.Services
         public async Task<IEnumerable<School>> GetSchoolsAsync()
         {
             return await _context.Schools
+                .IgnoreQueryFilters()
                 .FromSqlRaw("EXEC dbo.sp_GetSchools")
                 .AsNoTracking()
                 .ToListAsync();
