@@ -26,8 +26,8 @@ namespace ScanID.Api.Services
         public async Task<IEnumerable<User>> GetUsersAsync()
         {
             return await _context.Users
-                .IgnoreQueryFilters()
                 .FromSqlRaw("EXEC dbo.sp_GetUsers")
+                .IgnoreQueryFilters()
                 .AsNoTracking()
                 .ToListAsync();
         }

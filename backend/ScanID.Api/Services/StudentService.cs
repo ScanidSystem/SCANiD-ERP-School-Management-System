@@ -45,8 +45,8 @@ namespace ScanID.Api.Services
         public async Task<Student?> GetStudentByIdAsync(int id)
         {
             var list = await _context.Students
-                .IgnoreQueryFilters()
                 .FromSqlInterpolated($"EXEC dbo.sp_GetStudentById {id}")
+                .IgnoreQueryFilters()
                 .AsNoTracking()
                 .ToListAsync();
             return list.FirstOrDefault();

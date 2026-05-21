@@ -25,8 +25,8 @@ namespace ScanID.Api.Services
         {
             // Execute high-performance sp_GetAuditLogs Stored Procedure and materialize safely in-memory
             var logs = await _context.AuditLogs
-                .IgnoreQueryFilters()
                 .FromSqlRaw("EXEC dbo.sp_GetAuditLogs")
+                .IgnoreQueryFilters()
                 .AsNoTracking()
                 .ToListAsync();
             return logs.Take(limit);
