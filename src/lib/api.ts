@@ -352,7 +352,12 @@ export const apiService = {
   // Attendance
   getAttendance: (date: string, schoolId?: number, academicYearId?: number, params?: PaginatedParams) =>
     api.get("/attendance", { params: { date, schoolId, academicYearId, ...params } }),
-  markAttendance: (data: any) => api.post("/attendance", data),
+  markAttendance: (data: any) => {
+    if (Array.isArray(data)) {
+      return api.post("/attendance/bulk", data);
+    }
+    return api.post("/attendance", data);
+  },
 
   // Fees
   getFees: (schoolId?: number, academicYearId?: number, params?: PaginatedParams) => api.get("/fees", { params: { schoolId, academicYearId, ...params } }),

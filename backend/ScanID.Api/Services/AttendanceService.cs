@@ -37,10 +37,21 @@ namespace ScanID.Api.Services
 
         public async Task<bool> SubmitAttendanceAsync(Attendance attendance)
         {
-            var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"EXEC dbo.sp_ManageAttendance {attendance.StudentId}, {attendance.Date}, {attendance.Status}, NULL, NULL"
-            );
-            return rowsAffected > 0;
+            try
+            {
+                // Core optimization: Execute the MERGE stored procedure to insert or update attendance.
+                // Since SET NOCOUNT ON; is defined in the stored procedure, EF Core will return -1 rows affected,
+                // which represents success. We evaluate rowsAffected >= -1 to handle this correctly.
+                var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"EXEC dbo.sp_ManageAttendance {attendance.StudentId}, {attendance.Date}, {attendance.Status}, NULL, NULL"
+                );
+                return rowsAffected >= -1;
+            }
+            catch (Exception ex)
+            {
+                // Return false if a primary database error or query failure is encountered.
+                return false;
+            }
         }
 
         public async Task<bool> SubmitBulkAttendanceAsync(IEnumerable<Attendance> records)
