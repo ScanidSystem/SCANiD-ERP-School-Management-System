@@ -43,12 +43,22 @@ namespace ScanID.Api.Services
 
         public async Task<Teacher> CreateTeacherAsync(Teacher teacher)
         {
-            var idResult = await _context.Database.SqlQueryRaw<int>(
-                "EXEC dbo.sp_ManageTeacher @Action='INSERT', @Id=NULL, @UserId={0}, @ContactNumber={1}, @Department={2}, @Qualification={3}, @Status={4}, @SchoolId={5}, @ProfilePhotoPath={6}",
-                teacher.UserId, teacher.ContactNumber, teacher.Department, teacher.Qualification, teacher.Status, teacher.SchoolId, teacher.ProfilePhotoPath
-            ).ToListAsync();
+            // Execute the sp_ManageTeacher stored procedure safely using high-performance ADO.NET DbMapper 
+            // to retrieve the newly generated identity, completely avoiding EF Core query wrapping issues.
+            teacher.Id = await DbMapper.ExecuteScalarStoredProcedureAsync(
+                _context,
+                "dbo.sp_ManageTeacher",
+                ("Action", "INSERT"),
+                ("Id", null),
+                ("UserId", teacher.UserId),
+                ("ContactNumber", teacher.ContactNumber),
+                ("Department", teacher.Department),
+                ("Qualification", teacher.Qualification),
+                ("Status", teacher.Status),
+                ("SchoolId", teacher.SchoolId),
+                ("ProfilePhotoPath", teacher.ProfilePhotoPath)
+            );
 
-            teacher.Id = idResult.FirstOrDefault();
             return teacher;
         }
 

@@ -217,5 +217,34 @@ namespace ScanID.Api.Utilities
                 }
             }
         }
+
+        /// <summary>
+        /// Executes a stored procedure that returns a single scalar value.
+        /// Bypasses EF query composition limits for non-composable stored procedure calls.
+        /// </summary>
+        public static async Task<int> ExecuteScalarStoredProcedureAsync(DbContext context, string spName, params (string Name, object? Value)[] parameters)
+        {
+            var connection = context.Database.GetDbConnection();
+            
+            if (connection.State == ConnectionState.Closed)
+            {
+                await context.Database.OpenConnectionAsync();
+            }
+
+            using var command = connection.CreateCommand();
+            command.CommandText = spName;
+            command.CommandType = CommandType.StoredProcedure;
+
+            foreach (var p in parameters)
+            {
+                var parameter = command.CreateParameter();
+                parameter.ParameterName = p.Name.StartsWith("@") ? p.Name : "@" + p.Name;
+                parameter.Value = p.Value ?? DBNull.Value;
+                command.Parameters.Add(parameter);
+            }
+
+            var result = await command.ExecuteScalarAsync();
+            return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
+        }
     }
 }

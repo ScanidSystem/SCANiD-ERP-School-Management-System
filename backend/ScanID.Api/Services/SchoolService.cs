@@ -39,12 +39,20 @@ namespace ScanID.Api.Services
 
         public async Task<School> CreateSchoolAsync(School school)
         {
-            var idResult = await _context.Database.SqlQueryRaw<int>(
-                "EXEC dbo.sp_ManageSchool @Action='INSERT', @Id=NULL, @Name={0}, @LogoPath={1}, @Address={2}, @ContactNumber={3}, @Email={4}, @CreatedBy=NULL",
-                school.Name, school.ProfilePhotoPath, school.Address, school.Phone, school.Email
-            ).ToListAsync();
-
-            school.Id = idResult.FirstOrDefault();
+            // Execute the sp_ManageSchool stored procedure safely using high-performance ADO.NET DbMapper 
+            // to retrieve the newly generated identity, completely avoiding EF Core query wrapping issues.
+            school.Id = await ScanID.Api.Utilities.DbMapper.ExecuteScalarStoredProcedureAsync(
+                _context,
+                "dbo.sp_ManageSchool",
+                ("Action", "INSERT"),
+                ("Id", null),
+                ("Name", school.Name),
+                ("LogoPath", school.ProfilePhotoPath),
+                ("Address", school.Address),
+                ("ContactNumber", school.Phone),
+                ("Email", school.Email),
+                ("CreatedBy", null)
+            );
             return school;
         }
 

@@ -26,12 +26,12 @@ namespace ScanID.Api.Services
         /// </summary>
         public async Task<IEnumerable<ErrorLog>> GetErrorLogsAsync(int limit = 100)
         {
-            // Execute high-performance sp_GetErrorLogs Stored Procedure
-            return await _context.ErrorLogs
+            // Execute high-performance sp_GetErrorLogs Stored Procedure and materialize safely in-memory
+            var logs = await _context.ErrorLogs
                 .FromSqlRaw("EXEC dbo.sp_GetErrorLogs")
-                .Take(limit)
                 .AsNoTracking()
                 .ToListAsync();
+            return logs.Take(limit);
         }
 
         /// <summary>

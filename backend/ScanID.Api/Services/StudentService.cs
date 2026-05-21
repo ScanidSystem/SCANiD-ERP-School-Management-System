@@ -59,12 +59,43 @@ namespace ScanID.Api.Services
             student.RegistrationNumber = student.RegistrationNumber ?? "REG-" + UPPER_RAND_STRING();
             student.Status = student.Status ?? "Active";
 
-            var idResult = await _context.Database.SqlQueryRaw<int>(
-                "EXEC dbo.sp_ManageStudent @Action='INSERT', @Id=NULL, @RegistrationNumber={0}, @Name={1}, @SchoolId={2}, @StandardId={3}, @SectionId={4}, @AcademicYearId={5}, @RollNumber={6}, @GRNO={7}, @GENDER={8}, @DOB={9}, @CategoryId={10}, @ReligionId={11}, @CasteId={12}, @Status={13}, @MOBILE={14}, @EMAIL={15}, @ADDRESS={16}, @MOTHERNAME={17}, @aadharcard={18}, @RFID={19}, @ShiftId={20}, @BloodGroupId={21}, @HouseId={22}, @DOA={23}, @FATHERNAME={24}, @PEN_No={25}, @bankacc={26}, @ProfilePhotoPath={27}",
-                student.RegistrationNumber, student.Name, student.SchoolId, student.StandardId, student.SectionId, student.AcademicYearId, student.RollNumber, student.GRNO, student.GENDER, student.DOB, student.CategoryId, student.ReligionId, student.CasteId, student.Status, student.MOBILE, student.EMAIL, student.ADDRESS, student.MOTHERNAME, student.aadharcard, student.RFID, student.ShiftId, student.BloodGroupId, student.HouseId, student.DOA, student.FATHERNAME, student.PEN_No, student.bankacc, student.ProfilePhotoPath
-            ).ToListAsync();
+            // Execute the sp_ManageStudent stored procedure safely using high-performance ADO.NET DbMapper 
+            // to retrieve the newly generated identity, completely avoiding EF Core query wrapping issues.
+            student.Id = await DbMapper.ExecuteScalarStoredProcedureAsync(
+                _context,
+                "dbo.sp_ManageStudent",
+                ("Action", "INSERT"),
+                ("Id", null),
+                ("RegistrationNumber", student.RegistrationNumber),
+                ("Name", student.Name),
+                ("SchoolId", student.SchoolId),
+                ("StandardId", student.StandardId),
+                ("SectionId", student.SectionId),
+                ("AcademicYearId", student.AcademicYearId),
+                ("RollNumber", student.RollNumber),
+                ("GRNO", student.GRNO),
+                ("GENDER", student.GENDER),
+                ("DOB", student.DOB),
+                ("CategoryId", student.CategoryId),
+                ("ReligionId", student.ReligionId),
+                ("CasteId", student.CasteId),
+                ("Status", student.Status),
+                ("MOBILE", student.MOBILE),
+                ("EMAIL", student.EMAIL),
+                ("ADDRESS", student.ADDRESS),
+                ("MOTHERNAME", student.MOTHERNAME),
+                ("aadharcard", student.aadharcard),
+                ("RFID", student.RFID),
+                ("ShiftId", student.ShiftId),
+                ("BloodGroupId", student.BloodGroupId),
+                ("HouseId", student.HouseId),
+                ("DOA", student.DOA),
+                ("FATHERNAME", student.FATHERNAME),
+                ("PEN_No", student.PEN_No),
+                ("bankacc", student.bankacc),
+                ("ProfilePhotoPath", student.ProfilePhotoPath)
+            );
 
-            student.Id = idResult.FirstOrDefault();
             return student;
         }
 
@@ -158,15 +189,46 @@ namespace ScanID.Api.Services
                 index++;
             }
 
-            // Inser using standard sp_ManageStudent stored procedure loops
+            // Insert using standard sp_ManageStudent stored procedure loops mapped securely
             foreach (var s in students)
             {
                 s.RegistrationNumber = s.RegistrationNumber ?? "REG-" + UPPER_RAND_STRING();
-                var idResult = await _context.Database.SqlQueryRaw<int>(
-                    "EXEC dbo.sp_ManageStudent @Action='INSERT', @Id=NULL, @RegistrationNumber={0}, @Name={1}, @SchoolId={2}, @StandardId={3}, @SectionId={4}, @AcademicYearId={5}, @RollNumber={6}, @GRNO={7}, @GENDER={8}, @DOB={9}, @CategoryId={10}, @ReligionId={11}, @CasteId={12}, @Status={13}, @MOBILE={14}, @EMAIL={15}, @ADDRESS={16}, @MOTHERNAME={17}, @aadharcard={18}, @RFID={19}, @ShiftId={20}, @BloodGroupId={21}, @HouseId={22}, @DOA={23}, @FATHERNAME={24}, @PEN_No={25}, @bankacc={26}, @ProfilePhotoPath={27}",
-                    s.RegistrationNumber, s.Name, s.SchoolId, s.StandardId, s.SectionId, s.AcademicYearId, s.RollNumber, s.GRNO, s.GENDER, s.DOB, s.CategoryId, s.ReligionId, s.CasteId, s.Status, s.MOBILE, s.EMAIL, s.ADDRESS, s.MOTHERNAME, s.aadharcard, s.RFID, s.ShiftId, s.BloodGroupId, s.HouseId, s.DOA, s.FATHERNAME, s.PEN_No, s.bankacc, s.ProfilePhotoPath
-                ).ToListAsync();
-                s.Id = idResult.FirstOrDefault();
+                // Execute the sp_ManageStudent stored procedure safely using high-performance ADO.NET DbMapper 
+                // to retrieve the newly generated identity, completely avoiding EF Core query wrapping issues.
+                s.Id = await DbMapper.ExecuteScalarStoredProcedureAsync(
+                    _context,
+                    "dbo.sp_ManageStudent",
+                    ("Action", "INSERT"),
+                    ("Id", null),
+                    ("RegistrationNumber", s.RegistrationNumber),
+                    ("Name", s.Name),
+                    ("SchoolId", s.SchoolId),
+                    ("StandardId", s.StandardId),
+                    ("SectionId", s.SectionId),
+                    ("AcademicYearId", s.AcademicYearId),
+                    ("RollNumber", s.RollNumber),
+                    ("GRNO", s.GRNO),
+                    ("GENDER", s.GENDER),
+                    ("DOB", s.DOB),
+                    ("CategoryId", s.CategoryId),
+                    ("ReligionId", s.ReligionId),
+                    ("CasteId", s.CasteId),
+                    ("Status", s.Status),
+                    ("MOBILE", s.MOBILE),
+                    ("EMAIL", s.EMAIL),
+                    ("ADDRESS", s.ADDRESS),
+                    ("MOTHERNAME", s.MOTHERNAME),
+                    ("aadharcard", s.aadharcard),
+                    ("RFID", s.RFID),
+                    ("ShiftId", s.ShiftId),
+                    ("BloodGroupId", s.BloodGroupId),
+                    ("HouseId", s.HouseId),
+                    ("DOA", s.DOA),
+                    ("FATHERNAME", s.FATHERNAME),
+                    ("PEN_No", s.PEN_No),
+                    ("bankacc", s.bankacc),
+                    ("ProfilePhotoPath", s.ProfilePhotoPath)
+                );
             }
 
             return new { count = students.Count(), message = "Bulk upload successful" };

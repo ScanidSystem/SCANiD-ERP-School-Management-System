@@ -23,11 +23,12 @@ namespace ScanID.Api.Services
 
         public async Task<IEnumerable<AuditLog>> GetAuditLogsAsync(int limit = 100)
         {
-            return await _context.AuditLogs
+            // Execute high-performance sp_GetAuditLogs Stored Procedure and materialize safely in-memory
+            var logs = await _context.AuditLogs
                 .FromSqlRaw("EXEC dbo.sp_GetAuditLogs")
-                .Take(limit)
                 .AsNoTracking()
                 .ToListAsync();
+            return logs.Take(limit);
         }
 
         public async Task<bool> InsertAuditLogAsync(AuditLog log)

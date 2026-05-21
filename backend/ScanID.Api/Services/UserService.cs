@@ -41,12 +41,23 @@ namespace ScanID.Api.Services
         {
             user.PasswordHash = string.IsNullOrEmpty(user.PasswordHash) ? "password123" : user.PasswordHash;
 
-            var idResult = await _context.Database.SqlQueryRaw<int>(
-                "EXEC dbo.sp_ManageUser @Action='INSERT', @Id=NULL, @Username={0}, @PasswordHash={1}, @Name={2}, @Email={3}, @Role={4}, @RoleId={5}, @SchoolId={6}, @CreatedBy=NULL",
-                user.Username, user.PasswordHash, user.Name, user.Email, user.Role, user.RoleId, user.SchoolId
-            ).ToListAsync();
+            // Execute the sp_ManageUser stored procedure safely using high-performance ADO.NET DbMapper 
+            // to retrieve the newly generated identity, completely avoiding EF Core query wrapping issues.
+            user.Id = await ScanID.Api.Utilities.DbMapper.ExecuteScalarStoredProcedureAsync(
+                _context,
+                "dbo.sp_ManageUser",
+                ("Action", "INSERT"),
+                ("Id", null),
+                ("Username", user.Username),
+                ("PasswordHash", user.PasswordHash),
+                ("Name", user.Name),
+                ("Email", user.Email),
+                ("Role", user.Role),
+                ("RoleId", user.RoleId),
+                ("SchoolId", user.SchoolId),
+                ("CreatedBy", null)
+            );
 
-            user.Id = idResult.FirstOrDefault();
             return user;
         }
 
