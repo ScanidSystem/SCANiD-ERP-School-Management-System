@@ -93,6 +93,7 @@ export default function Schools({ user }: { user: UserType }) {
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [activeCount, setActiveCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingSchoolId, setUploadingSchoolId] = useState<number | "new" | null>(null);
   const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
@@ -163,12 +164,18 @@ export default function Schools({ user }: { user: UserType }) {
         setTotalCount(total);
         setTotalPages(Math.ceil(total / pageSize));
         
+        // Calculate true registered active count of institutions
+        const active = rawSchoolsList.filter((s: any) => s.status === 'Active').length;
+        setActiveCount(active);
+        
         const startIndex = (page - 1) * pageSize;
         setSchools(filtered.slice(startIndex, startIndex + pageSize));
       } else {
         // Server-side loaded correctly
         setTotalCount(resData.pagination.totalCount);
         setTotalPages(resData.pagination.totalPages);
+        const active = rawSchoolsList.filter((s: any) => s.status === 'Active').length;
+        setActiveCount(active);
         setSchools(rawSchoolsList);
       }
     } catch (error) {
@@ -833,8 +840,8 @@ export default function Schools({ user }: { user: UserType }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatItem title="Total Schools" value={schools.length.toString()} icon={School} color="text-blue-600 bg-blue-50" />
-        <StatItem title="Active License" value={schools.filter(s => s.status === 'Active').length.toString()} icon={Globe} color="text-emerald-600 bg-emerald-50" />
+        <StatItem title="Total Schools" value={totalCount.toString()} icon={School} color="text-blue-600 bg-blue-50" />
+        <StatItem title="Active License" value={activeCount.toString()} icon={Globe} color="text-emerald-600 bg-emerald-50" />
         <StatItem title="System Health" value="99.9%" icon={ShieldCheck} color="text-purple-600 bg-purple-50" />
       </div>
 

@@ -32,16 +32,116 @@ namespace ScanID.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves students for a specific school and optionally an academic year.
+        /// Retrieves students for a specific school and optionally an academic year. Supports pagination, sorting, searching, and custom filters.
         /// </summary>
         /// <param name="schoolId">Optional school ID filter.</param>
         /// <param name="academicYearId">Optional academic year ID filter.</param>
-        /// <returns>A list of students.</returns>
+        /// <param name="page">The page number, 1-indexed.</param>
+        /// <param name="pageSize">Number of items per page.</param>
+        /// <param name="sortBy">Field to sort by (e.g., name, grno, roll, standard, section).</param>
+        /// <param name="sortOrder">Sort order direction: 'asc' or 'desc'.</param>
+        /// <param name="search">Search query to match name, grno, standard, section, or roll number.</param>
+        /// <param name="standard">Specific standard/grade to filter by.</param>
+        /// <param name="section">Specific section/division to filter by.</param>
+        /// <returns>A paginated envelope containing student records matching the filters.</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Student>>> GetStudents(int? schoolId, int? academicYearId)
+        public async Task<ActionResult> GetStudents(
+            [FromQuery] int? schoolId, 
+            [FromQuery] int? academicYearId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string sortBy = null,
+            [FromQuery] string sortOrder = "asc",
+            [FromQuery] string search = null,
+            [FromQuery] string standard = null,
+            [FromQuery] string section = null)
         {
-            var students = await _studentService.GetStudentsAsync(schoolId, academicYearId);
-            return Ok(students);
+            // Retrieve all raw students for the given school and academic year from backend SQL DB repository
+            var studentsList = await _studentService.GetStudentsAsync(schoolId, academicYearId);
+            
+            // Convert to queryable list for high-performance in-memory sorting and filtering
+            var query = studentsList.AsQueryable();
+
+            // 1. Apply robust server-side text matching/searching
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchLower = search.Trim().ToLower();
+                query = query.Where(s => 
+                    (s.Name != null && s.Name.ToLower().Contains(searchLower)) ||
+                    (s.GRNO != null && s.GRNO.ToLower().Contains(searchLower)) ||
+                    (s.RegistrationNumber != null && s.RegistrationNumber.ToLower().Contains(searchLower)) ||
+                    s.RollNumber.ToString().Contains(searchLower) ||
+                    (s.Standard != null && s.Standard.Name != null && s.Standard.Name.ToLower().Contains(searchLower)) ||
+                    (s.Section != null && s.Section.Name != null && s.Section.Name.ToLower().Contains(searchLower))
+                );
+            }
+
+            // 2. Apply academic Standard (Grade) filters
+            if (!string.IsNullOrWhiteSpace(standard) && !standard.Equals("all", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(s => s.Standard != null && s.Standard.Name != null && s.Standard.Name.Equals(standard, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // 3. Apply division Section filters
+            if (!string.IsNullOrWhiteSpace(section) && !section.Equals("all", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(s => s.Section != null && s.Section.Name != null && s.Section.Name.Equals(section, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // 4. Apply high-performance dynamic sorting
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                bool isDesc = sortOrder != null && sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase);
+                switch (sortBy.ToLower())
+                {
+                    case "name":
+                        query = isDesc ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name);
+                        break;
+                    case "grno":
+                    case "registrationnumber":
+                        query = isDesc ? query.OrderByDescending(s => s.GRNO ?? s.RegistrationNumber) : query.OrderBy(s => s.GRNO ?? s.RegistrationNumber);
+                        break;
+                    case "roll":
+                    case "rollnumber":
+                        query = isDesc ? query.OrderByDescending(s => s.RollNumber) : query.OrderBy(s => s.RollNumber);
+                        break;
+                    case "standard":
+                        query = isDesc ? query.OrderByDescending(s => s.Standard != null ? s.Standard.Name : string.Empty) : query.OrderBy(s => s.Standard != null ? s.Standard.Name : string.Empty);
+                        break;
+                    case "section":
+                        query = isDesc ? query.OrderByDescending(s => s.Section != null ? s.Section.Name : string.Empty) : query.OrderBy(s => s.Section != null ? s.Section.Name : string.Empty);
+                        break;
+                    default:
+                        query = isDesc ? query.OrderByDescending(s => s.Id) : query.OrderBy(s => s.Id);
+                        break;
+                }
+            }
+            else
+            {
+                // Default fallback sorting to guarantee deterministic response matching
+                query = query.OrderBy(s => s.Id);
+            }
+
+            // 5. Build pagination parameters
+            var totalCount = query.Count();
+            var totalPages = (int)Math.Max(1, Math.Ceiling((double)totalCount / pageSize));
+
+            // Adjust pages limits safely to avoid out-of-bounds queries
+            var currentPage = Math.Max(1, page);
+            var safeDataSlice = query.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+
+            // Return enveloped paginated model perfectly parsed by React UI
+            return Ok(new
+            {
+                data = safeDataSlice,
+                pagination = new
+                {
+                    totalCount,
+                    totalPages,
+                    page = currentPage,
+                    pageSize
+                }
+            });
         }
 
         /// <summary>

@@ -25,11 +25,9 @@ namespace ScanID.Api.Services
 
         public async Task<IEnumerable<School>> GetSchoolsAsync()
         {
-            return await _context.Schools
-                .FromSqlRaw("EXEC dbo.sp_GetSchools")
-                .IgnoreQueryFilters()
-                .AsNoTracking()
-                .ToListAsync();
+            // Execute the sp_GetSchools stored procedure safely using high-performance ADO.NET DbMapper
+            // to bypass EF Core's query translation entirely and solve 'FromSql' non-composable query errors.
+            return await ScanID.Api.Utilities.DbMapper.ExecuteStoredProcedureAsync<School>(_context, "dbo.sp_GetSchools");
         }
 
         public async Task<School?> GetSchoolByIdAsync(int id)

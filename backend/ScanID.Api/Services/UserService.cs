@@ -25,11 +25,9 @@ namespace ScanID.Api.Services
 
         public async Task<IEnumerable<User>> GetUsersAsync()
         {
-            return await _context.Users
-                .FromSqlRaw("EXEC dbo.sp_GetUsers")
-                .IgnoreQueryFilters()
-                .AsNoTracking()
-                .ToListAsync();
+            // Execute the sp_GetUsers stored procedure safely using high-performance ADO.NET DbMapper
+            // to bypass EF Core's query translation entirely and solve 'FromSql' non-composable query errors.
+            return await ScanID.Api.Utilities.DbMapper.ExecuteStoredProcedureAsync<User>(_context, "dbo.sp_GetUsers");
         }
 
         public async Task<User?> GetUserByIdAsync(int id)
