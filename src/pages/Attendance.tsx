@@ -491,7 +491,7 @@ export default function Attendance({ user }: { user: any }) {
               {user.role === "superadmin" && (
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase text-slate-500 tracking-widest ml-1">School Branch</label>
-                  <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
+                  <Select value={selectedSchoolId} onValueChange={(val) => setSelectedSchoolId(val || "")}>
                     <SelectTrigger className="border-slate-200 bg-blue-50/30 font-bold rounded-xl h-11 pointer-events-auto">
                       <SelectValue placeholder="Select School Branch">
                         {selectedSchoolId ? schools.find(s => s.id.toString() === selectedSchoolId)?.name : undefined}
@@ -530,7 +530,7 @@ export default function Attendance({ user }: { user: any }) {
               {/* Standards Code */}
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-slate-400 tracking-widest ml-1">Academic Grade</label>
-                <Select value={selectedStandard} onValueChange={setSelectedStandard}>
+                <Select value={selectedStandard} onValueChange={(val) => setSelectedStandard(val || "")}>
                   <SelectTrigger className="border-slate-200 bg-slate-50/50 font-bold rounded-xl h-11">
                     <SelectValue placeholder="Select Academic Standard">
                       {selectedStandard || undefined}
@@ -548,7 +548,7 @@ export default function Attendance({ user }: { user: any }) {
               {/* Divisions Code */}
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-slate-400 tracking-widest ml-1">Division/Section</label>
-                <Select value={selectedSection} onValueChange={setSelectedSection}>
+                <Select value={selectedSection} onValueChange={(val) => setSelectedSection(val || "")}>
                   <SelectTrigger className="border-slate-200 bg-slate-50/50 font-bold rounded-xl h-11">
                     <SelectValue placeholder="Select Class Section">
                       {selectedSection ? `Section ${selectedSection}` : undefined}
@@ -719,7 +719,7 @@ export default function Attendance({ user }: { user: any }) {
               {/* Attendee Category selector: Students, Staff, Teacher (shows All by default) */}
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Attendee Type</label>
-                <Select value={attendeeType} onValueChange={setAttendeeType}>
+                <Select value={attendeeType} onValueChange={(val) => setAttendeeType(val || "")}>
                   <SelectTrigger className="border-slate-200 bg-slate-50/50 font-bold rounded-xl h-11">
                     <SelectValue placeholder="Select Attendee Type" />
                   </SelectTrigger>
