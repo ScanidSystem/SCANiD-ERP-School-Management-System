@@ -16,10 +16,13 @@ namespace ScanID.Api.Services
     public class AttendanceService : IAttendanceService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IErrorLogService _errorLogService;
 
-        public AttendanceService(ApplicationDbContext context)
+        // Dependency injection of ApplicationDbContext and IErrorLogService for persistent error logging
+        public AttendanceService(ApplicationDbContext context, IErrorLogService errorLogService)
         {
             _context = context;
+            _errorLogService = errorLogService;
         }
 
         public async Task<IEnumerable<Attendance>> GetAttendanceAsync(DateTime date, int? schoolId, int? academicYearId)
@@ -49,6 +52,14 @@ namespace ScanID.Api.Services
             }
             catch (Exception ex)
             {
+                // High-performance exception logging into database via the sp_InsertErrorLog stored procedure
+                await _errorLogService.InsertErrorLogAsync(
+                    ex.Message,
+                    "Error",
+                    ex.ToString(),
+                    $"AttendanceService.SubmitAttendanceAsync - StudentId: {attendance.StudentId}, Date: {attendance.Date}"
+                );
+
                 // Return false if a primary database error or query failure is encountered.
                 return false;
             }
