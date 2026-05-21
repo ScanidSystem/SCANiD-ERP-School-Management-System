@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using ScanID.Api.Data;
+using ScanID.Api.Interfaces;
 using ScanID.Api.Models;
+using ScanID.Api.Services;
 using ScanID.Api.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +28,19 @@ builder.Services.AddSwaggerGen(c =>
 // Configure SQL Server
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register Decoupled Abstractions & Implementation services (SOLID, SRP, OCP, DIP)
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<IErrorLogService, ErrorLogService>();
+builder.Services.AddScoped<ISchoolService, SchoolService>();
+builder.Services.AddScoped<ITeacherService, TeacherService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IFeeService, FeeService>();
+builder.Services.AddScoped<IMarkService, MarkService>();
 
 // Configure CORS for React Frontend
 builder.Services.AddCors(options =>

@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ScanID.Api.Data;
+using ScanID.Api.Interfaces;
 using ScanID.Api.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ScanID.Api.Controllers
 {
@@ -9,32 +10,33 @@ namespace ScanID.Api.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IUserService _userService;
 
-        public UsersController(ApplicationDbContext context)
+        public UsersController(IUserService userService)
         {
-            _context = context;
+            _userService = userService;
         }
 
         // GET: api/Users
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
-            return await _context.Users.ToListAsync();
+            var users = await _userService.GetUsersAsync();
+            return Ok(users);
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userService.GetUserByIdAsync(id);
 
             if (user == null)
             {
                 return NotFound();
             }
 
-            return user;
+            return Ok(user);
         }
 
         // PUT: api/Users/5
@@ -46,24 +48,16 @@ namespace ScanID.Api.Controllers
                 return BadRequest();
             }
 
-            // Ensure we don't accidentally overwrite sensitive fields if not intended
-            // For a basic CRUD, we'll just mark as modified.
-            _context.Entry(user).State = EntityState.Modified;
-
-            try
+            var existingUser = await _userService.GetUserByIdAsync(id);
+            if (existingUser == null)
             {
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
-            catch (DbUpdateConcurrencyException)
+
+            var success = await _userService.UpdateUserAsync(user);
+            if (!success)
             {
-                if (!UserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return StatusCode(500, "Failed to persist user updates.");
             }
 
             return NoContent();
@@ -73,31 +67,25 @@ namespace ScanID.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
-            // Set default password if not provided for dummy users
-            if (string.IsNullOrEmpty(user.PasswordHash))
-            {
-                user.PasswordHash = "password123";
-            }
-            
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetUser", new { id = user.Id }, user);
+            var createdUser = await _userService.CreateUserAsync(user);
+            return CreatedAtAction("GetUser", new { id = createdUser.Id }, createdUser);
         }
 
         // DELETE: api/Users/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userService.GetUserByIdAsync(id);
             if (user == null)
             {
                 return NotFound();
             }
 
-            user.IsDeleted = true;
-            _context.Entry(user).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
+            var success = await _userService.DeleteUserAsync(id);
+            if (!success)
+            {
+                return StatusCode(500, "Failed to delete user.");
+            }
 
             return NoContent();
         }
@@ -106,22 +94,19 @@ namespace ScanID.Api.Controllers
         [HttpPut("{id}/role")]
         public async Task<IActionResult> UpdateUserRole(int id, [FromBody] RoleUpdateRequest request)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userService.GetUserByIdAsync(id);
             if (user == null)
             {
                 return NotFound();
             }
 
-            user.Role = request.Role;
-            _context.Entry(user).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
+            var success = await _userService.UpdateUserRoleAsync(id, request.Role);
+            if (!success)
+            {
+                return StatusCode(500, "Failed to save user role updates.");
+            }
 
             return NoContent();
-        }
-
-        private bool UserExists(int id)
-        {
-            return _context.Users.Any(e => e.Id == id);
         }
     }
 

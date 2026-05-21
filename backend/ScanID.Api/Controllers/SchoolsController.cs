@@ -1,24 +1,31 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ScanID.Api.Data;
+using Microsoft.AspNetCore.Hosting;
+using ScanID.Api.Interfaces;
 using ScanID.Api.Models;
 using ScanID.Api.Utilities;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ScanID.Api.Controllers
 {
     /// <summary>
     /// Controller for managing school records.
+    /// This implementation adheres to SOLID Principles and is fully decoupled utilizing DI.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class SchoolsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ISchoolService _schoolService;
         private readonly IWebHostEnvironment _environment;
 
-        public SchoolsController(ApplicationDbContext context, IWebHostEnvironment environment)
+        public SchoolsController(ISchoolService schoolService, IWebHostEnvironment environment)
         {
-            _context = context;
+            _schoolService = schoolService;
             _environment = environment;
         }
 
@@ -29,7 +36,8 @@ namespace ScanID.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<School>>> GetSchools()
         {
-            return await _context.Schools.AsNoTracking().ToListAsync();
+            var schools = await _schoolService.GetSchoolsAsync();
+            return Ok(schools);
         }
 
         /// <summary>
@@ -40,9 +48,9 @@ namespace ScanID.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<School>> GetSchool(int id)
         {
-            var school = await _context.Schools.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id);
+            var school = await _schoolService.GetSchoolByIdAsync(id);
             if (school == null) return NotFound();
-            return school;
+            return Ok(school);
         }
 
         /// <summary>
@@ -53,9 +61,8 @@ namespace ScanID.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<School>> PostSchool(School school)
         {
-            _context.Schools.Add(school);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction("GetSchool", new { id = school.Id }, school);
+            var createdSchool = await _schoolService.CreateSchoolAsync(school);
+            return CreatedAtAction("GetSchool", new { id = createdSchool.Id }, createdSchool);
         }
 
         /// <summary>
@@ -68,25 +75,12 @@ namespace ScanID.Api.Controllers
         public async Task<IActionResult> PutSchool(int id, School school)
         {
             if (id != school.Id) return BadRequest();
-            
-            var existingSchool = await _context.Schools.FindAsync(id);
+
+            var existingSchool = await _schoolService.GetSchoolByIdAsync(id);
             if (existingSchool == null) return NotFound();
 
-            existingSchool.Name = school.Name;
-            existingSchool.Address = school.Address;
-            existingSchool.Phone = school.Phone;
-            existingSchool.Email = school.Email;
-            existingSchool.Status = school.Status;
-            existingSchool.ProfilePhotoPath = school.ProfilePhotoPath;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                throw;
-            }
+            var success = await _schoolService.UpdateSchoolAsync(school);
+            if (!success) return StatusCode(500, "Failed to persist school record updates.");
 
             return NoContent();
         }
@@ -105,7 +99,7 @@ namespace ScanID.Api.Controllers
                 return BadRequest(new { message = "No image file provided for upload." });
             }
 
-            var school = await _context.Schools.FindAsync(id);
+            var school = await _schoolService.GetSchoolByIdAsync(id);
             if (school == null) 
             {
                 return NotFound(new { message = "School record not found." });
@@ -115,7 +109,6 @@ namespace ScanID.Api.Controllers
             {
                 var schoolSnapshotName = SanitizeFolderName(school.Name);
                 
-                // Enhanced path resolution for robust folder creation
                 string webRootPath = _environment.WebRootPath;
                 if (string.IsNullOrEmpty(webRootPath))
                 {
@@ -154,19 +147,17 @@ namespace ScanID.Api.Controllers
                     }
                 }
 
-                school.ProfilePhotoPath = relativePath;
-                school.ModifiedOn = DateTime.Now;
-                
-                await _context.SaveChangesAsync();
+                var success = await _schoolService.SavePhotoPathAsync(id, relativePath);
+                if (!success) return StatusCode(500, "Failed to persist updated logo path to the database.");
 
                 return Ok(new { 
                     message = "School identity image updated successfully", 
-                    path = school.ProfilePhotoPath 
+                    path = relativePath 
                 });
             }
             catch (Exception ex)
             {
-                ScanID.Api.Utilities.FileLogger.LogError(ex);
+                FileLogger.LogError(ex);
                 return StatusCode(500, new { message = "Physical storage failed: " + ex.Message });
             }
         }
@@ -179,5 +170,4 @@ namespace ScanID.Api.Controllers
             return sanitized.Replace(" ", "_").Trim('_');
         }
     }
-
 }

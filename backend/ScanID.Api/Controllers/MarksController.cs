@@ -1,22 +1,24 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ScanID.Api.Data;
+using ScanID.Api.Interfaces;
 using ScanID.Api.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ScanID.Api.Controllers
 {
     /// <summary>
     /// Controller for managing student marks and academic performance.
+    /// Perfectly decoupled and adheres to SOLID.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class MarksController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IMarkService _markService;
 
-        public MarksController(ApplicationDbContext context)
+        public MarksController(IMarkService markService)
         {
-            _context = context;
+            _markService = markService;
         }
 
         /// <summary>
@@ -29,18 +31,8 @@ namespace ScanID.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Mark>>> GetMarks(int? studentId, int? schoolId, int? academicYearId)
         {
-            var query = _context.Marks.Include(m => m.Student).AsNoTracking().AsQueryable();
-            
-            if (studentId.HasValue)
-                query = query.Where(m => m.StudentId == studentId.Value);
-            
-            if (schoolId.HasValue)
-                query = query.Where(m => m.Student!.SchoolId == schoolId.Value);
-
-            if (academicYearId.HasValue)
-                query = query.Where(m => m.Student!.AcademicYearId == academicYearId.Value);
-
-            return await query.ToListAsync();
+            var marks = await _markService.GetMarksAsync(studentId, schoolId, academicYearId);
+            return Ok(marks);
         }
 
         /// <summary>
@@ -51,10 +43,9 @@ namespace ScanID.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Mark>> PostMark(Mark mark)
         {
-            _context.Marks.Add(mark);
-            await _context.SaveChangesAsync();
+            var success = await _markService.CreateMarkAsync(mark);
+            if (!success) return StatusCode(500, "Failed to submit mark record.");
             return Ok(mark);
         }
     }
-
 }

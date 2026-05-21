@@ -1,24 +1,33 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using ScanID.Api.Data;
+using ScanID.Api.Interfaces;
 using ScanID.Api.Models;
 using ScanID.Api.Utilities;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ScanID.Api.Controllers
 {
     /// <summary>
     /// Controller for managing student records.
+    /// This implementation adheres to SOLID Principles and is fully decoupled utilizing DI.
+    /// - High-level module (StudentsController) does not depend on low-level database schemas, but on the abstraction (IStudentService).
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class StudentsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IStudentService _studentService;
         private readonly IWebHostEnvironment _environment;
 
-        public StudentsController(ApplicationDbContext context, IWebHostEnvironment environment)
+        public StudentsController(IStudentService studentService, IWebHostEnvironment environment)
         {
-            _context = context;
+            _studentService = studentService;
             _environment = environment;
         }
 
@@ -31,24 +40,8 @@ namespace ScanID.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Student>>> GetStudents(int? schoolId, int? academicYearId)
         {
-            IQueryable<Student> query = _context.Students
-                .Include(s => s.Standard)
-                .Include(s => s.Section)
-                .Include(s => s.AcademicYear)
-                .Where(s => !s.IsDeleted)
-                .AsNoTracking();
-
-            if (schoolId.HasValue)
-            {
-                query = query.Where(s => s.SchoolId == schoolId.Value);
-            }
-
-            if (academicYearId.HasValue)
-            {
-                query = query.Where(s => s.AcademicYearId == academicYearId.Value);
-            }
-
-            return await query.ToListAsync();
+            var students = await _studentService.GetStudentsAsync(schoolId, academicYearId);
+            return Ok(students);
         }
 
         /// <summary>
@@ -59,14 +52,14 @@ namespace ScanID.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Student>> GetStudent(int id)
         {
-            var student = await _context.Students.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id);
+            var student = await _studentService.GetStudentByIdAsync(id);
 
             if (student == null)
             {
                 return NotFound();
             }
 
-            return student;
+            return Ok(student);
         }
 
         /// <summary>
@@ -77,16 +70,8 @@ namespace ScanID.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Student>> PostStudent(Student student)
         {
-            // Set audit fields
-            student.CreatedOn = DateTime.Now;
-            student.ModifiedOn = DateTime.Now;
-            student.IsActive = true;
-            student.IsDeleted = false;
-
-            _context.Students.Add(student);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetStudent", new { id = student.Id }, student);
+            var createdStudent = await _studentService.CreateStudentAsync(student);
+            return CreatedAtAction("GetStudent", new { id = createdStudent.Id }, createdStudent);
         }
 
         /// <summary>
@@ -97,24 +82,7 @@ namespace ScanID.Api.Controllers
         [HttpGet("export")]
         public async Task<IActionResult> ExportStudents(int? schoolId)
         {
-            var query = _context.Students
-                .Include(s => s.Standard)
-                .Include(s => s.Section)
-                .Include(s => s.AcademicYear)
-                .Include(s => s.Caste)
-                .Include(s => s.Religion)
-                .Include(s => s.Category)
-                .Include(s => s.BloodGroup)
-                .Include(s => s.House)
-                .Include(s => s.Shift)
-                .Where(s => !s.IsDeleted);
-
-            if (schoolId.HasValue)
-            {
-                query = query.Where(s => s.SchoolId == schoolId.Value);
-            }
-
-            var students = await query.ToListAsync();
+            var students = await _studentService.GetStudentsForExportAsync(schoolId);
 
             var csv = new System.Text.StringBuilder();
             // Comprehensive Header
@@ -184,15 +152,14 @@ namespace ScanID.Api.Controllers
         {
             if (id != student.Id) return BadRequest();
 
-            _context.Entry(student).State = EntityState.Modified;
-
-            // Ensure auditing and non-schema fields are preserved if not sent
-            // or just let EF handle it. Here we use Entry(student).State = Modified.
-            // But we should ensure we don't accidentally overwrite IsDeleted etc if not in payload.
-
             try
             {
-                await _context.SaveChangesAsync();
+                var success = await _studentService.UpdateStudentAsync(student);
+                if (!success)
+                {
+                    if (!await StudentExistsAsync(id)) return NotFound();
+                    return StatusCode(500, "Failed to persist student record updates.");
+                }
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -205,6 +172,7 @@ namespace ScanID.Api.Controllers
 
         /// <summary>
         /// Bulk registers multiple students.
+        /// Encapsulates validations inside Domain logic.
         /// </summary>
         /// <param name="students">List of students.</param>
         /// <returns>Count of registered students.</returns>
@@ -213,129 +181,34 @@ namespace ScanID.Api.Controllers
         {
             if (students == null || !students.Any()) return BadRequest("No student data provided.");
 
-            // Load existing non-deleted student unique identifiers from the database for validation
-            var dbStudents = await _context.Students
-                .Where(s => !s.IsDeleted)
-                .Select(s => new { s.RegistrationNumber, s.GRNO, s.aadharcard, s.RFID, s.uniformid })
-                .AsNoTracking()
-                .ToListAsync();
-
-            var dbRegs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var dbAadhars = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var dbRfids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var dbUniforms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var dbs in dbStudents)
+            try
             {
-                if (!string.IsNullOrEmpty(dbs.RegistrationNumber)) dbRegs.Add(dbs.RegistrationNumber.Trim());
-                if (!string.IsNullOrEmpty(dbs.GRNO)) dbRegs.Add(dbs.GRNO.Trim());
-                if (!string.IsNullOrEmpty(dbs.aadharcard)) dbAadhars.Add(dbs.aadharcard.Trim());
-                if (!string.IsNullOrEmpty(dbs.RFID)) dbRfids.Add(dbs.RFID.Trim());
-                if (!string.IsNullOrEmpty(dbs.uniformid)) dbUniforms.Add(dbs.uniformid.Trim());
+                var response = await _studentService.CreateBulkStudentsAsync(students);
+                return Ok(response);
             }
-
-            // Keep track of sets within the incoming batch
-            var batchRegs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var batchAadhars = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var batchRfids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var batchUniforms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            int index = 1;
-            foreach (var student in students)
+            catch (InvalidOperationException ex)
             {
-                // a) RegistrationNumber/GRNO
-                var reg = (student.RegistrationNumber ?? student.GRNO ?? "").Trim();
-                if (!string.IsNullOrEmpty(reg))
-                {
-                    if (batchRegs.Contains(reg) || dbRegs.Contains(reg))
-                    {
-                        return BadRequest(new { message = $"Row {index}: Duplicate Registration Number/GRNO '{reg}' detected." });
-                    }
-                    batchRegs.Add(reg);
-                }
-
-                // If GRNO is passed separately and differs from RegistrationNumber
-                var grno = (student.GRNO ?? "").Trim();
-                if (!string.IsNullOrEmpty(grno))
-                {
-                    if (batchRegs.Contains(grno) || dbRegs.Contains(grno))
-                    {
-                        return BadRequest(new { message = $"Row {index}: Duplicate Registration Number/GRNO '{grno}' detected." });
-                    }
-                    batchRegs.Add(grno);
-                }
-
-                // b) AadharCard
-                var aadhar = (student.aadharcard ?? "").Trim();
-                if (!string.IsNullOrEmpty(aadhar))
-                {
-                    if (batchAadhars.Contains(aadhar) || dbAadhars.Contains(aadhar))
-                    {
-                        return BadRequest(new { message = $"Row {index}: Duplicate Aadhar Card '{aadhar}' detected." });
-                    }
-                    batchAadhars.Add(aadhar);
-                }
-
-                // c) RFID
-                var rfid = (student.RFID ?? "").Trim();
-                if (!string.IsNullOrEmpty(rfid))
-                {
-                    if (batchRfids.Contains(rfid) || dbRfids.Contains(rfid))
-                    {
-                        return BadRequest(new { message = $"Row {index}: Duplicate RFID/CardID '{rfid}' detected." });
-                    }
-                    batchRfids.Add(rfid);
-                }
-
-                // d) UniformID
-                var uniform = (student.uniformid ?? "").Trim();
-                if (!string.IsNullOrEmpty(uniform))
-                {
-                    if (batchUniforms.Contains(uniform) || dbUniforms.Contains(uniform))
-                    {
-                        return BadRequest(new { message = $"Row {index}: Duplicate UniformID '{uniform}' detected." });
-                    }
-                    batchUniforms.Add(uniform);
-                }
-
-                student.CreatedOn = DateTime.Now;
-                student.ModifiedOn = DateTime.Now;
-                student.IsActive = true;
-                student.IsDeleted = false;
-
-                // Ensure RegistrationNumber is set if missing
-                if (string.IsNullOrEmpty(student.RegistrationNumber))
-                {
-                    student.RegistrationNumber = "REG-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper();
-                }
-
-                index++;
+                return BadRequest(new { message = ex.Message });
             }
-
-            _context.Students.AddRange(students);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { count = students.Count(), message = "Bulk upload successful" });
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
-        /// Removes a student record (soft delete handled by context).
+        /// Removes a student record (soft delete handled by service).
         /// </summary>
         /// <param name="id">The student ID to delete.</param>
         /// <returns>No content on success.</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStudent(int id)
         {
-            var student = await _context.Students.FindAsync(id);
-            if (student == null) return NotFound();
-
-            // Set IsDeleted for soft delete
-            student.IsDeleted = true;
-            await _context.SaveChangesAsync();
+            var success = await _studentService.DeleteStudentAsync(id);
+            if (!success) return NotFound();
 
             return NoContent();
         }
-
 
         /// <summary>
         /// Updates a student's profile picture by saving it to the server filesystem.
@@ -348,7 +221,6 @@ namespace ScanID.Api.Controllers
         {
             if (file == null || file.Length == 0)
             {
-                // Inspecting the request more closely for diagnostics
                 var contentType = Request.ContentType ?? "null";
                 var bodyLength = Request.ContentLength ?? 0;
                 return BadRequest(new { 
@@ -358,11 +230,7 @@ namespace ScanID.Api.Controllers
                 });
             }
 
-            var student = await _context.Students
-                .Include(s => s.School)
-                .Include(s => s.Standard)
-                .Include(s => s.Section)
-                .FirstOrDefaultAsync(s => s.Id == id);
+            var student = await _studentService.GetStudentWithPhotoDetailsAsync(id);
 
             if (student == null)
             {
@@ -374,15 +242,12 @@ namespace ScanID.Api.Controllers
                 var schoolID = SanitizeFolderName(student.School?.Id.ToString() ?? student.SchoolId.ToString());
                 var relativeFolder = Path.Combine("photos", schoolID);
 
-                // Enhanced path resolution for robust folder creation across different environments
                 string webRootPath = _environment.WebRootPath;
                 if (string.IsNullOrEmpty(webRootPath))
                 {
-                    // Fallback 1: Try to find wwwroot in current directory
                     webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
                 }
 
-                // Fallback 2: If we are in a subfolder or different context, ensure we have a base
                 if (!Directory.Exists(webRootPath))
                 {
                     Directory.CreateDirectory(webRootPath);
@@ -390,7 +255,6 @@ namespace ScanID.Api.Controllers
 
                 var uploadsFolder = Path.Combine(webRootPath, relativeFolder);
 
-                // Ensure the hierarchical directory structure exists
                 if (!Directory.Exists(uploadsFolder))
                 {
                     Directory.CreateDirectory(uploadsFolder);
@@ -399,7 +263,6 @@ namespace ScanID.Api.Controllers
                 var extension = Path.GetExtension(file.FileName);
                 if (string.IsNullOrEmpty(extension)) extension = ".jpg";
                 
-                // Generate a 12-digit random number for the filename as requested
                 Random res = new Random();
                 string random12Digit = "";
                 for (int i = 0; i < 12; i++)
@@ -415,7 +278,6 @@ namespace ScanID.Api.Controllers
                     await file.CopyToAsync(stream);
                 }
 
-                // Path for storage in DB and serving to frontend
                 var relativePath = $"/photos/{schoolID}/{fileName}";
 
                 if (!string.IsNullOrEmpty(student.ProfilePhotoPath))
@@ -430,7 +292,7 @@ namespace ScanID.Api.Controllers
                 student.ProfilePhotoPath = relativePath;
                 student.ModifiedOn = DateTime.Now;
 
-                await _context.SaveChangesAsync();
+                await _studentService.SaveChangesAsync();
 
                 return Ok(new
                 {
@@ -440,7 +302,7 @@ namespace ScanID.Api.Controllers
             }
             catch (Exception ex)
             {
-                ScanID.Api.Utilities.FileLogger.LogError(ex);
+                FileLogger.LogError(ex);
                 return StatusCode(500, new { message = "Physical storage failed: " + ex.Message });
             }
         }
@@ -452,17 +314,16 @@ namespace ScanID.Api.Controllers
         {
             if (string.IsNullOrWhiteSpace(name)) return "Unassigned";
 
-            // Remove illegal characters from path
             var invalidChars = Path.GetInvalidFileNameChars();
             var sanitized = new string(name.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray());
 
-            // Further cleaning to ensure it's a slick folder name
             return sanitized.Replace(" ", "_").Trim('_');
         }
 
         private async Task<bool> StudentExistsAsync(int id)
         {
-            return await _context.Students.AnyAsync(e => e.Id == id);
+            var std = await _studentService.GetStudentByIdAsync(id);
+            return std != null;
         }
     }
 }

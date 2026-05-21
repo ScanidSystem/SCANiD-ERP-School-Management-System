@@ -12,11 +12,11 @@ namespace ScanID.Api.Controllers
     [ApiController]
     public class ErrorLogsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IErrorLogService _errorLogService;
 
-        public ErrorLogsController(ApplicationDbContext context)
+        public ErrorLogsController(IErrorLogService errorLogService)
         {
-            _context = context;
+            _errorLogService = errorLogService;
         }
 
         /// <summary>
@@ -27,10 +27,8 @@ namespace ScanID.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ErrorLog>>> GetErrorLogs([FromQuery] int limit = 100)
         {
-            return await _context.ErrorLogs
-                .OrderByDescending(x => x.Timestamp)
-                .Take(limit)
-                .ToListAsync();
+            var logs = await _errorLogService.GetErrorLogsAsync(limit);
+            return Ok(logs);
         }
 
         /// <summary>
@@ -40,8 +38,7 @@ namespace ScanID.Api.Controllers
         [HttpDelete("clear")]
         public async Task<IActionResult> ClearLogs()
         {
-            _context.ErrorLogs.RemoveRange(_context.ErrorLogs);
-            await _context.SaveChangesAsync();
+            await _errorLogService.ClearErrorLogsAsync();
             return NoContent();
         }
 

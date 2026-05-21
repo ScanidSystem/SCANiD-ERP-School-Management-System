@@ -1,22 +1,24 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ScanID.Api.Data;
+using ScanID.Api.Interfaces;
 using ScanID.Api.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ScanID.Api.Controllers
 {
     /// <summary>
     /// Controller for retrieving system audit trails.
+    /// Supports Dependency Injection and decoupled operations.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class AuditLogsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IAuditLogService _auditLogService;
 
-        public AuditLogsController(ApplicationDbContext context)
+        public AuditLogsController(IAuditLogService auditLogService)
         {
-            _context = context;
+            _auditLogService = auditLogService;
         }
 
         /// <summary>
@@ -27,10 +29,8 @@ namespace ScanID.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AuditLog>>> GetAuditLogs([FromQuery] int limit = 100)
         {
-            return await _context.AuditLogs
-                .OrderByDescending(x => x.DateTime)
-                .Take(limit)
-                .ToListAsync();
+            var logs = await _auditLogService.GetAuditLogsAsync(limit);
+            return Ok(logs);
         }
     }
 }
