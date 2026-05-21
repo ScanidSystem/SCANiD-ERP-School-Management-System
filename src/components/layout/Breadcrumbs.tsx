@@ -1,7 +1,41 @@
 import * as React from "react";
 import { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronRight, Home } from "lucide-react";
+import { 
+  ChevronRight, 
+  Home, 
+  LayoutDashboard, 
+  GraduationCap, 
+  CalendarCheck, 
+  BarChart3, 
+  Users, 
+  UserCheck, 
+  CreditCard, 
+  MessageSquare, 
+  Database, 
+  School, 
+  Key, 
+  Shield, 
+  Layout, 
+  LayoutGrid, 
+  Layers, 
+  Hash, 
+  Calendar, 
+  BookOpen, 
+  Heart, 
+  Droplets, 
+  UserCircle, 
+  Terminal, 
+  Map, 
+  MapPin, 
+  Clock, 
+  Award, 
+  Briefcase, 
+  Hammer, 
+  Bell, 
+  User, 
+  Settings 
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Breadcrumbs() {
@@ -9,53 +43,126 @@ export default function Breadcrumbs() {
 
   const breadcrumbs = useMemo(() => {
     const pathnames = location.pathname.split("/").filter((x) => x);
-    return [
-      { name: "Home", path: "/" },
-      ...pathnames.map((value, index) => {
-        const path = `/${pathnames.slice(0, index + 1).join("/")}`;
-        return { 
-          name: value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, " "), 
-          path 
-        };
-      }),
+    const crumbs = [
+      { name: "Home", path: "/" }
     ];
+    
+    pathnames.forEach((value, index) => {
+      const path = `/${pathnames.slice(0, index + 1).join("/")}`;
+      
+      // Map names professionally
+      let name = value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, " ");
+      if (name.toLowerCase() === "configuration") {
+        name = "Configuration";
+      } else if (name.toLowerCase() === "role-master") {
+        name = "Role Master";
+      } else if (name.toLowerCase() === "role-assignment") {
+        name = "Role Assignment";
+      } else if (name.toLowerCase() === "system-logs") {
+        name = "System Logs";
+      } else if (name.toLowerCase() === "marks") {
+        name = "Academic Reports";
+      }
+      
+      crumbs.push({ name, path });
+    });
+    
+    return crumbs;
   }, [location.pathname]);
 
-  const pageTitle = useMemo(() => {
-    if (location.pathname === "/") return "Dashboard";
-    const pathnames = location.pathname.split("/").filter((x) => x);
-    const last = pathnames[pathnames.length - 1];
-    if (!last) return "Dashboard";
-    return last.charAt(0).toUpperCase() + last.slice(1).replace(/-/g, " ");
-  }, [location.pathname]);
+  const getIconForPath = (path: string, name: string) => {
+    const cleanPath = path.toLowerCase().replace(/\/$/, "");
+    const cleanName = name.toLowerCase();
 
-  const displayPageTitle = useMemo(() => {
-    if (pageTitle === "Marks") return "Academic Reports";
-    return pageTitle;
-  }, [pageTitle]);
+    if (cleanPath === "" || cleanPath === "/") return Home;
+    if (cleanPath === "/students") return GraduationCap;
+    if (cleanPath === "/marks") return BarChart3;
+    if (cleanPath === "/attendance") return CalendarCheck;
+    if (cleanPath === "/fees") return CreditCard;
+    if (cleanPath === "/messages") return MessageSquare;
+    if (cleanPath === "/teachers") return UserCheck;
+    if (cleanPath === "/profile") return User;
+    if (cleanPath === "/settings") return Settings;
+    if (cleanPath === "/notifications") return Bell;
+    if (cleanPath === "/system-logs") return Terminal;
+    if (cleanPath === "/configuration") return Database;
+    
+    if (cleanPath.startsWith("/configuration/")) {
+      const sub = cleanPath.split("/").pop() || "";
+      switch (sub) {
+        case "schools": return School;
+        case "role-master": return Shield;
+        case "role-assignment": return UserCheck;
+        case "standards": return Layers;
+        case "sections": return Hash;
+        case "academic-years": return Calendar;
+        case "subjects": return BookOpen;
+        case "religions": return Heart;
+        case "blood-groups": return Droplets;
+        case "castes": return Users;
+        case "sub-castes": return UserCircle;
+        case "houses": return Home;
+        case "admission-types": return UserCheck;
+        case "states": return Map;
+        case "cities": return MapPin;
+        case "categories": return LayoutGrid;
+        case "sessions": return Clock;
+        case "batches": return Users;
+        case "shifts": return Clock;
+        case "exam-types": return Award;
+        case "designations": return Briefcase;
+        case "occupations": return Hammer;
+        case "navigation": return LayoutGrid;
+        case "users": return Users;
+        default: return Database;
+      }
+    }
+
+    if (cleanName.includes("home")) return Home;
+    if (cleanName.includes("dashboard")) return LayoutDashboard;
+    if (cleanName.includes("student")) return GraduationCap;
+    if (cleanName.includes("mark") || cleanName.includes("report") || cleanName.includes("academic")) return BarChart3;
+    if (cleanName.includes("attendance")) return CalendarCheck;
+    if (cleanName.includes("fee")) return CreditCard;
+    if (cleanName.includes("message") || cleanName.includes("chat") || cleanName.includes("comm")) return MessageSquare;
+    if (cleanName.includes("teacher") || cleanName.includes("faculty")) return UserCheck;
+    if (cleanName.includes("profile")) return User;
+    if (cleanName.includes("setting")) return Settings;
+    if (cleanName.includes("log") || cleanName.includes("audit")) return Terminal;
+    if (cleanName.includes("school")) return School;
+    if (cleanName.includes("config") || cleanName.includes("master")) return Database;
+
+    return Database;
+  };
 
   return (
-    <div className="bg-white border-b border-slate-200 px-8 py-4 shrink-0 transition-all duration-300">
-      <nav className="flex items-center space-x-1 text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5 overflow-x-auto whitespace-nowrap scrollbar-hide">
-        {breadcrumbs.map((crumb, index) => (
-          <React.Fragment key={crumb.path}>
-            {index > 0 && <ChevronRight size={10} className="text-slate-300 mx-1 shrink-0" />}
-            <Link 
-              to={crumb.path}
-              className={cn(
-                "hover:text-blue-600 transition-colors flex items-center gap-1 shrink-0",
-                index === breadcrumbs.length - 1 ? "text-slate-500" : ""
+    <div className="bg-white border-b border-slate-200/80 px-8 py-3 shrink-0 transition-all duration-300">
+      <nav className="flex items-center space-x-1 overflow-x-auto whitespace-nowrap scrollbar-hide py-0.5">
+        {breadcrumbs.map((crumb, index) => {
+          const IconComponent = getIconForPath(crumb.path, crumb.name);
+          const isLast = index === breadcrumbs.length - 1;
+          
+          return (
+            <React.Fragment key={crumb.path}>
+              {index > 0 && (
+                <ChevronRight size={12} className="text-slate-300 mx-1.5 shrink-0" />
               )}
-            >
-              {index === 0 && <Home size={10} />}
-              {crumb.name === "Marks" ? "Academic Reports" : crumb.name}
-            </Link>
-          </React.Fragment>
-        ))}
+              <Link 
+                to={crumb.path}
+                className={cn(
+                  "flex items-center gap-2 px-2 py-1 rounded-lg text-slate-400 font-bold text-[11px] uppercase tracking-wider transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2",
+                  isLast 
+                    ? "text-blue-600 bg-blue-50/50 hover:bg-blue-50" 
+                    : "hover:text-slate-700 hover:bg-slate-100/70"
+                )}
+              >
+                <IconComponent size={13} className={cn("shrink-0", isLast ? "text-blue-600" : "text-slate-400")} />
+                <span>{crumb.name}</span>
+              </Link>
+            </React.Fragment>
+          );
+        })}
       </nav>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">{displayPageTitle}</h1>
-      </div>
     </div>
   );
 }

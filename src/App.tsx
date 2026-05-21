@@ -91,6 +91,7 @@ export default function App() {
               onUserUpdate={handleUpdateUser} 
               toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
             />
+            <Breadcrumbs />
             <main className="flex-1 overflow-auto p-6 min-w-0">
               <Routes>
                 <Route path="/" element={<Dashboard user={user} />} />
