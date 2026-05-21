@@ -37,8 +37,11 @@ namespace ScanID.Api.Services
 
         public async Task<bool> CreateFeeAsync(Fee fee)
         {
+            // Execute the sp_ManageFee stored procedure with positional parameters.
+            // Under the hood, our optimized dual-mode sp_ManageFee procedure will translate
+            // these arguments into the appropriate database insertions on the Fees table.
             var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"EXEC dbo.sp_ManageFee 'INSERT', NULL, {fee.StudentId}, {fee.Amount}, {fee.Status}, {fee.Remarks}, NULL"
+                $"EXEC dbo.sp_ManageFee 'INSERT', NULL, {fee.StudentId}, {fee.Amount}, {fee.Status}, {fee.PaymentMethod}, NULL"
             );
             return rowsAffected > 0;
         }

@@ -37,8 +37,11 @@ namespace ScanID.Api.Services
 
         public async Task<bool> CreateMarkAsync(Mark mark)
         {
+            // Execute the sp_ManageMark stored procedure using SQL Server parameters.
+            // Our advanced dual-mode stored procedure sp_ManageMark handles name mapping 
+            // of subject and exam fields and generates corresponding grades dynamically.
             var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"EXEC dbo.sp_ManageMark 'INSERT', NULL, {mark.StudentId}, {mark.Subject}, {mark.TotalMarks}, {mark.ObtainedMarks}, {mark.Remarks}, NULL"
+                $"EXEC dbo.sp_ManageMark 'INSERT', NULL, {mark.StudentId}, {mark.Subject}, {mark.TotalMarks}, {mark.MarksObtained}, {mark.Grade}, NULL"
             );
             return rowsAffected > 0;
         }

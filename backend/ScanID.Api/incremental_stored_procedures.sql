@@ -366,10 +366,10 @@ BEGIN
     USING (SELECT @StudentId AS StudentId, CONVERT(DATE, @Date) AS AttendanceDate) AS source
     ON (target.StudentId = source.StudentId AND CONVERT(DATE, target.Date) = source.AttendanceDate)
     WHEN MATCHED THEN
-        UPDATE SET Status = @Status, Remarks = @Remarks, ModifiedOn = GETUTCDATE()
+        UPDATE SET Status = @Status, ModifiedOn = GETUTCDATE()
     WHEN NOT MATCHED THEN
-        INSERT (StudentId, Date, Status, Remarks, CreatedOn, ModifiedOn, CreatedBy)
-        VALUES (@StudentId, @Date, @Status, @Remarks, GETUTCDATE(), GETUTCDATE(), @CreatedBy);
+        INSERT (StudentId, Date, Status, CreatedOn, ModifiedOn, CreatedBy)
+        VALUES (@StudentId, @Date, @Status, GETUTCDATE(), GETUTCDATE(), @CreatedBy);
 END;
 GO
 
@@ -396,20 +396,57 @@ GO
 IF OBJECT_ID('dbo.sp_ManageFee', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_ManageFee;
 GO
 CREATE PROCEDURE dbo.sp_ManageFee
-    @StudentId INT,
-    @Amount DECIMAL(18,2),
-    @Date DATETIME,
-    @Status NVARCHAR(50),
+    @Action NVARCHAR(50) = NULL,
+    @Id VARCHAR(50) = NULL,
+    @StudentId INT = NULL,
+    @Amount DECIMAL(18,2) = NULL,
+    @Status NVARCHAR(50) = NULL,
     @Remarks NVARCHAR(255) = NULL,
     @PaymentMode NVARCHAR(50) = NULL,
     @CreatedBy NVARCHAR(100) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
+    
+    DECLARE @RealStudentId INT;
+    DECLARE @RealAmount DECIMAL(18,2);
+    DECLARE @RealStatus NVARCHAR(50);
+    DECLARE @RealPaymentMethod NVARCHAR(100);
+    
+    -- Detect if used as sp_ManageFee 'INSERT', NULL, StudentId, Amount, Status, Remarks, PaymentMode
+    IF @Action IN ('INSERT', 'UPDATE', 'DELETE')
+    BEGIN
+        SET @RealStudentId = @StudentId;
+        SET @RealAmount = @Amount;
+        SET @RealStatus = @Status;
+        SET @RealPaymentMethod = @Remarks; -- In standard calls, @Remarks was used in the 6th position
+    END
+    ELSE
+    BEGIN
+        -- Used as sp_ManageFee @StudentId, @Amount, @Date, @Status, @Remarks, @PaymentMode
+        SET @RealStudentId = TRY_CAST(@Action AS INT);
+        SET @RealAmount = TRY_CAST(@Id AS DECIMAL(18,2));
+        SET @RealStatus = @Status;
+        SET @RealPaymentMethod = @PaymentMode;
+    END
+
+    -- Ensure we always insert safely
     INSERT INTO [dbo].[Fees] (
-        StudentId, Amount, Date, Status, Remarks, PaymentMode, IsActive, IsDeleted, CreatedOn, ModifiedOn, CreatedBy
+        StudentId, InvoiceNumber, Type, Amount, DueDate, PaidDate, Status, PaymentMethod, IsActive, IsDeleted, CreatedOn, ModifiedOn, CreatedBy
     ) VALUES (
-        @StudentId, @Amount, @Date, @Status, @Remarks, @PaymentMode, 1, 0, GETUTCDATE(), GETUTCDATE(), @CreatedBy
+        ISNULL(@RealStudentId, 0), 
+        'INV-' + CONVERT(NVARCHAR(36), NEWID()), 
+        N'Tuition', 
+        ISNULL(@RealAmount, 0), 
+        GETUTCDATE(), 
+        NULL, 
+        ISNULL(@RealStatus, N'Pending'), 
+        @RealPaymentMethod, 
+        1, 
+        0, 
+        GETUTCDATE(), 
+        GETUTCDATE(), 
+        @CreatedBy
     );
     SELECT SCOPE_IDENTITY();
 END;
@@ -438,20 +475,68 @@ GO
 IF OBJECT_ID('dbo.sp_ManageMark', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_ManageMark;
 GO
 CREATE PROCEDURE dbo.sp_ManageMark
-    @StudentId INT,
-    @SubjectId INT,
-    @ExamTypeId INT,
-    @ObtainedMarks DECIMAL(5,2),
-    @MaxMarks DECIMAL(5,2),
+    @Action NVARCHAR(50) = NULL,
+    @Id VARCHAR(50) = NULL,
+    @StudentId INT = NULL,
+    @Subject NVARCHAR(100) = NULL,
+    @TotalMarks DECIMAL(18,2) = NULL,
+    @MarksObtained DECIMAL(18,2) = NULL,
     @Remarks NVARCHAR(255) = NULL,
     @CreatedBy NVARCHAR(100) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    DECLARE @RealStudentId INT;
+    DECLARE @RealSubject NVARCHAR(100);
+    DECLARE @RealTotalMarks DECIMAL(18,2);
+    DECLARE @RealMarksObtained DECIMAL(18,2);
+    DECLARE @RealGrade NVARCHAR(10);
+
+    IF @Action IN ('INSERT', 'UPDATE', 'DELETE')
+    BEGIN
+        SET @RealStudentId = @StudentId;
+        SET @RealSubject = @Subject;
+        SET @RealTotalMarks = @TotalMarks;
+        SET @RealMarksObtained = @MarksObtained;
+        -- Generate simple grade based on percentage
+        IF @RealTotalMarks > 0
+        BEGIN
+            DECLARE @Pct DECIMAL(5,2) = (@RealMarksObtained * 100.0) / @RealTotalMarks;
+            IF @Pct >= 90 SET @RealGrade = 'A+';
+            ELSE IF @Pct >= 80 SET @RealGrade = 'A';
+            ELSE IF @Pct >= 70 SET @RealGrade = 'B';
+            ELSE IF @Pct >= 60 SET @RealGrade = 'C';
+            ELSE IF @Pct >= 50 SET @RealGrade = 'D';
+            ELSE SET @RealGrade = 'F';
+        END
+        ELSE
+            SET @RealGrade = 'E';
+    END
+    ELSE
+    BEGIN
+        SET @RealStudentId = TRY_CAST(@Action AS INT);
+        -- In old signature: @SubjectId represented subject string, @ExamTypeId represented exam. Let's cast them.
+        SET @RealSubject = @Id;
+        SET @RealTotalMarks = TRY_CAST(@MarksObtained AS DECIMAL(18,2));
+        SET @RealMarksObtained = TRY_CAST(@TotalMarks AS DECIMAL(18,2));
+        SET @RealGrade = N'Grade';
+    END
+
     INSERT INTO [dbo].[Marks] (
-        StudentId, SubjectId, ExamTypeId, ObtainedMarks, MaxMarks, Remarks, IsActive, IsDeleted, CreatedOn, ModifiedOn, CreatedBy
+        StudentId, Subject, ExamName, MarksObtained, TotalMarks, Grade, IsActive, IsDeleted, CreatedOn, ModifiedOn, CreatedBy
     ) VALUES (
-        @StudentId, @SubjectId, @ExamTypeId, @ObtainedMarks, @MaxMarks, @Remarks, 1, 0, GETUTCDATE(), GETUTCDATE(), @CreatedBy
+        ISNULL(@RealStudentId, 0),
+        ISNULL(@RealSubject, N'General'),
+        N'Term Exam',
+        ISNULL(@RealMarksObtained, 0),
+        ISNULL(@RealTotalMarks, 100),
+        @RealGrade,
+        1,
+        0,
+        GETUTCDATE(),
+        GETUTCDATE(),
+        @CreatedBy
     );
     SELECT SCOPE_IDENTITY();
 END;
@@ -538,8 +623,7 @@ BEGIN
     SET NOCOUNT ON;
     SELECT * FROM [dbo].[Notifications]
     WHERE IsDeleted = 0
-      AND (@SchoolId IS NULL OR SchoolId = @SchoolId)
-    ORDER BY CreatedOn DESC;
+    ORDER BY CreatedAt DESC;
 END;
 GO
 
@@ -558,9 +642,9 @@ BEGIN
     IF @Action = 'INSERT'
     BEGIN
         INSERT INTO [dbo].[Notifications] (
-            Title, Message, SchoolId, CreatedOn, IsDeleted, CreatedBy
+            Title, Message, CreatedAt, IsDeleted, CreatedBy
         ) VALUES (
-            @Title, @Message, @SchoolId, GETUTCDATE(), 0, @CreatedBy
+            @Title, @Message, GETUTCDATE(), 0, @CreatedBy
         );
         SELECT SCOPE_IDENTITY();
     END
@@ -599,7 +683,7 @@ BEGIN
     IF @Action = 'INSERT'
     BEGIN
         INSERT INTO [dbo].[Schools] (
-            Name, LogoPath, Address, ContactNumber, Email, IsActive, IsDeleted, CreatedOn, ModifiedOn, CreatedBy
+            Name, ProfilePhotoPath, Address, Phone, Email, IsActive, IsDeleted, CreatedOn, ModifiedOn, CreatedBy
         ) VALUES (
             @Name, @LogoPath, @Address, @ContactNumber, @Email, 1, 0, GETUTCDATE(), GETUTCDATE(), @CreatedBy
         );
@@ -609,9 +693,9 @@ BEGIN
     BEGIN
         UPDATE [dbo].[Schools] SET
             Name = ISNULL(@Name, Name),
-            LogoPath = ISNULL(@LogoPath, LogoPath),
+            ProfilePhotoPath = ISNULL(@LogoPath, ProfilePhotoPath),
             Address = ISNULL(@Address, Address),
-            ContactNumber = ISNULL(@ContactNumber, ContactNumber),
+            Phone = ISNULL(@ContactNumber, Phone),
             Email = ISNULL(@Email, Email),
             ModifiedOn = GETUTCDATE()
         WHERE Id = @Id;
