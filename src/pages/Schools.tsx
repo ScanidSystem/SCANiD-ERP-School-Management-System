@@ -287,8 +287,9 @@ export default function Schools({ user }: { user: UserType }) {
 
     checkField("name", !formData.name?.trim());
     checkField("address", !formData.address?.trim());
-    checkField("phone", formData.phone && !/^\d{10,12}$/.test(formData.phone.replace(/\D/g, "")));
-    checkField("email", formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email));
+    // Safe double negation evaluation cast to ensure string | boolean results compile cleanly as booleans
+    checkField("phone", !!(formData.phone && !/^\d{10,12}$/.test(formData.phone.replace(/\D/g, ""))));
+    checkField("email", !!(formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)));
 
     setFormErrors(newErrors);
 
@@ -355,8 +356,9 @@ export default function Schools({ user }: { user: UserType }) {
 
     checkField("name", !formData.name?.trim());
     checkField("address", !formData.address?.trim());
-    checkField("phone", formData.phone && !/^\d{10,12}$/.test(formData.phone.replace(/\D/g, "")));
-    checkField("email", formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email));
+    // Safe double negation evaluation cast to ensure string | boolean results compile cleanly as booleans
+    checkField("phone", !!(formData.phone && !/^\d{10,12}$/.test(formData.phone.replace(/\D/g, ""))));
+    checkField("email", !!(formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)));
 
     setFormErrors(newErrors);
 
@@ -590,7 +592,7 @@ export default function Schools({ user }: { user: UserType }) {
                 <section className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100">
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">System Status</Label>
-                    <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
+                    <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v || "Active"})}>
                       <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
                         <SelectValue placeholder="Select System Status">
                           {formData.status || undefined}
@@ -797,7 +799,7 @@ export default function Schools({ user }: { user: UserType }) {
                 <section className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100">
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">System Status</Label>
-                    <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
+                    <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v || "Active"})}>
                       <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
                         <SelectValue placeholder="Select System Status">
                           {formData.status || undefined}
@@ -979,7 +981,7 @@ export default function Schools({ user }: { user: UserType }) {
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5 mr-4">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rows per page</span>
-                  <UISelect value={pageSize.toString()} onValueChange={(v) => { setPageSize(parseInt(v)); setPage(1); }}>
+                  <UISelect value={pageSize.toString()} onValueChange={(v) => { setPageSize(parseInt(v || "10")); setPage(1); }}>
                     <SelectTrigger className="w-[70px] h-8 bg-white border-slate-200 rounded-lg text-xs font-bold">
                       <SelectValue />
                     </SelectTrigger>
