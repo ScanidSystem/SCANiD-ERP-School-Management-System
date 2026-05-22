@@ -1,5 +1,6 @@
 #pragma warning disable CS8604 // Disable warning for possible null reference argument for parameter 'parameters' in SqlQueryRaw
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using ScanID.Api.Data;
 using ScanID.Api.Interfaces;
 using ScanID.Api.Models;
@@ -14,6 +15,7 @@ namespace ScanID.Api.Services
     /// <summary>
     /// Decoupled TeacherService realization calling high-performance Stored Procedures.
     /// This keeps professional catalog lookups highly optimized and maintains SOLID architectures.
+    /// Handles database transactions, rollbacks, and deadlock recovery transparently.
     /// </summary>
     public class TeacherService : ITeacherService
     {
@@ -22,6 +24,38 @@ namespace ScanID.Api.Services
         public TeacherService(ApplicationDbContext context)
         {
             _context = context;
+        }
+
+        /// <summary>
+        /// Executes an operation with transparent retry logic under SQL Server Deadlock (1205) occurrences.
+        /// This ensures transient deadlock issues are resolved safely without bubbling errors to end users.
+        /// </summary>
+        private async Task<T> ExecuteWithRetryAsync<T>(Func<Task<T>> action, int maxRetries = 3)
+        {
+            int delay = 150; // Delay in milliseconds
+            for (int retry = 0; retry < maxRetries; retry++)
+            {
+                try
+                {
+                    return await action();
+                }
+                catch (SqlException ex) when (ex.Number == 1205) // 1205 is the SQL Server Error code for deadlocks
+                {
+                    if (retry == maxRetries - 1)
+                    {
+                        FileLogger.LogError(new Exception($"Database transaction transient deadlock failed after {maxRetries} retry attempts.", ex));
+                        throw;
+                    }
+                    await Task.Delay(delay);
+                    delay *= 2; // Exponential backoff
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.LogError(ex);
+                    throw;
+                }
+            }
+            throw new InvalidOperationException("Execution failed after maximum transient deadlock retries.");
         }
 
         public async Task<IEnumerable<Teacher>> GetTeachersAsync(int? schoolId)
@@ -43,63 +77,86 @@ namespace ScanID.Api.Services
 
         public async Task<Teacher> CreateTeacherAsync(Teacher teacher)
         {
-            // Execute the sp_ManageTeacher stored procedure safely using high-performance ADO.NET DbMapper 
-            // to retrieve the newly generated identity, completely avoiding EF Core query wrapping issues.
-            teacher.Id = await DbMapper.ExecuteScalarStoredProcedureAsync(
-                _context,
-                "dbo.sp_ManageTeacher",
-                ("Action", "INSERT"),
-                ("Id", null),
-                ("UserId", teacher.UserId),
-                ("ContactNumber", teacher.ContactNumber),
-                ("Department", teacher.Department),
-                ("Qualification", teacher.Qualification),
-                ("Status", teacher.Status),
-                ("SchoolId", teacher.SchoolId),
-                ("ProfilePhotoPath", teacher.ProfilePhotoPath)
-            );
+            return await ExecuteWithRetryAsync(async () =>
+            {
+                // Execute the sp_ManageTeacher stored procedure safely using high-performance ADO.NET DbMapper 
+                // to retrieve the newly generated identity, completely avoiding EF Core query wrapping issues.
+                teacher.Id = await DbMapper.ExecuteScalarStoredProcedureAsync(
+                    _context,
+                    "dbo.sp_ManageTeacher",
+                    ("Action", "INSERT"),
+                    ("Id", null),
+                    ("UserId", teacher.UserId),
+                    ("ContactNumber", teacher.ContactNumber),
+                    ("Department", teacher.Department),
+                    ("Qualification", teacher.Qualification),
+                    ("Status", teacher.Status),
+                    ("SchoolId", teacher.SchoolId),
+                    ("ProfilePhotoPath", teacher.ProfilePhotoPath)
+                );
 
-            return teacher;
+                return teacher;
+            });
         }
 
         public async Task<bool> UpdateTeacherAsync(Teacher teacher)
         {
-            var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"EXEC dbo.sp_ManageTeacher 'UPDATE', {teacher.Id}, {teacher.UserId}, {teacher.ContactNumber}, {teacher.Department}, {teacher.Qualification}, {teacher.Status}, {teacher.SchoolId}, {teacher.ProfilePhotoPath}"
-            );
-
-            // Also update the linked user account details if they were modified
-            if (teacher.User != null)
+            return await ExecuteWithRetryAsync(async () =>
             {
-                var user = await _context.Users.FindAsync(teacher.UserId);
-                if (user != null)
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                try
                 {
-                    user.Name = teacher.User.Name;
-                    user.Email = teacher.User.Email;
-                    user.ModifiedOn = DateTime.Now;
-                    await _context.SaveChangesAsync();
-                }
-            }
+                    var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
+                        $"EXEC dbo.sp_ManageTeacher 'UPDATE', {teacher.Id}, {teacher.UserId}, {teacher.ContactNumber}, {teacher.Department}, {teacher.Qualification}, {teacher.Status}, {teacher.SchoolId}, {teacher.ProfilePhotoPath}"
+                    );
 
-            return rowsAffected > 0;
+                    // Also update the linked user account details if they were modified
+                    if (teacher.User != null)
+                    {
+                        var user = await _context.Users.FindAsync(teacher.UserId);
+                        if (user != null)
+                        {
+                            user.Name = teacher.User.Name;
+                            user.Email = teacher.User.Email;
+                            user.ModifiedOn = DateTime.Now;
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+
+                    await transaction.CommitAsync();
+                    return rowsAffected > 0;
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    FileLogger.LogError(new Exception($"Failed to complete UpdateTeacherAsync transaction for TeacherId: {teacher.Id}. Rolled back.", ex));
+                    throw;
+                }
+            });
         }
 
         public async Task<bool> DeleteTeacherAsync(int id)
         {
-            var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"EXEC dbo.sp_ManageTeacher 'DELETE', {id}"
-            );
-            return rowsAffected > 0;
+            return await ExecuteWithRetryAsync(async () =>
+            {
+                var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"EXEC dbo.sp_ManageTeacher 'DELETE', {id}"
+                );
+                return rowsAffected > 0;
+            });
         }
 
         public async Task<bool> SavePhotoPathAsync(int id, string path)
         {
-            var teacher = await _context.Teachers.FindAsync(id);
-            if (teacher == null) return false;
+            return await ExecuteWithRetryAsync(async () =>
+            {
+                var teacher = await _context.Teachers.FindAsync(id);
+                if (teacher == null) return false;
 
-            teacher.ProfilePhotoPath = path;
-            teacher.ModifiedOn = DateTime.Now;
-            return await _context.SaveChangesAsync() > 0;
+                teacher.ProfilePhotoPath = path;
+                teacher.ModifiedOn = DateTime.Now;
+                return await _context.SaveChangesAsync() > 0;
+            });
         }
     }
 }

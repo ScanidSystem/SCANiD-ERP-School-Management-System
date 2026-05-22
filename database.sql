@@ -1030,38 +1030,51 @@ CREATE PROCEDURE dbo.sp_ManageTeacher
 AS
 BEGIN
     SET NOCOUNT ON;
-    IF @Action = 'INSERT'
-    BEGIN
-        INSERT INTO [dbo].[Teachers] (
-            UserId, ContactNumber, Department, Qualification, Status, SchoolId, ProfilePhotoPath, IsActive, IsDeleted, CreatedOn, ModifiedOn
-        ) VALUES (
-            @UserId, @ContactNumber, @Department, @Qualification, @Status, @SchoolId, @ProfilePhotoPath, 1, 0, GETUTCDATE(), GETUTCDATE()
-        );
-        SELECT SCOPE_IDENTITY();
-    END
-    ELSE IF @Action = 'UPDATE'
-    BEGIN
-        UPDATE [dbo].[Teachers] SET
-            UserId = ISNULL(@UserId, UserId),
-            ContactNumber = ISNULL(@ContactNumber, ContactNumber),
-            Department = ISNULL(@Department, Department),
-            Qualification = ISNULL(@Qualification, Qualification),
-            Status = ISNULL(@Status, Status),
-            SchoolId = ISNULL(@SchoolId, SchoolId),
-            ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
-            ModifiedOn = GETUTCDATE()
-        WHERE Id = @Id;
-    END
-    ELSE IF @Action = 'DELETE'
-    BEGIN
-        UPDATE [dbo].[Teachers] SET IsDeleted = 1, IsActive = 0, ModifiedOn = GETUTCDATE() WHERE Id = @Id;
-        DECLARE @LinkedUserId INT;
-        SELECT @LinkedUserId = UserId FROM [dbo].[Teachers] WHERE Id = @Id;
-        IF @LinkedUserId IS NOT NULL
+    SET XACT_ABORT ON; -- Instantly rolls back on any fatal SQL runtime errors
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        IF @Action = 'INSERT'
         BEGIN
-            UPDATE [dbo].[Users] SET IsDeleted = 1, ModifiedOn = GETUTCDATE() WHERE Id = @LinkedUserId;
+            INSERT INTO [dbo].[Teachers] (
+                UserId, ContactNumber, Department, Qualification, Status, SchoolId, ProfilePhotoPath, IsActive, IsDeleted, CreatedOn, ModifiedOn
+            ) VALUES (
+                @UserId, @ContactNumber, @Department, @Qualification, @Status, @SchoolId, @ProfilePhotoPath, 1, 0, GETUTCDATE(), GETUTCDATE()
+            );
+            SELECT SCOPE_IDENTITY();
         END
-    END
+        ELSE IF @Action = 'UPDATE'
+        BEGIN
+            UPDATE [dbo].[Teachers] SET
+                UserId = ISNULL(@UserId, UserId),
+                ContactNumber = ISNULL(@ContactNumber, ContactNumber),
+                Department = ISNULL(@Department, Department),
+                Qualification = ISNULL(@Qualification, Qualification),
+                Status = ISNULL(@Status, Status),
+                SchoolId = ISNULL(@SchoolId, SchoolId),
+                ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
+                ModifiedOn = GETUTCDATE()
+            WHERE Id = @Id;
+        END
+        ELSE IF @Action = 'DELETE'
+        BEGIN
+            UPDATE [dbo].[Teachers] SET IsDeleted = 1, IsActive = 0, ModifiedOn = GETUTCDATE() WHERE Id = @Id;
+            DECLARE @LinkedUserId INT;
+            SELECT @LinkedUserId = UserId FROM [dbo].[Teachers] WHERE Id = @Id;
+            IF @LinkedUserId IS NOT NULL
+            BEGIN
+                UPDATE [dbo].[Users] SET IsDeleted = 1, ModifiedOn = GETUTCDATE() WHERE Id = @LinkedUserId;
+            END
+        END
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
 
