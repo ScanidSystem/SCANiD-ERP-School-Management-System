@@ -161,6 +161,14 @@ namespace ScanID.Api.Utilities
                 {
                     student.School = new Models.School { Name = reader["SchoolName"].ToString() ?? string.Empty };
                 }
+                if (columns.Contains("CityName") && reader["CityName"] != DBNull.Value)
+                {
+                    student.City = new Models.City { Name = reader["CityName"].ToString() ?? string.Empty };
+                }
+                if (columns.Contains("StateName") && reader["StateName"] != DBNull.Value)
+                {
+                    student.State = new Models.State { Name = reader["StateName"].ToString() ?? string.Empty };
+                }
             }
 
             // User Custom Joins mapping

@@ -101,6 +101,8 @@ export default function Students({ user }: { user: UserType }) {
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [shifts, setShifts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [states, setStates] = useState<any[]>([]);
+  const [cities, setCities] = useState<any[]>([]);
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentStudentId, setCurrentStudentId] = useState<string | null>(null);
@@ -119,7 +121,9 @@ export default function Students({ user }: { user: UserType }) {
         subCastesRes,
         academicYearsRes,
         shiftsRes,
-        categoriesRes
+        categoriesRes,
+        statesRes,
+        citiesRes
       ] = await Promise.all([
         apiService.getStandards(),
         apiService.getSections(),
@@ -132,7 +136,9 @@ export default function Students({ user }: { user: UserType }) {
         apiService.getSubCastes(),
         apiService.getAcademicYears(),
         apiService.getShifts(),
-        apiService.getCategories()
+        apiService.getCategories(),
+        apiService.getStates(),
+        apiService.getCities()
       ]);
       
       const normalize = (res: any) => Array.isArray(res.data) ? res.data : (res.data?.data || []);
@@ -149,6 +155,8 @@ export default function Students({ user }: { user: UserType }) {
       setAcademicYears(normalize(academicYearsRes));
       setShifts(normalize(shiftsRes));
       setCategories(normalize(categoriesRes));
+      setStates(normalize(statesRes));
+      setCities(normalize(citiesRes));
     } catch (error) {
       console.error("Fetch masters error:", error);
     }
@@ -387,7 +395,12 @@ export default function Students({ user }: { user: UserType }) {
     uniformid: "",
     contact2: "",
     sms: "",
-    ProfilePhotoPath: ""
+    ProfilePhotoPath: "",
+    SchoolSection: "",
+    AdmissionDate: "",
+    Email: "",
+    CityId: "",
+    StateId: ""
   };
 
   const [newStudentFormData, setNewStudentFormData] = useState(initialFormState);
@@ -438,7 +451,12 @@ export default function Students({ user }: { user: UserType }) {
       uniformid: student.uniformid || "",
       contact2: student.contact2 || "",
       sms: student.sms || "",
-      ProfilePhotoPath: student.profilePhotoPath || student.ProfilePhotoPath || ""
+      ProfilePhotoPath: student.profilePhotoPath || student.ProfilePhotoPath || "",
+      SchoolSection: student.schoolSection || student.SchoolSection || "",
+      AdmissionDate: student.admissionDate || student.AdmissionDate || "",
+      Email: student.email || student.Email || student.EMAIL || "",
+      CityId: student.cityId?.toString() || student.CityId?.toString() || "",
+      StateId: student.stateId?.toString() || student.StateId?.toString() || ""
     });
     setIsAddDialogOpen(true);
     fetchMasters();
@@ -1012,6 +1030,11 @@ export default function Students({ user }: { user: UserType }) {
         uniformid: newStudentFormData.uniformid,
         sms: newStudentFormData.sms,
         ProfilePhotoPath: newStudentFormData.ProfilePhotoPath,
+        SchoolSection: newStudentFormData.SchoolSection,
+        AdmissionDate: newStudentFormData.AdmissionDate,
+        Email: newStudentFormData.Email,
+        CityId: parseSafeInt(newStudentFormData.CityId) || null,
+        StateId: parseSafeInt(newStudentFormData.StateId) || null,
 
         // Map IDs from masters for manual data persistence
         StandardId: standardsMaster.find(s => s.name === newStudentFormData.STD)?.id,
@@ -1916,8 +1939,8 @@ export default function Students({ user }: { user: UserType }) {
                             id="ADDRESS" 
                             value={newStudentFormData.ADDRESS} 
                             onChange={(e) => {
-                              setNewStudentFormData({...newStudentFormData, ADDRESS: e.target.value});
-                              if (formErrors.ADDRESS) setFormErrors(prev => ({ ...prev, ADDRESS: false }));
+                                setNewStudentFormData({...newStudentFormData, ADDRESS: e.target.value});
+                                if (formErrors.ADDRESS) setFormErrors(prev => ({ ...prev, ADDRESS: false }));
                             }} 
                             placeholder="Enter complete residential address" 
                             className={cn(
@@ -1925,6 +1948,92 @@ export default function Students({ user }: { user: UserType }) {
                               formErrors.ADDRESS && "border-red-500 ring-2 ring-red-500/10"
                             )}
                           />
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="mt-6">
+                      <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
+                        <div className="w-1.5 h-5 bg-teal-600 rounded-full"></div>
+                        <h3 className="text-sm font-black text-slate-900 tracking-tight">Additional & Geographic Information</h3>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="Email" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email Address</Label>
+                          <Input 
+                            id="Email" 
+                            type="email"
+                            value={newStudentFormData.Email} 
+                            onChange={(e) => setNewStudentFormData({...newStudentFormData, Email: e.target.value})} 
+                            placeholder="e.g. email@domain.com" 
+                            className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label htmlFor="AdmissionDate" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Admission Date</Label>
+                          <Input 
+                            id="AdmissionDate" 
+                            type="date"
+                            value={newStudentFormData.AdmissionDate} 
+                            onChange={(e) => setNewStudentFormData({...newStudentFormData, AdmissionDate: e.target.value})} 
+                            className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5 md:col-span-2">
+                          <Label htmlFor="SchoolSection" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">School Section</Label>
+                          <Input 
+                            id="SchoolSection" 
+                            value={newStudentFormData.SchoolSection} 
+                            onChange={(e) => setNewStudentFormData({...newStudentFormData, SchoolSection: e.target.value})} 
+                            placeholder="e.g. Primary, Secondary" 
+                            className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label htmlFor="StateId" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">State Name</Label>
+                          <Select 
+                            value={newStudentFormData.StateId} 
+                            onValueChange={(v) => setNewStudentFormData({...newStudentFormData, StateId: v, CityId: ""})}
+                          >
+                            <SelectTrigger id="StateId" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                              <SelectValue placeholder="Select State">
+                                {newStudentFormData.StateId ? states.find(st => st.id.toString() === newStudentFormData.StateId)?.name : "Select State"}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select State</SelectItem>
+                              {Array.isArray(states) && states.map(st => (
+                                <SelectItem key={st.id} value={st.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{st.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label htmlFor="CityId" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">City Name</Label>
+                          <Select 
+                            value={newStudentFormData.CityId} 
+                            onValueChange={(v) => setNewStudentFormData({...newStudentFormData, CityId: v})}
+                            disabled={!newStudentFormData.StateId}
+                          >
+                            <SelectTrigger id="CityId" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                              <SelectValue placeholder="Select City">
+                                {newStudentFormData.CityId ? cities.find(c => c.id.toString() === newStudentFormData.CityId)?.name : "Select City"}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select City</SelectItem>
+                              {Array.isArray(cities) && cities
+                                .filter(c => c.stateId?.toString() === newStudentFormData.StateId)
+                                .map(c => (
+                                  <SelectItem key={c.id} value={c.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{c.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </section>

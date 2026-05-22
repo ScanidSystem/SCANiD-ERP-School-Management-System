@@ -128,7 +128,12 @@ namespace ScanID.Api.Services
                     ("sms", student.sms),
                     ("uniformid", student.uniformid),
                     ("contact2", student.contact2),
-                    ("ProfilePhotoPath", student.ProfilePhotoPath)
+                    ("ProfilePhotoPath", student.ProfilePhotoPath),
+                    ("SchoolSection", student.SchoolSection),
+                    ("AdmissionDate", student.AdmissionDate),
+                    ("Email", student.Email),
+                    ("CityId", student.CityId),
+                    ("StateId", student.StateId)
                 );
 
                 return student;
@@ -142,10 +147,44 @@ namespace ScanID.Api.Services
         {
             return await ExecuteWithRetryAsync(async () =>
             {
-                var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
-                    $"EXEC dbo.sp_ManageStudent 'UPDATE', {student.Id}, {student.RegistrationNumber}, {student.Name}, {student.SchoolId}, {student.StandardId}, {student.SectionId}, {student.AcademicYearId}, {student.RollNumber}, {student.GRNO}, {student.GENDER}, {student.DOB}, {student.CategoryId}, {student.ReligionId}, {student.CasteId}, {student.Status}, {student.MOBILE}, {student.ADDRESS}, {student.MOTHERNAME}, {student.aadharcard}, {student.RFID}, {student.ShiftId}, {student.BloodGroupId}, {student.HouseId}, {student.sms}, {student.uniformid}, {student.contact2}, {student.ProfilePhotoPath}"
+                await DbMapper.ExecuteScalarStoredProcedureAsync(
+                    _context,
+                    "dbo.sp_ManageStudent",
+                    ("Action", "UPDATE"),
+                    ("Id", student.Id),
+                    ("RegistrationNumber", student.RegistrationNumber),
+                    ("Name", student.Name),
+                    ("SchoolId", student.SchoolId),
+                    ("StandardId", student.StandardId),
+                    ("SectionId", student.SectionId),
+                    ("AcademicYearId", student.AcademicYearId),
+                    ("RollNumber", student.RollNumber),
+                    ("GRNO", student.GRNO),
+                    ("GENDER", student.GENDER),
+                    ("DOB", student.DOB),
+                    ("CategoryId", student.CategoryId),
+                    ("ReligionId", student.ReligionId),
+                    ("CasteId", student.CasteId),
+                    ("Status", student.Status),
+                    ("MOBILE", student.MOBILE),
+                    ("ADDRESS", student.ADDRESS),
+                    ("MOTHERNAME", student.MOTHERNAME),
+                    ("aadharcard", student.aadharcard),
+                    ("RFID", student.RFID),
+                    ("ShiftId", student.ShiftId),
+                    ("BloodGroupId", student.BloodGroupId),
+                    ("HouseId", student.HouseId),
+                    ("sms", student.sms),
+                    ("uniformid", student.uniformid),
+                    ("contact2", student.contact2),
+                    ("ProfilePhotoPath", student.ProfilePhotoPath),
+                    ("SchoolSection", student.SchoolSection),
+                    ("AdmissionDate", student.AdmissionDate),
+                    ("Email", student.Email),
+                    ("CityId", student.CityId),
+                    ("StateId", student.StateId)
                 );
-                return rowsAffected > 0;
+                return true;
             });
         }
 
@@ -269,7 +308,12 @@ namespace ScanID.Api.Services
                             ("sms", s.sms),
                             ("uniformid", s.uniformid),
                             ("contact2", s.contact2),
-                            ("ProfilePhotoPath", s.ProfilePhotoPath)
+                            ("ProfilePhotoPath", s.ProfilePhotoPath),
+                            ("SchoolSection", s.SchoolSection),
+                            ("AdmissionDate", s.AdmissionDate),
+                            ("Email", s.Email),
+                            ("CityId", s.CityId),
+                            ("StateId", s.StateId)
                         );
                     }
 

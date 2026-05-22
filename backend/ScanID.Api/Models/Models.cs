@@ -141,6 +141,9 @@ namespace ScanID.Api.Models
         public string? uniformid { get; set; }
         public string? contact2 { get; set; }
         public string? RFID { get; set; }
+        public string? SchoolSection { get; set; }
+        public string? AdmissionDate { get; set; }
+        public string? Email { get; set; }
 
         // --- ID Mapping properties for master data ---
         public int? StandardId { get; set; }

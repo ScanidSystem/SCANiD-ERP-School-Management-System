@@ -84,11 +84,15 @@ BEGIN
     SELECT s.*, 
            std.Name AS StandardName, 
            sec.Name AS SectionName, 
-           ay.Name AS AcademicYearName
+           ay.Name AS AcademicYearName,
+           c.Name AS CityName,
+           st.Name AS StateName
     FROM [dbo].[Students] s
     LEFT JOIN [dbo].[Standards] std ON s.StandardId = std.Id
     LEFT JOIN [dbo].[Sections] sec ON s.SectionId = sec.Id
     LEFT JOIN [dbo].[AcademicYears] ay ON s.AcademicYearId = ay.Id
+    LEFT JOIN [dbo].[Cities] c ON s.CityId = c.Id
+    LEFT JOIN [dbo].[States] st ON s.StateId = st.Id
     WHERE s.IsDeleted = 0
       AND (@SchoolId IS NULL OR s.SchoolId = @SchoolId)
       AND (@AcademicYearId IS NULL OR s.AcademicYearId = @AcademicYearId);
@@ -105,11 +109,15 @@ BEGIN
     SELECT s.*, 
            std.Name AS StandardName, 
            sec.Name AS SectionName, 
-           ay.Name AS AcademicYearName
+           ay.Name AS AcademicYearName,
+           c.Name AS CityName,
+           st.Name AS StateName
     FROM [dbo].[Students] s
     LEFT JOIN [dbo].[Standards] std ON s.StandardId = std.Id
     LEFT JOIN [dbo].[Sections] sec ON s.SectionId = sec.Id
     LEFT JOIN [dbo].[AcademicYears] ay ON s.AcademicYearId = ay.Id
+    LEFT JOIN [dbo].[Cities] c ON s.CityId = c.Id
+    LEFT JOIN [dbo].[States] st ON s.StateId = st.Id
     WHERE s.Id = @Id AND s.IsDeleted = 0;
 END;
 GO
@@ -195,7 +203,12 @@ CREATE PROCEDURE dbo.sp_ManageStudent
     @sms NVARCHAR(10) = NULL,
     @uniformid NVARCHAR(500) = NULL,
     @contact2 NVARCHAR(255) = NULL,
-    @ProfilePhotoPath NVARCHAR(255) = NULL
+    @ProfilePhotoPath NVARCHAR(255) = NULL,
+    @SchoolSection NVARCHAR(100) = NULL,
+    @AdmissionDate NVARCHAR(200) = NULL,
+    @Email NVARCHAR(255) = NULL,
+    @CityId INT = NULL,
+    @StateId INT = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -215,12 +228,12 @@ BEGIN
                 RegistrationNumber, Name, SchoolId, StandardId, SectionId, AcademicYearId, RollNumber, 
                 GRNO, GENDER, DOB, CategoryId, ReligionId, CasteId, Status, MOBILE, ADDRESS, 
                 MOTHERNAME, aadharcard, RFID, ShiftId, BloodGroupId, HouseId, sms, uniformid,
-                contact2, ProfilePhotoPath, IsActive, IsDeleted, CreatedOn, ModifiedOn
+                contact2, ProfilePhotoPath, SchoolSection, AdmissionDate, Email, CityId, StateId, IsActive, IsDeleted, CreatedOn, ModifiedOn
             ) VALUES (
                 @RegistrationNumber, @Name, @SchoolId, @StandardId, @SectionId, @AcademicYearId, @RollNumber,
                 @GRNO, @GENDER, @DOB, @CategoryId, @ReligionId, @CasteId, @Status, @MOBILE, @ADDRESS,
                 @MOTHERNAME, @aadharcard, @RFID, @ShiftId, @BloodGroupId, @HouseId, @sms, @uniformid,
-                @contact2, @ProfilePhotoPath, 1, 0, GETUTCDATE(), GETUTCDATE()
+                @contact2, @ProfilePhotoPath, @SchoolSection, @AdmissionDate, @Email, @CityId, @StateId, 1, 0, GETUTCDATE(), GETUTCDATE()
             );
             SELECT SCOPE_IDENTITY();
         END
@@ -253,6 +266,11 @@ BEGIN
                 uniformid = ISNULL(@uniformid, uniformid),
                 contact2 = ISNULL(@contact2, contact2),
                 ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
+                SchoolSection = ISNULL(@SchoolSection, SchoolSection),
+                AdmissionDate = ISNULL(@AdmissionDate, AdmissionDate),
+                Email = ISNULL(@Email, Email),
+                CityId = ISNULL(@CityId, CityId),
+                StateId = ISNULL(@StateId, StateId),
                 ModifiedOn = GETUTCDATE()
             WHERE Id = @Id;
         END
