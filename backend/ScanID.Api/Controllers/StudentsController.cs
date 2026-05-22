@@ -185,8 +185,8 @@ namespace ScanID.Api.Controllers
             var students = await _studentService.GetStudentsForExportAsync(schoolId);
 
             var csv = new System.Text.StringBuilder();
-            // Comprehensive Header
-            csv.AppendLine("RegistrationNumber,Name,Standard,Section,AcademicYear,RollNumber,GRNO,Gender,DOB,Category,Religion,Caste,Status,Mobile,Email,Address,MotherName,AadharCard,RFID,Shift,BloodGroup,House,AdmissionDate,FatherName,NationalId,BankAcc,ProfilePhotoPath");
+            // Cleaned Header
+            csv.AppendLine("RegistrationNumber,Name,Standard,Section,AcademicYear,RollNumber,GRNO,Gender,DOB,Category,Religion,Caste,Status,Mobile,Address,MotherName,AadharCard,RFID,Shift,BloodGroup,House,sms,uniformid,contact2,ProfilePhotoPath");
 
             foreach (var s in students)
             {
@@ -206,7 +206,6 @@ namespace ScanID.Api.Controllers
                     s.Caste?.Name,
                     s.Status,
                     s.MOBILE,
-                    s.EMAIL,
                     $"\"{s.ADDRESS?.Replace("\"", "\"\"")}\"",
                     s.MOTHERNAME,
                     s.aadharcard,
@@ -214,10 +213,9 @@ namespace ScanID.Api.Controllers
                     s.Shift?.Name,
                     s.BloodGroup?.Name,
                     s.House?.Name,
-                    s.DOA,
-                    s.FATHERNAME,
-                    s.PEN_No,
-                    s.bankacc,
+                    s.sms,
+                    s.uniformid,
+                    s.contact2,
                     s.ProfilePhotoPath
                 };
                 csv.AppendLine(string.Join(",", row));
@@ -233,10 +231,10 @@ namespace ScanID.Api.Controllers
         public IActionResult GetSampleTemplate()
         {
             var csv = new System.Text.StringBuilder();
-            // Required Header reflecting all critical table fields
-            csv.AppendLine("RegistrationNumber,Name,SchoolId,StandardId,SectionId,AcademicYearId,RollNumber,GRNO,Gender,DOB,CategoryId,ReligionId,CasteId,Mobile,Email,Address,MotherName,AadharCard,RFID,ShiftId,BloodGroupId,HouseId,DOA,FatherName,PEN_No,BankAcc,ProfilePhotoPath");
+            // Required Header reflecting all active table fields
+            csv.AppendLine("RegistrationNumber,Name,SchoolId,StandardId,SectionId,AcademicYearId,RollNumber,GRNO,Gender,DOB,CategoryId,ReligionId,CasteId,Mobile,Address,MotherName,AadharCard,RFID,ShiftId,BloodGroupId,HouseId,sms,uniformid,contact2,ProfilePhotoPath");
             // Example data row
-            csv.AppendLine("REG001,John Doe,1,1,1,1,10,1234,Male,2015-05-15,1,1,1,9876543210,john@example.com,City Main Road,Jane Doe,123456789012,RF-123,1,1,1,2024-06-01,Robert Doe,PEN123,ACC12345,/photos/1/example.jpg");
+            csv.AppendLine("REG001,John Doe,1,1,1,1,10,1234,Male,2015-05-15,1,1,1,9876543210,City Main Road,Jane Doe,123456789012,RF-123,1,1,1,SecondarySMS,UniformID,SecondContact,/photos/1/example.jpg");
 
             return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "Student_Upload_Template.csv");
         }

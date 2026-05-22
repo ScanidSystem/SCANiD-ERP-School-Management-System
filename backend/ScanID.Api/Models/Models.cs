@@ -124,8 +124,7 @@ namespace ScanID.Api.Models
         public string Status { get; set; } = "Active";
         public int RollNumber { get; set; }
 
-        // --- Columns from studentmaster schema ---
-        public string? STUDENTID { get; set; }
+        // --- Cleaned columns used by the application ---
         public string? FNAME { get; set; }
         public string? MNAME { get; set; }
         public string? LNAME { get; set; }
@@ -134,52 +133,13 @@ namespace ScanID.Api.Models
         public string? GENDER { get; set; }
         public string? DOB { get; set; }
         public string? ADDRESS { get; set; }
-        public string? PIN { get; set; }
-        public string? FATHERNAME { get; set; }
         public string? MOTHERNAME { get; set; }
         public string? MOBILE { get; set; }
-        public string? EMAIL { get; set; }
-        public string? DOA { get; set; }
         public string? ProfilePhotoPath { get; set; }
-        public string? CARDID { get; set; }
-        public string? VALIDFROM { get; set; }
-        public string? VALIDTO { get; set; }
         public string? sms { get; set; }
-        public string? saralid { get; set; }
         public string? aadharcard { get; set; }
-        public string? bankname { get; set; }
-        public string? bankacc { get; set; }
-        public string? cid { get; set; }
-        public string? fingerid { get; set; }
-        public string? freeshiptype { get; set; }
-        public string? otp { get; set; }
-        public string? subjects { get; set; }
-        public string? placeofbirth { get; set; }
-        public string? birthtaluka { get; set; }
-        public string? birthdistrict { get; set; }
-        public string? birthstate { get; set; }
-        public string? birthcountry { get; set; }
-        public string? mothertongue { get; set; }
-        public string? Nationality { get; set; }
-        public string? Lastschool { get; set; }
-        public string? Progress { get; set; }
-        public string? DateofLeaving { get; set; }
-        public string? Reasonforleaving { get; set; }
-        public string? LCNo { get; set; }
-        public string? conduct { get; set; }
-        public string? remark { get; set; }
-        public string? dobwords { get; set; }
-        public string? admissionstd { get; set; }
-        public string? accountname { get; set; }
-        public string? IQLD { get; set; }
-        public string? schoolsection { get; set; }
-        public string? leftstatus { get; set; }
-        public string? feesinstallment { get; set; }
         public string? uniformid { get; set; }
-        public string? stdstudyingInWords { get; set; }
-        public string? EntryDate { get; set; }
-        public string? PEN_No { get; set; }
-        public string? apaar_id { get; set; }
+        public string? contact2 { get; set; }
         public string? RFID { get; set; }
 
         // --- ID Mapping properties for master data ---

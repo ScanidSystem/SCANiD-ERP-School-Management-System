@@ -362,72 +362,20 @@ CREATE TABLE [dbo].[Students](
 	[Status] [nvarchar](max) NOT NULL DEFAULT (N'Active'),
 	[RollNumber] [int] NOT NULL,
 	
-	[STUDENTID] [nvarchar](200) NULL,
 	[FNAME] [nvarchar](200) NULL,
 	[MNAME] [nvarchar](200) NULL,
 	[LNAME] [nvarchar](200) NULL,
-	[FirstName] [nvarchar](200) NULL,
-	[MiddleName] [nvarchar](200) NULL,
-	[LastName] [nvarchar](200) NULL,
-	-- Redundant STD, DIV, ROLLNO removed
 	[GRNO] [nvarchar](100) NULL,
 	[GENDER] [nvarchar](10) NULL,
 	[DOB] [nvarchar](200) NULL,
-	[DateOfBirth] [nvarchar](200) NULL,
-	-- Redundant BLOODGROUP, CASTE, RELIGION, CATEGORY, CITY, STATE removed
 	[ADDRESS] [nvarchar](500) NULL,
-	[PIN] [nvarchar](100) NULL,
-	[FATHERNAME] [nvarchar](200) NULL,
 	[MOTHERNAME] [nvarchar](200) NULL,
 	[MOBILE] [nvarchar](200) NULL,
-	[EMAIL] [nvarchar](50) NULL,
-	-- Redundant SHIFTNAME removed
-	[DOA] [nvarchar](200) NULL,
 	[ProfilePhotoPath] [nvarchar](500) NULL,
-	[CARDID] [nvarchar](500) NULL,
-	[VALIDFROM] [nvarchar](200) NULL,
-	[VALIDTO] [nvarchar](200) NULL,
 	[sms] [nvarchar](10) NULL,
-	-- Redundant subcaste, photo removed
 	[contact2] [nvarchar](255) NULL,
-	[ispromoted] [nvarchar](10) NULL,
-	[saralid] [nvarchar](100) NULL,
 	[aadharcard] [nvarchar](100) NULL,
-	[bankname] [nvarchar](200) NULL,
-	[bankacc] [nvarchar](100) NULL,
-	[cid] [nvarchar](100) NULL,
-	[fingerid] [nvarchar](500) NULL,
-	[freeshiptype] [nvarchar](500) NULL,
-	[otp] [nvarchar](500) NULL,
-	-- Redundant admissiontype removed
-	[subjects] [nvarchar](500) NULL,
-	[placeofbirth] [nvarchar](500) NULL,
-	[birthtaluka] [nvarchar](500) NULL,
-	[birthdistrict] [nvarchar](500) NULL,
-	[birthstate] [nvarchar](500) NULL,
-	[birthcountry] [nvarchar](500) NULL,
-	[mothertongue] [nvarchar](500) NULL,
-	[Nationality] [nvarchar](100) NULL,
-	[Lastschool] [nvarchar](500) NULL,
-	[Progress] [nvarchar](500) NULL,
-	[DateofLeaving] [nvarchar](100) NULL,
-	[Reasonforleaving] [nvarchar](500) NULL,
-	[LCNo] [nvarchar](500) NULL,
-	[conduct] [nvarchar](500) NULL,
-	[remark] [nvarchar](500) NULL,
-	[dobwords] [nvarchar](500) NULL,
-	[admissionstd] [nvarchar](500) NULL,
-	[accountname] [nvarchar](500) NULL,
-	[IQLD] [nvarchar](10) NULL,
-	[schoolsection] [nvarchar](500) NULL,
-	[leftstatus] [nvarchar](100) NULL,
-	-- Redundant academicyear, stdstudying, house removed
-	[feesinstallment] [nvarchar](500) NULL,
 	[uniformid] [nvarchar](500) NULL,
-	[stdstudyingInWords] [nvarchar](500) NULL,
-	[EntryDate] [nvarchar](500) NULL,
-	[PEN_No] [nvarchar](50) NULL,
-	[apaar_id] [varchar](100) NULL,
 	[RFID] [nvarchar](100) NULL,
 
 	[StandardId] [int] NULL,
@@ -954,7 +902,6 @@ CREATE PROCEDURE dbo.sp_ManageStudent
     @CasteId INT = NULL,
     @Status NVARCHAR(50) = NULL,
     @MOBILE NVARCHAR(50) = NULL,
-    @EMAIL NVARCHAR(100) = NULL,
     @ADDRESS NVARCHAR(500) = NULL,
     @MOTHERNAME NVARCHAR(100) = NULL,
     @aadharcard NVARCHAR(100) = NULL,
@@ -962,76 +909,93 @@ CREATE PROCEDURE dbo.sp_ManageStudent
     @ShiftId INT = NULL,
     @BloodGroupId INT = NULL,
     @HouseId INT = NULL,
-    @DOA NVARCHAR(50) = NULL,
-    @FATHERNAME NVARCHAR(100) = NULL,
-    @PEN_No NVARCHAR(100) = NULL,
-    @bankacc NVARCHAR(100) = NULL,
+    @sms NVARCHAR(10) = NULL,
+    @uniformid NVARCHAR(500) = NULL,
+    @contact2 NVARCHAR(255) = NULL,
     @ProfilePhotoPath NVARCHAR(255) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
-    IF @Action = 'INSERT'
-    BEGIN
-        IF @RegistrationNumber IS NULL
+    SET XACT_ABORT ON; -- Ensures instant rollback on any fatal SQL runtime errors
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        IF @Action = 'INSERT'
         BEGIN
-            SET @RegistrationNumber = 'REG-' + UPPER(LEFT(REPLACE(CAST(NEWID() as NVARCHAR(36)), '-', ''), 8));
+            IF @RegistrationNumber IS NULL
+            BEGIN
+                SET @RegistrationNumber = 'REG-' + UPPER(LEFT(REPLACE(CAST(NEWID() as NVARCHAR(36)), '-', ''), 8));
+            END
+
+            INSERT INTO [dbo].[Students] (
+                RegistrationNumber, Name, SchoolId, StandardId, SectionId, AcademicYearId, RollNumber, 
+                GRNO, GENDER, DOB, CategoryId, ReligionId, CasteId, Status, MOBILE, ADDRESS, 
+                MOTHERNAME, aadharcard, RFID, ShiftId, BloodGroupId, HouseId, sms, uniformid,
+                contact2, ProfilePhotoPath, IsActive, IsDeleted, CreatedOn, ModifiedOn
+            ) VALUES (
+                @RegistrationNumber, @Name, @SchoolId, @StandardId, @SectionId, @AcademicYearId, @RollNumber,
+                @GRNO, @GENDER, @DOB, @CategoryId, @ReligionId, @CasteId, @Status, @MOBILE, @ADDRESS,
+                @MOTHERNAME, @aadharcard, @RFID, @ShiftId, @BloodGroupId, @HouseId, @sms, @uniformid,
+                @contact2, @ProfilePhotoPath, 1, 0, GETUTCDATE(), GETUTCDATE()
+            );
+            SELECT SCOPE_IDENTITY();
+        END
+        ELSE IF @Action = 'UPDATE'
+        BEGIN
+            UPDATE [dbo].[Students] SET
+                RegistrationNumber = ISNULL(@RegistrationNumber, RegistrationNumber),
+                Name = ISNULL(@Name, Name),
+                SchoolId = ISNULL(@SchoolId, SchoolId),
+                StandardId = ISNULL(@StandardId, StandardId),
+                SectionId = ISNULL(@SectionId, SectionId),
+                AcademicYearId = ISNULL(@AcademicYearId, AcademicYearId),
+                RollNumber = ISNULL(@RollNumber, RollNumber),
+                GRNO = ISNULL(@GRNO, GRNO),
+                GENDER = ISNULL(@GENDER, GENDER),
+                DOB = ISNULL(@DOB, DOB),
+                CategoryId = ISNULL(@CategoryId, CategoryId),
+                ReligionId = ISNULL(@ReligionId, ReligionId),
+                CasteId = ISNULL(@CasteId, CasteId),
+                Status = ISNULL(@Status, Status),
+                MOBILE = ISNULL(@MOBILE, MOBILE),
+                ADDRESS = ISNULL(@ADDRESS, ADDRESS),
+                MOTHERNAME = ISNULL(@MOTHERNAME, MOTHERNAME),
+                aadharcard = ISNULL(@aadharcard, aadharcard),
+                RFID = ISNULL(@RFID, RFID),
+                ShiftId = ISNULL(@ShiftId, ShiftId),
+                BloodGroupId = ISNULL(@BloodGroupId, BloodGroupId),
+                HouseId = ISNULL(@HouseId, HouseId),
+                sms = ISNULL(@sms, sms),
+                uniformid = ISNULL(@uniformid, uniformid),
+                contact2 = ISNULL(@contact2, contact2),
+                ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
+                ModifiedOn = GETUTCDATE()
+            WHERE Id = @Id;
+        END
+        ELSE IF @Action = 'DELETE'
+        BEGIN
+            UPDATE [dbo].[Students] SET IsDeleted = 1, IsActive = 0, ModifiedOn = GETUTCDATE() WHERE Id = @Id;
+        END
+        ELSE IF @Action = 'PHOTO'
+        BEGIN
+            UPDATE [dbo].[Students] SET ProfilePhotoPath = @ProfilePhotoPath, ModifiedOn = GETUTCDATE() WHERE Id = @Id;
         END
 
-        INSERT INTO [dbo].[Students] (
-            RegistrationNumber, Name, SchoolId, StandardId, SectionId, AcademicYearId, RollNumber, 
-            GRNO, GENDER, DOB, CategoryId, ReligionId, CasteId, Status, MOBILE, EMAIL, ADDRESS, 
-            MOTHERNAME, aadharcard, RFID, ShiftId, BloodGroupId, HouseId, DOA, FATHERNAME, 
-            PEN_No, bankacc, ProfilePhotoPath, IsActive, IsDeleted, CreatedOn, ModifiedOn
-        ) VALUES (
-            @RegistrationNumber, @Name, @SchoolId, @StandardId, @SectionId, @AcademicYearId, @RollNumber,
-            @GRNO, @GENDER, @DOB, @CategoryId, @ReligionId, @CasteId, @Status, @MOBILE, @EMAIL, @ADDRESS,
-            @MOTHERNAME, @aadharcard, @RFID, @ShiftId, @BloodGroupId, @HouseId, @DOA, @FATHERNAME,
-            @PEN_No, @bankacc, @ProfilePhotoPath, 1, 0, GETUTCDATE(), GETUTCDATE()
-        );
-        SELECT SCOPE_IDENTITY();
-    END
-    ELSE IF @Action = 'UPDATE'
-    BEGIN
-        UPDATE [dbo].[Students] SET
-            RegistrationNumber = ISNULL(@RegistrationNumber, RegistrationNumber),
-            Name = ISNULL(@Name, Name),
-            SchoolId = ISNULL(@SchoolId, SchoolId),
-            StandardId = ISNULL(@StandardId, StandardId),
-            SectionId = ISNULL(@SectionId, SectionId),
-            AcademicYearId = ISNULL(@AcademicYearId, AcademicYearId),
-            RollNumber = ISNULL(@RollNumber, RollNumber),
-            GRNO = ISNULL(@GRNO, GRNO),
-            GENDER = ISNULL(@GENDER, GENDER),
-            DOB = ISNULL(@DOB, DOB),
-            CategoryId = ISNULL(@CategoryId, CategoryId),
-            ReligionId = ISNULL(@ReligionId, ReligionId),
-            CasteId = ISNULL(@CasteId, CasteId),
-            Status = ISNULL(@Status, Status),
-            MOBILE = ISNULL(@MOBILE, MOBILE),
-            EMAIL = ISNULL(@EMAIL, EMAIL),
-            ADDRESS = ISNULL(@ADDRESS, ADDRESS),
-            MOTHERNAME = ISNULL(@MOTHERNAME, MOTHERNAME),
-            aadharcard = ISNULL(@aadharcard, aadharcard),
-            RFID = ISNULL(@RFID, RFID),
-            ShiftId = ISNULL(@ShiftId, ShiftId),
-            BloodGroupId = ISNULL(@BloodGroupId, BloodGroupId),
-            HouseId = ISNULL(@HouseId, HouseId),
-            DOA = ISNULL(@DOA, DOA),
-            FATHERNAME = ISNULL(@FATHERNAME, FATHERNAME),
-            PEN_No = ISNULL(@PEN_No, PEN_No),
-            bankacc = ISNULL(@bankacc, bankacc),
-            ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
-            ModifiedOn = GETUTCDATE()
-        WHERE Id = @Id;
-    END
-    ELSE IF @Action = 'DELETE'
-    BEGIN
-        UPDATE [dbo].[Students] SET IsDeleted = 1, IsActive = 0, ModifiedOn = GETUTCDATE() WHERE Id = @Id;
-    END
-    ELSE IF @Action = 'PHOTO'
-    BEGIN
-        UPDATE [dbo].[Students] SET ProfilePhotoPath = @ProfilePhotoPath, ModifiedOn = GETUTCDATE() WHERE Id = @Id;
-    END
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+        BEGIN
+            ROLLBACK TRANSACTION;
+        END;
+
+        -- Reraise database errors back safely to EF Core logic
+        DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
+        DECLARE @ErrorSeverity INT = ERROR_SEVERITY();
+        DECLARE @ErrorState INT = ERROR_STATE();
+        RAISERROR(@ErrorMessage, @ErrorSeverity, @ErrorState);
+    END CATCH
 END;
 GO
 
