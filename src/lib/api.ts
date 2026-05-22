@@ -140,6 +140,7 @@ const mockFallbacks: Record<string, any> = {
     { id: 456, title: "Admission Types", icon: "UserCheck", path: "/configuration/admission-types", parentId: 45, sortOrder: 6, roleIds: [1, 2] },
     { id: 457, title: "States Master", icon: "Map", path: "/configuration/states", parentId: 45, sortOrder: 7, roleIds: [1, 2] },
     { id: 458, title: "Cities Master", icon: "MapPin", path: "/configuration/cities", parentId: 45, sortOrder: 8, roleIds: [1, 2] },
+    { id: 459, title: "School Sections", icon: "Layers", path: "/configuration/school-sections", parentId: 45, sortOrder: 9, roleIds: [1, 2] },
     
     { id: 23, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roleIds: [1] },
   ],
@@ -402,6 +403,11 @@ export const apiService = {
   createReligion: (data: any) => api.post("/masters/religions", data),
   updateReligion: (id: number, data: any) => api.put(`/masters/religions/${id}`, data),
   deleteReligion: (id: number) => api.delete(`/masters/religions/${id}`),
+
+  getSchoolSections: (params?: PaginatedParams) => api.get("/masters/school-sections", { params }),
+  createSchoolSection: (data: any) => api.post("/masters/school-sections", data),
+  updateSchoolSection: (id: number, data: any) => api.put(`/masters/school-sections/${id}`, data),
+  deleteSchoolSection: (id: number) => api.delete(`/masters/school-sections/${id}`),
 
   getStates: (params?: PaginatedParams) => api.get("/masters/states", { params }),
   createState: (data: any) => api.post("/masters/states", data),

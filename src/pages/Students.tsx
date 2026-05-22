@@ -103,6 +103,7 @@ export default function Students({ user }: { user: UserType }) {
   const [categories, setCategories] = useState<any[]>([]);
   const [states, setStates] = useState<any[]>([]);
   const [cities, setCities] = useState<any[]>([]);
+  const [schoolSections, setSchoolSections] = useState<any[]>([]);
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentStudentId, setCurrentStudentId] = useState<string | null>(null);
@@ -123,7 +124,8 @@ export default function Students({ user }: { user: UserType }) {
         shiftsRes,
         categoriesRes,
         statesRes,
-        citiesRes
+        citiesRes,
+        schoolSectionsRes
       ] = await Promise.all([
         apiService.getStandards(),
         apiService.getSections(),
@@ -138,7 +140,8 @@ export default function Students({ user }: { user: UserType }) {
         apiService.getShifts(),
         apiService.getCategories(),
         apiService.getStates(),
-        apiService.getCities()
+        apiService.getCities(),
+        apiService.getSchoolSections()
       ]);
       
       const normalize = (res: any) => Array.isArray(res.data) ? res.data : (res.data?.data || []);
@@ -157,6 +160,7 @@ export default function Students({ user }: { user: UserType }) {
       setCategories(normalize(categoriesRes));
       setStates(normalize(statesRes));
       setCities(normalize(citiesRes));
+      setSchoolSections(normalize(schoolSectionsRes));
     } catch (error) {
       console.error("Fetch masters error:", error);
     }
@@ -1665,6 +1669,76 @@ export default function Students({ user }: { user: UserType }) {
                               className="h-10 border-slate-200 bg-slate-50/30 font-mono font-bold rounded-xl px-4 text-sm"
                             />
                           </div>
+                          
+                          <div className="space-y-1.5">
+                            <Label htmlFor="SchoolSection" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">School Section</Label>
+                            <Select 
+                              value={newStudentFormData.SchoolSection} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, SchoolSection: v})}
+                            >
+                              <SelectTrigger id="SchoolSection" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                                <SelectValue placeholder="Select School Section">
+                                  {newStudentFormData.SchoolSection || undefined}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                                <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select School Section</SelectItem>
+                                {Array.isArray(schoolSections) && schoolSections.map(sec => (
+                                  <SelectItem key={sec.id} value={sec.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{sec.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label htmlFor="house" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">School House</Label>
+                            <Select 
+                              value={newStudentFormData.house} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, house: v})}
+                            >
+                              <SelectTrigger id="house" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                                <SelectValue placeholder="Select Student House Group">
+                                  {newStudentFormData.house ? (
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: houses.find(h => h.id.toString() === newStudentFormData.house)?.color }}></div>
+                                      {houses.find(h => h.id.toString() === newStudentFormData.house)?.name}
+                                    </div>
+                                  ) : undefined}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                                <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student House Group</SelectItem>
+                                {Array.isArray(houses) && houses.map(h => (
+                                  <SelectItem key={h.id} value={h.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: h.color }}></div>
+                                      {h.name}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label htmlFor="admissiontype" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Admission Type</Label>
+                            <Select 
+                              value={newStudentFormData.admissiontype} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, admissiontype: v})}
+                            >
+                              <SelectTrigger id="admissiontype" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                                <SelectValue placeholder="Select Student Admission Type">
+                                  {newStudentFormData.admissiontype ? admissionTypes.find(at => at.id.toString() === newStudentFormData.admissiontype)?.name : undefined}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
+                                <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Admission Type</SelectItem>
+                                {Array.isArray(admissionTypes) && admissionTypes.map(at => (
+                                  <SelectItem key={at.id} value={at.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{at.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                       </section>
 
@@ -1811,7 +1885,7 @@ export default function Students({ user }: { user: UserType }) {
                              </Select>
                            </div>
 
-                          <div className="space-y-1.5">
+                          <div className="md:col-span-2 space-y-1.5">
                             <Label htmlFor="subcaste" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Sub-Caste</Label>
                             <Select 
                               value={newStudentFormData.subcaste} 
@@ -1832,56 +1906,6 @@ export default function Students({ user }: { user: UserType }) {
                                   ))
                                 }
                               </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label htmlFor="house" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">School House</Label>
-                            <Select 
-                              value={newStudentFormData.house} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, house: v})}
-                            >
-                              <SelectTrigger id="house" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student House Group">
-                                  {newStudentFormData.house ? (
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: houses.find(h => h.id.toString() === newStudentFormData.house)?.color }}></div>
-                                      {houses.find(h => h.id.toString() === newStudentFormData.house)?.name}
-                                    </div>
-                                  ) : undefined}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student House Group</SelectItem>
-                              {Array.isArray(houses) && houses.map(h => (
-                                <SelectItem key={h.id} value={h.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: h.color }}></div>
-                                    {h.name}
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label htmlFor="admissiontype" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Admission Type</Label>
-                            <Select 
-                              value={newStudentFormData.admissiontype} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, admissiontype: v})}
-                            >
-                              <SelectTrigger id="admissiontype" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student Admission Type">
-                                  {newStudentFormData.admissiontype ? admissionTypes.find(at => at.id.toString() === newStudentFormData.admissiontype)?.name : undefined}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Admission Type</SelectItem>
-                              {Array.isArray(admissionTypes) && admissionTypes.map(at => (
-                                <SelectItem key={at.id} value={at.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{at.name}</SelectItem>
-                              ))}
-                            </SelectContent>
                             </Select>
                           </div>
                         </div>
@@ -1978,17 +2002,6 @@ export default function Students({ user }: { user: UserType }) {
                             type="date"
                             value={newStudentFormData.AdmissionDate} 
                             onChange={(e) => setNewStudentFormData({...newStudentFormData, AdmissionDate: e.target.value})} 
-                            className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm"
-                          />
-                        </div>
-
-                        <div className="space-y-1.5 md:col-span-2">
-                          <Label htmlFor="SchoolSection" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">School Section</Label>
-                          <Input 
-                            id="SchoolSection" 
-                            value={newStudentFormData.SchoolSection} 
-                            onChange={(e) => setNewStudentFormData({...newStudentFormData, SchoolSection: e.target.value})} 
-                            placeholder="e.g. Primary, Secondary" 
                             className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm"
                           />
                         </div>

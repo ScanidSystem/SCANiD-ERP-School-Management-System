@@ -109,6 +109,7 @@ const MASTER_TYPES: Record<string, { label: string, icon: any, description: stri
   "religions": { label: "Religions", icon: Milestone, description: "Manage religious affiliations", apiPrefix: "Religion" },
   "states": { label: "States", icon: Map, description: "List of administrative states", apiPrefix: "State" },
   "cities": { label: "Cities", icon: MapPin, description: "List of cities/towns", apiPrefix: "City" },
+  "school-sections": { label: "School Sections", icon: Layers, description: "Manage school sections", apiPrefix: "SchoolSection" },
   "blood-groups": { label: "Blood Groups", icon: Droplet, description: "Manage emergency blood types", apiPrefix: "BloodGroup" },
   "houses": { label: "Houses", icon: Home, description: "Manage school house systems", apiPrefix: "House" },
   "admission-types": { label: "Admission Types", icon: FileText, description: "Manage enrollment categories", apiPrefix: "AdmissionType" },

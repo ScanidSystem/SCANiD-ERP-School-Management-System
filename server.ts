@@ -203,6 +203,7 @@ async function startServer() {
   let examTypes = [{ id: 1, name: "Mid-Term" }, { id: 2, name: "Final" }];
   let designations = [{ id: 1, name: "Principal" }, { id: 2, name: "Teacher" }];
   let occupations = [{ id: 1, name: "Service" }, { id: 2, name: "Business" }];
+  let schoolSections = [{ id: 1, name: "Primary" }, { id: 2, name: "Secondary" }, { id: 3, name: "Higher Secondary" }];
   let roles = [{ id: 1, name: "superadmin" }, { id: 2, name: "admin" }, { id: 3, name: "teacher" }];
 
   let attendance = [
@@ -271,6 +272,7 @@ async function startServer() {
     { id: 456, title: "Admission Types", icon: "UserCheck", path: "/configuration/admission-types", parentId: 45, sortOrder: 6, roleIds: [1, 2] },
     { id: 457, title: "States Master", icon: "Map", path: "/configuration/states", parentId: 45, sortOrder: 7, roleIds: [1, 2] },
     { id: 458, title: "Cities Master", icon: "MapPin", path: "/configuration/cities", parentId: 45, sortOrder: 8, roleIds: [1, 2] },
+    { id: 459, title: "School Sections", icon: "Layers", path: "/configuration/school-sections", parentId: 45, sortOrder: 9, roleIds: [1, 2] },
 
     // System Audit (23)
     { id: 23, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roleIds: [1] },
@@ -294,6 +296,9 @@ async function startServer() {
     "exam-types": examTypes,
     "designations": designations,
     "occupations": occupations,
+    "school-sections": schoolSections,
+    "schoolSections": schoolSections,
+    "schoolsections": schoolSections,
     "roles": roles,
     "standards": standards,
     "sections": sections,

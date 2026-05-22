@@ -502,5 +502,13 @@ namespace ScanID.Api.Models
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
     }
+
+    /// <summary> Master data for school sections (Primary, Secondary, Higher Secondary, etc). </summary>
+    public class SchoolSection : BaseEntity
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
 }
 

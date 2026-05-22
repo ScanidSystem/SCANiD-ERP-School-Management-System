@@ -156,6 +156,22 @@ CREATE TABLE [dbo].[Categories](
 END
 GO
 
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SchoolSections]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [dbo].[SchoolSections](
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Name] [nvarchar](100) NOT NULL,
+    [IsActive] [bit] NOT NULL DEFAULT (1),
+    [IsDeleted] [bit] NOT NULL DEFAULT (0),
+    [CreatedBy] [nvarchar](max) NULL,
+    [CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+    [ModifiedBy] [nvarchar](max) NULL,
+    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+ CONSTRAINT [PK_SchoolSections] PRIMARY KEY CLUSTERED ([Id] ASC)
+)
+END
+GO
+
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[States]') AND type in (N'U'))
 BEGIN
 CREATE TABLE [dbo].[States](

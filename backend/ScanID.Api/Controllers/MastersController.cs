@@ -166,6 +166,19 @@ namespace ScanID.Api.Controllers
         [HttpDelete("religions/{id}")]
         public async Task<IActionResult> DeleteReligion(int id) => await Delete(_context.Religions, id);
 
+        // --- School Sections ---
+        [HttpGet("school-sections")]
+        public async Task<ActionResult<IEnumerable<SchoolSection>>> GetSchoolSections() => await GetAll(_context.SchoolSections);
+
+        [HttpPost("school-sections")]
+        public async Task<ActionResult<SchoolSection>> CreateSchoolSection(SchoolSection item) => await Create(_context.SchoolSections, item);
+
+        [HttpPut("school-sections/{id}")]
+        public async Task<IActionResult> UpdateSchoolSection(int id, SchoolSection item) => await Update(id, item);
+
+        [HttpDelete("school-sections/{id}")]
+        public async Task<IActionResult> DeleteSchoolSection(int id) => await Delete(_context.SchoolSections, id);
+
         // --- States ---
         [HttpGet("states")]
         public async Task<ActionResult<IEnumerable<State>>> GetStates() => await GetAll(_context.States);
