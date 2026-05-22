@@ -128,6 +128,8 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
             { id: 454, title: "Sub-Caste", icon: "UserCircle", path: "/configuration/sub-castes", parentId: 45, sortOrder: 4, roleIds: adminRoles },
             { id: 455, title: "School House", icon: "Home", path: "/configuration/houses", parentId: 45, sortOrder: 5, roleIds: adminRoles },
             { id: 456, title: "Admission Types", icon: "UserCheck", path: "/configuration/admission-types", parentId: 45, sortOrder: 6, roleIds: adminRoles },
+            { id: 457, title: "States Master", icon: "Map", path: "/configuration/states", parentId: 45, sortOrder: 7, roleIds: adminRoles },
+            { id: 458, title: "Cities Master", icon: "MapPin", path: "/configuration/cities", parentId: 45, sortOrder: 8, roleIds: adminRoles },
 
             { id: 23, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roleIds: [1] }
           ];

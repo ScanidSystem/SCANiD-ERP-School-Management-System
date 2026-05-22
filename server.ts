@@ -269,6 +269,8 @@ async function startServer() {
     { id: 454, title: "Sub-Caste Master", icon: "UserCircle", path: "/configuration/sub-castes", parentId: 45, sortOrder: 4, roleIds: [1, 2] },
     { id: 455, title: "School House", icon: "Home", path: "/configuration/houses", parentId: 45, sortOrder: 5, roleIds: [1, 2] },
     { id: 456, title: "Admission Types", icon: "UserCheck", path: "/configuration/admission-types", parentId: 45, sortOrder: 6, roleIds: [1, 2] },
+    { id: 457, title: "States Master", icon: "Map", path: "/configuration/states", parentId: 45, sortOrder: 7, roleIds: [1, 2] },
+    { id: 458, title: "Cities Master", icon: "MapPin", path: "/configuration/cities", parentId: 45, sortOrder: 8, roleIds: [1, 2] },
 
     // System Audit (23)
     { id: 23, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roleIds: [1] },

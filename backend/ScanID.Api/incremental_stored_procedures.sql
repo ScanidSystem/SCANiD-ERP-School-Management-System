@@ -696,7 +696,13 @@ CREATE PROCEDURE dbo.sp_GetSchools
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT * FROM [dbo].[Schools] WHERE IsDeleted = 0;
+    SELECT s.*, 
+           c.Name AS CityName, 
+           st.Name AS StateName
+    FROM [dbo].[Schools] s
+    LEFT JOIN [dbo].[Cities] c ON s.CityId = c.Id
+    LEFT JOIN [dbo].[States] st ON s.StateId = st.Id
+    WHERE s.IsDeleted = 0;
 END;
 GO
 
@@ -710,16 +716,39 @@ CREATE PROCEDURE dbo.sp_ManageSchool
     @Address NVARCHAR(255) = NULL,
     @ContactNumber NVARCHAR(50) = NULL,
     @Email NVARCHAR(100) = NULL,
-    @CreatedBy NVARCHAR(100) = NULL
+    @CreatedBy NVARCHAR(100) = NULL,
+    @ShortName NVARCHAR(100) = NULL,
+    @CityId INT = NULL,
+    @StateId INT = NULL,
+    @Pincode NVARCHAR(100) = NULL,
+    @SMSLimit INT = NULL,
+    @TotalSMSSent INT = NULL,
+    @SMSBalance INT = NULL,
+    @EnableSMS BIT = NULL,
+    @EnablePresenteeSMS BIT = NULL,
+    @AutomaticBirthdaySMS BIT = NULL,
+    @EnableWhatsapp BIT = NULL,
+    @WebsiteUrl NVARCHAR(500) = NULL,
+    @SMSSenderID NVARCHAR(100) = NULL,
+    @BusNumbers NVARCHAR(MAX) = NULL,
+    @SCANiDContact NVARCHAR(100) = NULL,
+    @SCANiDEmail NVARCHAR(255) = NULL,
+    @InChargeContact NVARCHAR(100) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
     IF @Action = 'INSERT'
     BEGIN
         INSERT INTO [dbo].[Schools] (
-            Name, ProfilePhotoPath, Address, Phone, Email, IsActive, IsDeleted, CreatedOn, ModifiedOn, CreatedBy
+            Name, ProfilePhotoPath, Address, Phone, Email, IsActive, IsDeleted, CreatedOn, ModifiedOn, CreatedBy,
+            ShortName, CityId, StateId, Pincode, SMSLimit, TotalSMSSent, SMSBalance, EnableSMS,
+            EnablePresenteeSMS, AutomaticBirthdaySMS, EnableWhatsapp, WebsiteUrl, SMSSenderID, BusNumbers,
+            SCANiDContact, SCANiDEmail, InChargeContact
         ) VALUES (
-            @Name, @LogoPath, @Address, @ContactNumber, @Email, 1, 0, GETUTCDATE(), GETUTCDATE(), @CreatedBy
+            @Name, @LogoPath, @Address, @ContactNumber, @Email, 1, 0, GETUTCDATE(), GETUTCDATE(), @CreatedBy,
+            @ShortName, @CityId, @StateId, @Pincode, @SMSLimit, @TotalSMSSent, @SMSBalance, @EnableSMS,
+            @EnablePresenteeSMS, @AutomaticBirthdaySMS, @EnableWhatsapp, @WebsiteUrl, @SMSSenderID, @BusNumbers,
+            @SCANiDContact, @SCANiDEmail, @InChargeContact
         );
         SELECT SCOPE_IDENTITY();
     END
@@ -731,6 +760,23 @@ BEGIN
             Address = ISNULL(@Address, Address),
             Phone = ISNULL(@ContactNumber, Phone),
             Email = ISNULL(@Email, Email),
+            ShortName = ISNULL(@ShortName, ShortName),
+            CityId = ISNULL(@CityId, CityId),
+            StateId = ISNULL(@StateId, StateId),
+            Pincode = ISNULL(@Pincode, Pincode),
+            SMSLimit = ISNULL(@SMSLimit, SMSLimit),
+            TotalSMSSent = ISNULL(@TotalSMSSent, TotalSMSSent),
+            SMSBalance = ISNULL(@SMSBalance, SMSBalance),
+            EnableSMS = ISNULL(@EnableSMS, EnableSMS),
+            EnablePresenteeSMS = ISNULL(@EnablePresenteeSMS, EnablePresenteeSMS),
+            AutomaticBirthdaySMS = ISNULL(@AutomaticBirthdaySMS, AutomaticBirthdaySMS),
+            EnableWhatsapp = ISNULL(@EnableWhatsapp, EnableWhatsapp),
+            WebsiteUrl = ISNULL(@WebsiteUrl, WebsiteUrl),
+            SMSSenderID = ISNULL(@SMSSenderID, SMSSenderID),
+            BusNumbers = ISNULL(@BusNumbers, BusNumbers),
+            SCANiDContact = ISNULL(@SCANiDContact, SCANiDContact),
+            SCANiDEmail = ISNULL(@SCANiDEmail, SCANiDEmail),
+            InChargeContact = ISNULL(@InChargeContact, InChargeContact),
             ModifiedOn = GETUTCDATE()
         WHERE Id = @Id;
     END

@@ -87,7 +87,24 @@ namespace ScanID.Api.Services
                     ("Address", school.Address),
                     ("ContactNumber", school.Phone),
                     ("Email", school.Email),
-                    ("CreatedBy", null)
+                    ("CreatedBy", null),
+                    ("ShortName", school.ShortName),
+                    ("CityId", school.CityId),
+                    ("StateId", school.StateId),
+                    ("Pincode", school.Pincode),
+                    ("SMSLimit", school.SMSLimit),
+                    ("TotalSMSSent", school.TotalSMSSent),
+                    ("SMSBalance", school.SMSBalance),
+                    ("EnableSMS", school.EnableSMS),
+                    ("EnablePresenteeSMS", school.EnablePresenteeSMS),
+                    ("AutomaticBirthdaySMS", school.AutomaticBirthdaySMS),
+                    ("EnableWhatsapp", school.EnableWhatsapp),
+                    ("WebsiteUrl", school.WebsiteUrl),
+                    ("SMSSenderID", school.SMSSenderID),
+                    ("BusNumbers", school.BusNumbers),
+                    ("SCANiDContact", school.SCANiDContact),
+                    ("SCANiDEmail", school.SCANiDEmail),
+                    ("InChargeContact", school.InChargeContact)
                 );
                 return school;
             });
@@ -97,10 +114,36 @@ namespace ScanID.Api.Services
         {
             return await ExecuteWithRetryAsync(async () =>
             {
-                var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
-                    $"EXEC dbo.sp_ManageSchool 'UPDATE', {school.Id}, {school.Name}, {school.ProfilePhotoPath}, {school.Address}, {school.Phone}, {school.Email}"
+                await ScanID.Api.Utilities.DbMapper.ExecuteScalarStoredProcedureAsync(
+                    _context,
+                    "dbo.sp_ManageSchool",
+                    ("Action", "UPDATE"),
+                    ("Id", school.Id),
+                    ("Name", school.Name),
+                    ("LogoPath", school.ProfilePhotoPath),
+                    ("Address", school.Address),
+                    ("ContactNumber", school.Phone),
+                    ("Email", school.Email),
+                    ("CreatedBy", null),
+                    ("ShortName", school.ShortName),
+                    ("CityId", school.CityId),
+                    ("StateId", school.StateId),
+                    ("Pincode", school.Pincode),
+                    ("SMSLimit", school.SMSLimit),
+                    ("TotalSMSSent", school.TotalSMSSent),
+                    ("SMSBalance", school.SMSBalance),
+                    ("EnableSMS", school.EnableSMS),
+                    ("EnablePresenteeSMS", school.EnablePresenteeSMS),
+                    ("AutomaticBirthdaySMS", school.AutomaticBirthdaySMS),
+                    ("EnableWhatsapp", school.EnableWhatsapp),
+                    ("WebsiteUrl", school.WebsiteUrl),
+                    ("SMSSenderID", school.SMSSenderID),
+                    ("BusNumbers", school.BusNumbers),
+                    ("SCANiDContact", school.SCANiDContact),
+                    ("SCANiDEmail", school.SCANiDEmail),
+                    ("InChargeContact", school.InChargeContact)
                 );
-                return rowsAffected > 0;
+                return true;
             });
         }
 

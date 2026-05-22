@@ -60,6 +60,29 @@ namespace ScanID.Api.Models
         public int TotalStudents { get; set; }
         public string Status { get; set; } = "Active";
         public string? ProfilePhotoPath { get; set; }
+        
+        // --- Legacy School Information form - New Fields ---
+        public string? ShortName { get; set; }
+        public int? CityId { get; set; }
+        public int? StateId { get; set; }
+        public string? Pincode { get; set; }
+        public int? SMSLimit { get; set; }
+        public int? TotalSMSSent { get; set; }
+        public int? SMSBalance { get; set; }
+        public bool? EnableSMS { get; set; }
+        public bool? EnablePresenteeSMS { get; set; }
+        public bool? AutomaticBirthdaySMS { get; set; }
+        public bool? EnableWhatsapp { get; set; }
+        public string? WebsiteUrl { get; set; }
+        public string? SMSSenderID { get; set; }
+        public string? BusNumbers { get; set; }
+        public string? SCANiDContact { get; set; }
+        public string? SCANiDEmail { get; set; }
+        public string? InChargeContact { get; set; }
+
+        // Navigation labels for representation
+        public string? CityName { get; set; }
+        public string? StateName { get; set; }
     }
 
     /// <summary>

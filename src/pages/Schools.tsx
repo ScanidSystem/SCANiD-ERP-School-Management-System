@@ -78,6 +78,8 @@ export default function Schools({ user }: { user: UserType }) {
 
   const [schools, setSchools] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [states, setStates] = useState<any[]>([]);
+  const [cities, setCities] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -105,7 +107,24 @@ export default function Schools({ user }: { user: UserType }) {
     phone: "",
     email: "",
     status: "Active",
-    photo: ""
+    photo: "",
+    shortName: "",
+    cityId: "",
+    stateId: "",
+    pincode: "",
+    smsLimit: "",
+    totalSMSSent: 0,
+    smsBalance: 0,
+    enableSMS: false,
+    enablePresenteeSMS: false,
+    automaticBirthdaySMS: false,
+    enableWhatsapp: false,
+    websiteUrl: "",
+    smsSenderID: "",
+    busNumbers: "",
+    scanIDContact: "",
+    scanIDEmail: "",
+    inChargeContact: ""
   });
 
   const fetchSchools = useCallback(async () => {
@@ -192,6 +211,23 @@ export default function Schools({ user }: { user: UserType }) {
   }, [user.role, fetchSchools]);
 
   useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const [statesRes, citiesRes] = await Promise.all([
+          apiService.getStates(),
+          apiService.getCities()
+        ]);
+        const normalize = (res: any) => Array.isArray(res?.data) ? res.data : (res?.data?.data || []);
+        setStates(normalize(statesRes));
+        setCities(normalize(citiesRes));
+      } catch (error) {
+        console.error("Failed to load states and cities", error);
+      }
+    };
+    fetchLocations();
+  }, []);
+
+  useEffect(() => {
     if (!isAddDialogOpen) {
       setSelectedPhotoFile(null);
       if (localPhotoPreview) {
@@ -230,7 +266,24 @@ export default function Schools({ user }: { user: UserType }) {
       email: school.email || "",
       status: school.status || "Active",
       // Map both camelCase and Capitalized server properties to preserve original branding details on form entry
-      photo: school.profilePhotoPath || school.ProfilePhotoPath || school.photo || ""
+      photo: school.profilePhotoPath || school.ProfilePhotoPath || school.photo || "",
+      shortName: school.shortName || school.ShortName || "",
+      cityId: school.cityId?.toString() || school.CityId?.toString() || "",
+      stateId: school.stateId?.toString() || school.StateId?.toString() || "",
+      pincode: school.pincode || school.Pincode || "",
+      smsLimit: school.smsLimit?.toString() || school.SMSLimit?.toString() || "",
+      totalSMSSent: school.totalSMSSent || school.TotalSMSSent || 0,
+      smsBalance: school.smsBalance || school.SMSBalance || 0,
+      enableSMS: !!(school.enableSMS ?? school.EnableSMS ?? false),
+      enablePresenteeSMS: !!(school.enablePresenteeSMS ?? school.EnablePresenteeSMS ?? false),
+      automaticBirthdaySMS: !!(school.automaticBirthdaySMS ?? school.AutomaticBirthdaySMS ?? false),
+      enableWhatsapp: !!(school.enableWhatsapp ?? school.EnableWhatsapp ?? false),
+      websiteUrl: school.websiteUrl || school.WebsiteUrl || "",
+      smsSenderID: school.smsSenderID || school.SMSSenderID || "",
+      busNumbers: school.busNumbers || school.BusNumbers || "",
+      scanIDContact: school.scanIDContact || school.scaniDContact || school.SCANiDContact || "",
+      scanIDEmail: school.scanIDEmail || school.scaniDEmail || school.SCANiDEmail || "",
+      inChargeContact: school.inChargeContact || school.InChargeContact || ""
     });
     setFormErrors({});
     setIsEditDialogOpen(true);
@@ -314,6 +367,23 @@ export default function Schools({ user }: { user: UserType }) {
         // Pass photo path explicitly as profilePhotoPath to prevent backend wiping it out
         profilePhotoPath: formData.photo,
         id: currentSchool.id,
+        shortName: formData.shortName || null,
+        cityId: formData.cityId ? parseInt(formData.cityId) : null,
+        stateId: formData.stateId ? parseInt(formData.stateId) : null,
+        pincode: formData.pincode || null,
+        smsLimit: formData.smsLimit ? parseInt(formData.smsLimit) : null,
+        totalSMSSent: formData.totalSMSSent ? parseInt(formData.totalSMSSent.toString()) : 0,
+        smsBalance: formData.smsBalance ? parseInt(formData.smsBalance.toString()) : 0,
+        enableSMS: !!formData.enableSMS,
+        enablePresenteeSMS: !!formData.enablePresenteeSMS,
+        automaticBirthdaySMS: !!formData.automaticBirthdaySMS,
+        enableWhatsapp: !!formData.enableWhatsapp,
+        websiteUrl: formData.websiteUrl || null,
+        smsSenderID: formData.smsSenderID || null,
+        busNumbers: formData.busNumbers || null,
+        scanIDContact: formData.scanIDContact || null,
+        scanIDEmail: formData.scanIDEmail || null,
+        inChargeContact: formData.inChargeContact || null,
         ModifiedBy: user.name || user.email
       });
       toast.success("School details updated!");
@@ -387,6 +457,23 @@ export default function Schools({ user }: { user: UserType }) {
       const response = await apiService.createSchool({
         ...formData,
         profilePhotoPath: formData.photo,
+        shortName: formData.shortName || null,
+        cityId: formData.cityId ? parseInt(formData.cityId) : null,
+        stateId: formData.stateId ? parseInt(formData.stateId) : null,
+        pincode: formData.pincode || null,
+        smsLimit: formData.smsLimit ? parseInt(formData.smsLimit) : null,
+        totalSMSSent: formData.totalSMSSent ? parseInt(formData.totalSMSSent.toString()) : 0,
+        smsBalance: formData.smsBalance ? parseInt(formData.smsBalance.toString()) : 0,
+        enableSMS: !!formData.enableSMS,
+        enablePresenteeSMS: !!formData.enablePresenteeSMS,
+        automaticBirthdaySMS: !!formData.automaticBirthdaySMS,
+        enableWhatsapp: !!formData.enableWhatsapp,
+        websiteUrl: formData.websiteUrl || null,
+        smsSenderID: formData.smsSenderID || null,
+        busNumbers: formData.busNumbers || null,
+        scanIDContact: formData.scanIDContact || null,
+        scanIDEmail: formData.scanIDEmail || null,
+        inChargeContact: formData.inChargeContact || null,
         CreatedBy: user.name || user.email,
         ModifiedBy: user.name || user.email
       });
@@ -400,7 +487,31 @@ export default function Schools({ user }: { user: UserType }) {
       }
       toast.success("School registered successfully!");
       setIsAddDialogOpen(false);
-      setFormData({ name: "", address: "", phone: "", email: "", status: "Active", photo: "" });
+      setFormData({
+        name: "",
+        address: "",
+        phone: "",
+        email: "",
+        status: "Active",
+        photo: "",
+        shortName: "",
+        cityId: "",
+        stateId: "",
+        pincode: "",
+        smsLimit: "",
+        totalSMSSent: 0,
+        smsBalance: 0,
+        enableSMS: false,
+        enablePresenteeSMS: false,
+        automaticBirthdaySMS: false,
+        enableWhatsapp: false,
+        websiteUrl: "",
+        smsSenderID: "",
+        busNumbers: "",
+        scanIDContact: "",
+        scanIDEmail: "",
+        inChargeContact: ""
+      });
       setSelectedPhotoFile(null);
       setLocalPhotoPreview(null);
       fetchSchools();
@@ -516,25 +627,37 @@ export default function Schools({ user }: { user: UserType }) {
                          <h3 className="text-sm font-black text-slate-900 tracking-tight">Institution Details</h3>
                        </div>
                        
-                       <div className="space-y-1.5">
-                         <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Official Name</Label>
-                         <Input 
-                           ref={el => { inputRefs.current["name"] = el; }}
-                           value={formData.name} 
-                           onChange={e => {
-                             setFormData({...formData, name: e.target.value});
-                             if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
-                           }} 
-                           placeholder="e.g. St. Xavier's International" 
-                           className={cn(
-                             "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                             formErrors.name && "border-red-500 ring-2 ring-red-500/10"
-                           )} 
-                         />
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div className="space-y-1.5">
+                           <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Official Name *</Label>
+                           <Input 
+                             ref={el => { inputRefs.current["name"] = el; }}
+                             value={formData.name} 
+                             onChange={e => {
+                               setFormData({...formData, name: e.target.value});
+                               if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                             }} 
+                             placeholder="e.g. St. Xavier's International" 
+                             className={cn(
+                               "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
+                               formErrors.name && "border-red-500 ring-2 ring-red-500/10"
+                             )} 
+                           />
+                         </div>
+
+                         <div className="space-y-1.5">
+                           <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Short Name / Code</Label>
+                           <Input 
+                             value={formData.shortName} 
+                             onChange={e => setFormData({...formData, shortName: e.target.value})} 
+                             placeholder="e.g. SXIB-01" 
+                             className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm"
+                           />
+                         </div>
                        </div>
 
                        <div className="space-y-1.5">
-                         <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Primary Address</Label>
+                         <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Primary Address *</Label>
                          <Input 
                            ref={el => { inputRefs.current["address"] = el; }}
                            value={formData.address} 
@@ -547,6 +670,80 @@ export default function Schools({ user }: { user: UserType }) {
                              "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
                              formErrors.address && "border-red-500 ring-2 ring-red-500/10"
                            )} 
+                         />
+                       </div>
+
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                         <div className="space-y-1.5">
+                           <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">State</Label>
+                           <UISelect 
+                             value={formData.stateId} 
+                             onValueChange={v => {
+                               const stateIdNum = parseInt(v);
+                               const currentCity = cities.find(c => (c.id || c.Id) === parseInt(formData.cityId));
+                               const cityBelongsToState = currentCity && ((currentCity.stateId || currentCity.StateId) === stateIdNum);
+                               setFormData({
+                                 ...formData,
+                                 stateId: v,
+                                 cityId: cityBelongsToState ? formData.cityId : ""
+                               });
+                             }}
+                           >
+                             <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                               <SelectValue placeholder="Choose State" />
+                             </SelectTrigger>
+                             <SelectContent className="rounded-xl border-slate-200 max-h-48 overflow-y-auto">
+                               <SelectItem value="" className="text-slate-400 italic">Select State</SelectItem>
+                               {states.map((st: any) => (
+                                 <SelectItem key={st.id || st.Id} value={(st.id || st.Id).toString()} className="font-semibold">
+                                   {st.name || st.Name}
+                                 </SelectItem>
+                               ))}
+                             </SelectContent>
+                           </UISelect>
+                         </div>
+
+                         <div className="space-y-1.5">
+                           <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">City</Label>
+                           <UISelect 
+                             value={formData.cityId} 
+                             onValueChange={v => setFormData({...formData, cityId: v})}
+                             disabled={!formData.stateId}
+                           >
+                             <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm disabled:opacity-50">
+                               <SelectValue placeholder="Choose City" />
+                             </SelectTrigger>
+                             <SelectContent className="rounded-xl border-slate-200 max-h-48 overflow-y-auto">
+                               <SelectItem value="" className="text-slate-400 italic">Select City</SelectItem>
+                               {cities
+                                 .filter((c: any) => (c.stateId || c.StateId) === parseInt(formData.stateId))
+                                 .map((ct: any) => (
+                                   <SelectItem key={ct.id || ct.Id} value={(ct.id || ct.Id).toString()} className="font-semibold">
+                                     {ct.name || ct.Name}
+                                   </SelectItem>
+                                 ))}
+                             </SelectContent>
+                           </UISelect>
+                         </div>
+
+                         <div className="space-y-1.5">
+                           <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Pincode</Label>
+                           <Input 
+                             value={formData.pincode} 
+                             onChange={e => setFormData({...formData, pincode: e.target.value})} 
+                             placeholder="6-digit ZIP code" 
+                             className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm"
+                           />
+                         </div>
+                       </div>
+
+                       <div className="space-y-1.5">
+                         <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Website URL</Label>
+                         <Input 
+                           value={formData.websiteUrl} 
+                           onChange={e => setFormData({...formData, websiteUrl: e.target.value})} 
+                           placeholder="https://www.schoolwebsite.com" 
+                           className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm"
                          />
                        </div>
                      </section>
@@ -596,23 +793,164 @@ export default function Schools({ user }: { user: UserType }) {
                   </div>
                 </section>
 
-                <section className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100">
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">System Status</Label>
-                    <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v || "Active"})}>
-                      <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
-                        <SelectValue placeholder="Select System Status">
-                          {formData.status || undefined}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border-slate-200">
-                        <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select System Status</SelectItem>
-                        <SelectItem value="Active" className="font-semibold py-1.5 text-xs">Active</SelectItem>
-                        <SelectItem value="Suspended" className="font-semibold py-1.5 text-xs">Suspended</SelectItem>
-                      </SelectContent>
-                    </UISelect>
-                  </div>
-                </section>
+                <section className="space-y-4 pt-4 border-t border-slate-50">
+                   <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
+                     <div className="w-1.5 h-5 bg-indigo-500 rounded-full"></div>
+                     <h3 className="text-sm font-black text-slate-900 tracking-tight">SMS Gateway & Utility Configuration</h3>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">SMS Limit</Label>
+                       <Input 
+                         type="number"
+                         value={formData.smsLimit} 
+                         onChange={e => setFormData({...formData, smsLimit: e.target.value})} 
+                         placeholder="Max SMS count allowable" 
+                         className="h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm"
+                       />
+                     </div>
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">SMS Sender ID</Label>
+                       <Input 
+                         value={formData.smsSenderID} 
+                         onChange={e => setFormData({...formData, smsSenderID: e.target.value})} 
+                         placeholder="6-character Sender ID" 
+                         className="h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm"
+                       />
+                     </div>
+                     <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 flex items-center justify-around">
+                       <div className="text-center">
+                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">SMS Sent</p>
+                         <p className="text-lg font-black text-indigo-600">{formData.totalSMSSent || 0}</p>
+                       </div>
+                       <div className="w-px h-8 bg-slate-200"></div>
+                       <div className="text-center">
+                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">SMS Balance</p>
+                         <p className="text-lg font-black text-emerald-600">{formData.smsBalance || 0}</p>
+                       </div>
+                     </div>
+                   </div>
+
+                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+                     <label className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/80 transition-all border border-slate-100 cursor-pointer select-none">
+                       <input 
+                         type="checkbox" 
+                         checked={formData.enableSMS} 
+                         onChange={e => setFormData({...formData, enableSMS: e.target.checked})}
+                         className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                       />
+                       <div className="flex flex-col">
+                         <span className="text-[11px] font-black text-slate-800 leading-none">Enable SMS</span>
+                         <span className="text-[9px] text-slate-400 font-bold mt-0.5">Core alerts</span>
+                       </div>
+                     </label>
+
+                     <label className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/80 transition-all border border-slate-100 cursor-pointer select-none">
+                       <input 
+                         type="checkbox" 
+                         checked={formData.enablePresenteeSMS} 
+                         onChange={e => setFormData({...formData, enablePresenteeSMS: e.target.checked})}
+                         className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                       />
+                       <div className="flex flex-col">
+                         <span className="text-[11px] font-black text-slate-800 leading-none">Attendance SMS</span>
+                         <span className="text-[9px] text-slate-400 font-bold mt-0.5">Absentee logs</span>
+                       </div>
+                     </label>
+
+                     <label className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/80 transition-all border border-slate-100 cursor-pointer select-none">
+                       <input 
+                         type="checkbox" 
+                         checked={formData.automaticBirthdaySMS} 
+                         onChange={e => setFormData({...formData, automaticBirthdaySMS: e.target.checked})}
+                         className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                       />
+                       <div className="flex flex-col">
+                         <span className="text-[11px] font-black text-slate-800 leading-none">Birthday SMS</span>
+                         <span className="text-[9px] text-slate-400 font-bold mt-0.5">Auto-greetings</span>
+                       </div>
+                     </label>
+
+                     <label className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/80 transition-all border border-slate-100 cursor-pointer select-none">
+                       <input 
+                         type="checkbox" 
+                         checked={formData.enableWhatsapp} 
+                         onChange={e => setFormData({...formData, enableWhatsapp: e.target.checked})}
+                         className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                       />
+                       <div className="flex flex-col">
+                         <span className="text-[11px] font-black text-slate-800 leading-none">WhatsApp API</span>
+                         <span className="text-[9px] text-slate-400 font-bold mt-0.5">Direct chat</span>
+                       </div>
+                     </label>
+                   </div>
+                 </section>
+
+                 <section className="space-y-4 pt-4 border-t border-slate-50">
+                   <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
+                     <div className="w-1.5 h-5 bg-amber-500 rounded-full"></div>
+                     <h3 className="text-sm font-black text-slate-900 tracking-tight">Transit & SCANiD Support Settings</h3>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">SCANiD Helpline</Label>
+                       <Input 
+                         value={formData.scanIDContact} 
+                         onChange={e => setFormData({...formData, scanIDContact: e.target.value})} 
+                         placeholder="SCANiD custom support phone" 
+                         className="h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm"
+                       />
+                     </div>
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">SCANiD Email</Label>
+                       <Input 
+                         value={formData.scanIDEmail} 
+                         onChange={e => setFormData({...formData, scanIDEmail: e.target.value})} 
+                         placeholder="support@scanid.com" 
+                         className="h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm"
+                       />
+                     </div>
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">In-Charge Contact</Label>
+                       <Input 
+                         value={formData.inChargeContact} 
+                         onChange={e => setFormData({...formData, inChargeContact: e.target.value})} 
+                         placeholder="Principal/Admin direct line" 
+                         className="h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm"
+                       />
+                     </div>
+                   </div>
+
+                   <div className="space-y-1.5">
+                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned Institutional Bus Numbers</Label>
+                     <textarea 
+                       value={formData.busNumbers} 
+                       onChange={e => setFormData({...formData, busNumbers: e.target.value})} 
+                       placeholder="e.g. Bus 01: MH-12-DT-2032, Bus 02: MH-14-AP-9302" 
+                       className="w-full min-h-[80px] text-sm border border-slate-200 bg-slate-50/30 rounded-2xl p-4 font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-100"
+                     />
+                   </div>
+                 </section>
+
+                 <section className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100">
+                   <div className="space-y-1.5">
+                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">System Status</Label>
+                     <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v || "Active"})}>
+                       <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
+                         <SelectValue placeholder="Select System Status">
+                           {formData.status || undefined}
+                         </SelectValue>
+                       </SelectTrigger>
+                       <SelectContent className="rounded-xl border-slate-200">
+                         <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select System Status</SelectItem>
+                         <SelectItem value="Active" className="font-semibold py-1.5 text-xs">Active</SelectItem>
+                         <SelectItem value="Suspended" className="font-semibold py-1.5 text-xs">Suspended</SelectItem>
+                       </SelectContent>
+                     </UISelect>
+                   </div>
+                 </section>
               </div>
             </div>
 
@@ -723,25 +1061,37 @@ export default function Schools({ user }: { user: UserType }) {
                       </div>
                       
                       <div className="space-y-4">
-                        <div className="space-y-1.5">
-                          <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Official Name</Label>
-                          <Input 
-                            ref={el => { inputRefs.current["name"] = el; }}
-                            value={formData.name} 
-                            onChange={e => {
-                              setFormData({...formData, name: e.target.value});
-                              if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
-                            }} 
-                            placeholder="e.g. St. Xavier's International" 
-                            className={cn(
-                              "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                              formErrors.name && "border-red-500 ring-2 ring-red-500/10"
-                            )} 
-                          />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Official Name *</Label>
+                            <Input 
+                              ref={el => { inputRefs.current["name"] = el; }}
+                              value={formData.name} 
+                              onChange={e => {
+                                setFormData({...formData, name: e.target.value});
+                                if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                              }} 
+                              placeholder="e.g. St. Xavier's International" 
+                              className={cn(
+                                "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
+                                formErrors.name && "border-red-500 ring-2 ring-red-500/10"
+                              )} 
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Short Name / Code</Label>
+                            <Input 
+                              value={formData.shortName} 
+                              onChange={e => setFormData({...formData, shortName: e.target.value})} 
+                              placeholder="e.g. SXIB-01" 
+                              className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm"
+                            />
+                          </div>
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Primary Address</Label>
+                          <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Primary Address *</Label>
                           <Input 
                             ref={el => { inputRefs.current["address"] = el; }}
                             value={formData.address} 
@@ -754,6 +1104,80 @@ export default function Schools({ user }: { user: UserType }) {
                               "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
                               formErrors.address && "border-red-500 ring-2 ring-red-500/10"
                             )} 
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="space-y-1.5">
+                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">State</Label>
+                            <UISelect 
+                              value={formData.stateId} 
+                              onValueChange={v => {
+                                const stateIdNum = parseInt(v);
+                                const currentCity = cities.find(c => (c.id || c.Id) === parseInt(formData.cityId));
+                                const cityBelongsToState = currentCity && ((currentCity.stateId || currentCity.StateId) === stateIdNum);
+                                setFormData({
+                                  ...formData,
+                                  stateId: v,
+                                  cityId: cityBelongsToState ? formData.cityId : ""
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
+                                <SelectValue placeholder="Choose State" />
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl border-slate-200 max-h-48 overflow-y-auto">
+                                <SelectItem value="" className="text-slate-400 italic">Select State</SelectItem>
+                                {states.map((st: any) => (
+                                  <SelectItem key={st.id || st.Id} value={(st.id || st.Id).toString()} className="font-semibold">
+                                    {st.name || st.Name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </UISelect>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">City</Label>
+                            <UISelect 
+                              value={formData.cityId} 
+                              onValueChange={v => setFormData({...formData, cityId: v})}
+                              disabled={!formData.stateId}
+                            >
+                              <SelectTrigger className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm disabled:opacity-50">
+                                <SelectValue placeholder="Choose City" />
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl border-slate-200 max-h-48 overflow-y-auto">
+                                <SelectItem value="" className="text-slate-400 italic">Select City</SelectItem>
+                                {cities
+                                  .filter((c: any) => (c.stateId || c.StateId) === parseInt(formData.stateId))
+                                  .map((ct: any) => (
+                                    <SelectItem key={ct.id || ct.Id} value={(ct.id || ct.Id).toString()} className="font-semibold">
+                                      {ct.name || ct.Name}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </UISelect>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Pincode</Label>
+                            <Input 
+                              value={formData.pincode} 
+                              onChange={e => setFormData({...formData, pincode: e.target.value})} 
+                              placeholder="6-digit ZIP code" 
+                              className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Website URL</Label>
+                          <Input 
+                            value={formData.websiteUrl} 
+                            onChange={e => setFormData({...formData, websiteUrl: e.target.value})} 
+                            placeholder="https://www.schoolwebsite.com" 
+                            className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm"
                           />
                         </div>
                       </div>
@@ -803,23 +1227,164 @@ export default function Schools({ user }: { user: UserType }) {
                   </div>
                 </section>
 
-                <section className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100">
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">System Status</Label>
-                    <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v || "Active"})}>
-                      <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
-                        <SelectValue placeholder="Select System Status">
-                          {formData.status || undefined}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border-slate-200">
-                        <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select System Status</SelectItem>
-                        <SelectItem value="Active" className="font-semibold py-1.5 text-xs">Active</SelectItem>
-                        <SelectItem value="Suspended" className="font-semibold py-1.5 text-xs">Suspended</SelectItem>
-                      </SelectContent>
-                    </UISelect>
-                  </div>
-                </section>
+                <section className="space-y-4 pt-4 border-t border-slate-50">
+                   <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
+                     <div className="w-1.5 h-5 bg-indigo-500 rounded-full"></div>
+                     <h3 className="text-sm font-black text-slate-900 tracking-tight">SMS Gateway & Utility Configuration</h3>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">SMS Limit</Label>
+                       <Input 
+                         type="number"
+                         value={formData.smsLimit} 
+                         onChange={e => setFormData({...formData, smsLimit: e.target.value})} 
+                         placeholder="Max SMS count allowable" 
+                         className="h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm"
+                       />
+                     </div>
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">SMS Sender ID</Label>
+                       <Input 
+                         value={formData.smsSenderID} 
+                         onChange={e => setFormData({...formData, smsSenderID: e.target.value})} 
+                         placeholder="6-character Sender ID" 
+                         className="h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm"
+                       />
+                     </div>
+                     <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 flex items-center justify-around">
+                       <div className="text-center">
+                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">SMS Sent</p>
+                         <p className="text-lg font-black text-indigo-600">{formData.totalSMSSent || 0}</p>
+                       </div>
+                       <div className="w-px h-8 bg-slate-200"></div>
+                       <div className="text-center">
+                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">SMS Balance</p>
+                         <p className="text-lg font-black text-emerald-600">{formData.smsBalance || 0}</p>
+                       </div>
+                     </div>
+                   </div>
+
+                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+                     <label className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/80 transition-all border border-slate-100 cursor-pointer select-none">
+                       <input 
+                         type="checkbox" 
+                         checked={formData.enableSMS} 
+                         onChange={e => setFormData({...formData, enableSMS: e.target.checked})}
+                         className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                       />
+                       <div className="flex flex-col">
+                         <span className="text-[11px] font-black text-slate-800 leading-none">Enable SMS</span>
+                         <span className="text-[9px] text-slate-400 font-bold mt-0.5">Core alerts</span>
+                       </div>
+                     </label>
+
+                     <label className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/80 transition-all border border-slate-100 cursor-pointer select-none">
+                       <input 
+                         type="checkbox" 
+                         checked={formData.enablePresenteeSMS} 
+                         onChange={e => setFormData({...formData, enablePresenteeSMS: e.target.checked})}
+                         className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                       />
+                       <div className="flex flex-col">
+                         <span className="text-[11px] font-black text-slate-800 leading-none">Attendance SMS</span>
+                         <span className="text-[9px] text-slate-400 font-bold mt-0.5">Absentee logs</span>
+                       </div>
+                     </label>
+
+                     <label className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/80 transition-all border border-slate-100 cursor-pointer select-none">
+                       <input 
+                         type="checkbox" 
+                         checked={formData.automaticBirthdaySMS} 
+                         onChange={e => setFormData({...formData, automaticBirthdaySMS: e.target.checked})}
+                         className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                       />
+                       <div className="flex flex-col">
+                         <span className="text-[11px] font-black text-slate-800 leading-none">Birthday SMS</span>
+                         <span className="text-[9px] text-slate-400 font-bold mt-0.5">Auto-greetings</span>
+                       </div>
+                     </label>
+
+                     <label className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/80 transition-all border border-slate-100 cursor-pointer select-none">
+                       <input 
+                         type="checkbox" 
+                         checked={formData.enableWhatsapp} 
+                         onChange={e => setFormData({...formData, enableWhatsapp: e.target.checked})}
+                         className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                       />
+                       <div className="flex flex-col">
+                         <span className="text-[11px] font-black text-slate-800 leading-none">WhatsApp API</span>
+                         <span className="text-[9px] text-slate-400 font-bold mt-0.5">Direct chat</span>
+                       </div>
+                     </label>
+                   </div>
+                 </section>
+
+                 <section className="space-y-4 pt-4 border-t border-slate-50">
+                   <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
+                     <div className="w-1.5 h-5 bg-amber-500 rounded-full"></div>
+                     <h3 className="text-sm font-black text-slate-900 tracking-tight">Transit & SCANiD Support Settings</h3>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">SCANiD Helpline</Label>
+                       <Input 
+                         value={formData.scanIDContact} 
+                         onChange={e => setFormData({...formData, scanIDContact: e.target.value})} 
+                         placeholder="SCANiD custom support phone" 
+                         className="h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm"
+                       />
+                     </div>
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">SCANiD Email</Label>
+                       <Input 
+                         value={formData.scanIDEmail} 
+                         onChange={e => setFormData({...formData, scanIDEmail: e.target.value})} 
+                         placeholder="support@scanid.com" 
+                         className="h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm"
+                       />
+                     </div>
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">In-Charge Contact</Label>
+                       <Input 
+                         value={formData.inChargeContact} 
+                         onChange={e => setFormData({...formData, inChargeContact: e.target.value})} 
+                         placeholder="Principal/Admin direct line" 
+                         className="h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm"
+                       />
+                     </div>
+                   </div>
+
+                   <div className="space-y-1.5">
+                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned Institutional Bus Numbers</Label>
+                     <textarea 
+                       value={formData.busNumbers} 
+                       onChange={e => setFormData({...formData, busNumbers: e.target.value})} 
+                       placeholder="e.g. Bus 01: MH-12-DT-2032, Bus 02: MH-14-AP-9302" 
+                       className="w-full min-h-[80px] text-sm border border-slate-200 bg-slate-50/30 rounded-2xl p-4 font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-100"
+                     />
+                   </div>
+                 </section>
+
+                 <section className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100">
+                   <div className="space-y-1.5">
+                     <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">System Status</Label>
+                     <UISelect value={formData.status} onValueChange={v => setFormData({...formData, status: v || "Active"})}>
+                       <SelectTrigger className="h-10 border-slate-200 bg-white font-bold rounded-xl px-4 text-sm">
+                         <SelectValue placeholder="Select System Status">
+                           {formData.status || undefined}
+                         </SelectValue>
+                       </SelectTrigger>
+                       <SelectContent className="rounded-xl border-slate-200">
+                         <SelectItem value="" className="font-semibold py-1.5 text-xs text-slate-400 italic">Select System Status</SelectItem>
+                         <SelectItem value="Active" className="font-semibold py-1.5 text-xs">Active</SelectItem>
+                         <SelectItem value="Suspended" className="font-semibold py-1.5 text-xs">Suspended</SelectItem>
+                       </SelectContent>
+                     </UISelect>
+                   </div>
+                 </section>
               </div>
             </div>
 
@@ -927,16 +1492,27 @@ export default function Schools({ user }: { user: UserType }) {
                           </button>
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-bold text-slate-900 leading-tight">{school.name}</span>
+                          <span className="font-bold text-slate-900 leading-tight">
+                            {school.name} {(school.shortName || school.ShortName) && <span className="text-xs text-blue-600 font-semibold">({school.shortName || school.ShortName})</span>}
+                          </span>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                              <MapPin size={10} /> {school.address || "Main Branch"}
+                              <MapPin size={10} className="shrink-0" /> 
+                              {school.address || "Main Branch"}
+                              {(school.cityName || school.CityName) && `, ${school.cityName || school.CityName}`}
+                              {(school.stateName || school.StateName) && `, ${school.stateName || school.StateName}`}
+                              {(school.pincode || school.Pincode) && ` - ${school.pincode || school.Pincode}`}
                             </span>
                           </div>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-slate-400">{school.id}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        {school.phone && <div className="text-[11px] font-bold text-slate-700">{school.phone}</div>}
+                        {school.email && <div className="text-[10px] font-bold text-slate-400 lowercase">{school.email}</div>}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <Badge 
                         className={cn(
