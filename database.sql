@@ -303,12 +303,6 @@ CREATE TABLE [dbo].[Schools](
 	[TotalStudents] [int] NOT NULL,
 	[ProfilePhotoPath] [nvarchar](max) NULL,
 	[Status] [nvarchar](max) NOT NULL DEFAULT (N'Active'),
-    [IsActive] [bit] NOT NULL DEFAULT (1),
-    [IsDeleted] [bit] NOT NULL DEFAULT (0),
-    [CreatedBy] [nvarchar](max) NULL,
-	[CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
-    [ModifiedBy] [nvarchar](max) NULL,
-    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
 
 	-- --- Legacy Schools Details ---
 	[ShortName] [nvarchar](100) NULL,
@@ -328,6 +322,12 @@ CREATE TABLE [dbo].[Schools](
 	[SCANiDContact] [nvarchar](100) NULL,
 	[SCANiDEmail] [nvarchar](255) NULL,
 	[InChargeContact] [nvarchar](100) NULL,
+    [IsActive] [bit] NOT NULL DEFAULT (1),
+    [IsDeleted] [bit] NOT NULL DEFAULT (0),
+    [CreatedBy] [nvarchar](max) NULL,
+	[CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+    [ModifiedBy] [nvarchar](max) NULL,
+    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
  CONSTRAINT [PK_Schools] PRIMARY KEY CLUSTERED ([Id] ASC)
 )
 END

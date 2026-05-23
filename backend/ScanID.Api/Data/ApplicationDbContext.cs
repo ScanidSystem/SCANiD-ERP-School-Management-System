@@ -95,6 +95,7 @@ namespace ScanID.Api.Data
             modelBuilder.Entity<Designation>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<Occupation>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<Role>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<SchoolSection>().HasQueryFilter(x => !x.IsDeleted);
         }
 
         /// <summary>
