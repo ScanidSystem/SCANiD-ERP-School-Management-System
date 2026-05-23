@@ -52,7 +52,12 @@ This document records the exact changes, the root causes identified, and the fix
   3. **Backend Models & Dependency Injection**: Updated the `Student` C# model entity in `Models.cs` to map `SchoolSectionId` as an integer and configured a navigation property `[ForeignKey("SchoolSectionId")] public SchoolSection? SchoolSection { get; set; }`. Adjusted mappings inside the ADO.NET-based `StudentService.cs` repository methods to call correct Stored Procedure mappings safely.
   4. **Frontend Form & Value Binding**: Refactored `Students.tsx` form state tracking properties to handle numeric values binding securely under `SchoolSectionId` instead of legacy strings, providing a seamless backwards-compatible fallback mapping for older datasets.
 
-## 6. Modified Files List (New Updates)
+## 6. Issue: "Invalid column name 'DOB'/ 'MOBILE'/ 'contact2'" on update_students_admission_email.sql Execution
+- **Root Cause**: An incremental database migration script `/update_students_admission_email.sql` contained an outdated definition for recreating the `dbo.sp_ManageStudent` stored procedure, which referenced legacy, dropped columns (`DOB`, `MOBILE`, and `contact2`) instead of the standardized and migrated column names (`DateOfBirth`, `FatherContactNo`, and `MotherContactNo`).
+- **Remediation**:
+  - Refactored `dbo.sp_ManageStudent` stored procedure definition inside `/update_students_admission_email.sql` to align its query parameters, schema mapping, and columns with the standardized database definitions.
+
+## 7. Modified Files List (New Updates)
 
 1. `/database.sql`:
    - Altered table structure of `Students` changing `SchoolSection` to `SchoolSectionId INT NULL`.
@@ -69,5 +74,5 @@ This document records the exact changes, the root causes identified, and the fix
    - Renamed query parameters, INSERT/UPDATE schemas, and table modifications to follow robust standard database conventions.
 
 5. `/src/pages/Students.tsx`:
-   - Malloc standard select bound items of School Section dropdown from plain text name value to numeric ID values, saving correct database foreign key items safely and automatically.
+   - Mated standard select bound items of School Section dropdown from plain text name value to numeric ID values, saving correct database foreign key items safely and automatically.
 
