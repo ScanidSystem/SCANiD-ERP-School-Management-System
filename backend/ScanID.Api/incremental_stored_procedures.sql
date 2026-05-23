@@ -185,30 +185,31 @@ CREATE PROCEDURE dbo.sp_ManageStudent
     @SectionId INT = NULL,
     @AcademicYearId INT = NULL,
     @RollNumber INT = NULL,
-    @GRNO NVARCHAR(100) = NULL,
-    @GENDER NVARCHAR(50) = NULL,
-    @DOB NVARCHAR(50) = NULL,
+    @GrNo NVARCHAR(100) = NULL,
+    @Gender NVARCHAR(50) = NULL,
+    @DateOfBirth NVARCHAR(50) = NULL,
     @CategoryId INT = NULL,
     @ReligionId INT = NULL,
     @CasteId INT = NULL,
     @Status NVARCHAR(50) = NULL,
-    @MOBILE NVARCHAR(50) = NULL,
-    @ADDRESS NVARCHAR(500) = NULL,
-    @MOTHERNAME NVARCHAR(100) = NULL,
-    @aadharcard NVARCHAR(100) = NULL,
-    @RFID NVARCHAR(100) = NULL,
+    @FatherContactNo NVARCHAR(200) = NULL,
+    @Address NVARCHAR(500) = NULL,
+    @MotherName NVARCHAR(100) = NULL,
+    @AadharCard NVARCHAR(100) = NULL,
+    @Rfid NVARCHAR(100) = NULL,
     @ShiftId INT = NULL,
     @BloodGroupId INT = NULL,
     @HouseId INT = NULL,
-    @sms NVARCHAR(10) = NULL,
-    @uniformid NVARCHAR(500) = NULL,
-    @contact2 NVARCHAR(255) = NULL,
+    @Sms BIT = 0,
+    @UniformId NVARCHAR(500) = NULL,
+    @MotherContactNo NVARCHAR(200) = NULL,
     @ProfilePhotoPath NVARCHAR(255) = NULL,
     @SchoolSection NVARCHAR(100) = NULL,
     @AdmissionDate NVARCHAR(200) = NULL,
     @Email NVARCHAR(255) = NULL,
     @CityId INT = NULL,
-    @StateId INT = NULL
+    @StateId INT = NULL,
+    @IsStateBoard BIT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -226,14 +227,14 @@ BEGIN
 
             INSERT INTO [dbo].[Students] (
                 RegistrationNumber, Name, SchoolId, StandardId, SectionId, AcademicYearId, RollNumber, 
-                GRNO, GENDER, DOB, CategoryId, ReligionId, CasteId, Status, MOBILE, ADDRESS, 
-                MOTHERNAME, aadharcard, RFID, ShiftId, BloodGroupId, HouseId, sms, uniformid,
-                contact2, ProfilePhotoPath, SchoolSection, AdmissionDate, Email, CityId, StateId, IsActive, IsDeleted, CreatedOn, ModifiedOn
+                GrNo, Gender, DateOfBirth, CategoryId, ReligionId, CasteId, Status, FatherContactNo, Address, 
+                MotherName, AadharCard, Rfid, ShiftId, BloodGroupId, HouseId, Sms, UniformId,
+                MotherContactNo, ProfilePhotoPath, SchoolSection, AdmissionDate, Email, CityId, StateId, IsStateBoard, IsActive, IsDeleted, CreatedOn, ModifiedOn
             ) VALUES (
                 @RegistrationNumber, @Name, @SchoolId, @StandardId, @SectionId, @AcademicYearId, @RollNumber,
-                @GRNO, @GENDER, @DOB, @CategoryId, @ReligionId, @CasteId, @Status, @MOBILE, @ADDRESS,
-                @MOTHERNAME, @aadharcard, @RFID, @ShiftId, @BloodGroupId, @HouseId, @sms, @uniformid,
-                @contact2, @ProfilePhotoPath, @SchoolSection, @AdmissionDate, @Email, @CityId, @StateId, 1, 0, GETUTCDATE(), GETUTCDATE()
+                @GrNo, @Gender, @DateOfBirth, @CategoryId, @ReligionId, @CasteId, @Status, @FatherContactNo, @Address,
+                @MotherName, @AadharCard, @Rfid, @ShiftId, @BloodGroupId, @HouseId, @Sms, @UniformId,
+                @MotherContactNo, @ProfilePhotoPath, @SchoolSection, @AdmissionDate, @Email, @CityId, @StateId, @IsStateBoard, 1, 0, GETUTCDATE(), GETUTCDATE()
             );
             SELECT SCOPE_IDENTITY();
         END
@@ -247,30 +248,31 @@ BEGIN
                 SectionId = ISNULL(@SectionId, SectionId),
                 AcademicYearId = ISNULL(@AcademicYearId, AcademicYearId),
                 RollNumber = ISNULL(@RollNumber, RollNumber),
-                GRNO = ISNULL(@GRNO, GRNO),
-                GENDER = ISNULL(@GENDER, GENDER),
-                DOB = ISNULL(@DOB, DOB),
+                GrNo = ISNULL(@GrNo, GrNo),
+                Gender = ISNULL(@Gender, Gender),
+                DateOfBirth = ISNULL(@DateOfBirth, DateOfBirth),
                 CategoryId = ISNULL(@CategoryId, CategoryId),
                 ReligionId = ISNULL(@ReligionId, ReligionId),
                 CasteId = ISNULL(@CasteId, CasteId),
                 Status = ISNULL(@Status, Status),
-                MOBILE = ISNULL(@MOBILE, MOBILE),
-                ADDRESS = ISNULL(@ADDRESS, ADDRESS),
-                MOTHERNAME = ISNULL(@MOTHERNAME, MOTHERNAME),
-                aadharcard = ISNULL(@aadharcard, aadharcard),
-                RFID = ISNULL(@RFID, RFID),
+                FatherContactNo = ISNULL(@FatherContactNo, FatherContactNo),
+                Address = ISNULL(@Address, Address),
+                MotherName = ISNULL(@MotherName, MotherName),
+                AadharCard = ISNULL(@AadharCard, AadharCard),
+                Rfid = ISNULL(@Rfid, Rfid),
                 ShiftId = ISNULL(@ShiftId, ShiftId),
                 BloodGroupId = ISNULL(@BloodGroupId, BloodGroupId),
                 HouseId = ISNULL(@HouseId, HouseId),
-                sms = ISNULL(@sms, sms),
-                uniformid = ISNULL(@uniformid, uniformid),
-                contact2 = ISNULL(@contact2, contact2),
+                Sms = ISNULL(@Sms, Sms),
+                UniformId = ISNULL(@UniformId, UniformId),
+                MotherContactNo = ISNULL(@MotherContactNo, MotherContactNo),
                 ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
                 SchoolSection = ISNULL(@SchoolSection, SchoolSection),
                 AdmissionDate = ISNULL(@AdmissionDate, AdmissionDate),
                 Email = ISNULL(@Email, Email),
                 CityId = ISNULL(@CityId, CityId),
                 StateId = ISNULL(@StateId, StateId),
+                IsStateBoard = ISNULL(@IsStateBoard, IsStateBoard),
                 ModifiedOn = GETUTCDATE()
             WHERE Id = @Id;
         END

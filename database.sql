@@ -391,31 +391,27 @@ IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[St
 BEGIN
 CREATE TABLE [dbo].[Students](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[RegistrationNumber] [nvarchar](max) NOT NULL,
-	[Name] [nvarchar](max) NOT NULL,
+	[RegistrationNumber] [nvarchar](100) NOT NULL,
+	[Name] [nvarchar](255) NOT NULL,
 	[SchoolId] [int] NOT NULL,
-	[Status] [nvarchar](max) NOT NULL DEFAULT (N'Active'),
+	[Status] [nvarchar](50) NOT NULL DEFAULT (N'Active'),
 	[RollNumber] [int] NOT NULL,
-	
-	[FNAME] [nvarchar](200) NULL,
-	[MNAME] [nvarchar](200) NULL,
-	[LNAME] [nvarchar](200) NULL,
-	[GRNO] [nvarchar](100) NULL,
-	[GENDER] [nvarchar](10) NULL,
-	[DOB] [nvarchar](200) NULL,
-	[ADDRESS] [nvarchar](500) NULL,
-	[MOTHERNAME] [nvarchar](200) NULL,
-	[MOBILE] [nvarchar](200) NULL,
-	[ProfilePhotoPath] [nvarchar](500) NULL,
-	[sms] [nvarchar](10) NULL,
-	[contact2] [nvarchar](255) NULL,
-	[aadharcard] [nvarchar](100) NULL,
-	[uniformid] [nvarchar](500) NULL,
-	[RFID] [nvarchar](100) NULL,
+	[FirstName] [nvarchar](200) NULL,
+	[MiddleName] [nvarchar](200) NULL,
+	[LastName] [nvarchar](200) NULL,
+	[GrNo] [nvarchar](100) NULL,
+	[Gender] [nvarchar](10) NULL,
+	[DateOfBirth] [nvarchar](200) NULL,
+	[Address] [nvarchar](500) NULL,
+	[MotherName] [nvarchar](200) NULL,
+	[FatherContactNo] [nvarchar](200) NULL,
+	[MotherContactNo] [nvarchar](200) NULL,
+	[AadharCard] [nvarchar](100) NULL,
+	[UniformId] [nvarchar](500) NULL,
+	[Rfid] [nvarchar](100) NULL,
 	[SchoolSection] [nvarchar](100) NULL,
 	[AdmissionDate] [nvarchar](200) NULL,
 	[Email] [nvarchar](255) NULL,
-
 	[StandardId] [int] NULL,
 	[SectionId] [int] NULL,
 	[AcademicYearId] [int] NULL,
@@ -429,13 +425,15 @@ CREATE TABLE [dbo].[Students](
 	[StateId] [int] NULL,
 	[ShiftId] [int] NULL,
 	[CategoryId] [int] NULL,
-
-    [IsActive] [bit] NOT NULL DEFAULT (1),
-    [IsDeleted] [bit] NOT NULL DEFAULT (0),
-    [CreatedBy] [nvarchar](max) NULL,
+	[Sms] [bit] NOT NULL DEFAULT (0),
+	[IsStateBoard] [bit] NOT NULL DEFAULT (0),
+	[ProfilePhotoPath] [nvarchar](500) NULL,
+	[IsActive] [bit] NOT NULL DEFAULT (1),
+	[IsDeleted] [bit] NOT NULL DEFAULT (0),
+	[CreatedBy] [nvarchar](max) NULL,
 	[CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
-    [ModifiedBy] [nvarchar](max) NULL,
-    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+	[ModifiedBy] [nvarchar](max) NULL,
+	[ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
  CONSTRAINT [PK_Students] PRIMARY KEY CLUSTERED ([Id] ASC)
 )
 END
@@ -940,34 +938,35 @@ CREATE PROCEDURE dbo.sp_ManageStudent
     @SectionId INT = NULL,
     @AcademicYearId INT = NULL,
     @RollNumber INT = NULL,
-    @GRNO NVARCHAR(100) = NULL,
-    @GENDER NVARCHAR(50) = NULL,
-    @DOB NVARCHAR(50) = NULL,
+    @GrNo NVARCHAR(100) = NULL,
+    @Gender NVARCHAR(50) = NULL,
+    @DateOfBirth NVARCHAR(50) = NULL,
     @CategoryId INT = NULL,
     @ReligionId INT = NULL,
     @CasteId INT = NULL,
     @Status NVARCHAR(50) = NULL,
-    @MOBILE NVARCHAR(50) = NULL,
-    @ADDRESS NVARCHAR(500) = NULL,
-    @MOTHERNAME NVARCHAR(100) = NULL,
-    @aadharcard NVARCHAR(100) = NULL,
-    @RFID NVARCHAR(100) = NULL,
+    @FatherContactNo NVARCHAR(200) = NULL,
+    @Address NVARCHAR(500) = NULL,
+    @MotherName NVARCHAR(100) = NULL,
+    @AadharCard NVARCHAR(100) = NULL,
+    @Rfid NVARCHAR(100) = NULL,
     @ShiftId INT = NULL,
     @BloodGroupId INT = NULL,
     @HouseId INT = NULL,
-    @sms NVARCHAR(10) = NULL,
-    @uniformid NVARCHAR(500) = NULL,
-    @contact2 NVARCHAR(255) = NULL,
+    @Sms BIT = 0,
+    @UniformId NVARCHAR(500) = NULL,
+    @MotherContactNo NVARCHAR(200) = NULL,
     @ProfilePhotoPath NVARCHAR(255) = NULL,
     @SchoolSection NVARCHAR(100) = NULL,
     @AdmissionDate NVARCHAR(200) = NULL,
     @Email NVARCHAR(255) = NULL,
     @CityId INT = NULL,
-    @StateId INT = NULL
+    @StateId INT = NULL,
+    @IsStateBoard BIT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
-    SET XACT_ABORT ON; -- Ensures instant rollback on any fatal SQL runtime errors
+    SET XACT_ABORT ON;
 
     BEGIN TRY
         BEGIN TRANSACTION;
@@ -981,14 +980,14 @@ BEGIN
 
             INSERT INTO [dbo].[Students] (
                 RegistrationNumber, Name, SchoolId, StandardId, SectionId, AcademicYearId, RollNumber, 
-                GRNO, GENDER, DOB, CategoryId, ReligionId, CasteId, Status, MOBILE, ADDRESS, 
-                MOTHERNAME, aadharcard, RFID, ShiftId, BloodGroupId, HouseId, sms, uniformid,
-                contact2, ProfilePhotoPath, SchoolSection, AdmissionDate, Email, CityId, StateId, IsActive, IsDeleted, CreatedOn, ModifiedOn
+                GrNo, Gender, DateOfBirth, CategoryId, ReligionId, CasteId, Status, FatherContactNo, Address, 
+                MotherName, AadharCard, Rfid, ShiftId, BloodGroupId, HouseId, Sms, UniformId,
+                MotherContactNo, ProfilePhotoPath, SchoolSection, AdmissionDate, Email, CityId, StateId, IsStateBoard, IsActive, IsDeleted, CreatedOn, ModifiedOn
             ) VALUES (
                 @RegistrationNumber, @Name, @SchoolId, @StandardId, @SectionId, @AcademicYearId, @RollNumber,
-                @GRNO, @GENDER, @DOB, @CategoryId, @ReligionId, @CasteId, @Status, @MOBILE, @ADDRESS,
-                @MOTHERNAME, @aadharcard, @RFID, @ShiftId, @BloodGroupId, @HouseId, @sms, @uniformid,
-                @contact2, @ProfilePhotoPath, @SchoolSection, @AdmissionDate, @Email, @CityId, @StateId, 1, 0, GETUTCDATE(), GETUTCDATE()
+                @GrNo, @Gender, @DateOfBirth, @CategoryId, @ReligionId, @CasteId, @Status, @FatherContactNo, @Address,
+                @MotherName, @AadharCard, @Rfid, @ShiftId, @BloodGroupId, @HouseId, @Sms, @UniformId,
+                @MotherContactNo, @ProfilePhotoPath, @SchoolSection, @AdmissionDate, @Email, @CityId, @StateId, @IsStateBoard, 1, 0, GETUTCDATE(), GETUTCDATE()
             );
             SELECT SCOPE_IDENTITY();
         END
@@ -1002,30 +1001,31 @@ BEGIN
                 SectionId = ISNULL(@SectionId, SectionId),
                 AcademicYearId = ISNULL(@AcademicYearId, AcademicYearId),
                 RollNumber = ISNULL(@RollNumber, RollNumber),
-                GRNO = ISNULL(@GRNO, GRNO),
-                GENDER = ISNULL(@GENDER, GENDER),
-                DOB = ISNULL(@DOB, DOB),
+                GrNo = ISNULL(@GrNo, GrNo),
+                Gender = ISNULL(@Gender, Gender),
+                DateOfBirth = ISNULL(@DateOfBirth, DateOfBirth),
                 CategoryId = ISNULL(@CategoryId, CategoryId),
                 ReligionId = ISNULL(@ReligionId, ReligionId),
                 CasteId = ISNULL(@CasteId, CasteId),
                 Status = ISNULL(@Status, Status),
-                MOBILE = ISNULL(@MOBILE, MOBILE),
-                ADDRESS = ISNULL(@ADDRESS, ADDRESS),
-                MOTHERNAME = ISNULL(@MOTHERNAME, MOTHERNAME),
-                aadharcard = ISNULL(@aadharcard, aadharcard),
-                RFID = ISNULL(@RFID, RFID),
+                FatherContactNo = ISNULL(@FatherContactNo, FatherContactNo),
+                Address = ISNULL(@Address, Address),
+                MotherName = ISNULL(@MotherName, MotherName),
+                AadharCard = ISNULL(@AadharCard, AadharCard),
+                Rfid = ISNULL(@Rfid, Rfid),
                 ShiftId = ISNULL(@ShiftId, ShiftId),
                 BloodGroupId = ISNULL(@BloodGroupId, BloodGroupId),
                 HouseId = ISNULL(@HouseId, HouseId),
-                sms = ISNULL(@sms, sms),
-                uniformid = ISNULL(@uniformid, uniformid),
-                contact2 = ISNULL(@contact2, contact2),
+                Sms = ISNULL(@Sms, Sms),
+                UniformId = ISNULL(@UniformId, UniformId),
+                MotherContactNo = ISNULL(@MotherContactNo, MotherContactNo),
                 ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
                 SchoolSection = ISNULL(@SchoolSection, SchoolSection),
                 AdmissionDate = ISNULL(@AdmissionDate, AdmissionDate),
                 Email = ISNULL(@Email, Email),
                 CityId = ISNULL(@CityId, CityId),
                 StateId = ISNULL(@StateId, StateId),
+                IsStateBoard = ISNULL(@IsStateBoard, IsStateBoard),
                 ModifiedOn = GETUTCDATE()
             WHERE Id = @Id;
         END

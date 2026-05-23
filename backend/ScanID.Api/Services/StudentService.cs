@@ -110,30 +110,31 @@ namespace ScanID.Api.Services
                     ("SectionId", student.SectionId),
                     ("AcademicYearId", student.AcademicYearId),
                     ("RollNumber", student.RollNumber),
-                    ("GRNO", student.GRNO),
-                    ("GENDER", student.GENDER),
-                    ("DOB", student.DOB),
+                    ("GrNo", student.GrNo),
+                    ("Gender", student.Gender),
+                    ("DateOfBirth", student.DateOfBirth),
                     ("CategoryId", student.CategoryId),
                     ("ReligionId", student.ReligionId),
                     ("CasteId", student.CasteId),
                     ("Status", student.Status),
-                    ("MOBILE", student.MOBILE),
-                    ("ADDRESS", student.ADDRESS),
-                    ("MOTHERNAME", student.MOTHERNAME),
-                    ("aadharcard", student.aadharcard),
-                    ("RFID", student.RFID),
+                    ("FatherContactNo", student.FatherContactNo),
+                    ("Address", student.Address),
+                    ("MotherName", student.MotherName),
+                    ("AadharCard", student.AadharCard),
+                    ("Rfid", student.Rfid),
                     ("ShiftId", student.ShiftId),
                     ("BloodGroupId", student.BloodGroupId),
                     ("HouseId", student.HouseId),
-                    ("sms", student.sms),
-                    ("uniformid", student.uniformid),
-                    ("contact2", student.contact2),
+                    ("Sms", student.Sms),
+                    ("UniformId", student.UniformId),
+                    ("MotherContactNo", student.MotherContactNo),
                     ("ProfilePhotoPath", student.ProfilePhotoPath),
                     ("SchoolSection", student.SchoolSection),
                     ("AdmissionDate", student.AdmissionDate),
                     ("Email", student.Email),
                     ("CityId", student.CityId),
-                    ("StateId", student.StateId)
+                    ("StateId", student.StateId),
+                    ("IsStateBoard", student.IsStateBoard)
                 );
 
                 return student;
@@ -159,30 +160,31 @@ namespace ScanID.Api.Services
                     ("SectionId", student.SectionId),
                     ("AcademicYearId", student.AcademicYearId),
                     ("RollNumber", student.RollNumber),
-                    ("GRNO", student.GRNO),
-                    ("GENDER", student.GENDER),
-                    ("DOB", student.DOB),
+                    ("GrNo", student.GrNo),
+                    ("Gender", student.Gender),
+                    ("DateOfBirth", student.DateOfBirth),
                     ("CategoryId", student.CategoryId),
                     ("ReligionId", student.ReligionId),
                     ("CasteId", student.CasteId),
                     ("Status", student.Status),
-                    ("MOBILE", student.MOBILE),
-                    ("ADDRESS", student.ADDRESS),
-                    ("MOTHERNAME", student.MOTHERNAME),
-                    ("aadharcard", student.aadharcard),
-                    ("RFID", student.RFID),
+                    ("FatherContactNo", student.FatherContactNo),
+                    ("Address", student.Address),
+                    ("MotherName", student.MotherName),
+                    ("AadharCard", student.AadharCard),
+                    ("Rfid", student.Rfid),
                     ("ShiftId", student.ShiftId),
                     ("BloodGroupId", student.BloodGroupId),
                     ("HouseId", student.HouseId),
-                    ("sms", student.sms),
-                    ("uniformid", student.uniformid),
-                    ("contact2", student.contact2),
+                    ("Sms", student.Sms),
+                    ("UniformId", student.UniformId),
+                    ("MotherContactNo", student.MotherContactNo),
                     ("ProfilePhotoPath", student.ProfilePhotoPath),
                     ("SchoolSection", student.SchoolSection),
                     ("AdmissionDate", student.AdmissionDate),
                     ("Email", student.Email),
                     ("CityId", student.CityId),
-                    ("StateId", student.StateId)
+                    ("StateId", student.StateId),
+                    ("IsStateBoard", student.IsStateBoard)
                 );
                 return true;
             });
@@ -199,7 +201,7 @@ namespace ScanID.Api.Services
             // Standard bulk business check for duplicates before committing to SQL
             var allStudents = await DbMapper.ExecuteStoredProcedureAsync<Student>(_context, "dbo.sp_GetStudents");
             var dbStudents = allStudents
-                .Select(s => new { s.RegistrationNumber, s.GRNO, s.aadharcard, s.RFID, s.uniformid })
+                .Select(s => new { s.RegistrationNumber, s.GrNo, s.AadharCard, s.Rfid, s.UniformId })
                 .ToList();
 
             var dbRegs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -210,10 +212,10 @@ namespace ScanID.Api.Services
             foreach (var dbs in dbStudents)
             {
                 if (!string.IsNullOrEmpty(dbs.RegistrationNumber)) dbRegs.Add(dbs.RegistrationNumber.Trim());
-                if (!string.IsNullOrEmpty(dbs.GRNO)) dbRegs.Add(dbs.GRNO.Trim());
-                if (!string.IsNullOrEmpty(dbs.aadharcard)) dbAadhars.Add(dbs.aadharcard.Trim());
-                if (!string.IsNullOrEmpty(dbs.RFID)) dbRfids.Add(dbs.RFID.Trim());
-                if (!string.IsNullOrEmpty(dbs.uniformid)) dbUniforms.Add(dbs.uniformid.Trim());
+                if (!string.IsNullOrEmpty(dbs.GrNo)) dbRegs.Add(dbs.GrNo.Trim());
+                if (!string.IsNullOrEmpty(dbs.AadharCard)) dbAadhars.Add(dbs.AadharCard.Trim());
+                if (!string.IsNullOrEmpty(dbs.Rfid)) dbRfids.Add(dbs.Rfid.Trim());
+                if (!string.IsNullOrEmpty(dbs.UniformId)) dbUniforms.Add(dbs.UniformId.Trim());
             }
 
             var batchRegs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -224,7 +226,7 @@ namespace ScanID.Api.Services
             int index = 1;
             foreach (var s in students)
             {
-                var reg = (s.RegistrationNumber ?? s.GRNO ?? "").Trim();
+                var reg = (s.RegistrationNumber ?? s.GrNo ?? "").Trim();
                 if (!string.IsNullOrEmpty(reg))
                 {
                     if (batchRegs.Contains(reg) || dbRegs.Contains(reg))
@@ -232,7 +234,7 @@ namespace ScanID.Api.Services
                     batchRegs.Add(reg);
                 }
 
-                var grno = (s.GRNO ?? "").Trim();
+                var grno = (s.GrNo ?? "").Trim();
                 if (!string.IsNullOrEmpty(grno))
                 {
                     if (batchRegs.Contains(grno) || dbRegs.Contains(grno))
@@ -240,7 +242,7 @@ namespace ScanID.Api.Services
                     batchRegs.Add(grno);
                 }
 
-                var aadhar = (s.aadharcard ?? "").Trim();
+                var aadhar = (s.AadharCard ?? "").Trim();
                 if (!string.IsNullOrEmpty(aadhar))
                 {
                     if (batchAadhars.Contains(aadhar) || dbAadhars.Contains(aadhar))
@@ -248,7 +250,7 @@ namespace ScanID.Api.Services
                     batchAadhars.Add(aadhar);
                 }
 
-                var rfid = (s.RFID ?? "").Trim();
+                var rfid = (s.Rfid ?? "").Trim();
                 if (!string.IsNullOrEmpty(rfid))
                 {
                     if (batchRfids.Contains(rfid) || dbRfids.Contains(rfid))
@@ -256,7 +258,7 @@ namespace ScanID.Api.Services
                     batchRfids.Add(rfid);
                 }
 
-                var uniform = (s.uniformid ?? "").Trim();
+                var uniform = (s.UniformId ?? "").Trim();
                 if (!string.IsNullOrEmpty(uniform))
                 {
                     if (batchUniforms.Contains(uniform) || dbUniforms.Contains(uniform))
@@ -290,30 +292,31 @@ namespace ScanID.Api.Services
                             ("SectionId", s.SectionId),
                             ("AcademicYearId", s.AcademicYearId),
                             ("RollNumber", s.RollNumber),
-                            ("GRNO", s.GRNO),
-                            ("GENDER", s.GENDER),
-                            ("DOB", s.DOB),
+                            ("GrNo", s.GrNo),
+                            ("Gender", s.Gender),
+                            ("DateOfBirth", s.DateOfBirth),
                             ("CategoryId", s.CategoryId),
                             ("ReligionId", s.ReligionId),
                             ("CasteId", s.CasteId),
                             ("Status", s.Status),
-                            ("MOBILE", s.MOBILE),
-                            ("ADDRESS", s.ADDRESS),
-                            ("MOTHERNAME", s.MOTHERNAME),
-                            ("aadharcard", s.aadharcard),
-                            ("RFID", s.RFID),
+                            ("FatherContactNo", s.FatherContactNo),
+                            ("Address", s.Address),
+                            ("MotherName", s.MotherName),
+                            ("AadharCard", s.AadharCard),
+                            ("Rfid", s.Rfid),
                             ("ShiftId", s.ShiftId),
                             ("BloodGroupId", s.BloodGroupId),
                             ("HouseId", s.HouseId),
-                            ("sms", s.sms),
-                            ("uniformid", s.uniformid),
-                            ("contact2", s.contact2),
+                            ("Sms", s.Sms),
+                            ("UniformId", s.UniformId),
+                            ("MotherContactNo", s.MotherContactNo),
                             ("ProfilePhotoPath", s.ProfilePhotoPath),
                             ("SchoolSection", s.SchoolSection),
                             ("AdmissionDate", s.AdmissionDate),
                             ("Email", s.Email),
                             ("CityId", s.CityId),
-                            ("StateId", s.StateId)
+                            ("StateId", s.StateId),
+                            ("IsStateBoard", s.IsStateBoard)
                         );
                     }
 

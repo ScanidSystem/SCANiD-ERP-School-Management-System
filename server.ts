@@ -49,10 +49,11 @@ async function startServer() {
   let students: any[] = [
     { 
       id: 1, 
-      grno: "REG1001", 
+      grNo: "REG1001", 
       registrationNumber: "REG1001",
       fullName: "SHIVANSH SANJAY KHOPKAR", 
       firstName: "SHIVANSH",
+      middleName: "SANJAY",
       lastName: "KHOPKAR",
       dateOfBirth: "2020-04-27",
       standard: "1st", 
@@ -66,24 +67,23 @@ async function startServer() {
       sectionId: 1,
       attendance: "95%",
       performance: "Excellent",
-      FNAME: "SHIVANSH",
-      MNAME: "SANJAY",
-      LNAME: "KHOPKAR",
-      DOB: "2020-04-27",
-      MOBILE: "9823674019",
-      MOTHERNAME: "SANJANA",
-      STUDENTID: "REG1001",
-      STD: "1st",
-      DIV: "A",
-      ROLLNO: "1",
-      GRNO: "REG1001"
+      fatherContactNo: "9823674019",
+      motherName: "SANJANA",
+      motherContactNo: "9823674020",
+      sms: true,
+      isStateBoard: true,
+      address: "Lane 4, Pune",
+      rfid: "RF-101",
+      aadharCard: "123412341234",
+      uniformId: "UNIFORM-101"
     },
     { 
       id: 2, 
-      grno: "REG1002", 
+      grNo: "REG1002", 
       registrationNumber: "REG1002",
       fullName: "AAVYA AMIT PATIL", 
       firstName: "AAVYA",
+      middleName: "AMIT",
       lastName: "PATIL",
       dateOfBirth: "2020-08-20",
       standard: "1st", 
@@ -97,24 +97,23 @@ async function startServer() {
       sectionId: 1,
       attendance: "92%",
       performance: "Good",
-      FNAME: "AAVYA",
-      MNAME: "AMIT",
-      LNAME: "PATIL",
-      DOB: "2020-08-20",
-      MOBILE: "8888941563",
-      MOTHERNAME: "AMITA PATIL",
-      STUDENTID: "REG1002",
-      STD: "1st",
-      DIV: "A",
-      ROLLNO: "2",
-      GRNO: "REG1002"
+      fatherContactNo: "8888941563",
+      motherName: "AMITA PATIL",
+      motherContactNo: "8888941564",
+      sms: false,
+      isStateBoard: false,
+      address: "Shivaji Nagar, Mumbai",
+      rfid: "RF-102",
+      aadharCard: "123412341235",
+      uniformId: "UNIFORM-102"
     },
     { 
       id: 3, 
-      grno: "REG/2024/003", 
+      grNo: "REG/2024/003", 
       registrationNumber: "REG/2024/003",
       fullName: "LIAM WILSON", 
       firstName: "LIAM",
+      middleName: "",
       lastName: "WILSON",
       dateOfBirth: "2019-01-15",
       standard: "2nd", 
@@ -128,24 +127,23 @@ async function startServer() {
       sectionId: 1,
       attendance: "88%",
       performance: "Average",
-      FNAME: "LIAM",
-      MNAME: "",
-      LNAME: "WILSON",
-      DOB: "2019-01-15",
-      MOBILE: "9999999999",
-      MOTHERNAME: "SARAH WILSON",
-      STUDENTID: "REG/2024/003",
-      STD: "2nd",
-      DIV: "A",
-      ROLLNO: "3",
-      GRNO: "REG/2024/003"
+      fatherContactNo: "9999999999",
+      motherName: "SARAH WILSON",
+      motherContactNo: "9999999998",
+      sms: true,
+      isStateBoard: true,
+      address: "123 Park Avenue, New York",
+      rfid: "RF-103",
+      aadharCard: "123412341236",
+      uniformId: "UNIFORM-103"
     },
     { 
       id: 4, 
-      grno: "REG/2024/003", 
-      registrationNumber: "REG/2024/003",
+      grNo: "REG/2024/004", 
+      registrationNumber: "REG/2024/004",
       fullName: "RAJESH PATEL", 
       firstName: "RAJESH",
+      middleName: "",
       lastName: "PATEL",
       dateOfBirth: "2020-02-10",
       standard: "1st", 
@@ -159,17 +157,15 @@ async function startServer() {
       sectionId: 1,
       attendance: "90%",
       performance: "Good",
-      FNAME: "RAJESH",
-      MNAME: "",
-      LNAME: "PATEL",
-      DOB: "2020-02-10",
-      MOBILE: "8888888888",
-      MOTHERNAME: "MEENA PATEL",
-      STUDENTID: "REG/2024/003",
-      STD: "1st",
-      DIV: "A",
-      ROLLNO: "4",
-      GRNO: "REG/2024/003"
+      fatherContactNo: "8888888888",
+      motherName: "MEENA PATEL",
+      motherContactNo: "8888888889",
+      sms: false,
+      isStateBoard: true,
+      address: "Main Sector 5, Ahmedabad",
+      rfid: "RF-104",
+      aadharCard: "123412341237",
+      uniformId: "UNIFORM-104"
     }
   ];
 
@@ -452,11 +448,31 @@ async function startServer() {
   });
 
   app.post("/api/students", (req, res) => {
+    const body = req.body;
     const newStudent = {
       id: students.length > 0 ? Math.max(...students.map(s => s.id)) + 1 : 1,
-      grno: req.body.GRNO || req.body.registrationNumber || `REG-${Date.now()}`,
-      fullName: req.body.fullName || `${req.body.FNAME || ""} ${req.body.LNAME || ""}`.trim(),
-      ...req.body
+      grNo: body.grNo || body.GRNO || body.grno || body.registrationNumber || `REG-${Date.now()}`,
+      registrationNumber: body.registrationNumber || body.grNo || body.GRNO || body.grno || `REG-${Date.now()}`,
+      fullName: body.fullName || `${body.firstName || body.FNAME || ""} ${body.lastName || body.LNAME || ""}`.trim(),
+      firstName: body.firstName || body.FNAME || "",
+      middleName: body.middleName || body.MNAME || "",
+      lastName: body.lastName || body.LNAME || "",
+      gender: body.gender || body.GENDER || "",
+      dateOfBirth: body.dateOfBirth || body.dob || body.DOB || "",
+      address: body.address || body.ADDRESS || "",
+      motherName: body.motherName || body.MOTHERNAME || "",
+      fatherContactNo: body.fatherContactNo || body.MOBILE || "",
+      motherContactNo: body.motherContactNo || body.contact2 || "",
+      sms: body.sms === 'true' || body.sms === true || body.Sms === true || false,
+      isStateBoard: body.isStateBoard === 'true' || body.isStateBoard === true || body.IsStateBoard === true || false,
+      schoolId: body.schoolId ? parseInt(body.schoolId) : null,
+      standardId: body.standardId ? parseInt(body.standardId) : null,
+      sectionId: body.sectionId ? parseInt(body.sectionId) : null,
+      academicYearId: body.academicYearId ? parseInt(body.academicYearId) : null,
+      rollNumber: body.rollNumber ? parseInt(body.rollNumber) : 0,
+      rfid: body.rfid || body.RFID || "",
+      aadharCard: body.aadharCard || body.aadharcard || "",
+      uniformId: body.uniformId || body.uniformid || "",
     };
     students.push(newStudent);
     res.status(201).json({ data: newStudent });
@@ -475,47 +491,47 @@ async function startServer() {
     const batchUniforms = new Set<string>();
 
     // Sets of identifiers currently registered in simulated database (existing students, case-insensitive checks)
-    const dbRegs = new Set<string>(students.map(s => (s.registrationNumber || s.grno || s.GRNO || s.registration_number || "").toString().trim().toLowerCase()).filter(Boolean));
-    const dbAadhars = new Set<string>(students.map(s => (s.aadharcard || s.aadharCard || s.aadhar_card || "").toString().trim().toLowerCase()).filter(Boolean));
-    const dbRfids = new Set<string>(students.map(s => (s.RFID || s.rfid || s.CARDID || s.card_id || "").toString().trim().toLowerCase()).filter(Boolean));
-    const dbUniforms = new Set<string>(students.map(s => (s.uniformid || s.uniformId || s.uniform_id || "").toString().trim().toLowerCase()).filter(Boolean));
+    const dbRegs = new Set<string>(students.map(s => (s.registrationNumber || s.grNo || s.grno || s.GRNO || "").toString().trim().toLowerCase()).filter(Boolean));
+    const dbAadhars = new Set<string>(students.map(s => (s.aadharCard || s.aadharcard || "").toString().trim().toLowerCase()).filter(Boolean));
+    const dbRfids = new Set<string>(students.map(s => (s.rfid || s.RFID || "").toString().trim().toLowerCase()).filter(Boolean));
+    const dbUniforms = new Set<string>(students.map(s => (s.uniformId || s.uniformid || "").toString().trim().toLowerCase()).filter(Boolean));
 
     for (let idx = 0; idx < incoming.length; idx++) {
       const s = incoming[idx];
       const index = idx + 1; // 1-based index representation for error display
 
       // a) RegistrationNumber / GRNO
-      const reg = (s.registrationNumber || s.grno || s.GRNO || s.registration_number || "").toString().trim().toLowerCase();
+      const reg = (s.registrationNumber || s.grNo || s.grno || s.GRNO || "").toString().trim().toLowerCase();
       if (reg) {
         if (batchRegs.has(reg) || dbRegs.has(reg)) {
-          return res.status(400).json({ message: `Row ${index}: Duplicate Registration Number/GRNO '${s.registrationNumber || s.grno || s.GRNO || s.registration_number}' detected.` });
+          return res.status(400).json({ message: `Row ${index}: Duplicate Registration Number/GRNO '${s.registrationNumber || s.grNo || s.grno || s.GRNO}' detected.` });
         }
         batchRegs.add(reg);
       }
 
       // b) AadharCard
-      const aadhar = (s.aadharcard || s.aadharCard || s.aadhar_card || "").toString().trim().toLowerCase();
+      const aadhar = (s.aadharCard || s.aadharcard || "").toString().trim().toLowerCase();
       if (aadhar) {
         if (batchAadhars.has(aadhar) || dbAadhars.has(aadhar)) {
-          return res.status(400).json({ message: `Row ${index}: Duplicate Aadhar Card '${s.aadharcard || s.aadharCard || s.aadhar_card}' detected.` });
+          return res.status(400).json({ message: `Row ${index}: Duplicate Aadhar Card '${s.aadharCard || s.aadharcard}' detected.` });
         }
         batchAadhars.add(aadhar);
       }
 
       // c) RFID
-      const rfid = (s.RFID || s.rfid || s.CARDID || s.card_id || "").toString().trim().toLowerCase();
+      const rfid = (s.rfid || s.RFID || "").toString().trim().toLowerCase();
       if (rfid) {
         if (batchRfids.has(rfid) || dbRfids.has(rfid)) {
-          return res.status(400).json({ message: `Row ${index}: Duplicate RFID/CardID '${s.RFID || s.rfid || s.CARDID || s.card_id}' detected.` });
+          return res.status(400).json({ message: `Row ${index}: Duplicate RFID/CardID '${s.rfid || s.RFID}' detected.` });
         }
         batchRfids.add(rfid);
       }
 
       // d) UniformID
-      const uniform = (s.uniformid || s.uniformId || s.uniform_id || "").toString().trim().toLowerCase();
+      const uniform = (s.uniformId || s.uniformid || "").toString().trim().toLowerCase();
       if (uniform) {
         if (batchUniforms.has(uniform) || dbUniforms.has(uniform)) {
-          return res.status(400).json({ message: `Row ${index}: Duplicate UniformID '${s.uniformid || s.uniformId || s.uniform_id}' detected.` });
+          return res.status(400).json({ message: `Row ${index}: Duplicate UniformID '${s.uniformId || s.uniformid}' detected.` });
         }
         batchUniforms.add(uniform);
       }
@@ -534,7 +550,24 @@ async function startServer() {
     const id = parseInt(req.params.id);
     const index = students.findIndex(s => s.id === id);
     if (index !== -1) {
-      students[index] = { ...students[index], ...req.body, id };
+      const body = req.body;
+      const updated = {
+        ...students[index],
+        firstName: body.firstName || body.FNAME || students[index].firstName,
+        middleName: body.middleName || body.MNAME || students[index].middleName,
+        lastName: body.lastName || body.LNAME || students[index].lastName,
+        grNo: body.grNo || body.GRNO || body.grno || students[index].grNo,
+        gender: body.gender || body.GENDER || students[index].gender,
+        dateOfBirth: body.dateOfBirth || body.dob || body.DOB || students[index].dateOfBirth,
+        address: body.address || body.ADDRESS || students[index].address,
+        motherName: body.motherName || body.MOTHERNAME || students[index].motherName,
+        fatherContactNo: body.fatherContactNo || body.MOBILE || students[index].fatherContactNo,
+        motherContactNo: body.motherContactNo || body.contact2 || students[index].motherContactNo,
+        sms: body.sms === 'true' || body.sms === true || body.Sms === true || students[index].sms,
+        isStateBoard: body.isStateBoard === 'true' || body.isStateBoard === true || body.IsStateBoard === true || students[index].isStateBoard,
+        fullName: body.fullName || `${body.firstName || body.FNAME || students[index].firstName || ""} ${body.lastName || body.LNAME || students[index].lastName || ""}`.trim()
+      };
+      students[index] = updated;
       res.json({ data: students[index] });
     } else {
       res.status(404).json({ message: "Student not found" });

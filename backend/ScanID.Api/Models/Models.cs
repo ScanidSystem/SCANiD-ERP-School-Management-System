@@ -148,25 +148,26 @@ namespace ScanID.Api.Models
         public int RollNumber { get; set; }
 
         // --- Cleaned columns used by the application ---
-        public string? FNAME { get; set; }
-        public string? MNAME { get; set; }
-        public string? LNAME { get; set; }
+        public string? FirstName { get; set; }
+        public string? MiddleName { get; set; }
+        public string? LastName { get; set; }
         
-        public string? GRNO { get; set; }
-        public string? GENDER { get; set; }
-        public string? DOB { get; set; }
-        public string? ADDRESS { get; set; }
-        public string? MOTHERNAME { get; set; }
-        public string? MOBILE { get; set; }
+        public string? GrNo { get; set; }
+        public string? Gender { get; set; }
+        public string? DateOfBirth { get; set; }
+        public string? Address { get; set; }
+        public string? MotherName { get; set; }
+        public string? FatherContactNo { get; set; }
         public string? ProfilePhotoPath { get; set; }
-        public string? sms { get; set; }
-        public string? aadharcard { get; set; }
-        public string? uniformid { get; set; }
-        public string? contact2 { get; set; }
-        public string? RFID { get; set; }
+        public bool Sms { get; set; }
+        public string? AadharCard { get; set; }
+        public string? UniformId { get; set; }
+        public string? MotherContactNo { get; set; }
+        public string? Rfid { get; set; }
         public string? SchoolSection { get; set; }
         public string? AdmissionDate { get; set; }
         public string? Email { get; set; }
+        public bool IsStateBoard { get; set; }
 
         // --- ID Mapping properties for master data ---
         public int? StandardId { get; set; }

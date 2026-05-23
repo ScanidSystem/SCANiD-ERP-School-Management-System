@@ -185,8 +185,8 @@ namespace ScanID.Api.Controllers
             var students = await _studentService.GetStudentsForExportAsync(schoolId);
 
             var csv = new System.Text.StringBuilder();
-            // Cleaned Header
-            csv.AppendLine("RegistrationNumber,Name,Standard,Section,AcademicYear,RollNumber,GRNO,Gender,DOB,Category,Religion,Caste,Status,Mobile,Address,MotherName,AadharCard,RFID,Shift,BloodGroup,House,sms,uniformid,contact2,ProfilePhotoPath");
+            // Cleaned Header matching PascalCase naming standards
+            csv.AppendLine("RegistrationNumber,Name,Standard,Section,AcademicYear,RollNumber,GrNo,Gender,DateOfBirth,Category,Religion,Caste,Status,FatherContactNo,Address,MotherName,AadharCard,Rfid,Shift,BloodGroup,House,Sms,UniformId,MotherContactNo,IsStateBoard,ProfilePhotoPath");
 
             foreach (var s in students)
             {
@@ -198,24 +198,25 @@ namespace ScanID.Api.Controllers
                     s.Section?.Name,
                     s.AcademicYear?.Name,
                     s.RollNumber.ToString(),
-                    s.GRNO,
-                    s.GENDER,
-                    s.DOB,
+                    s.GrNo,
+                    s.Gender,
+                    s.DateOfBirth,
                     s.Category?.Name,
                     s.Religion?.Name,
                     s.Caste?.Name,
                     s.Status,
-                    s.MOBILE,
-                    $"\"{s.ADDRESS?.Replace("\"", "\"\"")}\"",
-                    s.MOTHERNAME,
-                    s.aadharcard,
-                    s.RFID,
+                    s.FatherContactNo,
+                    $"\"{s.Address?.Replace("\"", "\"\"")}\"",
+                    s.MotherName,
+                    s.AadharCard,
+                    s.Rfid,
                     s.Shift?.Name,
                     s.BloodGroup?.Name,
                     s.House?.Name,
-                    s.sms,
-                    s.uniformid,
-                    s.contact2,
+                    s.Sms.ToString().ToLower(),
+                    s.UniformId,
+                    s.MotherContactNo,
+                    s.IsStateBoard.ToString().ToLower(),
                     s.ProfilePhotoPath
                 };
                 csv.AppendLine(string.Join(",", row));
@@ -231,10 +232,10 @@ namespace ScanID.Api.Controllers
         public IActionResult GetSampleTemplate()
         {
             var csv = new System.Text.StringBuilder();
-            // Required Header reflecting all active table fields
-            csv.AppendLine("RegistrationNumber,Name,SchoolId,StandardId,SectionId,AcademicYearId,RollNumber,GRNO,Gender,DOB,CategoryId,ReligionId,CasteId,Mobile,Address,MotherName,AadharCard,RFID,ShiftId,BloodGroupId,HouseId,sms,uniformid,contact2,ProfilePhotoPath");
-            // Example data row
-            csv.AppendLine("REG001,John Doe,1,1,1,1,10,1234,Male,2015-05-15,1,1,1,9876543210,City Main Road,Jane Doe,123456789012,RF-123,1,1,1,SecondarySMS,UniformID,SecondContact,/photos/1/example.jpg");
+            // Required Header reflecting all active table fields in PascalCase
+            csv.AppendLine("RegistrationNumber,Name,SchoolId,StandardId,SectionId,AcademicYearId,RollNumber,GrNo,Gender,DateOfBirth,CategoryId,ReligionId,CasteId,FatherContactNo,Address,MotherName,AadharCard,Rfid,ShiftId,BloodGroupId,HouseId,Sms,UniformId,MotherContactNo,IsStateBoard,ProfilePhotoPath");
+            // Example data row with Boolean sms/IsStateBoard mappings
+            csv.AppendLine("REG001,John Doe,1,1,1,1,10,1234,Male,2015-05-15,1,1,1,9876543210,City Main Road,Jane Doe,123456789012,RF-123,1,1,1,true,UniformID,9876543211,false,/photos/1/example.jpg");
 
             return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "Student_Upload_Template.csv");
         }

@@ -221,11 +221,11 @@ export default function Students({ user }: { user: UserType }) {
 
         return {
           id: s.id?.toString() || "",
-          grno: getVal("GRNO") || s.registrationNumber || s.grno || getVal("registrationNumber") || "",
+          grno: getVal("GrNo") || getVal("GRNO") || s.registrationNumber || s.grno || getVal("registrationNumber") || "",
           schoolId: (s.schoolId || s.SchoolId)?.toString() || "",
-          firstName: getVal("FNAME") || s.firstName || (s.name || s.fullName)?.split(" ")[0] || "",
-          lastName: getVal("LNAME") || s.lastName || (s.name || s.fullName)?.split(" ").slice(-1)[0] || "",
-          middleName: getVal("MNAME") || s.middleName || ((s.name || s.fullName)?.split(" ").length > 2 ? (s.name || s.fullName)?.split(" ").slice(1, -1).join(" ") : ""),
+          firstName: getVal("FirstName") || getVal("FNAME") || s.firstName || (s.name || s.fullName)?.split(" ")[0] || "",
+          lastName: getVal("LastName") || getVal("LNAME") || s.lastName || (s.name || s.fullName)?.split(" ").slice(-1)[0] || "",
+          middleName: getVal("MiddleName") || getVal("MNAME") || s.middleName || ((s.name || s.fullName)?.split(" ").length > 2 ? (s.name || s.fullName)?.split(" ").slice(1, -1).join(" ") : ""),
           name: s.name || s.fullName || s.FullName || getVal("FullName") || getVal("Name") || "",
           standard: typeof getVal("STD") === "object" ? getVal("STD")?.name : (getVal("STD") || s.standard?.name || s.Standard?.name || s.standard || ""),
           section: typeof getVal("DIV") === "object" ? getVal("DIV")?.name : (getVal("DIV") || s.section?.name || s.Section?.name || s.section || ""),
@@ -237,25 +237,27 @@ export default function Students({ user }: { user: UserType }) {
           subCasteId: getSafeId(getVal("subCasteId") || getVal("subcaste") || s.subCasteId),
           joiningAcademicYearId: getSafeId(getVal("academicYearId") || getVal("academicyear") || s.joiningAcademicYearId),
           roll: getVal("ROLLNO") || s.rollNumber?.toString() || s.roll?.toString() || "0",
-          address: getVal("ADDRESS") || s.address || "N/A",
-          birthDate: getVal("DOB") || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
-          gender: getVal("GENDER") || s.gender || "male",
-          contactNumber: getVal("MOBILE") || s.contactNumber || s.mobile || "",
-          motherName: getVal("MOTHERNAME") || s.motherName || "",
-          aadharCard: getVal("aadharcard") || s.aadharCard || "",
+          address: getVal("Address") || getVal("ADDRESS") || s.address || "N/A",
+          birthDate: getVal("DateOfBirth") || getVal("DOB") || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
+          gender: getVal("Gender") || getVal("GENDER") || s.gender || "male",
+          contactNumber: getVal("FatherContactNo") || getVal("MOBILE") || s.contactNumber || s.mobile || "",
+          fatherContactNo: getVal("FatherContactNo") || getVal("MOBILE") || s.fatherContactNo || s.contactNumber || s.mobile || "",
+          motherContactNo: getVal("MotherContactNo") || getVal("contact2") || s.motherContactNo || s.contact2 || "",
+          motherName: getVal("MotherName") || getVal("MOTHERNAME") || s.motherName || "",
+          aadharCard: getVal("AadharCard") || getVal("aadharcard") || s.aadharCard || "",
           profilePhotoPath: getVal("ProfilePhotoPath") || s.profilePhotoPath || "",
           photo: getVal("ProfilePhotoPath") || s.profilePhotoPath || s.photo || s.Photo || "", 
           attendance: "100%", 
           performance: "Excellent", 
           // Schema properties explicitly mapped for forms and legacy compat
           STUDENTID: getVal("STUDENTID") || s.registrationNumber,
-          FNAME: getVal("FNAME") || s.firstName,
-          MNAME: getVal("MNAME") || s.middleName,
-          LNAME: getVal("LNAME") || s.lastName,
+          FNAME: getVal("FirstName") || getVal("FNAME") || s.firstName,
+          MNAME: getVal("MiddleName") || getVal("MNAME") || s.middleName,
+          LNAME: getVal("LastName") || getVal("LNAME") || s.lastName,
           STD: typeof getVal("STD") === "object" ? getVal("STD")?.name : (getVal("STD") || s.standard?.name || s.standard || ""),
           DIV: typeof getVal("DIV") === "object" ? getVal("DIV")?.name : (getVal("DIV") || s.section?.name || s.section || ""),
           ROLLNO: getVal("ROLLNO") || s.rollNumber?.toString(),
-          GRNO: getVal("GRNO") || s.registrationNumber,
+          GRNO: getVal("GrNo") || getVal("GRNO") || s.registrationNumber,
           RELIGION: getSafeId(getVal("religionId") || getVal("RELIGION") || s.religionId),
           CASTE: getSafeId(getVal("casteId") || getVal("CASTE") || s.casteId),
           subcaste: getSafeId(getVal("subCasteId") || getVal("subcaste") || s.subCasteId),
@@ -264,17 +266,18 @@ export default function Students({ user }: { user: UserType }) {
           admissiontype: getSafeId(getVal("admissionTypeId") || getVal("admissiontype") || s.admissionTypeId),
           academicyear: getSafeId(getVal("academicYearId") || getVal("academicyear") || s.joiningAcademicYearId),
           CATEGORY: getSafeId(getVal("categoryId") || getVal("CATEGORY") || s.categoryId),
-          DOB: getVal("DOB") || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
-          MOBILE: getVal("MOBILE") || s.contactNumber || s.mobile,
+          DOB: getVal("DateOfBirth") || getVal("DOB") || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
+          MOBILE: getVal("FatherContactNo") || getVal("MOBILE") || s.contactNumber || s.mobile,
           EMAIL: getVal("EMAIL") || s.email,
-          ADDRESS: getVal("ADDRESS") || s.address,
-          MOTHERNAME: getVal("MOTHERNAME") || s.motherName,
-          aadharcard: getVal("aadharcard") || s.aadharCard,
-          RFID: getVal("RFID") || s.rfid || s.CARDID || s.cardId,
+          ADDRESS: getVal("Address") || getVal("ADDRESS") || s.address,
+          MOTHERNAME: getVal("MotherName") || getVal("MOTHERNAME") || s.motherName,
+          aadharcard: getVal("AadharCard") || getVal("aadharcard") || s.aadharCard,
+          RFID: getVal("Rfid") || getVal("RFID") || s.rfid || s.CARDID || s.cardId,
           SHIFTNAME: typeof getVal("shiftId") === "object" ? getVal("shiftId")?.name : (getVal("SHIFTNAME") || s.shiftName || shifts.find(sh => sh.id === s.shiftId)?.name || ""),
-          uniformid: getVal("uniformid") || s.uniformid || "",
-          contact2: getVal("contact2") || s.contact2 || "",
-          sms: getVal("sms") || s.sms || "",
+          uniformid: getVal("UniformId") || getVal("uniformid") || s.uniformid || "",
+          contact2: getVal("MotherContactNo") || getVal("contact2") || s.contact2 || "",
+          sms: getVal("Sms") || getVal("sms") || s.sms || false,
+          isStateBoard: getVal("IsStateBoard") || getVal("isStateBoard") || s.isStateBoard || false,
           ProfilePhotoPath: getVal("ProfilePhotoPath") || s.profilePhotoPath || ""
         };
       });
@@ -408,7 +411,8 @@ export default function Students({ user }: { user: UserType }) {
     SHIFTNAME: "",
     uniformid: "",
     contact2: "",
-    sms: "",
+    sms: false,
+    isStateBoard: false,
     ProfilePhotoPath: "",
     SchoolSection: "",
     AdmissionDate: "",
@@ -443,7 +447,7 @@ export default function Students({ user }: { user: UserType }) {
       MNAME: student.MNAME || student.middleName || "",
       LNAME: student.LNAME || student.lastName || "",
       GENDER: student.GENDER || student.gender || "Male",
-      MOBILE: student.MOBILE || student.contactNumber || "",
+      MOBILE: student.MOBILE || student.contactNumber || student.fatherContactNo || "",
       MOTHERNAME: student.MOTHERNAME || student.motherName || "",
       ADDRESS: student.ADDRESS || student.address || "",
       aadharcard: student.aadharcard || student.aadharCard || "",
@@ -460,11 +464,12 @@ export default function Students({ user }: { user: UserType }) {
       subcaste: student.subcaste || student.subCasteId?.toString() || "",
       academicyear: student.academicyear || student.joiningAcademicYearId?.toString() || "",
       status: student.status || "Active",
-      RFID: student.RFID || "",
+      RFID: student.RFID || student.rfid || "",
       SHIFTNAME: student.SHIFTNAME || "",
-      uniformid: student.uniformid || "",
-      contact2: student.contact2 || "",
-      sms: student.sms || "",
+      uniformid: student.uniformid || student.uniformId || "",
+      contact2: student.contact2 || student.motherContactNo || "",
+      sms: student.sms === "true" || student.sms === true,
+      isStateBoard: student.isStateBoard === "true" || student.isStateBoard === true,
       ProfilePhotoPath: student.profilePhotoPath || student.ProfilePhotoPath || "",
       SchoolSection: student.schoolSection || student.SchoolSection || "",
       AdmissionDate: student.admissionDate || student.AdmissionDate || "",
@@ -1028,7 +1033,24 @@ export default function Students({ user }: { user: UserType }) {
         name: `${newStudentFormData.FNAME} ${newStudentFormData.MNAME} ${newStudentFormData.LNAME}`.trim(),
         status: newStudentFormData.status || "Active",
         
-        // Schema database fields mapping
+        // Dynamic fields mapping supporting both legacy and unified standard naming
+        FirstName: newStudentFormData.FNAME,
+        MiddleName: newStudentFormData.MNAME,
+        LastName: newStudentFormData.LNAME,
+        GrNo: newStudentFormData.registrationNumber,
+        Gender: newStudentFormData.GENDER,
+        DateOfBirth: newStudentFormData.DOB,
+        FatherContactNo: newStudentFormData.MOBILE,
+        MotherContactNo: newStudentFormData.contact2,
+        MotherName: newStudentFormData.MOTHERNAME,
+        Address: newStudentFormData.ADDRESS,
+        AadharCard: newStudentFormData.aadharcard,
+        Rfid: newStudentFormData.RFID,
+        UniformId: newStudentFormData.uniformid,
+        Sms: !!newStudentFormData.sms,
+        IsStateBoard: !!newStudentFormData.isStateBoard,
+
+        // Legacy database fields mapping for safe proxying/SP support
         STUDENTID: newStudentFormData.registrationNumber,
         FNAME: newStudentFormData.FNAME,
         MNAME: newStudentFormData.MNAME,
@@ -1042,7 +1064,9 @@ export default function Students({ user }: { user: UserType }) {
         aadharcard: newStudentFormData.aadharcard,
         RFID: newStudentFormData.RFID,
         uniformid: newStudentFormData.uniformid,
-        sms: newStudentFormData.sms,
+        contact2: newStudentFormData.contact2,
+        sms: !!newStudentFormData.sms,
+        isStateBoard: !!newStudentFormData.isStateBoard,
         ProfilePhotoPath: newStudentFormData.ProfilePhotoPath,
         SchoolSection: newStudentFormData.SchoolSection,
         AdmissionDate: newStudentFormData.AdmissionDate,
@@ -1064,7 +1088,6 @@ export default function Students({ user }: { user: UserType }) {
         CategoryId: parseSafeInt(newStudentFormData.CATEGORY),
 
         // Audit fields: Ensure CreatedBy and ModifiedBy are captured for backend audit logging
-        // CreatedBy is only set for new records, ModifiedBy is updated for every modification
         CreatedBy: isEditMode ? undefined : (user.name || user.email),
         ModifiedBy: user.name || user.email
       };
@@ -1948,7 +1971,7 @@ export default function Students({ user }: { user: UserType }) {
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <Label htmlFor="MOBILE" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.MOBILE ? "text-red-500" : "text-slate-500")}>Mobile No. {formErrors.MOBILE && "*"}</Label>
+                          <Label htmlFor="MOBILE" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.MOBILE ? "text-red-500" : "text-slate-500")}>Father's Contact No. {formErrors.MOBILE && "*"}</Label>
                           <Input 
                             ref={el => { inputRefs.current["MOBILE"] = el; }}
                             id="MOBILE" 
@@ -1967,6 +1990,47 @@ export default function Students({ user }: { user: UserType }) {
                             )}
                           />
                         </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="contact2" className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-500">Mother's Contact No.</Label>
+                          <Input 
+                            id="contact2" 
+                            type="tel" 
+                            value={newStudentFormData.contact2} 
+                            maxLength={10}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                              setNewStudentFormData({...newStudentFormData, contact2: val});
+                            }} 
+                            placeholder="Optional 10-digit number" 
+                            className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm"
+                          />
+                        </div>
+
+                        {/* Double Interactive Communication & Affiliation Preferences check-buttons */}
+                        <div className="space-y-1.5 flex flex-col justify-end">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 h-10 items-center">
+                            <label className="flex items-center gap-2.5 cursor-pointer p-2.5 bg-slate-50/50 rounded-xl border border-slate-100 hover:bg-slate-50 transition-all select-none">
+                              <input 
+                                type="checkbox"
+                                checked={!!newStudentFormData.sms}
+                                onChange={(e) => setNewStudentFormData({...newStudentFormData, sms: e.target.checked})}
+                                className="h-4.5 w-4.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 accent-blue-600 cursor-pointer"
+                              />
+                              <span className="text-xs font-bold text-slate-700">SMS Notification</span>
+                            </label>
+
+                            <label className="flex items-center gap-2.5 cursor-pointer p-2.5 bg-slate-50/50 rounded-xl border border-slate-100 hover:bg-slate-50 transition-all select-none">
+                              <input 
+                                type="checkbox"
+                                checked={!!newStudentFormData.isStateBoard}
+                                onChange={(e) => setNewStudentFormData({...newStudentFormData, isStateBoard: e.target.checked})}
+                                className="h-4.5 w-4.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 accent-blue-600 cursor-pointer"
+                              />
+                              <span className="text-xs font-bold text-slate-700">State Board Affiliated</span>
+                            </label>
+                          </div>
+                        </div>
+
                         <div className="md:col-span-2 space-y-1.5">
                           <Label htmlFor="ADDRESS" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.ADDRESS ? "text-red-500" : "text-slate-500")}>Residential Address {formErrors.ADDRESS && "*"}</Label>
                           <Input 
