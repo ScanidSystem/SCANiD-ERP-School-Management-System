@@ -414,7 +414,7 @@ export default function Students({ user }: { user: UserType }) {
     sms: false,
     isStateBoard: false,
     ProfilePhotoPath: "",
-    SchoolSection: "",
+    SchoolSectionId: "",
     AdmissionDate: "",
     Email: "",
     CityId: "",
@@ -471,7 +471,7 @@ export default function Students({ user }: { user: UserType }) {
       sms: student.sms === "true" || student.sms === true,
       isStateBoard: student.isStateBoard === "true" || student.isStateBoard === true,
       ProfilePhotoPath: student.profilePhotoPath || student.ProfilePhotoPath || "",
-      SchoolSection: student.schoolSection || student.SchoolSection || "",
+      SchoolSectionId: student.schoolSectionId?.toString() || (student.schoolSection ? schoolSections.find((s: any) => s.name === student.schoolSection)?.id?.toString() : "") || "",
       AdmissionDate: student.admissionDate || student.AdmissionDate || "",
       Email: student.email || student.Email || student.EMAIL || "",
       CityId: student.cityId?.toString() || student.CityId?.toString() || "",
@@ -1068,7 +1068,7 @@ export default function Students({ user }: { user: UserType }) {
         sms: !!newStudentFormData.sms,
         isStateBoard: !!newStudentFormData.isStateBoard,
         ProfilePhotoPath: newStudentFormData.ProfilePhotoPath,
-        SchoolSection: newStudentFormData.SchoolSection,
+        SchoolSectionId: parseSafeInt(newStudentFormData.SchoolSectionId) || null,
         AdmissionDate: newStudentFormData.AdmissionDate,
         Email: newStudentFormData.Email,
         CityId: parseSafeInt(newStudentFormData.CityId) || null,
@@ -1707,18 +1707,18 @@ export default function Students({ user }: { user: UserType }) {
                           <div className="space-y-1.5">
                             <Label htmlFor="SchoolSection" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">School Section</Label>
                             <Select 
-                              value={newStudentFormData.SchoolSection} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, SchoolSection: v || ""})}
+                              value={newStudentFormData.SchoolSectionId} 
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, SchoolSectionId: v || ""})}
                             >
                               <SelectTrigger id="SchoolSection" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                 <SelectValue placeholder="Select School Section">
-                                  {newStudentFormData.SchoolSection || undefined}
+                                  {schoolSections.find(s => s.id.toString() === newStudentFormData.SchoolSectionId)?.name || undefined}
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
                                 <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select School Section</SelectItem>
                                 {Array.isArray(schoolSections) && schoolSections.map(sec => (
-                                  <SelectItem key={sec.id} value={sec.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{sec.name}</SelectItem>
+                                  <SelectItem key={sec.id} value={sec.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{sec.name}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>

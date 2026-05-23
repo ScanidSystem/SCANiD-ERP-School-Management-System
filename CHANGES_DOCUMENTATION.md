@@ -41,3 +41,33 @@ This document records the exact changes, the root causes identified, and the fix
 
 5. `/incremental_database_updates.sql`:
    - Created standalone script ensuring smooth manual schema patch.
+
+---
+
+## 5. Issue: "School Section" Column Standardization & Integrity (Renaming and Reordering)
+- **Root Cause**: The `Students` table used a free-text `nvarchar(100)` column called `SchoolSection` to store school sections. This pattern does not enforce referential integrity nor follow database naming conventions where relational links should end with `*Id`. Additionally, auditing columns were not grouped cleanly at the end of every relational constraint.
+- **Remediation**:
+  1. **Relational Schema Integration**: Changed `Students.SchoolSection` column inside `database.sql` to `SchoolSectionId` (of type `INT NULL`), and introduced a foreign key constraint `FK_Students_SchoolSections` pointing to the `SchoolSections` master table.
+  2. **Stored Procedure Standardization**: Updated `sp_ManageStudent` stored procedure parameters and SQL statement definitions in both `database.sql` and `incremental_stored_procedures.sql` to map the normalized integer-based `@SchoolSectionId` parameter correctly.
+  3. **Backend Models & Dependency Injection**: Updated the `Student` C# model entity in `Models.cs` to map `SchoolSectionId` as an integer and configured a navigation property `[ForeignKey("SchoolSectionId")] public SchoolSection? SchoolSection { get; set; }`. Adjusted mappings inside the ADO.NET-based `StudentService.cs` repository methods to call correct Stored Procedure mappings safely.
+  4. **Frontend Form & Value Binding**: Refactored `Students.tsx` form state tracking properties to handle numeric values binding securely under `SchoolSectionId` instead of legacy strings, providing a seamless backwards-compatible fallback mapping for older datasets.
+
+## 6. Modified Files List (New Updates)
+
+1. `/database.sql`:
+   - Altered table structure of `Students` changing `SchoolSection` to `SchoolSectionId INT NULL`.
+   - Added `FK_Students_SchoolSections` foreign key constraint linking students to school sections.
+   - Standardized `sp_ManageStudent` stored procedure parameter schemas.
+
+2. `/backend/ScanID.Api/Models/Models.cs`:
+   - Swapped `SchoolSection` string property in `Student` class for `SchoolSectionId` INT property mapping standard ForeignKey.
+
+3. `/backend/ScanID.Api/Services/StudentService.cs`:
+   - Unified ADO.NET parameters mapping `@SchoolSectionId` under standard db transaction context.
+
+4. `/backend/ScanID.Api/incremental_stored_procedures.sql` & `/update_students_admission_email.sql`:
+   - Renamed query parameters, INSERT/UPDATE schemas, and table modifications to follow robust standard database conventions.
+
+5. `/src/pages/Students.tsx`:
+   - Malloc standard select bound items of School Section dropdown from plain text name value to numeric ID values, saving correct database foreign key items safely and automatically.
+

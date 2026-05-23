@@ -204,7 +204,7 @@ CREATE PROCEDURE dbo.sp_ManageStudent
     @UniformId NVARCHAR(500) = NULL,
     @MotherContactNo NVARCHAR(200) = NULL,
     @ProfilePhotoPath NVARCHAR(255) = NULL,
-    @SchoolSection NVARCHAR(100) = NULL,
+    @SchoolSectionId INT = NULL,
     @AdmissionDate NVARCHAR(200) = NULL,
     @Email NVARCHAR(255) = NULL,
     @CityId INT = NULL,
@@ -229,12 +229,12 @@ BEGIN
                 RegistrationNumber, Name, SchoolId, StandardId, SectionId, AcademicYearId, RollNumber, 
                 GrNo, Gender, DateOfBirth, CategoryId, ReligionId, CasteId, Status, FatherContactNo, Address, 
                 MotherName, AadharCard, Rfid, ShiftId, BloodGroupId, HouseId, Sms, UniformId,
-                MotherContactNo, ProfilePhotoPath, SchoolSection, AdmissionDate, Email, CityId, StateId, IsStateBoard, IsActive, IsDeleted, CreatedOn, ModifiedOn
+                MotherContactNo, ProfilePhotoPath, SchoolSectionId, AdmissionDate, Email, CityId, StateId, IsStateBoard, IsActive, IsDeleted, CreatedOn, ModifiedOn
             ) VALUES (
                 @RegistrationNumber, @Name, @SchoolId, @StandardId, @SectionId, @AcademicYearId, @RollNumber,
                 @GrNo, @Gender, @DateOfBirth, @CategoryId, @ReligionId, @CasteId, @Status, @FatherContactNo, @Address,
                 @MotherName, @AadharCard, @Rfid, @ShiftId, @BloodGroupId, @HouseId, @Sms, @UniformId,
-                @MotherContactNo, @ProfilePhotoPath, @SchoolSection, @AdmissionDate, @Email, @CityId, @StateId, @IsStateBoard, 1, 0, GETUTCDATE(), GETUTCDATE()
+                @MotherContactNo, @ProfilePhotoPath, @SchoolSectionId, @AdmissionDate, @Email, @CityId, @StateId, @IsStateBoard, 1, 0, GETUTCDATE(), GETUTCDATE()
             );
             SELECT SCOPE_IDENTITY();
         END
@@ -267,7 +267,7 @@ BEGIN
                 UniformId = ISNULL(@UniformId, UniformId),
                 MotherContactNo = ISNULL(@MotherContactNo, MotherContactNo),
                 ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
-                SchoolSection = ISNULL(@SchoolSection, SchoolSection),
+                SchoolSectionId = ISNULL(@SchoolSectionId, SchoolSectionId),
                 AdmissionDate = ISNULL(@AdmissionDate, AdmissionDate),
                 Email = ISNULL(@Email, Email),
                 CityId = ISNULL(@CityId, CityId),

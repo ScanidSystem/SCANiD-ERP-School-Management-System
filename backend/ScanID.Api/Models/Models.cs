@@ -164,10 +164,13 @@ namespace ScanID.Api.Models
         public string? UniformId { get; set; }
         public string? MotherContactNo { get; set; }
         public string? Rfid { get; set; }
-        public string? SchoolSection { get; set; }
+        public int? SchoolSectionId { get; set; }
         public string? AdmissionDate { get; set; }
         public string? Email { get; set; }
         public bool IsStateBoard { get; set; }
+
+        [ForeignKey("SchoolSectionId")]
+        public SchoolSection? SchoolSection { get; set; }
 
         // --- ID Mapping properties for master data ---
         public int? StandardId { get; set; }

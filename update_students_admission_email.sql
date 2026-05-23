@@ -4,8 +4,8 @@
 -- ==================================================================================
 
 -- 1. Add columns to [dbo].[Students] table if they do not exist
-IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = N'SchoolSection')
-    ALTER TABLE [dbo].[Students] ADD [SchoolSection] [nvarchar](100) NULL;
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = N'SchoolSectionId')
+    ALTER TABLE [dbo].[Students] ADD [SchoolSectionId] [int] NULL;
 
 IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = N'AdmissionDate')
     ALTER TABLE [dbo].[Students] ADD [AdmissionDate] [nvarchar](200) NULL;
@@ -47,7 +47,7 @@ CREATE PROCEDURE dbo.sp_ManageStudent
     @uniformid NVARCHAR(500) = NULL,
     @contact2 NVARCHAR(255) = NULL,
     @ProfilePhotoPath NVARCHAR(255) = NULL,
-    @SchoolSection NVARCHAR(100) = NULL,
+    @SchoolSectionId INT = NULL,
     @AdmissionDate NVARCHAR(200) = NULL,
     @Email NVARCHAR(255) = NULL,
     @CityId INT = NULL,
@@ -71,12 +71,12 @@ BEGIN
                 RegistrationNumber, Name, SchoolId, StandardId, SectionId, AcademicYearId, RollNumber, 
                 GRNO, GENDER, DOB, CategoryId, ReligionId, CasteId, Status, MOBILE, ADDRESS, 
                 MOTHERNAME, aadharcard, RFID, ShiftId, BloodGroupId, HouseId, sms, uniformid,
-                contact2, ProfilePhotoPath, SchoolSection, AdmissionDate, Email, CityId, StateId, IsActive, IsDeleted, CreatedOn, ModifiedOn
+                contact2, ProfilePhotoPath, SchoolSectionId, AdmissionDate, Email, CityId, StateId, IsActive, IsDeleted, CreatedOn, ModifiedOn
             ) VALUES (
                 @RegistrationNumber, @Name, @SchoolId, @StandardId, @SectionId, @AcademicYearId, @RollNumber,
                 @GRNO, @GENDER, @DOB, @CategoryId, @ReligionId, @CasteId, @Status, @MOBILE, @ADDRESS,
                 @MOTHERNAME, @aadharcard, @RFID, @ShiftId, @BloodGroupId, @HouseId, @sms, @uniformid,
-                @contact2, @ProfilePhotoPath, @SchoolSection, @AdmissionDate, @Email, @CityId, @StateId, 1, 0, GETUTCDATE(), GETUTCDATE()
+                @contact2, @ProfilePhotoPath, @SchoolSectionId, @AdmissionDate, @Email, @CityId, @StateId, 1, 0, GETUTCDATE(), GETUTCDATE()
             );
             SELECT SCOPE_IDENTITY();
         END
@@ -109,7 +109,7 @@ BEGIN
                 uniformid = ISNULL(@uniformid, uniformid),
                 contact2 = ISNULL(@contact2, contact2),
                 ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
-                SchoolSection = ISNULL(@SchoolSection, SchoolSection),
+                SchoolSectionId = ISNULL(@SchoolSectionId, SchoolSectionId),
                 AdmissionDate = ISNULL(@AdmissionDate, AdmissionDate),
                 Email = ISNULL(@Email, Email),
                 CityId = ISNULL(@CityId, CityId),

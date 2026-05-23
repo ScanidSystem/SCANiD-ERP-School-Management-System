@@ -409,7 +409,7 @@ CREATE TABLE [dbo].[Students](
 	[AadharCard] [nvarchar](100) NULL,
 	[UniformId] [nvarchar](500) NULL,
 	[Rfid] [nvarchar](100) NULL,
-	[SchoolSection] [nvarchar](100) NULL,
+	[SchoolSectionId] [int] NULL,
 	[AdmissionDate] [nvarchar](200) NULL,
 	[Email] [nvarchar](255) NULL,
 	[StandardId] [int] NULL,
@@ -480,6 +480,9 @@ BEGIN
 
 	IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_Categories')
         ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_Categories] FOREIGN KEY([CategoryId]) REFERENCES [dbo].[Categories] ([Id]);
+
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_SchoolSections')
+        ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_SchoolSections] FOREIGN KEY([SchoolSectionId]) REFERENCES [dbo].[SchoolSections] ([Id]);
 END
 GO
 
@@ -957,7 +960,7 @@ CREATE PROCEDURE dbo.sp_ManageStudent
     @UniformId NVARCHAR(500) = NULL,
     @MotherContactNo NVARCHAR(200) = NULL,
     @ProfilePhotoPath NVARCHAR(255) = NULL,
-    @SchoolSection NVARCHAR(100) = NULL,
+    @SchoolSectionId INT = NULL,
     @AdmissionDate NVARCHAR(200) = NULL,
     @Email NVARCHAR(255) = NULL,
     @CityId INT = NULL,
@@ -982,12 +985,12 @@ BEGIN
                 RegistrationNumber, Name, SchoolId, StandardId, SectionId, AcademicYearId, RollNumber, 
                 GrNo, Gender, DateOfBirth, CategoryId, ReligionId, CasteId, Status, FatherContactNo, Address, 
                 MotherName, AadharCard, Rfid, ShiftId, BloodGroupId, HouseId, Sms, UniformId,
-                MotherContactNo, ProfilePhotoPath, SchoolSection, AdmissionDate, Email, CityId, StateId, IsStateBoard, IsActive, IsDeleted, CreatedOn, ModifiedOn
+                MotherContactNo, ProfilePhotoPath, SchoolSectionId, AdmissionDate, Email, CityId, StateId, IsStateBoard, IsActive, IsDeleted, CreatedOn, ModifiedOn
             ) VALUES (
                 @RegistrationNumber, @Name, @SchoolId, @StandardId, @SectionId, @AcademicYearId, @RollNumber,
                 @GrNo, @Gender, @DateOfBirth, @CategoryId, @ReligionId, @CasteId, @Status, @FatherContactNo, @Address,
                 @MotherName, @AadharCard, @Rfid, @ShiftId, @BloodGroupId, @HouseId, @Sms, @UniformId,
-                @MotherContactNo, @ProfilePhotoPath, @SchoolSection, @AdmissionDate, @Email, @CityId, @StateId, @IsStateBoard, 1, 0, GETUTCDATE(), GETUTCDATE()
+                @MotherContactNo, @ProfilePhotoPath, @SchoolSectionId, @AdmissionDate, @Email, @CityId, @StateId, @IsStateBoard, 1, 0, GETUTCDATE(), GETUTCDATE()
             );
             SELECT SCOPE_IDENTITY();
         END
@@ -1020,7 +1023,7 @@ BEGIN
                 UniformId = ISNULL(@UniformId, UniformId),
                 MotherContactNo = ISNULL(@MotherContactNo, MotherContactNo),
                 ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
-                SchoolSection = ISNULL(@SchoolSection, SchoolSection),
+                SchoolSectionId = ISNULL(@SchoolSectionId, SchoolSectionId),
                 AdmissionDate = ISNULL(@AdmissionDate, AdmissionDate),
                 Email = ISNULL(@Email, Email),
                 CityId = ISNULL(@CityId, CityId),
