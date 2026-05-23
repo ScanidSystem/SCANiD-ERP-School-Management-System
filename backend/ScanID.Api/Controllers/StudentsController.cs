@@ -50,11 +50,11 @@ namespace ScanID.Api.Controllers
             [FromQuery] int? academicYearId,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
-            [FromQuery] string sortBy = null,
+            [FromQuery] string? sortBy = null,
             [FromQuery] string sortOrder = "asc",
-            [FromQuery] string search = null,
-            [FromQuery] string standard = null,
-            [FromQuery] string section = null)
+            [FromQuery] string? search = null,
+            [FromQuery] string? standard = null,
+            [FromQuery] string? section = null)
         {
             // Retrieve all raw students for the given school and academic year from backend SQL DB repository
             var studentsList = await _studentService.GetStudentsAsync(schoolId, academicYearId);

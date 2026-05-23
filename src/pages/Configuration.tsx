@@ -209,7 +209,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
         try {
           const response = await apiService.uploadSchoolPhoto(editingItem.id, file);
           const newPath = response.data.data?.path || response.data.path;
-          setFormData(prev => ({ ...prev, profilePhotoPath: newPath }));
+          setFormData((prev: any) => ({ ...prev, profilePhotoPath: newPath }));
           toast.dismiss(loadingToast);
           toast.success("Institutional photo updated successfully");
           fetchData(); // Refresh to reflect in the grid

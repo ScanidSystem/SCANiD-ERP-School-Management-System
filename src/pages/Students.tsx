@@ -1383,7 +1383,7 @@ export default function Students({ user }: { user: UserType }) {
                                 <Select 
                                   value={newStudentFormData.schoolId} 
                                   onValueChange={(v) => {
-                                    setNewStudentFormData({...newStudentFormData, schoolId: v});
+                                    setNewStudentFormData({...newStudentFormData, schoolId: v || ""});
                                     if (formErrors.schoolId) setFormErrors(prev => ({ ...prev, schoolId: false }));
                                   }}
                                   disabled={user.role !== "superadmin" && !!user.schoolId}
@@ -1430,7 +1430,7 @@ export default function Students({ user }: { user: UserType }) {
                               <Select 
                                 value={newStudentFormData.STD} 
                                 onValueChange={(v) => {
-                                  setNewStudentFormData({...newStudentFormData, STD: v});
+                                  setNewStudentFormData({...newStudentFormData, STD: v || ""});
                                   if (formErrors.STD) setFormErrors(prev => ({ ...prev, STD: false }));
                                 }}
                               >
@@ -1460,7 +1460,7 @@ export default function Students({ user }: { user: UserType }) {
                               <Select 
                                 value={newStudentFormData.DIV} 
                                 onValueChange={(v) => {
-                                  setNewStudentFormData({...newStudentFormData, DIV: v});
+                                  setNewStudentFormData({...newStudentFormData, DIV: v || ""});
                                   if (formErrors.DIV) setFormErrors(prev => ({ ...prev, DIV: false }));
                                 }}
                               >
@@ -1489,7 +1489,7 @@ export default function Students({ user }: { user: UserType }) {
                               <Label htmlFor="academicyear" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Joining Year</Label>
                               <Select 
                                 value={newStudentFormData.academicyear} 
-                                onValueChange={(v) => setNewStudentFormData({...newStudentFormData, academicyear: v})}
+                                onValueChange={(v) => setNewStudentFormData({...newStudentFormData, academicyear: v || ""})}
                               >
                                 <SelectTrigger id="academicyear" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                   <SelectValue placeholder="Select Academic Year">
@@ -1509,7 +1509,7 @@ export default function Students({ user }: { user: UserType }) {
                               <Label htmlFor="SHIFTNAME" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned Shift</Label>
                               <Select 
                                 value={newStudentFormData.SHIFTNAME} 
-                                onValueChange={(v) => setNewStudentFormData({...newStudentFormData, SHIFTNAME: v})}
+                                onValueChange={(v) => setNewStudentFormData({...newStudentFormData, SHIFTNAME: v || ""})}
                               >
                                 <SelectTrigger id="SHIFTNAME" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                   <SelectValue placeholder="Select Shift">
@@ -1626,7 +1626,8 @@ export default function Students({ user }: { user: UserType }) {
                             <Select 
                               value={newStudentFormData.GENDER} 
                               onValueChange={(v) => {
-                                setNewStudentFormData({...newStudentFormData, GENDER: v});
+                                setNewStudentFormData({...newStudentFormData, GENDER: v || ""});
+                                setNewStudentFormData(prev => ({ ...prev, GENDER: v || "" }));
                                 setFormErrors(prev => ({ ...prev, GENDER: false }));
                               }}
                             >
@@ -1684,7 +1685,7 @@ export default function Students({ user }: { user: UserType }) {
                             <Label htmlFor="SchoolSection" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">School Section</Label>
                             <Select 
                               value={newStudentFormData.SchoolSection} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, SchoolSection: v})}
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, SchoolSection: v || ""})}
                             >
                               <SelectTrigger id="SchoolSection" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                 <SelectValue placeholder="Select School Section">
@@ -1704,7 +1705,7 @@ export default function Students({ user }: { user: UserType }) {
                             <Label htmlFor="house" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">School House</Label>
                             <Select 
                               value={newStudentFormData.house} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, house: v})}
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, house: v || ""})}
                             >
                               <SelectTrigger id="house" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                 <SelectValue placeholder="Select Student House Group">
@@ -1734,7 +1735,7 @@ export default function Students({ user }: { user: UserType }) {
                             <Label htmlFor="admissiontype" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Admission Type</Label>
                             <Select 
                               value={newStudentFormData.admissiontype} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, admissiontype: v})}
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, admissiontype: v || ""})}
                             >
                               <SelectTrigger id="admissiontype" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                 <SelectValue placeholder="Select Student Admission Type">
@@ -1819,7 +1820,7 @@ export default function Students({ user }: { user: UserType }) {
                             <Label htmlFor="RELIGION" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Religion</Label>
                             <Select 
                               value={newStudentFormData.RELIGION} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, RELIGION: v})}
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, RELIGION: v || ""})}
                             >
                               <SelectTrigger id="RELIGION" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                 <SelectValue placeholder="Select Student Religion">
@@ -1836,10 +1837,10 @@ export default function Students({ user }: { user: UserType }) {
                           </div>
 
                           <div className="space-y-1.5">
-                            <Label htmlFor="BLOODGROUP" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Blood Group</Label>
+                            <Label htmlFor="BLOODGROUP" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Blood Group</Label>
                             <Select 
                               value={newStudentFormData.BLOODGROUP} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, BLOODGROUP: v})}
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, BLOODGROUP: v || ""})}
                             >
                               <SelectTrigger id="BLOODGROUP" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                 <SelectValue placeholder="Select Student Blood Group">
@@ -1859,7 +1860,7 @@ export default function Students({ user }: { user: UserType }) {
                              <Label htmlFor="CASTE" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Caste</Label>
                              <Select 
                                value={newStudentFormData.CASTE} 
-                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, CASTE: v})}
+                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, CASTE: v || ""})}
                              >
                                <SelectTrigger id="CASTE" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                  <SelectValue placeholder="Select Caste">
@@ -1879,7 +1880,7 @@ export default function Students({ user }: { user: UserType }) {
                              <Label htmlFor="CATEGORY" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Category</Label>
                              <Select 
                                value={newStudentFormData.CATEGORY} 
-                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, CATEGORY: v})}
+                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, CATEGORY: v || ""})}
                              >
                                <SelectTrigger id="CATEGORY" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                                  <SelectValue placeholder="Select Category">
@@ -1899,7 +1900,7 @@ export default function Students({ user }: { user: UserType }) {
                             <Label htmlFor="subcaste" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Sub-Caste</Label>
                             <Select 
                               value={newStudentFormData.subcaste} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, subcaste: v})}
+                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, subcaste: v || ""})}
                               disabled={!newStudentFormData.CASTE}
                             >
                               <SelectTrigger id="subcaste" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
@@ -2020,7 +2021,7 @@ export default function Students({ user }: { user: UserType }) {
                           <Label htmlFor="StateId" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">State Name</Label>
                           <Select 
                             value={newStudentFormData.StateId} 
-                            onValueChange={(v) => setNewStudentFormData({...newStudentFormData, StateId: v, CityId: ""})}
+                            onValueChange={(v) => setNewStudentFormData({...newStudentFormData, StateId: v || "", CityId: ""})}
                           >
                             <SelectTrigger id="StateId" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
                               <SelectValue placeholder="Select State">
@@ -2040,7 +2041,7 @@ export default function Students({ user }: { user: UserType }) {
                           <Label htmlFor="CityId" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">City Name</Label>
                           <Select 
                             value={newStudentFormData.CityId} 
-                            onValueChange={(v) => setNewStudentFormData({...newStudentFormData, CityId: v})}
+                            onValueChange={(v) => setNewStudentFormData({...newStudentFormData, CityId: v || ""})}
                             disabled={!newStudentFormData.StateId}
                           >
                             <SelectTrigger id="CityId" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
