@@ -68,7 +68,7 @@ namespace ScanID.Api.Controllers
                 var searchLower = search.Trim().ToLower();
                 query = query.Where(s => 
                     (s.Name != null && s.Name.ToLower().Contains(searchLower)) ||
-                    (s.GRNO != null && s.GRNO.ToLower().Contains(searchLower)) ||
+                    (s.GrNo != null && s.GrNo.ToLower().Contains(searchLower)) ||
                     (s.RegistrationNumber != null && s.RegistrationNumber.ToLower().Contains(searchLower)) ||
                     s.RollNumber.ToString().Contains(searchLower) ||
                     (s.Standard != null && s.Standard.Name != null && s.Standard.Name.ToLower().Contains(searchLower)) ||
@@ -99,7 +99,7 @@ namespace ScanID.Api.Controllers
                         break;
                     case "grno":
                     case "registrationnumber":
-                        query = isDesc ? query.OrderByDescending(s => s.GRNO ?? s.RegistrationNumber) : query.OrderBy(s => s.GRNO ?? s.RegistrationNumber);
+                        query = isDesc ? query.OrderByDescending(s => s.GrNo ?? s.RegistrationNumber) : query.OrderBy(s => s.GrNo ?? s.RegistrationNumber);
                         break;
                     case "roll":
                     case "rollnumber":

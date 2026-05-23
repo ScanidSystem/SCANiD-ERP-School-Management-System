@@ -51,7 +51,15 @@ namespace ScanID.Api.Controllers
         /// </summary>
         private async Task<IActionResult> Update<T>(int id, T item) where T : BaseEntity
         {
-            _context.Entry(item).State = EntityState.Modified;
+            var existing = await _context.Set<T>().FindAsync(id);
+            if (existing == null) return NotFound();
+
+            // Set modified timestamp
+            item.ModifiedOn = DateTime.UtcNow;
+
+            // Safe incremental update via EF Core entry current values mapping
+            _context.Entry(existing).CurrentValues.SetValues(item);
+
             try
             {
                 await _context.SaveChangesAsync();
@@ -107,6 +115,9 @@ namespace ScanID.Api.Controllers
 
         [HttpPost("sections")]
         public async Task<ActionResult<Section>> CreateSection(Section section) => await Create(_context.Sections, section);
+
+        [HttpPut("sections/{id}")]
+        public async Task<IActionResult> UpdateSection(int id, Section section) => await Update(id, section);
 
         [HttpDelete("sections/{id}")]
         public async Task<IActionResult> DeleteSection(int id) => await Delete(_context.Sections, id);
