@@ -109,6 +109,16 @@ export default function Students({ user }: { user: UserType }) {
   const [currentStudentId, setCurrentStudentId] = useState<string | null>(null);
 
   const fetchMasters = useCallback(async () => {
+    // Robust master data fetching: wrap each call to handle failure gracefully and prevent Promise.all crash
+    const safeFetch = async (promise: Promise<any>, masterName: string) => {
+      try {
+        return await promise;
+      } catch (err) {
+        console.warn(`Failed to fetch master [${masterName}] from API:`, err);
+        return { data: [] };
+      }
+    };
+
     try {
       const [
         standardsRes, 
@@ -127,21 +137,21 @@ export default function Students({ user }: { user: UserType }) {
         citiesRes,
         schoolSectionsRes
       ] = await Promise.all([
-        apiService.getStandards(),
-        apiService.getSections(),
-        apiService.getSchools(),
-        apiService.getBloodGroups(),
-        apiService.getHouses(),
-        apiService.getAdmissionTypes(),
-        apiService.getReligions(),
-        apiService.getCastes(),
-        apiService.getSubCastes(),
-        apiService.getAcademicYears(),
-        apiService.getShifts(),
-        apiService.getCategories(),
-        apiService.getStates(),
-        apiService.getCities(),
-        apiService.getSchoolSections()
+        safeFetch(apiService.getStandards(), "standards"),
+        safeFetch(apiService.getSections(), "sections"),
+        safeFetch(apiService.getSchools(), "schools"),
+        safeFetch(apiService.getBloodGroups(), "bloodGroups"),
+        safeFetch(apiService.getHouses(), "houses"),
+        safeFetch(apiService.getAdmissionTypes(), "admissionTypes"),
+        safeFetch(apiService.getReligions(), "religions"),
+        safeFetch(apiService.getCastes(), "castes"),
+        safeFetch(apiService.getSubCastes(), "subCastes"),
+        safeFetch(apiService.getAcademicYears(), "academicYears"),
+        safeFetch(apiService.getShifts(), "shifts"),
+        safeFetch(apiService.getCategories(), "categories"),
+        safeFetch(apiService.getStates(), "states"),
+        safeFetch(apiService.getCities(), "cities"),
+        safeFetch(apiService.getSchoolSections(), "schoolSections")
       ]);
       
       const normalize = (res: any) => Array.isArray(res.data) ? res.data : (res.data?.data || []);

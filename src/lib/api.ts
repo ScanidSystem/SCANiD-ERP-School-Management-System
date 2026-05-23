@@ -102,6 +102,11 @@ const mockFallbacks: Record<string, any> = {
   "/masters/categories": [
     { id: 1, name: "General", isActive: true },
   ],
+  "/masters/school-sections": [
+    { id: 1, name: "Primary", isActive: true },
+    { id: 2, name: "Secondary", isActive: true },
+    { id: 3, name: "Higher Secondary", isActive: true }
+  ],
   "/navigation": [
     { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roleIds: [1, 2, 3, 4, 5] },
     { id: 2, title: "Academic Operations", icon: "BookOpen", path: null, parentId: null, sortOrder: 2, roleIds: [1, 2, 3, 4, 5] },
