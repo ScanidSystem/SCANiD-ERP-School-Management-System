@@ -490,33 +490,50 @@ export default function Students({ user }: { user: UserType }) {
       // Prepare data for export including all important student fields
       const exportData = filteredStudents.map(s => ({
         "Registration Number": s.grno || s.registrationNumber,
-        "Roll Number": s.roll,
+        "Name": s.name || `${s.FNAME || s.firstName || ""} ${s.MNAME || s.middleName || ""} ${s.LNAME || s.lastName || ""}`.trim(),
+        "School": schools.find(sch => sch.id?.toString() === (s.schoolId || s.SchoolId)?.toString())?.name || s.schoolId || "",
+        "Status": s.status || "Active",
+        "Roll Number": s.roll || s.ROLLNO || s.rollNumber,
         "First Name": s.FNAME || s.firstName,
         "Middle Name": s.MNAME || s.middleName,
         "Last Name": s.LNAME || s.lastName,
+        "GrNo": s.grno || s.GRNO || s.GrNo,
         "Gender": s.GENDER || s.gender,
-        "Date of Birth": s.DOB || s.birthDate,
-        "Mobile": s.MOBILE || s.contactNumber,
-        "Email": s.EMAIL || s.email,
-        "Standard": s.STD || s.standard,
-        "Division": s.DIV || s.section,
-        "Mother Name": s.MOTHERNAME || s.motherName,
-        "Address": s.ADDRESS || s.address,
-        "Aadhar Card": s.aadharcard || s.aadharCard,
-        "Blood Group": s.BLOODGROUP || s.bloodGroupId ? (bloodGroups.find(bg => bg.id?.toString() === (s.BLOODGROUP || s.bloodGroupId)?.toString())?.name || s.BLOODGROUP || s.bloodGroupId) : "",
-        "House": s.house || s.houseId ? (houses.find(h => h.id?.toString() === (s.house || s.houseId)?.toString())?.name || s.house || s.houseId) : "",
-        "Admission Type": s.admissiontype || s.admissionTypeId ? (admissionTypes.find(at => at.id?.toString() === (s.admissiontype || s.admissionTypeId)?.toString())?.name || s.admissiontype || s.admissionTypeId) : "",
-        "Religion": s.RELIGION || s.religionId ? (religions.find(r => r.id?.toString() === (s.RELIGION || s.religionId)?.toString())?.name || s.RELIGION || s.religionId) : "",
-        "Caste": s.CASTE || s.casteId ? (castes.find(c => c.id?.toString() === (s.CASTE || s.casteId)?.toString())?.name || s.CASTE || s.casteId) : "",
-        "Sub-Caste": s.subcaste || s.subCasteId ? (subCastes.find(sc => sc.id?.toString() === (s.subcaste || s.subCasteId)?.toString())?.name || s.subcaste || s.subCasteId) : "",
-        "Academic Year": s.academicyear || s.joiningAcademicYearId ? (academicYears.find(ay => ay.id?.toString() === (s.academicyear || s.joiningAcademicYearId)?.toString())?.name || s.academicyear || s.joiningAcademicYearId) : "",
-        "Category": s.CATEGORY || s.categoryId ? (categories.find(c => c.id?.toString() === (s.CATEGORY || s.categoryId)?.toString())?.name || s.CATEGORY || s.categoryId) : "",
-        "RFID": s.RFID || s.rfid,
-        "Uniform ID": s.uniformid || s.uniformId,
-        "Digital Uniform": s.digitalUniform === "true" || s.digitalUniform === true || s.DigitalUniform === "true" || s.DigitalUniform === true ? "Yes" : "No",
-        "Digital Notebook": s.digitalNotebook === "true" || s.digitalNotebook === true || s.DigitalNotebook === "true" || s.DigitalNotebook === true ? "Yes" : "No",
-        "Shift Name": s.SHIFTNAME,
-        "Status": s.status
+        "Date of Birth": s.DOB || s.birthDate || s.DateOfBirth,
+        "Address": s.ADDRESS || s.address || s.Address,
+        "Mother Name": s.MOTHERNAME || s.motherName || s.MotherName,
+        "Mobile": s.MOBILE || s.contactNumber || s.FatherContactNo,
+        "Secondary Mobile": s.contact2 || s.secondaryContact || s.MotherContactNo,
+        "Aadhar Card": s.aadharcard || s.aadharCard || s.AadharCard,
+        "Uniform ID": s.uniformid || s.uniformId || s.UniformId,
+        "RFID": s.RFID || s.rfid || s.Rfid,
+        "School Section": s.SchoolSectionId ? schoolSections.find(sec => sec.id?.toString() === s.SchoolSectionId?.toString())?.name : (s.schoolSection || ""),
+        "Admission Date": s.AdmissionDate || s.admissionDate,
+        "Email": s.EMAIL || s.email || s.Email,
+        "Standard": s.STD || s.standard || (s.StandardId ? standardsMaster.find(st => st.id?.toString() === s.StandardId?.toString())?.name : ""),
+        "Division": s.DIV || s.section || (s.SectionId ? sectionsMaster.find(sec => sec.id?.toString() === s.SectionId?.toString())?.name : ""),
+        "Academic Year": s.academicyear || s.joiningAcademicYearId || (s.AcademicYearId ? academicYears.find(ay => ay.id?.toString() === s.AcademicYearId?.toString())?.name : ""),
+        "Caste": s.CASTE || s.casteId ? (castes.find(c => c.id?.toString() === (s.CASTE || s.casteId || s.CasteId)?.toString())?.name || s.CASTE || s.casteId) : "",
+        "Sub-Caste": s.subcaste || s.subCasteId ? (subCastes.find(sc => sc.id?.toString() === (s.subcaste || s.subCasteId || s.SubCasteId)?.toString())?.name || s.subcaste || s.subCasteId) : "",
+        "Religion": s.RELIGION || s.religionId ? (religions.find(r => r.id?.toString() === (s.RELIGION || s.religionId || s.ReligionId)?.toString())?.name || s.RELIGION || s.religionId) : "",
+        "Blood Group": s.BLOODGROUP || s.bloodGroupId ? (bloodGroups.find(bg => bg.id?.toString() === (s.BLOODGROUP || s.bloodGroupId || s.BloodGroupId)?.toString())?.name || s.BLOODGROUP || s.bloodGroupId) : "",
+        "House": s.house || s.houseId ? (houses.find(h => h.id?.toString() === (s.house || s.houseId || s.HouseId)?.toString())?.name || s.house || s.houseId) : "",
+        "Admission Type": s.admissiontype || s.admissionTypeId ? (admissionTypes.find(at => at.id?.toString() === (s.admissiontype || s.admissionTypeId || s.AdmissionTypeId)?.toString())?.name || s.admissiontype || s.admissionTypeId) : "",
+        "City": s.CityId ? (cities.find(c => c.id?.toString() === s.CityId?.toString())?.name || s.CityId) : "",
+        "State": s.StateId ? (states.find(st => st.id?.toString() === s.StateId?.toString())?.name || s.StateId) : "",
+        "Shift Name": s.SHIFTNAME || (s.ShiftId ? (shifts.find(sh => sh.id?.toString() === s.ShiftId?.toString())?.name || s.ShiftId) : ""),
+        "Category": s.CATEGORY || s.categoryId ? (categories.find(c => c.id?.toString() === (s.CATEGORY || s.categoryId || s.CategoryId)?.toString())?.name || s.CATEGORY || s.categoryId) : "",
+        "Secondary SMS": s.sms ? "Yes" : "No",
+        "Is State Board": s.isStateBoard || s.IsStateBoard ? "Yes" : "No",
+        "Profile Photo Path": s.ProfilePhotoPath || s.profilePhotoPath,
+        "Digital Uniform": s.digitalUniform || s.DigitalUniform ? "Yes" : "No",
+        "Digital Notebook": s.digitalNotebook || s.DigitalNotebook ? "Yes" : "No",
+        "Is Active": s.isActive || s.IsActive || s.IsActive === undefined ? "Yes" : "No",
+        "Is Deleted": s.isDeleted || s.IsDeleted ? "Yes" : "No",
+        "Created By": s.createdBy || s.CreatedBy,
+        "Created On": s.createdOn || s.CreatedOn,
+        "Modified By": s.modifiedBy || s.ModifiedBy,
+        "Modified On": s.modifiedOn || s.ModifiedOn
       }));
 
       // Create workbook and worksheet
@@ -526,9 +543,15 @@ export default function Students({ user }: { user: UserType }) {
 
       // Set column widths for better readability
       const wscols = [
-        {wch: 20}, {wch: 12}, {wch: 15}, {wch: 15}, {wch: 15},
-        {wch: 10}, {wch: 12}, {wch: 15}, {wch: 25}, {wch: 12},
-        {wch: 10}, {wch: 20}, {wch: 40}, {wch: 15}, {wch: 15}
+        {wch: 20}, {wch: 25}, {wch: 20}, {wch: 10}, {wch: 12},
+        {wch: 15}, {wch: 15}, {wch: 15}, {wch: 12}, {wch: 10},
+        {wch: 15}, {wch: 35}, {wch: 20}, {wch: 15}, {wch: 15},
+        {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15},
+        {wch: 25}, {wch: 15}, {wch: 10}, {wch: 15}, {wch: 15},
+        {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15},
+        {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 10},
+        {wch: 15}, {wch: 25}, {wch: 15}, {wch: 15}, {wch: 10},
+        {wch: 10}, {wch: 15}, {wch: 20}, {wch: 15}, {wch: 20}
       ];
       ws['!cols'] = wscols;
 
@@ -594,51 +617,67 @@ export default function Students({ user }: { user: UserType }) {
 
   const downloadSampleExcel = async () => {
     try {
-      // Define standard headers based on all current student table fields
+      // Define standard headers based on all current student table fields in exact sequence
       // Using user-friendly names that the mapper will convert to IDs
       const headers = [
-        "SchoolName", "RegistrationNumber", "RollNumber", "FirstName", "MiddleName", "LastName", 
-        "Gender", "Mobile", "Email", "MotherName", "Address", "AadharCard", "DOB",
-        "GradeName", "SectionName", "BloodGroupName", "HouseName", 
-        "AdmissionType", "ReligionName", "CasteName", "SubCasteName", 
-        "CategoryName", "AcademicYear", "ShiftName", "Status",
-        "RFID", "UniformID", "SecondaryMobile", "SecondarySMS",
-        "DigitalUniform", "DigitalNotebook"
+        "RegistrationNumber", "Name", "SchoolName", "Status", "RollNumber", 
+        "FirstName", "MiddleName", "LastName", "GrNo", "Gender", 
+        "DOB", "Address", "MotherName", "Mobile", "SecondaryMobile", 
+        "AadharCard", "UniformID", "RFID", "SchoolSectionName", "AdmissionDate", 
+        "Email", "GradeName", "SectionName", "AcademicYear", "CasteName", 
+        "SubCasteName", "ReligionName", "BloodGroupName", "HouseName", "AdmissionType", 
+        "CityName", "StateName", "ShiftName", "CategoryName", "SecondarySMS", 
+        "IsStateBoard", "ProfilePhotoPath", "DigitalUniform", "DigitalNotebook",
+        "IsActive", "IsDeleted", "CreatedBy", "CreatedOn", "ModifiedBy", "ModifiedOn"
       ];
       
       const sampleData = [
         {
-          SchoolName: schools.find(sch => sch.id?.toString() === user.schoolId?.toString())?.name || schools[0]?.name || "Main Campus",
           RegistrationNumber: "REG1001",
+          Name: "John Doe Smith",
+          SchoolName: schools.find(sch => sch.id?.toString() === user.schoolId?.toString())?.name || schools[0]?.name || "Main Campus",
+          Status: "Active",
           RollNumber: "1",
           FirstName: "John",
           MiddleName: "Doe",
           LastName: "Smith",
+          GrNo: "REG1001",
           Gender: "Male",
-          Mobile: "9876543210",
-          Email: "john.smith@example.com",
-          MotherName: "Jane Smith",
-          Address: "123 Education Lane, Sector 4",
-          AadharCard: "123456789012",
           DOB: "2010-05-20",
+          Address: "123 Education Lane, Sector 4",
+          MotherName: "Jane Smith",
+          Mobile: "9876543210",
+          SecondaryMobile: "9876543211",
+          AadharCard: "123456789012",
+          UniformID: "UNIF-001",
+          RFID: "RF99221",
+          SchoolSectionName: schoolSections[0]?.name || "Primary",
+          AdmissionDate: "2026-05-24",
+          Email: "john.smith@example.com",
           GradeName: standardsMaster[0]?.name || "10th",
           SectionName: sectionsMaster[0]?.name || "A",
+          AcademicYear: academicYears.find(ay => ay.isCurrent)?.name || academicYears[0]?.name || "2024-25",
+          CasteName: castes[0]?.name || "General",
+          SubCasteName: subCastes[0]?.name || "None",
+          ReligionName: religions[0]?.name || "Hindu",
           BloodGroupName: bloodGroups[0]?.name || "O+",
           HouseName: houses[0]?.name || "Blue House",
           AdmissionType: admissionTypes[0]?.name || "Regular",
-          ReligionName: religions[0]?.name || "Hindu",
-          CasteName: castes[0]?.name || "General",
-          SubCasteName: subCastes[0]?.name || "None",
-          CategoryName: categories[0]?.name || "General",
-          AcademicYear: academicYears.find(ay => ay.isCurrent)?.name || academicYears[0]?.name || "2024-25",
+          CityName: cities[0]?.name || "",
+          StateName: states[0]?.name || "",
           ShiftName: shifts[0]?.name || "Morning",
-          Status: "Active",
-          RFID: "RF99221",
-          UniformID: "UNIF-001",
-          SecondaryMobile: "9876543211",
+          CategoryName: categories[0]?.name || "General",
           SecondarySMS: "Yes",
+          IsStateBoard: "No",
+          ProfilePhotoPath: "/photos/1/example.jpg",
           DigitalUniform: "Yes",
-          DigitalNotebook: "No"
+          DigitalNotebook: "No",
+          IsActive: "Yes",
+          IsDeleted: "No",
+          CreatedBy: user.name || user.email,
+          CreatedOn: "2026-05-24 00:00:00",
+          ModifiedBy: user.name || user.email,
+          ModifiedOn: "2026-05-24 00:00:00"
         }
       ];
 
@@ -766,6 +805,30 @@ export default function Students({ user }: { user: UserType }) {
               c.name.toLowerCase().trim() === catName.toLowerCase()
             )?.id : undefined);
 
+            // 12. School Section Resolution
+            const schoolSectionName = getFieldCleanVal(["SchoolSectionName", "SchoolSection", "school_section", "schoolsectionname"]);
+            const schoolSectionId = item.SchoolSectionId || (schoolSectionName ? schoolSections.find((s: any) => 
+              s.name.toLowerCase().trim() === schoolSectionName.toLowerCase()
+            )?.id : undefined);
+
+            // 13. Sub-Caste Resolution
+            const subCasteName = getFieldCleanVal(["SubCasteName", "SubCaste", "sub_caste", "subcastename"]);
+            const subCasteId = item.SubCasteId || (subCasteName ? subCastes.find((sc: any) => 
+              sc.name.toLowerCase().trim() === subCasteName.toLowerCase()
+            )?.id : undefined);
+
+            // 14. City Resolution
+            const cityName = getFieldCleanVal(["CityName", "City", "city", "cityname"]);
+            const cityId = item.CityId || (cityName ? cities.find((c: any) => 
+              c.name.toLowerCase().trim() === cityName.toLowerCase()
+            )?.id : undefined);
+
+            // 15. State Resolution
+            const stateName = getFieldCleanVal(["StateName", "State", "state", "statename"]);
+            const stateId = item.StateId || (stateName ? states.find((s: any) => 
+              s.name.toLowerCase().trim() === stateName.toLowerCase()
+            )?.id : undefined);
+
             // Map standard fields for DB persistence
             const regNum = getFieldCleanVal(["RegistrationNumber", "GRNO", "registration_number", "student_id"]);
             const fName = getFieldCleanVal(["FirstName", "FNAME", "first_name"]);
@@ -774,37 +837,83 @@ export default function Students({ user }: { user: UserType }) {
 
             return {
               registrationNumber: regNum || `REG-${Date.now()}-${index}`,
+              RegistrationNumber: regNum || `REG-${Date.now()}-${index}`,
               name: `${fName} ${mName} ${lName}`.trim() || item.Name || `Student ${index + 1}`,
+              Name: `${fName} ${mName} ${lName}`.trim() || item.Name || `Student ${index + 1}`,
               schoolId: parseInt(schMasterId || item.SchoolId || user.schoolId || "1"),
+              SchoolId: parseInt(schMasterId || item.SchoolId || user.schoolId || "1"),
               rollNumber: parseInt(getFieldCleanVal(["RollNumber", "ROLLNO", "roll_number"]) || "0"),
+              RollNumber: parseInt(getFieldCleanVal(["RollNumber", "ROLLNO", "roll_number"]) || "0"),
+              FirstName: fName,
+              MiddleName: mName,
+              LastName: lName,
               GRNO: regNum,
+              GrNo: regNum,
               GENDER: getFieldCleanVal(["Gender", "GENDER"]) || "Male",
+              Gender: getFieldCleanVal(["Gender", "GENDER"]) || "Male",
               DOB: getFieldCleanVal(["DOB", "DateOfBirth", "dob", "birth_date"]),
+              DateOfBirth: getFieldCleanVal(["DOB", "DateOfBirth", "dob", "birth_date"]),
               MOBILE: getFieldCleanVal(["Mobile", "MOBILE", "contact_number"]),
+              FatherContactNo: getFieldCleanVal(["Mobile", "MOBILE", "contact_number"]),
               EMAIL: getFieldCleanVal(["Email", "EMAIL"]),
+              Email: getFieldCleanVal(["Email", "EMAIL"]),
               ADDRESS: getFieldCleanVal(["Address", "ADDRESS"]),
+              Address: getFieldCleanVal(["Address", "ADDRESS"]),
               MOTHERNAME: getFieldCleanVal(["MotherName", "MOTHERNAME"]),
+              MotherName: getFieldCleanVal(["MotherName", "MOTHERNAME"]),
               aadharcard: getFieldCleanVal(["AadharCard", "aadharcard", "aadhar_card"]),
+              AadharCard: getFieldCleanVal(["AadharCard", "aadharcard", "aadhar_card"]),
               RFID: getFieldCleanVal(["RFID", "CARDID", "card_id"]),
+              Rfid: getFieldCleanVal(["RFID", "CARDID", "card_id"]),
               SHIFTNAME: shiftName,
               
               StandardId: stdMasterId,
+              standardId: stdMasterId,
               SectionId: divMasterId,
+              sectionId: divMasterId,
               ShiftId: shiftMasterId,
+              shiftId: shiftMasterId,
               AcademicYearId: ayMasterId,
+              academicYearId: ayMasterId,
               BloodGroupId: bgMasterId,
+              bloodGroupId: bgMasterId,
               ReligionId: religionMasterId,
+              religionId: religionMasterId,
               HouseId: houseMasterId,
+              houseId: houseMasterId,
               AdmissionTypeId: admissionTypeMasterId,
+              admissionTypeId: admissionTypeMasterId,
               CasteId: casteMasterId,
+              casteId: casteMasterId,
+              SubCasteId: subCasteId,
+              subCasteId: subCasteId,
               CategoryId: categoryMasterId,
+              categoryId: categoryMasterId,
+              CityId: cityId,
+              cityId: cityId,
+              StateId: stateId,
+              stateId: stateId,
+              SchoolSectionId: schoolSectionId,
+              schoolSectionId: schoolSectionId,
+              AdmissionDate: getFieldCleanVal(["AdmissionDate", "admission_date"]),
+              admissionDate: getFieldCleanVal(["AdmissionDate", "admission_date"]),
               
               uniformid: getFieldCleanVal(["UniformID", "uniformid", "uniform_id"]),
+              UniformId: getFieldCleanVal(["UniformID", "uniformid", "uniform_id"]),
               contact2: getFieldCleanVal(["SecondaryMobile", "SecondaryContact", "SecondaryPhone", "contact2"]),
+              MotherContactNo: getFieldCleanVal(["SecondaryMobile", "SecondaryContact", "SecondaryPhone", "contact2"]),
               sms: getFieldCleanVal(["SecondarySMS", "sms"]) === "Yes" || getFieldCleanVal(["SecondarySMS", "sms"]).toLowerCase() === "true",
+              Sms: getFieldCleanVal(["SecondarySMS", "sms"]) === "Yes" || getFieldCleanVal(["SecondarySMS", "sms"]).toLowerCase() === "true",
               digitalUniform: getFieldCleanVal(["DigitalUniform", "digital_uniform", "digitalUniform"]) === "Yes" || getFieldCleanVal(["DigitalUniform", "digital_uniform", "digitalUniform"]).toLowerCase() === "true",
+              DigitalUniform: getFieldCleanVal(["DigitalUniform", "digital_uniform", "digitalUniform"]) === "Yes" || getFieldCleanVal(["DigitalUniform", "digital_uniform", "digitalUniform"]).toLowerCase() === "true",
               digitalNotebook: getFieldCleanVal(["DigitalNotebook", "digital_notebook", "digitalNotebook"]) === "Yes" || getFieldCleanVal(["DigitalNotebook", "digital_notebook", "digitalNotebook"]).toLowerCase() === "true",
+              DigitalNotebook: getFieldCleanVal(["DigitalNotebook", "digital_notebook", "digitalNotebook"]) === "Yes" || getFieldCleanVal(["DigitalNotebook", "digital_notebook", "digitalNotebook"]).toLowerCase() === "true",
+              IsStateBoard: getFieldCleanVal(["IsStateBoard", "isStateBoard"]) === "Yes" || getFieldCleanVal(["IsStateBoard", "isStateBoard"]).toLowerCase() === "true",
+              isStateBoard: getFieldCleanVal(["IsStateBoard", "isStateBoard"]) === "Yes" || getFieldCleanVal(["IsStateBoard", "isStateBoard"]).toLowerCase() === "true",
+              ProfilePhotoPath: getFieldCleanVal(["ProfilePhotoPath", "profile_photo_path"]),
+              profilePhotoPath: getFieldCleanVal(["ProfilePhotoPath", "profile_photo_path"]),
               status: getFieldCleanVal(["Status", "status"]) || "Active",
+              Status: getFieldCleanVal(["Status", "status"]) || "Active",
               CreatedBy: user.name || user.email,
               ModifiedBy: user.name || user.email
             };

@@ -185,41 +185,59 @@ namespace ScanID.Api.Controllers
             var students = await _studentService.GetStudentsForExportAsync(schoolId);
 
             var csv = new System.Text.StringBuilder();
-            // Cleaned Header matching PascalCase naming standards
-            csv.AppendLine("RegistrationNumber,Name,Standard,Section,AcademicYear,RollNumber,GrNo,Gender,DateOfBirth,Category,Religion,Caste,Status,FatherContactNo,Address,MotherName,AadharCard,Rfid,Shift,BloodGroup,House,Sms,UniformId,MotherContactNo,IsStateBoard,DigitalUniform,DigitalNotebook,ProfilePhotoPath");
+            // Header matching database schema column layout, ending with IsActive, IsDeleted, CreatedBy, CreatedOn, ModifiedBy, ModifiedOn
+            csv.AppendLine("Id,RegistrationNumber,Name,SchoolId,Status,RollNumber,FirstName,MiddleName,LastName,GrNo,Gender,DateOfBirth,Address,MotherName,FatherContactNo,MotherContactNo,AadharCard,UniformId,Rfid,SchoolSection,AdmissionDate,Email,Standard,Section,AcademicYear,Caste,SubCaste,Religion,BloodGroup,House,AdmissionType,City,State,Shift,Category,Sms,IsStateBoard,ProfilePhotoPath,DigitalUniform,DigitalNotebook,IsActive,IsDeleted,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn");
 
             foreach (var s in students)
             {
                 var row = new List<string?>
                 {
+                    s.Id.ToString(),
                     s.RegistrationNumber,
                     s.Name,
-                    s.Standard?.Name,
-                    s.Section?.Name,
-                    s.AcademicYear?.Name,
+                    s.SchoolId.ToString(),
+                    s.Status,
                     s.RollNumber.ToString(),
+                    s.FirstName,
+                    s.MiddleName,
+                    s.LastName,
                     s.GrNo,
                     s.Gender,
                     s.DateOfBirth,
-                    s.Category?.Name,
-                    s.Religion?.Name,
-                    s.Caste?.Name,
-                    s.Status,
-                    s.FatherContactNo,
-                    $"\"{s.Address?.Replace("\"", "\"\"")}\"",
+                    $"\"{s.Address?.Replace("\"", \"\"")}\"",
                     s.MotherName,
+                    s.FatherContactNo,
+                    s.MotherContactNo,
                     s.AadharCard,
+                    s.UniformId,
                     s.Rfid,
-                    s.Shift?.Name,
+                    s.SchoolSection?.Name,
+                    s.AdmissionDate,
+                    s.Email,
+                    s.Standard?.Name,
+                    s.Section?.Name,
+                    s.AcademicYear?.Name,
+                    s.Caste?.Name,
+                    s.SubCaste?.Name ?? "",
+                    s.Religion?.Name,
                     s.BloodGroup?.Name,
                     s.House?.Name,
+                    s.AdmissionType?.Name ?? "",
+                    s.City?.Name ?? "",
+                    s.State?.Name ?? "",
+                    s.Shift?.Name,
+                    s.Category?.Name,
                     s.Sms.ToString().ToLower(),
-                    s.UniformId,
-                    s.MotherContactNo,
                     s.IsStateBoard.ToString().ToLower(),
+                    s.ProfilePhotoPath,
                     s.DigitalUniform.ToString().ToLower(),
                     s.DigitalNotebook.ToString().ToLower(),
-                    s.ProfilePhotoPath
+                    s.IsActive.ToString().ToLower(),
+                    s.IsDeleted.ToString().ToLower(),
+                    s.CreatedBy,
+                    s.CreatedOn.ToString("yyyy-MM-dd HH:mm:ss"),
+                    s.ModifiedBy,
+                    s.ModifiedOn.ToString("yyyy-MM-dd HH:mm:ss")
                 };
                 csv.AppendLine(string.Join(",", row));
             }
@@ -234,10 +252,10 @@ namespace ScanID.Api.Controllers
         public IActionResult GetSampleTemplate()
         {
             var csv = new System.Text.StringBuilder();
-            // Required Header reflecting all active table fields in PascalCase
-            csv.AppendLine("RegistrationNumber,Name,SchoolId,StandardId,SectionId,AcademicYearId,RollNumber,GrNo,Gender,DateOfBirth,CategoryId,ReligionId,CasteId,FatherContactNo,Address,MotherName,AadharCard,Rfid,ShiftId,BloodGroupId,HouseId,Sms,UniformId,MotherContactNo,IsStateBoard,DigitalUniform,DigitalNotebook,ProfilePhotoPath");
+            // Required Header reflecting all active table fields in exact sequence ending with auditing columns
+            csv.AppendLine("RegistrationNumber,Name,SchoolId,Status,RollNumber,FirstName,MiddleName,LastName,GrNo,Gender,DateOfBirth,Address,MotherName,FatherContactNo,MotherContactNo,AadharCard,UniformId,Rfid,SchoolSectionName,AdmissionDate,Email,GradeName,SectionName,AcademicYear,CasteName,SubCasteName,ReligionName,BloodGroupName,HouseName,AdmissionType,CityName,StateName,ShiftName,CategoryName,Sms,IsStateBoard,ProfilePhotoPath,DigitalUniform,DigitalNotebook,IsActive,IsDeleted,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn");
             // Example data row with Boolean sms/IsStateBoard mappings
-            csv.AppendLine("REG001,John Doe,1,1,1,1,10,1234,Male,2015-05-15,1,1,1,9876543210,City Main Road,Jane Doe,123456789012,RF-123,1,1,1,true,UniformID,9876543211,false,true,false,/photos/1/example.jpg");
+            csv.AppendLine("REG001,John Doe,1,Active,10,John,M.,Doe,1234,Male,2015-05-15,City Main Road,Jane Doe,9876543210,9876543211,123456789012,UniformID,RF-123,Primary,,john.doe@example.com,1,A,2024-25,General,,Hindu,B+,Red,Regular,,,Morning,General,true,false,/photos/1/example.jpg,true,false,true,false,Admin,2026-05-24 00:00:00,Admin,2026-05-24 00:00:00");
 
             return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "Student_Upload_Template.csv");
         }
