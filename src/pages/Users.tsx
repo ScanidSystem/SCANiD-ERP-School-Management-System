@@ -206,11 +206,13 @@ export default function Users() {
   const handleOpenDialog = (user: User | null = null) => {
     setEditingUser(user);
     if (user) {
+      // Normalize role string to lowercase with spaces stripped to match Select dropdown item option values
+      const normalizedRole = user.role ? user.role.toLowerCase().replace(/\s+/g, '') : "student";
       setFormData({
-        name: user.name,
+        name: user.name || "",
         email: user.email || "",
         username: user.username || "",
-        role: user.role,
+        role: normalizedRole,
         isActive: user.isActive !== false,
         password: "",
         confirmPassword: "",
@@ -249,14 +251,30 @@ export default function Users() {
     }
 
     try {
-      // Prepare standard data payload
+      // Find matching role descriptor dynamically from database roles or fall back gracefully
+      let matchedRole = Array.isArray(roles) ? roles.find(r => r.name.toLowerCase().replace(/\s+/g, '') === formData.role.toLowerCase().replace(/\s+/g, '')) : null;
+      let roleId = matchedRole ? parseInt(matchedRole.id?.toString()) : undefined;
+      let roleName = matchedRole ? matchedRole.name : formData.role;
+
+      // Robust fallback role credentials matching
+      if (!roleId) {
+        if (formData.role === "superadmin") { roleId = 1; roleName = "SuperAdmin"; }
+        else if (formData.role === "admin") { roleId = 2; roleName = "Admin"; }
+        else if (formData.role === "teacher") { roleId = 3; roleName = "Teacher"; }
+        else if (formData.role === "student") { roleId = 4; roleName = "Student"; }
+        else if (formData.role === "parent") { roleId = 5; roleName = "Parent"; }
+      }
+
+      // Prepare standard data payload matching C# model properties
       const payload = {
         name: formData.name,
         email: formData.email,
         username: formData.username,
-        role: formData.role,
+        role: roleName,
+        roleId: roleId,
         isActive: formData.isActive,
-        password: formData.password || undefined,
+        passwordHash: formData.password || undefined,
+        PasswordHash: formData.password || undefined, // Support both casings
         schoolId: formData.schoolId ? parseInt(formData.schoolId) : null
       };
 
@@ -407,6 +425,7 @@ export default function Users() {
                                         {sortBy === 'role' ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
                                     </div>
                                 </TableHead>
+                                <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Assigned School</TableHead>
                                 <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</TableHead>
                                 <TableHead className="text-right pr-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Actions</TableHead>
                             </TableRow>
@@ -415,7 +434,7 @@ export default function Users() {
                             {loading ? (
                                 [...Array(5)].map((_, i) => (
                                     <TableRow key={i} className="animate-pulse border-slate-50 h-20">
-                                        <TableCell colSpan={6} className="px-6">
+                                        <TableCell colSpan={7} className="px-6">
                                             <div className="flex items-center gap-3">
                                                 <div className="h-10 w-10 bg-slate-100 rounded-full" />
                                                 <div className="space-y-2">
@@ -428,7 +447,7 @@ export default function Users() {
                                 ))
                             ) : (!Array.isArray(filteredUsers) || filteredUsers.length === 0) ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-64 text-center">
+                                    <TableCell colSpan={7} className="h-64 text-center">
                                         <div className="flex flex-col items-center justify-center gap-3">
                                             <UsersIcon size={48} className="text-slate-200" />
                                             <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No users found</p>
@@ -454,6 +473,11 @@ export default function Users() {
                                         </TableCell>
                                         <TableCell className="font-mono text-xs font-bold text-slate-600">{user.username}</TableCell>
                                         <TableCell>{getRoleBadge(user.role)}</TableCell>
+                                        <TableCell>
+                                            <span className="text-xs font-bold text-slate-600 bg-slate-100/50 px-2.5 py-1.5 rounded-xl border border-slate-200/50">
+                                                {schools.find(s => s.id?.toString() === user.schoolId?.toString())?.name || "Global / Unassigned"}
+                                            </span>
+                                        </TableCell>
                                         <TableCell>
                                             <Badge variant={user.isActive !== false ? "outline" : "secondary"} className={cn("rounded-lg text-[9px] font-black uppercase tracking-widest", user.isActive !== false ? "text-emerald-600 border-emerald-100 bg-emerald-50" : "text-slate-400")}>
                                                 {user.isActive !== false ? "Active" : "Disabled"}
@@ -515,6 +539,10 @@ export default function Users() {
                                             <div className="flex items-center gap-2 text-xs font-medium text-slate-500 bg-white/50 p-2 rounded-xl border border-slate-100/50">
                                                 <UsersIcon size={14} className="text-slate-400" />
                                                 <span className="truncate">@{user.username}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs font-medium text-slate-500 bg-white/50 p-2 rounded-xl border border-slate-100/50 animate-in fade-in">
+                                                <Shield size={14} className="text-slate-400" />
+                                                <span className="truncate">{schools.find(s => s.id?.toString() === user.schoolId?.toString())?.name || "Global / Unassigned"}</span>
                                             </div>
                                         </div>
 
