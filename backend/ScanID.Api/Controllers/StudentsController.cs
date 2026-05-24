@@ -204,7 +204,7 @@ namespace ScanID.Api.Controllers
                     s.GrNo,
                     s.Gender,
                     s.DateOfBirth,
-                    $"\"{s.Address?.Replace("\"", \"\"")}\"",
+                    s.Address != null ? "\"" + s.Address.Replace("\"", "\"\"") + "\"" : null,
                     s.MotherName,
                     s.FatherContactNo,
                     s.MotherContactNo,
