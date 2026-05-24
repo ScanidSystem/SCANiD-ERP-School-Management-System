@@ -134,7 +134,9 @@ namespace ScanID.Api.Services
                     ("Email", student.Email),
                     ("CityId", student.CityId),
                     ("StateId", student.StateId),
-                    ("IsStateBoard", student.IsStateBoard)
+                    ("IsStateBoard", student.IsStateBoard),
+                    ("DigitalUniform", student.DigitalUniform),
+                    ("DigitalNotebook", student.DigitalNotebook)
                 );
 
                 return student;
@@ -184,7 +186,9 @@ namespace ScanID.Api.Services
                     ("Email", student.Email),
                     ("CityId", student.CityId),
                     ("StateId", student.StateId),
-                    ("IsStateBoard", student.IsStateBoard)
+                    ("IsStateBoard", student.IsStateBoard),
+                    ("DigitalUniform", student.DigitalUniform),
+                    ("DigitalNotebook", student.DigitalNotebook)
                 );
                 return true;
             });
@@ -316,7 +320,9 @@ namespace ScanID.Api.Services
                             ("Email", s.Email),
                             ("CityId", s.CityId),
                             ("StateId", s.StateId),
-                            ("IsStateBoard", s.IsStateBoard)
+                            ("IsStateBoard", s.IsStateBoard),
+                            ("DigitalUniform", s.DigitalUniform),
+                            ("DigitalNotebook", s.DigitalNotebook)
                         );
                     }
 

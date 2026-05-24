@@ -168,6 +168,8 @@ namespace ScanID.Api.Models
         public string? AdmissionDate { get; set; }
         public string? Email { get; set; }
         public bool IsStateBoard { get; set; }
+        public bool DigitalUniform { get; set; }
+        public bool DigitalNotebook { get; set; }
 
         [ForeignKey("SchoolSectionId")]
         public SchoolSection? SchoolSection { get; set; }

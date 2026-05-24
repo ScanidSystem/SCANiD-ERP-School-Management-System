@@ -209,7 +209,9 @@ CREATE PROCEDURE dbo.sp_ManageStudent
     @Email NVARCHAR(255) = NULL,
     @CityId INT = NULL,
     @StateId INT = NULL,
-    @IsStateBoard BIT = 0
+    @IsStateBoard BIT = 0,
+    @DigitalUniform BIT = 0,
+    @DigitalNotebook BIT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -229,12 +231,12 @@ BEGIN
                 RegistrationNumber, Name, SchoolId, StandardId, SectionId, AcademicYearId, RollNumber, 
                 GrNo, Gender, DateOfBirth, CategoryId, ReligionId, CasteId, Status, FatherContactNo, Address, 
                 MotherName, AadharCard, Rfid, ShiftId, BloodGroupId, HouseId, Sms, UniformId,
-                MotherContactNo, ProfilePhotoPath, SchoolSectionId, AdmissionDate, Email, CityId, StateId, IsStateBoard, IsActive, IsDeleted, CreatedOn, ModifiedOn
+                MotherContactNo, ProfilePhotoPath, SchoolSectionId, AdmissionDate, Email, CityId, StateId, IsStateBoard, DigitalUniform, DigitalNotebook, IsActive, IsDeleted, CreatedOn, ModifiedOn
             ) VALUES (
                 @RegistrationNumber, @Name, @SchoolId, @StandardId, @SectionId, @AcademicYearId, @RollNumber,
                 @GrNo, @Gender, @DateOfBirth, @CategoryId, @ReligionId, @CasteId, @Status, @FatherContactNo, @Address,
                 @MotherName, @AadharCard, @Rfid, @ShiftId, @BloodGroupId, @HouseId, @Sms, @UniformId,
-                @MotherContactNo, @ProfilePhotoPath, @SchoolSectionId, @AdmissionDate, @Email, @CityId, @StateId, @IsStateBoard, 1, 0, GETUTCDATE(), GETUTCDATE()
+                @MotherContactNo, @ProfilePhotoPath, @SchoolSectionId, @AdmissionDate, @Email, @CityId, @StateId, @IsStateBoard, @DigitalUniform, @DigitalNotebook, 1, 0, GETUTCDATE(), GETUTCDATE()
             );
             SELECT SCOPE_IDENTITY();
         END
@@ -273,6 +275,8 @@ BEGIN
                 CityId = ISNULL(@CityId, CityId),
                 StateId = ISNULL(@StateId, StateId),
                 IsStateBoard = ISNULL(@IsStateBoard, IsStateBoard),
+                DigitalUniform = ISNULL(@DigitalUniform, DigitalUniform),
+                DigitalNotebook = ISNULL(@DigitalNotebook, DigitalNotebook),
                 ModifiedOn = GETUTCDATE()
             WHERE Id = @Id;
         END

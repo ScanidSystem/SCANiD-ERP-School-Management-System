@@ -186,7 +186,7 @@ namespace ScanID.Api.Controllers
 
             var csv = new System.Text.StringBuilder();
             // Cleaned Header matching PascalCase naming standards
-            csv.AppendLine("RegistrationNumber,Name,Standard,Section,AcademicYear,RollNumber,GrNo,Gender,DateOfBirth,Category,Religion,Caste,Status,FatherContactNo,Address,MotherName,AadharCard,Rfid,Shift,BloodGroup,House,Sms,UniformId,MotherContactNo,IsStateBoard,ProfilePhotoPath");
+            csv.AppendLine("RegistrationNumber,Name,Standard,Section,AcademicYear,RollNumber,GrNo,Gender,DateOfBirth,Category,Religion,Caste,Status,FatherContactNo,Address,MotherName,AadharCard,Rfid,Shift,BloodGroup,House,Sms,UniformId,MotherContactNo,IsStateBoard,DigitalUniform,DigitalNotebook,ProfilePhotoPath");
 
             foreach (var s in students)
             {
@@ -217,6 +217,8 @@ namespace ScanID.Api.Controllers
                     s.UniformId,
                     s.MotherContactNo,
                     s.IsStateBoard.ToString().ToLower(),
+                    s.DigitalUniform.ToString().ToLower(),
+                    s.DigitalNotebook.ToString().ToLower(),
                     s.ProfilePhotoPath
                 };
                 csv.AppendLine(string.Join(",", row));
@@ -233,9 +235,9 @@ namespace ScanID.Api.Controllers
         {
             var csv = new System.Text.StringBuilder();
             // Required Header reflecting all active table fields in PascalCase
-            csv.AppendLine("RegistrationNumber,Name,SchoolId,StandardId,SectionId,AcademicYearId,RollNumber,GrNo,Gender,DateOfBirth,CategoryId,ReligionId,CasteId,FatherContactNo,Address,MotherName,AadharCard,Rfid,ShiftId,BloodGroupId,HouseId,Sms,UniformId,MotherContactNo,IsStateBoard,ProfilePhotoPath");
+            csv.AppendLine("RegistrationNumber,Name,SchoolId,StandardId,SectionId,AcademicYearId,RollNumber,GrNo,Gender,DateOfBirth,CategoryId,ReligionId,CasteId,FatherContactNo,Address,MotherName,AadharCard,Rfid,ShiftId,BloodGroupId,HouseId,Sms,UniformId,MotherContactNo,IsStateBoard,DigitalUniform,DigitalNotebook,ProfilePhotoPath");
             // Example data row with Boolean sms/IsStateBoard mappings
-            csv.AppendLine("REG001,John Doe,1,1,1,1,10,1234,Male,2015-05-15,1,1,1,9876543210,City Main Road,Jane Doe,123456789012,RF-123,1,1,1,true,UniformID,9876543211,false,/photos/1/example.jpg");
+            csv.AppendLine("REG001,John Doe,1,1,1,1,10,1234,Male,2015-05-15,1,1,1,9876543210,City Main Road,Jane Doe,123456789012,RF-123,1,1,1,true,UniformID,9876543211,false,true,false,/photos/1/example.jpg");
 
             return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "Student_Upload_Template.csv");
         }

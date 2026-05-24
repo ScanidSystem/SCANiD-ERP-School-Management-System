@@ -61,6 +61,21 @@ I have added a `.vscode` folder with `launch.json` and `tasks.json` to make debu
    - If you already ran `dotnet run`, use the **.NET Core Attach** configuration.
 
 ## Troubleshooting
+- **C# Namespaces showing red or "Microsoft.EntityFrameworkCore does not exist" in VS Code**:
+  If your VS Code file editor reports that namespaces like `EntityFrameworkCore`, `DbUpdateConcurrencyException`, or `Swashbuckle` do not exist, this is because VS Code's C# IntelliSense extension has not restored your local NuGet dependencies.
+  To fix this instantly:
+  1. Open a terminal in `/backend/ScanID.Api/` and execute:
+     ```bash
+     dotnet restore
+     ```
+  2. Open the VS Code Command Palette (`Ctrl+Shift+P` on Windows/Linux or `Cmd+Shift+P` on macOS).
+  3. Search for and click: **C#: Restart IntelliSense Server** (or **OmniSharp: Restart OmniSharp**).
+  4. Build the project locally with:
+     ```bash
+     dotnet build
+     ```
+  This will resolve all assembly references and clear all IDE problems in your editor.
+
 - **DirectoryNotFoundException (wwwroot)**: If you get an error saying `wwwroot` is missing, create an empty folder named `wwwroot` in the `/backend/ScanID.Api/` directory. ASP.NET Core expects this folder for static assets even if you aren't serving any yet.
 - **CORS Errors**: If you see CORS errors in the browser, ensure your current React URL (e.g., `http://localhost:3000` or `http://localhost:4173`) is listed in your .NET `Program.cs` under `.WithOrigins(...)`.
 - **Backend Port & URL**: 

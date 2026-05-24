@@ -99,4 +99,17 @@ This document records the exact changes, the root causes identified, and the fix
   3. **Attendance Dropdowns Alignment**: Refactored `Attendance.tsx` page to bind Select values to database primary IDs (`std.id.toString()`) instead of text names. This makes sure that the exact standard ID and section ID are parsed and transmitted to the server.
   4. **Active Re-Fetch Hook**: Added `selectedStandard` and `selectedSection` state dependencies to the student query hook in `Attendance.tsx`, which triggers automatic class roster reload whenever Standard or Section is selected in the UI.
 
+---
+
+## 10. Issue: Digital Uniform & Digital Notebook Backend Integration
+- **Root Cause**: While "Digital Uniform" and "Digital Notebook" UI checkbox states and Excel parsing maps were added on the frontend, the physical table schema, stored procedures, ADO.NET query parameter maps, custom CSV Export, and Bulk Upload Sample-Template endpoints in the .NET Core backend had no corresponding handlers, which meant student preferences were not persisted to the database.
+- **Remediation**:
+  1. **SQL Database Schema Expansion**: Added `DigitalUniform` and `DigitalNotebook` columns of type `BIT` (default `0`) to the `Students` table in `/database.sql`.
+  2. **Incremental Migration Scripting**: Appended self-healing migration parameters inside `/incremental_database_updates.sql` that conditionally run a DDL `ALTER TABLE` to append the columns and rebuild the `sp_ManageStudent` stored procedure safely.
+  3. **Stored Procedure Synchronization**: Updated the parameters, Insert mapping, and Update mappings of the `sp_ManageStudent` stored procedure in both `/database.sql` and `/backend/ScanID.Api/incremental_stored_procedures.sql` to accept and write `@DigitalUniform` and `@DigitalNotebook` BIT fields.
+  4. **C# Model Definition**: Declared the corresponding `DigitalUniform` and `DigitalNotebook` properties securely as `bool` types inside the `Student` entity in `/backend/ScanID.Api/Models/Models.cs`.
+  5. **ADO.NET parameter Mapping**: Updated parameter queries in `/backend/ScanID.Api/Services/StudentService.cs` (inside `CreateStudentAsync`, `UpdateStudentAsync`, and `CreateBulkStudentsAsync`) to transmit values to the SQL Server database.
+  6. **CSV Export Actions**: Extended `/backend/ScanID.Api/Controllers/StudentsController.cs` to add `DigitalUniform` and `DigitalNotebook` columns to CSV student list exports, and included them as boolean value examples in the student bulk upload master template CSV.
+
+
 
