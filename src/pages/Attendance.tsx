@@ -76,8 +76,8 @@ export default function Attendance({ user }: { user: any }) {
   const [standardsMaster, setStandardsMaster] = useState<any[]>([]);
   const [sectionsMaster, setSectionsMaster] = useState<any[]>([]);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>(user.schoolId?.toString() || "");
-  const [selectedStandard, setSelectedStandard] = useState<string>("10th");
-  const [selectedSection, setSelectedSection] = useState<string>("A");
+  const [selectedStandard, setSelectedStandard] = useState<string>("");
+  const [selectedSection, setSelectedSection] = useState<string>("");
 
   // -----------------------------------------
   // State for Manual Attendance Upload Tab
@@ -124,6 +124,12 @@ export default function Attendance({ user }: { user: any }) {
         if (user.role === "superadmin" && !selectedSchoolId && schoolData.length > 0) {
           setSelectedSchoolId(schoolData[0].id.toString());
         }
+        if (standardData.length > 0 && !selectedStandard) {
+          setSelectedStandard(standardData[0].id.toString());
+        }
+        if (sectionData.length > 0 && !selectedSection) {
+          setSelectedSection(sectionData[0].id.toString());
+        }
       } catch (error) {
         console.error("Failed to fetch masters", error);
       }
@@ -155,9 +161,13 @@ export default function Attendance({ user }: { user: any }) {
         const academicYearIdToUse = parseSafeInt(user.academicYearId);
         const formattedDate = format(date, "yyyy-MM-dd");
 
+        const stdId = selectedStandard && selectedStandard !== "all" ? parseSafeInt(selectedStandard) : undefined;
+        const sectId = selectedSection && selectedSection !== "all" ? parseSafeInt(selectedSection) : undefined;
+
         // Execute in parallel to keep application fast
         const [studentsRes, attendanceRes] = await Promise.all([
-          apiService.getStudents(schoolIdToUse, academicYearIdToUse),
+          // @ts-ignore
+          apiService.getStudents(schoolIdToUse, academicYearIdToUse, { standardId: stdId, sectionId: sectId }),
           apiService.getAttendance(formattedDate, schoolIdToUse, academicYearIdToUse)
         ]);
 
@@ -189,7 +199,7 @@ export default function Attendance({ user }: { user: any }) {
       }
     };
     fetchStudentsAndAttendance();
-  }, [user.schoolId, user.academicYearId, user.role, selectedSchoolId, date]);
+  }, [user.schoolId, user.academicYearId, user.role, selectedSchoolId, date, selectedStandard, selectedSection]);
 
   // Update offline UI state
   const updateStatus = (id: string, status: string) => {
@@ -533,13 +543,13 @@ export default function Attendance({ user }: { user: any }) {
                 <Select value={selectedStandard} onValueChange={(val) => setSelectedStandard(val || "")}>
                   <SelectTrigger className="border-slate-200 bg-slate-50/50 font-bold rounded-xl h-11">
                     <SelectValue placeholder="Select Standard">
-                      {selectedStandard || undefined}
+                      {standardsMaster.find(std => std.id.toString() === selectedStandard)?.name || undefined}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl shadow-2xl border-slate-200 p-2">
                     <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Standard</SelectItem>
                     {Array.isArray(standardsMaster) && standardsMaster.map(std => (
-                      <SelectItem key={std.id} value={std.name} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{std.name}</SelectItem>
+                      <SelectItem key={std.id} value={std.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{std.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -551,13 +561,13 @@ export default function Attendance({ user }: { user: any }) {
                 <Select value={selectedSection} onValueChange={(val) => setSelectedSection(val || "")}>
                   <SelectTrigger className="border-slate-200 bg-slate-50/50 font-bold rounded-xl h-11">
                     <SelectValue placeholder="Select Division">
-                      {selectedSection ? `Division ${selectedSection}` : undefined}
+                      {selectedSection ? `Division ${sectionsMaster.find(sec => sec.id.toString() === selectedSection)?.name || ""}` : undefined}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl shadow-2xl border-slate-200 p-2">
                     <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Division</SelectItem>
                     {Array.isArray(sectionsMaster) && sectionsMaster.map(sec => (
-                      <SelectItem key={sec.id} value={sec.name} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Division {sec.name}</SelectItem>
+                      <SelectItem key={sec.id} value={sec.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Division {sec.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

@@ -41,8 +41,8 @@ namespace ScanID.Api.Controllers
         /// <param name="sortBy">Field to sort by (e.g., name, grno, roll, standard, section).</param>
         /// <param name="sortOrder">Sort order direction: 'asc' or 'desc'.</param>
         /// <param name="search">Search query to match name, grno, standard, section, or roll number.</param>
-        /// <param name="standard">Specific standard/grade to filter by.</param>
-        /// <param name="section">Specific section/division to filter by.</param>
+        /// <param name="standardId">Specific standard/grade ID to filter by.</param>
+        /// <param name="sectionId">Specific section/division ID to filter by.</param>
         /// <returns>A paginated envelope containing student records matching the filters.</returns>
         [HttpGet]
         public async Task<ActionResult> GetStudents(
@@ -53,8 +53,8 @@ namespace ScanID.Api.Controllers
             [FromQuery] string? sortBy = null,
             [FromQuery] string sortOrder = "asc",
             [FromQuery] string? search = null,
-            [FromQuery] string? standard = null,
-            [FromQuery] string? section = null)
+            [FromQuery] int? standardId = null,
+            [FromQuery] int? sectionId = null)
         {
             // Retrieve all raw students for the given school and academic year from backend SQL DB repository
             var studentsList = await _studentService.GetStudentsAsync(schoolId, academicYearId);
@@ -77,15 +77,15 @@ namespace ScanID.Api.Controllers
             }
 
             // 2. Apply academic Standard (Grade) filters
-            if (!string.IsNullOrWhiteSpace(standard) && !standard.Equals("all", StringComparison.OrdinalIgnoreCase))
+            if (standardId.HasValue)
             {
-                query = query.Where(s => s.Standard != null && s.Standard.Name != null && s.Standard.Name.Equals(standard, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(s => s.StandardId == standardId.Value);
             }
 
             // 3. Apply division Section filters
-            if (!string.IsNullOrWhiteSpace(section) && !section.Equals("all", StringComparison.OrdinalIgnoreCase))
+            if (sectionId.HasValue)
             {
-                query = query.Where(s => s.Section != null && s.Section.Name != null && s.Section.Name.Equals(section, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(s => s.SectionId == sectionId.Value);
             }
 
             // 4. Apply high-performance dynamic sorting

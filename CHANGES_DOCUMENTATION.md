@@ -88,3 +88,15 @@ This document records the exact changes, the root causes identified, and the fix
   5. **Bulk Upload and Export**: Integrated "Digital Uniform", "Digital Notebook", and "Uniform ID" fields securely in sample template spreadsheet headers/values, XLSX file row mappings, and custom search filter standard query parameters.
   6. **API Query Alignment**: Standardized query filters in `/api/students` (backend) and `Students.tsx` (frontend) to filter by standardId and sectionId integer IDs instead of string labels.
 
+---
+
+## 9. Issue: C# Backend Errors and ID-Based Standard/Section API Filtering
+- **Root Cause 1 (C# Namespace Errors)**: The C# compilation errors (e.g., `EntityFrameworkCore` namespace not found) displayed in VS Code arise because the .NET Core system has not yet performed a NuGet package restore locally on the developer's computer.
+- **Root Cause 2 (String instead of ID in APIs)**: The `GetStudents` endpoint inside `/backend/ScanID.Api/Controllers/StudentsController.cs` and the Attendance page dropdown filters originally relied on text strings (e.g., "1st", "A") instead of safe, structured master foreign key IDs.
+- **Remediation**:
+  1. **C# Error Correction Instructions**: Documented the localized requirements for restoring NuGet caches in `LOCAL_SETUP.md`. Running `dotnet restore` resolves missing EF Core, SQL Client, and Swagger references in the editor immediately.
+  2. **API Refactoring**: Changed the query parameters in `/backend/ScanID.Api/Controllers/StudentsController.cs` from strings `standard` and `section` to integers `standardId` and `sectionId`. Modified the database query logic to carry out filtering using direct integer identity matches (`s.StandardId == standardId.Value` and `s.SectionId == sectionId.Value`).
+  3. **Attendance Dropdowns Alignment**: Refactored `Attendance.tsx` page to bind Select values to database primary IDs (`std.id.toString()`) instead of text names. This makes sure that the exact standard ID and section ID are parsed and transmitted to the server.
+  4. **Active Re-Fetch Hook**: Added `selectedStandard` and `selectedSection` state dependencies to the student query hook in `Attendance.tsx`, which triggers automatic class roster reload whenever Standard or Section is selected in the UI.
+
+
