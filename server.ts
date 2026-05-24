@@ -427,8 +427,8 @@ async function startServer() {
   app.get("/api/students", (req, res) => {
     const schoolId = req.query.schoolId ? parseInt(req.query.schoolId as string) : null;
     const academicYearId = req.query.academicYearId ? parseInt(req.query.academicYearId as string) : null;
-    const standard = req.query.standard as string;
-    const section = req.query.section as string;
+    const standardId = req.query.standardId ? parseInt(req.query.standardId as string) : null;
+    const sectionId = req.query.sectionId ? parseInt(req.query.sectionId as string) : null;
     
     let filtered = [...students];
     if (schoolId) {
@@ -437,11 +437,11 @@ async function startServer() {
     if (academicYearId) {
       filtered = filtered.filter(s => s.academicYearId === academicYearId || s.academicyear === academicYearId.toString());
     }
-    if (standard) {
-      filtered = filtered.filter(s => s.standard === standard || s.STD === standard);
+    if (standardId) {
+      filtered = filtered.filter(s => s.standardId === standardId || s.StandardId === standardId);
     }
-    if (section) {
-      filtered = filtered.filter(s => s.section === section || s.DIV === section);
+    if (sectionId) {
+      filtered = filtered.filter(s => s.sectionId === sectionId || s.SectionId === sectionId);
     }
     
     res.json(applySortingAndPagination(filtered, req.query));
@@ -465,6 +465,8 @@ async function startServer() {
       motherContactNo: body.motherContactNo || body.contact2 || "",
       sms: body.sms === 'true' || body.sms === true || body.Sms === true || false,
       isStateBoard: body.isStateBoard === 'true' || body.isStateBoard === true || body.IsStateBoard === true || false,
+      digitalUniform: body.digitalUniform === 'true' || body.digitalUniform === true || body.DigitalUniform === true || false,
+      digitalNotebook: body.digitalNotebook === 'true' || body.digitalNotebook === true || body.DigitalNotebook === true || false,
       schoolId: body.schoolId ? parseInt(body.schoolId) : null,
       standardId: body.standardId ? parseInt(body.standardId) : null,
       sectionId: body.sectionId ? parseInt(body.sectionId) : null,
@@ -565,6 +567,8 @@ async function startServer() {
         motherContactNo: body.motherContactNo || body.contact2 || students[index].motherContactNo,
         sms: body.sms === 'true' || body.sms === true || body.Sms === true || students[index].sms,
         isStateBoard: body.isStateBoard === 'true' || body.isStateBoard === true || body.IsStateBoard === true || students[index].isStateBoard,
+        digitalUniform: body.digitalUniform === 'true' || body.digitalUniform === true || body.DigitalUniform === true || students[index].digitalUniform || false,
+        digitalNotebook: body.digitalNotebook === 'true' || body.digitalNotebook === true || body.DigitalNotebook === true || students[index].digitalNotebook || false,
         fullName: body.fullName || `${body.firstName || body.FNAME || students[index].firstName || ""} ${body.lastName || body.LNAME || students[index].lastName || ""}`.trim()
       };
       students[index] = updated;

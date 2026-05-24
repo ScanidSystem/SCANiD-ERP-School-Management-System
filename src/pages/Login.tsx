@@ -71,6 +71,23 @@ export default function Login({ onLogin }: LoginProps) {
     }
   }, [fetchLookups]);
 
+  // Automatically update the role state on the basis of the username entered
+  useEffect(() => {
+    if (!username) return;
+    const uname = username.toLowerCase().trim();
+    if (uname === "superadmin" || uname.includes("super")) {
+      setRole("superadmin");
+    } else if (uname.includes("teacher")) {
+      setRole("teacher");
+    } else if (uname.includes("student")) {
+      setRole("student");
+    } else if (uname.includes("parent")) {
+      setRole("parent");
+    } else {
+      setRole("admin");
+    }
+  }, [username]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -398,7 +415,8 @@ export default function Login({ onLogin }: LoginProps) {
                 </div>
               </div>
               
-              <div className="space-y-3 pt-2">
+              {/* Temporarily hidden as per request. Roles are auto-detected by username or handled during validation */}
+              <div className="hidden space-y-3 pt-2" aria-hidden="true">
                 <Label className="text-slate-300 text-xs">Select Role</Label>
                 <div className="grid grid-cols-3 gap-2">
                   {(["superadmin", "admin", "teacher"] as Role[]).map((r) => (
@@ -445,7 +463,7 @@ export default function Login({ onLogin }: LoginProps) {
           )}
         </CardContent>
         <CardFooter className="flex flex-col gap-4 text-center">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-400 font-medium tracking-wide">
             Secure, Encypted & Scalable School Management Solutions
           </p>
         </CardFooter>

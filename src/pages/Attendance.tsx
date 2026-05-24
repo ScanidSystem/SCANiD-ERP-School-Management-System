@@ -529,15 +529,15 @@ export default function Attendance({ user }: { user: any }) {
 
               {/* Standards Code */}
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-slate-400 tracking-widest ml-1">Academic Grade</label>
+                <label className="text-xs font-bold uppercase text-slate-400 tracking-widest ml-1">Standard</label>
                 <Select value={selectedStandard} onValueChange={(val) => setSelectedStandard(val || "")}>
                   <SelectTrigger className="border-slate-200 bg-slate-50/50 font-bold rounded-xl h-11">
-                    <SelectValue placeholder="Select Academic Standard">
+                    <SelectValue placeholder="Select Standard">
                       {selectedStandard || undefined}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl shadow-2xl border-slate-200 p-2">
-                    <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Standard</SelectItem>
+                    <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Standard</SelectItem>
                     {Array.isArray(standardsMaster) && standardsMaster.map(std => (
                       <SelectItem key={std.id} value={std.name} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{std.name}</SelectItem>
                     ))}
@@ -547,17 +547,17 @@ export default function Attendance({ user }: { user: any }) {
 
               {/* Divisions Code */}
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-slate-400 tracking-widest ml-1">Division/Section</label>
+                <label className="text-xs font-bold uppercase text-slate-400 tracking-widest ml-1">Division</label>
                 <Select value={selectedSection} onValueChange={(val) => setSelectedSection(val || "")}>
                   <SelectTrigger className="border-slate-200 bg-slate-50/50 font-bold rounded-xl h-11">
-                    <SelectValue placeholder="Select Class Section">
-                      {selectedSection ? `Section ${selectedSection}` : undefined}
+                    <SelectValue placeholder="Select Division">
+                      {selectedSection ? `Division ${selectedSection}` : undefined}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl shadow-2xl border-slate-200 p-2">
-                    <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Class Section</SelectItem>
+                    <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Division</SelectItem>
                     {Array.isArray(sectionsMaster) && sectionsMaster.map(sec => (
-                      <SelectItem key={sec.id} value={sec.name} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Section {sec.name}</SelectItem>
+                      <SelectItem key={sec.id} value={sec.name} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Division {sec.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

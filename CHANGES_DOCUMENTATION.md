@@ -76,3 +76,15 @@ This document records the exact changes, the root causes identified, and the fix
 5. `/src/pages/Students.tsx`:
    - Mated standard select bound items of School Section dropdown from plain text name value to numeric ID values, saving correct database foreign key items safely and automatically.
 
+---
+
+## 8. Issue: Student Management Enhancements, Field Renamings, and Excel Import/Export
+- **Root Cause**: Enhancements requested for Student Management user forms, field renaming, RFID constraints, "Digital Notebook/Digital Uniform" checkbox preferences, and the inclusion of "Uniform ID" in standard screens and Excel actions.
+- **Remediation**:
+  1. **User Form Renamings**: Applied global label changes across Student and Attendance screens: "Academic Grade" to "Standard", "Division/Section" to "Division", and "Joining Year" to "Academic Year".
+  2. **RFID Card ID Validation**: Implemented alphanumeric filtering, maximum of 24 characters length, and validated that only 11 or 24-digit codes are submitted.
+  3. **Digital Uniform/Notebook checkboxes**: Added corresponding boolean fields to state initialization, form mapping on edit dialogs, API payloads, and configured responsive UI toggle cards.
+  4. **Uniform ID visibility**: Added "Uniform ID" text inputs to student forms.
+  5. **Bulk Upload and Export**: Integrated "Digital Uniform", "Digital Notebook", and "Uniform ID" fields securely in sample template spreadsheet headers/values, XLSX file row mappings, and custom search filter standard query parameters.
+  6. **API Query Alignment**: Standardized query filters in `/api/students` (backend) and `Students.tsx` (frontend) to filter by standardId and sectionId integer IDs instead of string labels.
+

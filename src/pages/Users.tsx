@@ -83,12 +83,16 @@ export default function Users() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [schools, setSchools] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     username: "",
     role: "student",
-    isActive: true
+    isActive: true,
+    password: "",
+    confirmPassword: "",
+    schoolId: ""
   });
 
   const fetchData = useCallback(async () => {
@@ -180,6 +184,15 @@ export default function Users() {
     fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    apiService.getSchools()
+      .then(res => {
+        const schoolData = res.data && Array.isArray(res.data) ? res.data : (res.data && Array.isArray(res.data.data) ? res.data.data : []);
+        setSchools(schoolData);
+      })
+      .catch(err => console.error("Error fetching schools in Users page:", err));
+  }, []);
+
   const handleSort = (key: string) => {
     if (sortBy === key) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -198,7 +211,10 @@ export default function Users() {
         email: user.email || "",
         username: user.username || "",
         role: user.role,
-        isActive: user.isActive !== false
+        isActive: user.isActive !== false,
+        password: "",
+        confirmPassword: "",
+        schoolId: user.schoolId?.toString() || ""
       });
     } else {
       setFormData({
@@ -206,7 +222,10 @@ export default function Users() {
         email: "",
         username: "",
         role: "student",
-        isActive: true
+        isActive: true,
+        password: "",
+        confirmPassword: "",
+        schoolId: ""
       });
     }
     setIsDialogOpen(true);
@@ -218,17 +237,39 @@ export default function Users() {
         return;
     }
 
+    // Passwords validation
+    if (!editingUser && !formData.password) {
+        toast.error("Password is required for new users");
+        return;
+    }
+
+    if (formData.password && formData.password !== formData.confirmPassword) {
+        toast.error("Passwords do not match");
+        return;
+    }
+
     try {
+      // Prepare standard data payload
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        username: formData.username,
+        role: formData.role,
+        isActive: formData.isActive,
+        password: formData.password || undefined,
+        schoolId: formData.schoolId ? parseInt(formData.schoolId) : null
+      };
+
       if (editingUser) {
         const userId = parseSafeInt(editingUser.id);
         if (userId === undefined) {
           toast.error("Invalid user ID for update");
           return;
         }
-        await apiService.updateUser(userId, { ...formData, id: userId });
+        await apiService.updateUser(userId, { ...payload, id: userId });
         toast.success("User updated successfully");
       } else {
-        await apiService.createUser(formData);
+        await apiService.createUser(payload);
         toast.success("User created successfully");
       }
       setIsDialogOpen(false);
@@ -612,7 +653,7 @@ export default function Users() {
                         </Select>
                     </div>
                 </div>
-                <div className="space-y-2">
+                 <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Email Contact</Label>
                     <Input 
                         placeholder="john@example.com"
@@ -621,6 +662,47 @@ export default function Users() {
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                     />
                 </div>
+                
+                {/* School dropdown */}
+                <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Assigned School Branch</Label>
+                    <Select value={formData.schoolId} onValueChange={(v) => setFormData({...formData, schoolId: v})}>
+                        <SelectTrigger className="h-12 rounded-xl bg-slate-50 border-slate-100 font-bold">
+                            <SelectValue placeholder="Select Assigned School" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl shadow-xl max-h-60">
+                            <SelectItem value="" className="italic text-slate-400">Select Assigned School</SelectItem>
+                            {Array.isArray(schools) && schools.map((s) => (
+                                <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* Password and Confirm Password fields */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Password</Label>
+                        <Input 
+                            type="password"
+                            placeholder={editingUser ? "Leave blank" : "••••••••"}
+                            className="h-12 rounded-xl bg-slate-50 border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all font-bold"
+                            value={formData.password}
+                            onChange={(e) => setFormData({...formData, password: e.target.value})}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Confirm Password</Label>
+                        <Input 
+                            type="password"
+                            placeholder={editingUser ? "Leave blank" : "••••••••"}
+                            className="h-12 rounded-xl bg-slate-50 border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all font-bold"
+                            value={formData.confirmPassword}
+                            onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                        />
+                    </div>
+                </div>
+
                 <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <input 
                         type="checkbox" 

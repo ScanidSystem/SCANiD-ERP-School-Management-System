@@ -189,8 +189,8 @@ export default function Students({ user }: { user: UserType }) {
           sortOrder,
           search,
           // @ts-ignore - adding filters to params
-          standard: standardFilter === "all" ? undefined : standardFilter,
-          section: sectionFilter === "all" ? undefined : sectionFilter
+          standardId: standardFilter === "all" ? undefined : parseSafeInt(standardFilter),
+          sectionId: sectionFilter === "all" ? undefined : parseSafeInt(sectionFilter)
         }
       );
       
@@ -302,12 +302,12 @@ export default function Students({ user }: { user: UserType }) {
         
         // Standard (Grade) Filter
         if (standardFilter !== "all") {
-          filtered = filtered.filter(item => item.standard === standardFilter);
+          filtered = filtered.filter(item => (item.standardId || item.StandardId || "").toString() === standardFilter);
         }
         
         // Section Filter
         if (sectionFilter !== "all") {
-          filtered = filtered.filter(item => item.section === sectionFilter);
+          filtered = filtered.filter(item => (item.sectionId || item.SectionId || "").toString() === sectionFilter);
         }
         
         // Sort
@@ -385,7 +385,7 @@ export default function Students({ user }: { user: UserType }) {
   
   const initialFormState = {
     registrationNumber: "",
-    schoolId: user.schoolId?.toString() || "",
+    schoolId: (user.schoolId && user.schoolId !== "all") ? user.schoolId.toString() : "",
     FNAME: "",
     MNAME: "",
     LNAME: "",
@@ -413,6 +413,8 @@ export default function Students({ user }: { user: UserType }) {
     contact2: "",
     sms: false,
     isStateBoard: false,
+    digitalUniform: false,
+    digitalNotebook: false,
     ProfilePhotoPath: "",
     SchoolSectionId: "",
     AdmissionDate: "",
@@ -470,6 +472,8 @@ export default function Students({ user }: { user: UserType }) {
       contact2: student.contact2 || student.motherContactNo || "",
       sms: student.sms === "true" || student.sms === true,
       isStateBoard: student.isStateBoard === "true" || student.isStateBoard === true,
+      digitalUniform: student.digitalUniform === "true" || student.digitalUniform === true || student.DigitalUniform === "true" || student.DigitalUniform === true,
+      digitalNotebook: student.digitalNotebook === "true" || student.digitalNotebook === true || student.DigitalNotebook === "true" || student.DigitalNotebook === true,
       ProfilePhotoPath: student.profilePhotoPath || student.ProfilePhotoPath || "",
       SchoolSectionId: student.schoolSectionId?.toString() || (student.schoolSection ? schoolSections.find((s: any) => s.name === student.schoolSection)?.id?.toString() : "") || "",
       AdmissionDate: student.admissionDate || student.AdmissionDate || "",
@@ -507,7 +511,10 @@ export default function Students({ user }: { user: UserType }) {
         "Sub-Caste": s.subcaste || s.subCasteId ? (subCastes.find(sc => sc.id?.toString() === (s.subcaste || s.subCasteId)?.toString())?.name || s.subcaste || s.subCasteId) : "",
         "Academic Year": s.academicyear || s.joiningAcademicYearId ? (academicYears.find(ay => ay.id?.toString() === (s.academicyear || s.joiningAcademicYearId)?.toString())?.name || s.academicyear || s.joiningAcademicYearId) : "",
         "Category": s.CATEGORY || s.categoryId ? (categories.find(c => c.id?.toString() === (s.CATEGORY || s.categoryId)?.toString())?.name || s.CATEGORY || s.categoryId) : "",
-        "RFID": s.RFID,
+        "RFID": s.RFID || s.rfid,
+        "Uniform ID": s.uniformid || s.uniformId,
+        "Digital Uniform": s.digitalUniform === "true" || s.digitalUniform === true || s.DigitalUniform === "true" || s.DigitalUniform === true ? "Yes" : "No",
+        "Digital Notebook": s.digitalNotebook === "true" || s.digitalNotebook === true || s.DigitalNotebook === "true" || s.DigitalNotebook === true ? "Yes" : "No",
         "Shift Name": s.SHIFTNAME,
         "Status": s.status
       }));
@@ -595,7 +602,8 @@ export default function Students({ user }: { user: UserType }) {
         "GradeName", "SectionName", "BloodGroupName", "HouseName", 
         "AdmissionType", "ReligionName", "CasteName", "SubCasteName", 
         "CategoryName", "AcademicYear", "ShiftName", "Status",
-        "RFID", "UniformID", "SecondaryMobile", "SecondarySMS"
+        "RFID", "UniformID", "SecondaryMobile", "SecondarySMS",
+        "DigitalUniform", "DigitalNotebook"
       ];
       
       const sampleData = [
@@ -628,7 +636,9 @@ export default function Students({ user }: { user: UserType }) {
           RFID: "RF99221",
           UniformID: "UNIF-001",
           SecondaryMobile: "9876543211",
-          SecondarySMS: "Yes"
+          SecondarySMS: "Yes",
+          DigitalUniform: "Yes",
+          DigitalNotebook: "No"
         }
       ];
 
@@ -791,7 +801,9 @@ export default function Students({ user }: { user: UserType }) {
               
               uniformid: getFieldCleanVal(["UniformID", "uniformid", "uniform_id"]),
               contact2: getFieldCleanVal(["SecondaryMobile", "SecondaryContact", "SecondaryPhone", "contact2"]),
-              sms: getFieldCleanVal(["SecondarySMS", "sms"]),
+              sms: getFieldCleanVal(["SecondarySMS", "sms"]) === "Yes" || getFieldCleanVal(["SecondarySMS", "sms"]).toLowerCase() === "true",
+              digitalUniform: getFieldCleanVal(["DigitalUniform", "digital_uniform", "digitalUniform"]) === "Yes" || getFieldCleanVal(["DigitalUniform", "digital_uniform", "digitalUniform"]).toLowerCase() === "true",
+              digitalNotebook: getFieldCleanVal(["DigitalNotebook", "digital_notebook", "digitalNotebook"]) === "Yes" || getFieldCleanVal(["DigitalNotebook", "digital_notebook", "digitalNotebook"]).toLowerCase() === "true",
               status: getFieldCleanVal(["Status", "status"]) || "Active",
               CreatedBy: user.name || user.email,
               ModifiedBy: user.name || user.email
@@ -1010,6 +1022,15 @@ export default function Students({ user }: { user: UserType }) {
     checkField("MOBILE", !newStudentFormData.MOBILE?.trim() || !/^\d{10}$/.test(newStudentFormData.MOBILE.replace(/\D/g, "")));
     checkField("ADDRESS", !newStudentFormData.ADDRESS?.trim());
 
+    // Validate RFID Card ID length if entered (must be 11 or 24 alphanumeric digits)
+    if (newStudentFormData.RFID && newStudentFormData.RFID.trim() !== "") {
+      const rfidLen = newStudentFormData.RFID.trim().length;
+      if (rfidLen !== 11 && rfidLen !== 24) {
+        toast.error("RFID CARD ID must be either 11 or 24 alphanumeric characters.");
+        return;
+      }
+    }
+
     setFormErrors(newErrors);
 
     if (firstErrorField) {
@@ -1049,6 +1070,8 @@ export default function Students({ user }: { user: UserType }) {
         UniformId: newStudentFormData.uniformid,
         Sms: !!newStudentFormData.sms,
         IsStateBoard: !!newStudentFormData.isStateBoard,
+        DigitalUniform: !!newStudentFormData.digitalUniform,
+        DigitalNotebook: !!newStudentFormData.digitalNotebook,
 
         // Legacy database fields mapping for safe proxying/SP support
         STUDENTID: newStudentFormData.registrationNumber,
@@ -1067,6 +1090,8 @@ export default function Students({ user }: { user: UserType }) {
         contact2: newStudentFormData.contact2,
         sms: !!newStudentFormData.sms,
         isStateBoard: !!newStudentFormData.isStateBoard,
+        digitalUniform: !!newStudentFormData.digitalUniform,
+        digitalNotebook: !!newStudentFormData.digitalNotebook,
         ProfilePhotoPath: newStudentFormData.ProfilePhotoPath,
         SchoolSectionId: parseSafeInt(newStudentFormData.SchoolSectionId) || null,
         AdmissionDate: newStudentFormData.AdmissionDate,
@@ -1422,7 +1447,7 @@ export default function Students({ user }: { user: UserType }) {
                                   >
                                     {/* Mapping logic to show only school name in trigger */}
                                     <SelectValue placeholder="Select School Branch">
-                                      {newStudentFormData.schoolId ? schools.find(s => s.id.toString() === newStudentFormData.schoolId.toString())?.name : undefined}
+                                      {newStudentFormData.schoolId && newStudentFormData.schoolId !== "all" ? schools.find(s => s.id.toString() === newStudentFormData.schoolId.toString())?.name : undefined}
                                     </SelectValue>
                                   </SelectTrigger>
                                   <SelectContent className="max-h-68 rounded-2xl shadow-2xl border-slate-200 p-2">
@@ -1449,7 +1474,7 @@ export default function Students({ user }: { user: UserType }) {
                             </div>
 
                             <div className="md:col-span-6 space-y-1.5">
-                              <Label htmlFor="STD" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.STD ? "text-red-500" : "text-slate-500")}>Academic Grade {formErrors.STD && "*"}</Label>
+                              <Label htmlFor="STD" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.STD ? "text-red-500" : "text-slate-500")}>Standard {formErrors.STD && "*"}</Label>
                               <Select 
                                 value={newStudentFormData.STD} 
                                 onValueChange={(v) => {
@@ -1465,12 +1490,12 @@ export default function Students({ user }: { user: UserType }) {
                                     formErrors.STD && "border-red-500 ring-2 ring-red-500/10"
                                   )}
                                 >
-                                  <SelectValue placeholder="Select Academic Grade">
+                                  <SelectValue placeholder="Select Standard">
                                     {newStudentFormData.STD || undefined}
                                   </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                                  <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Grade</SelectItem>
+                                  <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Standard</SelectItem>
                                   {Array.isArray(standardsMaster) && standardsMaster.map(std => (
                                     <SelectItem key={std.id} value={std.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{std.name}</SelectItem>
                                   ))}
@@ -1479,7 +1504,7 @@ export default function Students({ user }: { user: UserType }) {
                             </div>
 
                             <div className="md:col-span-6 space-y-1.5">
-                              <Label htmlFor="DIV" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.DIV ? "text-red-500" : "text-slate-500")}>Division/Section {formErrors.DIV && "*"}</Label>
+                              <Label htmlFor="DIV" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.DIV ? "text-red-500" : "text-slate-500")}>Division {formErrors.DIV && "*"}</Label>
                               <Select 
                                 value={newStudentFormData.DIV} 
                                 onValueChange={(v) => {
@@ -1509,7 +1534,7 @@ export default function Students({ user }: { user: UserType }) {
                             </div>
 
                             <div className="md:col-span-6 space-y-1.5">
-                              <Label htmlFor="academicyear" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Joining Year</Label>
+                              <Label htmlFor="academicyear" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Academic Year</Label>
                               <Select 
                                 value={newStudentFormData.academicyear} 
                                 onValueChange={(v) => setNewStudentFormData({...newStudentFormData, academicyear: v || ""})}
@@ -1698,9 +1723,25 @@ export default function Students({ user }: { user: UserType }) {
                             <Input 
                               id="RFID" 
                               value={newStudentFormData.RFID} 
-                              onChange={(e) => setNewStudentFormData({...newStudentFormData, RFID: e.target.value})} 
-                              placeholder="e.g. 1111111111" 
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/[^a-zA-Z0-9]/g, "");
+                                if (val.length <= 24) {
+                                  setNewStudentFormData({...newStudentFormData, RFID: val});
+                                }
+                              }} 
+                              placeholder="e.g. 11-digit or 24-digit alphanumeric" 
                               className="h-10 border-slate-200 bg-slate-50/30 font-mono font-bold rounded-xl px-4 text-sm"
+                            />
+                          </div>
+                          
+                          <div className="space-y-1.5">
+                            <Label htmlFor="uniformid" className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-500">Uniform ID</Label>
+                            <Input 
+                              id="uniformid" 
+                              value={newStudentFormData.uniformid || ""} 
+                              onChange={(e) => setNewStudentFormData({...newStudentFormData, uniformid: e.target.value})} 
+                              placeholder="e.g. UNIF-001" 
+                              className="h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm"
                             />
                           </div>
                           
@@ -2007,8 +2048,9 @@ export default function Students({ user }: { user: UserType }) {
                         </div>
 
                         {/* Double Interactive Communication & Affiliation Preferences check-buttons */}
-                        <div className="space-y-1.5 flex flex-col justify-end">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 h-10 items-center">
+                        <div className="md:col-span-2 space-y-1.5">
+                          <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-500">Facility & Affiliation Preferences</Label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-center">
                             <label className="flex items-center gap-2.5 cursor-pointer p-2.5 bg-slate-50/50 rounded-xl border border-slate-100 hover:bg-slate-50 transition-all select-none">
                               <input 
                                 type="checkbox"
@@ -2016,7 +2058,7 @@ export default function Students({ user }: { user: UserType }) {
                                 onChange={(e) => setNewStudentFormData({...newStudentFormData, sms: e.target.checked})}
                                 className="h-4.5 w-4.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 accent-blue-600 cursor-pointer"
                               />
-                              <span className="text-xs font-bold text-slate-700">SMS Notification</span>
+                              <span className="text-xs font-bold text-slate-700">SMS Alerts</span>
                             </label>
 
                             <label className="flex items-center gap-2.5 cursor-pointer p-2.5 bg-slate-50/50 rounded-xl border border-slate-100 hover:bg-slate-50 transition-all select-none">
@@ -2026,7 +2068,27 @@ export default function Students({ user }: { user: UserType }) {
                                 onChange={(e) => setNewStudentFormData({...newStudentFormData, isStateBoard: e.target.checked})}
                                 className="h-4.5 w-4.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 accent-blue-600 cursor-pointer"
                               />
-                              <span className="text-xs font-bold text-slate-700">State Board Affiliated</span>
+                              <span className="text-xs font-bold text-slate-700">State Board</span>
+                            </label>
+
+                            <label className="flex items-center gap-2.5 cursor-pointer p-2.5 bg-slate-50/50 rounded-xl border border-slate-100 hover:bg-slate-50 transition-all select-none">
+                              <input 
+                                type="checkbox"
+                                checked={!!newStudentFormData.digitalUniform}
+                                onChange={(e) => setNewStudentFormData({...newStudentFormData, digitalUniform: e.target.checked})}
+                                className="h-4.5 w-4.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 accent-blue-600 cursor-pointer"
+                              />
+                              <span className="text-xs font-bold text-slate-700">Digital Uniform</span>
+                            </label>
+
+                            <label className="flex items-center gap-2.5 cursor-pointer p-2.5 bg-slate-50/50 rounded-xl border border-slate-100 hover:bg-slate-50 transition-all select-none">
+                              <input 
+                                type="checkbox"
+                                checked={!!newStudentFormData.digitalNotebook}
+                                onChange={(e) => setNewStudentFormData({...newStudentFormData, digitalNotebook: e.target.checked})}
+                                className="h-4.5 w-4.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 accent-blue-600 cursor-pointer"
+                              />
+                              <span className="text-xs font-bold text-slate-700">Digital Notebook</span>
                             </label>
                           </div>
                         </div>
@@ -2164,13 +2226,13 @@ export default function Students({ user }: { user: UserType }) {
                   <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-2xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
                     {/* Explicit mapping to show "Grade X" or "All Grades" in trigger */}
                     <SelectValue placeholder="Standard">
-                      {standardFilter === "all" ? "All Grades" : (standardFilter ? `Grade ${standardFilter}` : undefined)}
+                      {standardFilter === "all" ? "All Standards" : (standardsMaster.find(std => std.id.toString() === standardFilter)?.name ? `Standard ${standardsMaster.find(std => std.id.toString() === standardFilter)?.name}` : undefined)}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
-                    <SelectItem value="all" className="rounded-xl font-bold py-2.5">All Grades</SelectItem>
+                    <SelectItem value="all" className="rounded-xl font-bold py-2.5">All Standards</SelectItem>
                     {Array.isArray(standardsMaster) && standardsMaster.map(std => (
-                      <SelectItem key={std.id} value={std.name} className="rounded-xl font-bold py-2.5">Grade {std.name}</SelectItem>
+                      <SelectItem key={std.id} value={std.id.toString()} className="rounded-xl font-bold py-2.5">Standard {std.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -2179,13 +2241,13 @@ export default function Students({ user }: { user: UserType }) {
                   <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-2xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
                     {/* Explicit mapping to show "Section X" or "All Sections" in trigger */}
                     <SelectValue placeholder="Section">
-                      {sectionFilter === "all" ? "All Sections" : (sectionFilter ? `Section ${sectionFilter}` : undefined)}
+                      {sectionFilter === "all" ? "All Divisions" : (sectionsMaster.find(sec => sec.id.toString() === sectionFilter)?.name ? `Division ${sectionsMaster.find(sec => sec.id.toString() === sectionFilter)?.name}` : undefined)}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
-                    <SelectItem value="all" className="rounded-xl font-bold py-2.5">All Sections</SelectItem>
+                    <SelectItem value="all" className="rounded-xl font-bold py-2.5">All Divisions</SelectItem>
                     {Array.isArray(sectionsMaster) && sectionsMaster.map(sec => (
-                      <SelectItem key={sec.id} value={sec.name} className="rounded-xl font-bold py-2.5">Section {sec.name}</SelectItem>
+                      <SelectItem key={sec.id} value={sec.id.toString()} className="rounded-xl font-bold py-2.5">Division {sec.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
