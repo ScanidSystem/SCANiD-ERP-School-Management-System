@@ -111,5 +111,15 @@ This document records the exact changes, the root causes identified, and the fix
   5. **ADO.NET parameter Mapping**: Updated parameter queries in `/backend/ScanID.Api/Services/StudentService.cs` (inside `CreateStudentAsync`, `UpdateStudentAsync`, and `CreateBulkStudentsAsync`) to transmit values to the SQL Server database.
   6. **CSV Export Actions**: Extended `/backend/ScanID.Api/Controllers/StudentsController.cs` to add `DigitalUniform` and `DigitalNotebook` columns to CSV student list exports, and included them as boolean value examples in the student bulk upload master template CSV.
 
+---
+
+## 11. Issue: Relocating Auditing Columns to the End of the Students Table (Consistency Standards)
+- **Root Cause**: Over multiple incremental upgrades adding custom fields such as `DigitalUniform`, `DigitalNotebook`, and registration descriptors, the default SQL Server table append placed new columns after the existing audit columns (`IsActive`, `IsDeleted`, `CreatedBy`, `CreatedOn`, `ModifiedBy`, `ModifiedOn`) on live/local databases. This resulted in an inconsistent column layout where auditing fields were located in the middle of the database structure.
+- **Remediation**:
+  1. **Self-Healing Column Shifting**: Created an intelligent and repeatable SQL migration script within `/incremental_database_updates.sql` that manages transferring auditing columns dynamically to the end of the `Students` table.
+  2. **Audit Column Replication & Preservation**: The relocation script creates temporary holding columns, preserves all existing audit records, drops associated auto-generated constraint keys safely, drops original middle-aligned columns, appends the physical columns back at the absolute end, transfers back the saved audit states, reinstates default constraint rules, and prunes temporary fields cleanly.
+  3. **Database & API Alignment**: Verified that all stored procedures utilizing dynamic SQL mapping, ADO.NET query definitions, and Entity Framework C# models execute consistently across the entire database layout.
+
+
 
 

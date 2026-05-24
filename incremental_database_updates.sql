@@ -219,3 +219,99 @@ BEGIN
 END;
 GO
 
+-- 6. Move IsActive, IsDeleted, CreatedBy, CreatedOn, ModifiedBy, ModifiedOn to the end of the Students table (Consistency Standard)
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND type in (N'U'))
+BEGIN
+    -- Only run relocation if IsActive exists and is not already near the last columns
+    IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'IsActive')
+    BEGIN
+        -- 1. Create temp columns to temporarily hold values safely preserving database registry integrity
+        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'Temp_IsActive')
+        BEGIN
+            ALTER TABLE [dbo].[Students] ADD [Temp_IsActive] [bit] NULL;
+            ALTER TABLE [dbo].[Students] ADD [Temp_IsDeleted] [bit] NULL;
+            ALTER TABLE [dbo].[Students] ADD [Temp_CreatedBy] [nvarchar](max) NULL;
+            ALTER TABLE [dbo].[Students] ADD [Temp_CreatedOn] [datetime2](7) NULL;
+            ALTER TABLE [dbo].[Students] ADD [Temp_ModifiedBy] [nvarchar](max) NULL;
+            ALTER TABLE [dbo].[Students] ADD [Temp_ModifiedOn] [datetime2](7) NULL;
+        END;
+
+        -- 2. Preserve active records audit data
+        EXEC('UPDATE [dbo].[Students] SET 
+            [Temp_IsActive] = [IsActive],
+            [Temp_IsDeleted] = [IsDeleted],
+            [Temp_CreatedBy] = [CreatedBy],
+            [Temp_CreatedOn] = [CreatedOn],
+            [Temp_ModifiedBy] = [ModifiedBy],
+            [Temp_ModifiedOn] = [ModifiedOn]');
+
+        -- 3. Dynamic Drop of existing default constraints to allow column removal
+        DECLARE @ConstraintName NVARCHAR(200);
+
+        -- IsActive Default
+        SELECT @ConstraintName = d.name 
+        FROM sys.default_constraints d 
+        JOIN sys.columns c ON d.parent_column_id = c.column_id 
+        WHERE d.parent_object_id = OBJECT_ID('dbo.Students') AND c.name = 'IsActive';
+        IF @ConstraintName IS NOT NULL EXEC('ALTER TABLE [dbo].[Students] DROP CONSTRAINT [' + @ConstraintName + ']');
+
+        -- IsDeleted Default
+        SET @ConstraintName = NULL;
+        SELECT @ConstraintName = d.name 
+        FROM sys.default_constraints d 
+        JOIN sys.columns c ON d.parent_column_id = c.column_id 
+        WHERE d.parent_object_id = OBJECT_ID('dbo.Students') AND c.name = 'IsDeleted';
+        IF @ConstraintName IS NOT NULL EXEC('ALTER TABLE [dbo].[Students] DROP CONSTRAINT [' + @ConstraintName + ']');
+
+        -- CreatedOn Default
+        SET @ConstraintName = NULL;
+        SELECT @ConstraintName = d.name 
+        FROM sys.default_constraints d 
+        JOIN sys.columns c ON d.parent_column_id = c.column_id 
+        WHERE d.parent_object_id = OBJECT_ID('dbo.Students') AND c.name = 'CreatedOn';
+        IF @ConstraintName IS NOT NULL EXEC('ALTER TABLE [dbo].[Students] DROP CONSTRAINT [' + @ConstraintName + ']');
+
+        -- ModifiedOn Default
+        SET @ConstraintName = NULL;
+        SELECT @ConstraintName = d.name 
+        FROM sys.default_constraints d 
+        JOIN sys.columns c ON d.parent_column_id = c.column_id 
+        WHERE d.parent_object_id = OBJECT_ID('dbo.Students') AND c.name = 'ModifiedOn';
+        IF @ConstraintName IS NOT NULL EXEC('ALTER TABLE [dbo].[Students] DROP CONSTRAINT [' + @ConstraintName + ']');
+
+        -- 4. Drop original columns physically re-indexing the table layout
+        ALTER TABLE [dbo].[Students] DROP COLUMN [IsActive];
+        ALTER TABLE [dbo].[Students] DROP COLUMN [IsDeleted];
+        ALTER TABLE [dbo].[Students] DROP COLUMN [CreatedBy];
+        ALTER TABLE [dbo].[Students] DROP COLUMN [CreatedOn];
+        ALTER TABLE [dbo].[Students] DROP COLUMN [ModifiedBy];
+        ALTER TABLE [dbo].[Students] DROP COLUMN [ModifiedOn];
+
+        -- 5. Add columns back (this appends them under any recently added fields like DigitalUniform, DigitalNotebook)
+        ALTER TABLE [dbo].[Students] ADD [IsActive] [bit] NOT NULL CONSTRAINT [DF_Students_IsActive] DEFAULT (1);
+        ALTER TABLE [dbo].[Students] ADD [IsDeleted] [bit] NOT NULL CONSTRAINT [DF_Students_IsDeleted] DEFAULT (0);
+        ALTER TABLE [dbo].[Students] ADD [CreatedBy] [nvarchar](max) NULL;
+        ALTER TABLE [dbo].[Students] ADD [CreatedOn] [datetime2](7) NOT NULL CONSTRAINT [DF_Students_CreatedOn] DEFAULT (GETUTCDATE());
+        ALTER TABLE [dbo].[Students] ADD [ModifiedBy] [nvarchar](max) NULL;
+        ALTER TABLE [dbo].[Students] ADD [ModifiedOn] [datetime2](7) NOT NULL CONSTRAINT [DF_Students_ModifiedOn] DEFAULT (GETUTCDATE());
+
+        -- 6. Restore data from temporary structures
+        EXEC('UPDATE [dbo].[Students] SET 
+            [IsActive] = COALESCE([Temp_IsActive], 1),
+            [IsDeleted] = COALESCE([Temp_IsDeleted], 0),
+            [CreatedBy] = [Temp_CreatedBy],
+            [CreatedOn] = COALESCE([Temp_CreatedOn], GETUTCDATE()),
+            [ModifiedBy] = [Temp_ModifiedBy],
+            [ModifiedOn] = COALESCE([Temp_ModifiedOn], GETUTCDATE())');
+
+        -- 7. Prune temporary columns cleanly
+        ALTER TABLE [dbo].[Students] DROP COLUMN [Temp_IsActive];
+        ALTER TABLE [dbo].[Students] DROP COLUMN [Temp_IsDeleted];
+        ALTER TABLE [dbo].[Students] DROP COLUMN [Temp_CreatedBy];
+        ALTER TABLE [dbo].[Students] DROP COLUMN [Temp_CreatedOn];
+        ALTER TABLE [dbo].[Students] DROP COLUMN [Temp_ModifiedBy];
+        ALTER TABLE [dbo].[Students] DROP COLUMN [Temp_ModifiedOn];
+    END;
+END;
+GO
+
