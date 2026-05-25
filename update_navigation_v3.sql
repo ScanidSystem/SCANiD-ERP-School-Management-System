@@ -69,7 +69,7 @@ INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], 
 VALUES (13, N'Access Control (RBAC)', N'Key', NULL, 11, 2, 1, GETUTCDATE());
 INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedOn])
 VALUES (14, N'Role Master', N'Shield', N'/configuration/role-master', 13, 1, 1, GETUTCDATE()),
-       (15, N'Role Assignment', N'UserCheck', N'/configuration/role-assignment', 13, 2, 1, GETUTCDATE());
+       (15, N'User Accounts', N'UserCheck', N'/configuration/role-assignment', 13, 2, 1, GETUTCDATE());
 
 -- Menu Designer Sub-group (16)
 INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedOn])

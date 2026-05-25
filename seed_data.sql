@@ -397,7 +397,7 @@ IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 18)
 
 IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 19)
     INSERT INTO [dbo].[NavigationItems] ([Id], [Title], [Icon], [Path], [ParentId], [SortOrder], [IsActive], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) 
-    VALUES (19, N'Role Assignment', N'UserCheck', N'/configuration/role-assignment', 14, 2, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+    VALUES (19, N'User Accounts', N'UserCheck', N'/configuration/role-assignment', 14, 2, 1, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
 
 -- Sub-items for Menu Designer (ParentId: 15)
 IF NOT EXISTS (SELECT 1 FROM [dbo].[NavigationItems] WHERE [Id] = 20)

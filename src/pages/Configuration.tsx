@@ -100,7 +100,7 @@ interface ConfigurationProps {
 const MASTER_TYPES: Record<string, { label: string, icon: any, description: string, apiPrefix: string, getMethod?: string }> = {
   "schools": { label: "Schools", icon: School, description: "Manage institutional branches", apiPrefix: "School" },
   "role-master": { label: "Role Master", icon: Shield, description: "Manage system access roles", apiPrefix: "Role" },
-  "role-assignment": { label: "Role Assignment", icon: UserCheck, description: "Assign roles to system users", apiPrefix: "User" },
+  "role-assignment": { label: "User Accounts", icon: UserCheck, description: "Manage system user accounts and credentials", apiPrefix: "User" },
   "standards": { label: "Standards", icon: Layers, description: "Manage academic standards/grades", apiPrefix: "Standard" },
   "sections": { label: "Divisions/Sections", icon: Hash, description: "Manage class subdivisions", apiPrefix: "Section" },
   "academic-years": { label: "Academic Years", icon: Calendar, description: "Manage educational sessions", apiPrefix: "AcademicYear" },
@@ -236,12 +236,20 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       const typeConfig = MASTER_TYPES[activeTab];
       
       if (activeTab === "role-assignment") {
-        const usersRes = await apiService.getUsers();
-        const rolesRes = await apiService.getRoles();
+        const [usersRes, rolesRes, schoolsRes] = await Promise.all([
+          apiService.getUsers(),
+          apiService.getRoles(),
+          apiService.getSchools()
+        ]);
         const usersData = usersRes.data?.data || usersRes.data || [];
         const rolesData = rolesRes.data?.data || rolesRes.data || [];
+        const schoolsData = schoolsRes.data?.data || schoolsRes.data || [];
         setMasterData(Array.isArray(usersData) ? usersData : []);
-        setDependencies(prev => ({ ...prev, roles: Array.isArray(rolesData) ? rolesData : [] }));
+        setDependencies(prev => ({ 
+          ...prev, 
+          roles: Array.isArray(rolesData) ? rolesData : [],
+          schools: Array.isArray(schoolsData) ? schoolsData : [] 
+        }));
       } else {
         const getMethodName = typeConfig.getMethod || `get${typeConfig.apiPrefix}s`;
         // @ts-ignore
@@ -321,7 +329,12 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       parentId: item?.parentId?.toString() || "",
       sortOrder: item?.sortOrder || 0,
       roles: item?.roles || ["superadmin"],
-      profilePhotoPath: item?.profilePhotoPath || item?.ProfilePhotoPath || ""
+      profilePhotoPath: item?.profilePhotoPath || item?.ProfilePhotoPath || "",
+      username: item?.username || "",
+      password: "",
+      confirmPassword: "",
+      role: item?.role ? item.role.toLowerCase().replace(/\s+/g, '') : "student",
+      schoolId: item?.schoolId ? item.schoolId.toString() : ""
     });
     setIsDialogOpen(true);
   };
@@ -344,6 +357,14 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
     if (activeTab === "sub-castes" && !formData.casteId) newErrors.casteId = true;
     if (activeTab === "cities" && !formData.stateId) newErrors.stateId = true;
     if (activeTab === "schools" && !formData.address) newErrors.address = true;
+    if (activeTab === "role-assignment") {
+      if (!formData.username?.trim()) newErrors.username = true;
+      if (!formData.email?.trim()) newErrors.email = true;
+      if (!editingItem && !formData.password?.trim()) newErrors.password = true;
+      if (formData.password && formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = true;
+      }
+    }
     
     setFormErrors(newErrors);
 
@@ -400,12 +421,33 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
         // Keep school branding path aligned to avoid clearing it during name/address updates
         payload.profilePhotoPath = formData.profilePhotoPath;
       } else if (activeTab === "role-assignment") {
-        // Map common 'name' field back to 'fullName' for User API
-        payload.fullName = formData.name;
-        delete payload.name;
-        payload.email = formData.email;
-        // For new users, we could allow setting a default role if needed, 
-        // but table select handles it afterwards
+        let matchedRole = Array.isArray(dependencies.roles) 
+          ? dependencies.roles.find((r: any) => r.name.toLowerCase().replace(/\s+/g, '') === formData.role?.toLowerCase().replace(/\s+/g, '')) 
+          : null;
+        let roleId = matchedRole ? parseInt(matchedRole.id?.toString()) : undefined;
+        let roleName = matchedRole ? matchedRole.name : formData.role;
+
+        // Robust fallback role credentials matching
+        if (!roleId) {
+          if (formData.role === "superadmin") { roleId = 1; roleName = "SuperAdmin"; }
+          else if (formData.role === "admin") { roleId = 2; roleName = "Admin"; }
+          else if (formData.role === "teacher") { roleId = 3; roleName = "Teacher"; }
+          else if (formData.role === "student") { roleId = 4; roleName = "Student"; }
+          else if (formData.role === "parent") { roleId = 5; roleName = "Parent"; }
+        }
+
+        payload = {
+          ...payload,
+          name: formData.name,
+          fullName: formData.name, // Keep both for backwards compatibility
+          email: formData.email,
+          username: formData.username,
+          role: roleName,
+          roleId: roleId,
+          passwordHash: formData.password || undefined,
+          PasswordHash: formData.password || undefined, // Support both casings
+          schoolId: formData.schoolId ? parseInt(formData.schoolId) : null
+        };
       }
 
       if (editingItem) {
@@ -797,14 +839,16 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
           <div className="bg-blue-600 p-8 text-white">
             <DialogTitle className="text-2xl font-black tracking-tight flex items-center gap-2">
               {editingItem ? <Edit3 size={24} /> : <Plus size={24} />}
-              {editingItem ? "Edit" : "Add New"} {activeConfig.label.replace('Manage ', '').slice(0, -1)}
+              {editingItem ? "Edit" : "Add New"} {activeTab === "role-assignment" ? "User Account" : activeConfig.label.replace('Manage ', '').slice(0, -1)}
             </DialogTitle>
             <DialogDescription className="text-blue-100 font-medium">
-              Update the details for this {activeConfig.label.toLowerCase()} record.
+              {activeTab === "role-assignment" 
+                ? "Manage system access credentials and role assignment." 
+                : `Update the details for this ${activeConfig.label.toLowerCase()} record.`}
             </DialogDescription>
           </div>
           
-          <div className="p-8 space-y-5">
+          <div className="p-8 space-y-5 max-h-[60vh] overflow-y-auto">
             <div className="space-y-2">
               <Label htmlFor="name" className={cn("text-xs font-black uppercase tracking-wider", (formErrors.name || formErrors.title) ? "text-red-500" : "text-slate-400")}>
                 {activeTab === "schools" ? "School Name" : activeTab === "role-assignment" ? "Full Name" : activeTab === "navigation" ? "Navigation Title" : "Name / Label"} {(formErrors.name || formErrors.title) && "*"}
@@ -929,7 +973,138 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
               </>
             )}
 
-            {(activeTab === "schools" || activeTab === "role-assignment") && (
+            {activeTab === "role-assignment" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="username" className={cn("text-xs font-black uppercase tracking-wider", formErrors.username ? "text-red-500" : "text-slate-400")}>Username {formErrors.username && "*"}</Label>
+                  <Input 
+                    id="username" 
+                    placeholder="Enter unique username..."
+                    className={cn(
+                      "h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold",
+                      formErrors.username && "border-red-500 ring-2 ring-red-500/10"
+                    )}
+                    value={formData.username || ""}
+                    onChange={(e) => {
+                      setFormData({...formData, username: e.target.value});
+                      if (formErrors.username) setFormErrors(prev => ({ ...prev, username: false }));
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className={cn("text-xs font-black uppercase tracking-wider", formErrors.email ? "text-red-500" : "text-slate-400")}>Email Address {formErrors.email && "*"}</Label>
+                  <Input 
+                    id="email" 
+                    placeholder="Enter email address..."
+                    className={cn(
+                      "h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold",
+                      formErrors.email && "border-red-500 ring-2 ring-red-500/10"
+                    )}
+                    value={formData.email || ""}
+                    onChange={(e) => {
+                      setFormData({...formData, email: e.target.value});
+                      if (formErrors.email) setFormErrors(prev => ({ ...prev, email: false }));
+                    }}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-black uppercase tracking-wider text-slate-400">System Role</Label>
+                    <Select 
+                      value={formData.role || "student"} 
+                      onValueChange={(v) => {
+                        setFormData({...formData, role: v});
+                      }}
+                    >
+                      <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white font-bold px-4">
+                        <SelectValue placeholder="Select Role" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-200 shadow-xl max-h-60 overflow-y-auto">
+                        {Array.isArray(dependencies.roles) && dependencies.roles.length > 0 ? (
+                          dependencies.roles.map((r: any) => {
+                            const normalizedVal = r.name.toLowerCase().replace(/\s+/g, '');
+                            return (
+                              <SelectItem key={r.id} value={normalizedVal} className="font-semibold py-2">
+                                {r.name}
+                              </SelectItem>
+                            );
+                          })
+                        ) : (
+                          <>
+                            <SelectItem value="superadmin" className="font-semibold py-2">SuperAdmin</SelectItem>
+                            <SelectItem value="admin" className="font-semibold py-2">Admin</SelectItem>
+                            <SelectItem value="teacher" className="font-semibold py-2">Teacher</SelectItem>
+                            <SelectItem value="student" className="font-semibold py-2">Student</SelectItem>
+                            <SelectItem value="parent" className="font-semibold py-2">Parent</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-black uppercase tracking-wider text-slate-400">Assigned School</Label>
+                    <Select 
+                      value={formData.schoolId || ""} 
+                      onValueChange={(v) => setFormData({...formData, schoolId: v})}
+                    >
+                      <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white font-bold px-4">
+                        <SelectValue placeholder="Global / Unassigned" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-200 shadow-xl max-h-60 overflow-y-auto">
+                        <SelectItem value="" className="font-semibold py-2 text-slate-400 italic">Global / Unassigned</SelectItem>
+                        {Array.isArray(dependencies.schools) && dependencies.schools.map((s: any) => (
+                          <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2">
+                            {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className={cn("text-xs font-black uppercase tracking-wider", formErrors.password ? "text-red-500" : "text-slate-400")}>Password {formErrors.password && "*"}</Label>
+                    <Input 
+                      id="password" 
+                      type="password"
+                      placeholder={editingItem ? "Leave blank" : "••••••••"}
+                      className={cn(
+                        "h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold",
+                        formErrors.password && "border-red-500 ring-2 ring-red-500/10"
+                      )}
+                      value={formData.password || ""}
+                      onChange={(e) => {
+                        setFormData({...formData, password: e.target.value});
+                        if (formErrors.password) setFormErrors(prev => ({ ...prev, password: false }));
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword" className={cn("text-xs font-black uppercase tracking-wider", formErrors.confirmPassword ? "text-red-500" : "text-slate-400")}>Confirm Password {formErrors.confirmPassword && "*"}</Label>
+                    <Input 
+                      id="confirmPassword" 
+                      type="password"
+                      placeholder={editingItem ? "Leave blank" : "••••••••"}
+                      className={cn(
+                        "h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold",
+                        formErrors.confirmPassword && "border-red-500 ring-2 ring-red-500/10"
+                      )}
+                      value={formData.confirmPassword || ""}
+                      onChange={(e) => {
+                        setFormData({...formData, confirmPassword: e.target.value});
+                        if (formErrors.confirmPassword) setFormErrors(prev => ({ ...prev, confirmPassword: false }));
+                      }}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {activeTab === "schools" && (
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-xs font-black uppercase tracking-wider text-slate-400">Email Address</Label>
                 <Input 

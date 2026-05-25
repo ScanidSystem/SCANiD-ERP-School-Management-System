@@ -4,13 +4,12 @@ using ScanID.Api.Interfaces;
 using ScanID.Api.Models;
 using ScanID.Api.Services;
 using ScanID.Api.Utilities;
-using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.Configure<RouteOptions>(options =>
+builder.Services.Configure<RouteOptions>(options => 
 {
     options.LowercaseUrls = true;
     options.LowercaseQueryStrings = true;
@@ -24,13 +23,6 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "API for student monitoring, attendance, and fee management."
     });
-});
-
-builder.Services.Configure<ForwardedHeadersOptions>(options =>
-{
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownNetworks.Clear();
-    options.KnownProxies.Clear();
 });
 
 // Configure SQL Server
@@ -64,14 +56,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-app.UseForwardedHeaders();
 // Automatically check/create/remediate missing master tables in live DB to prevent 500 errors
 try
 {
     using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
+        
         // 1. Check if States table exists, if not create it (due to FK dependency in Cities)
         context.Database.ExecuteSqlRaw(@"
             IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[States]') AND type in (N'U'))
@@ -174,7 +165,7 @@ app.Use(async (context, next) =>
         FileLogger.LogError(ex);
 
         // Log to Database (optional, don't crash if DB is down)
-        try
+        try 
         {
             var db = context.RequestServices.GetRequiredService<ApplicationDbContext>();
             db.ErrorLogs.Add(new ErrorLog
@@ -191,13 +182,12 @@ app.Use(async (context, next) =>
         {
             FileLogger.LogError(new Exception("Failed to log error to database. " + dbEx.Message, dbEx));
         }
-
+        
         // Return a cleaner 500 error instead of throwing a raw exception that might leak info
         context.Response.StatusCode = 500;
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new
-        {
-            error = "Internal Server Error",
+        await context.Response.WriteAsJsonAsync(new { 
+            error = "Internal Server Error", 
             message = ex.Message,
             details = "Check server logs for more information."
         });
@@ -208,8 +198,7 @@ app.Use(async (context, next) =>
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    //c.SwaggerEndpoint("/swagger/v1/swagger.json", "ScanID API v1");
-    c.SwaggerEndpoint("./v1/swagger.json", "ScanID API v1");
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "ScanID API v1");
     c.RoutePrefix = "swagger"; // Keep it at /swagger
 });
 
@@ -219,9 +208,9 @@ if (app.Environment.IsDevelopment())
     // In development, we might not have SSL certificates configured locally, 
     // so we skip redirection to prevent "Empty Response" errors.
 }
-else
+else 
 {
-    //app.UseHttpsRedirection();
+    app.UseHttpsRedirection();
 }
 app.UseStaticFiles(); // Enable serving of static files from wwwroot
 app.UseCors("AllowReactApp");

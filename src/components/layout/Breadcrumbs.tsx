@@ -57,7 +57,7 @@ export default function Breadcrumbs() {
       } else if (name.toLowerCase() === "role-master") {
         name = "Role Master";
       } else if (name.toLowerCase() === "role-assignment") {
-        name = "Role Assignment";
+        name = "User Accounts";
       } else if (name.toLowerCase() === "system-logs") {
         name = "System Logs";
       } else if (name.toLowerCase() === "marks") {
