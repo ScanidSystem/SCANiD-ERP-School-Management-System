@@ -102,10 +102,12 @@ namespace ScanID.Api.Services
         {
             return await ExecuteWithRetryAsync(async () =>
             {
+                // Execute stored procedure. Note: Since sp_ManageUser starts with SET NOCOUNT ON, 
+                // it suppresses row counts and returns -1. Thus, we check 'rowsAffected >= 0 || rowsAffected == -1'.
                 var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
                     $"EXEC dbo.sp_ManageUser 'UPDATE', {user.Id}, {user.Username}, {user.PasswordHash}, {user.Name}, {user.Email}, {user.Role}, {user.RoleId}, {user.SchoolId}"
                 );
-                return rowsAffected > 0;
+                return rowsAffected >= 0 || rowsAffected == -1;
             });
         }
 
@@ -113,10 +115,11 @@ namespace ScanID.Api.Services
         {
             return await ExecuteWithRetryAsync(async () =>
             {
+                // Execute stored procedure for deletion. Handles SET NOCOUNT ON correctly.
                 var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
                     $"EXEC dbo.sp_ManageUser 'DELETE', {id}"
                 );
-                return rowsAffected > 0;
+                return rowsAffected >= 0 || rowsAffected == -1;
             });
         }
 

@@ -108,15 +108,17 @@ BEGIN
     IF @Action = 'INSERT'
     BEGIN
         INSERT INTO [dbo].[Schools] (
-            Name, ProfilePhotoPath, Address, Phone, Email, IsActive, IsDeleted, CreatedOn, ModifiedOn, CreatedBy,
+            Name, ProfilePhotoPath, Address, Phone, Email,
             ShortName, CityId, StateId, Pincode, SMSLimit, TotalSMSSent, SMSBalance, EnableSMS,
             EnablePresenteeSMS, AutomaticBirthdaySMS, EnableWhatsapp, WebsiteUrl, SMSSenderID, BusNumbers,
-            SCANiDContact, SCANiDEmail, InChargeContact
+            SCANiDContact, SCANiDEmail, InChargeContact,
+            IsActive, IsDeleted, CreatedOn, ModifiedOn, CreatedBy
         ) VALUES (
-            @Name, @LogoPath, @Address, @ContactNumber, @Email, 1, 0, GETUTCDATE(), GETUTCDATE(), @CreatedBy,
+            @Name, @LogoPath, @Address, @ContactNumber, @Email,
             @ShortName, @CityId, @StateId, @Pincode, @SMSLimit, @TotalSMSSent, @SMSBalance, @EnableSMS,
             @EnablePresenteeSMS, @AutomaticBirthdaySMS, @EnableWhatsapp, @WebsiteUrl, @SMSSenderID, @BusNumbers,
-            @SCANiDContact, @SCANiDEmail, @InChargeContact
+            @SCANiDContact, @SCANiDEmail, @InChargeContact,
+            1, 0, GETUTCDATE(), GETUTCDATE(), @CreatedBy
         );
         SELECT SCOPE_IDENTITY();
     END

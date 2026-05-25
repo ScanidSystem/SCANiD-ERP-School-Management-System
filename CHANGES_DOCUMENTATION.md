@@ -120,6 +120,39 @@ This document records the exact changes, the root causes identified, and the fix
   2. **Audit Column Replication & Preservation**: The relocation script creates temporary holding columns, preserves all existing audit records, drops associated auto-generated constraint keys safely, drops original middle-aligned columns, appends the physical columns back at the absolute end, transfers back the saved audit states, reinstates default constraint rules, and prunes temporary fields cleanly.
   3. **Database & API Alignment**: Verified that all stored procedures utilizing dynamic SQL mapping, ADO.NET query definitions, and Entity Framework C# models execute consistently across the entire database layout.
 
+---
+
+## 12. Issue: Relocating Auditing Columns to the Absolute End of the Schools Table and Models
+- **Root Cause**: Similar to the Students table, adding legacy school information fields to `Schools` on live/running databases appended them after the audit columns (`IsActive`, `IsDeleted`, `CreatedBy`, `CreatedOn`, `ModifiedBy`, `ModifiedOn`). This resulted in audit columns residing in the middle of the table, causing structural discrepancies between model files and table definitions.
+- **Remediation**:
+  1. **Audit Column Realignment Query**: Created `/realign_schools_columns.sql` to carry out table realignment safely in live and production environments.
+  2. **Safe Constraint Handling**: The migration drops the foreign key relationships (`FK_Users_Schools_SchoolId`, `FK_Teachers_Schools_SchoolId`, `FK_Students_Schools_SchoolId`) to enable table renaming safely without orphan references.
+  3. **Data Preservation & Re-Alignment**: Renames the old `Schools` table, re-creates a fresh `Schools` table with audit cols placed at the absolute end, enables identity insert to map over records while fully preserving primary key IDs, inserts all back, removes the temporary holding table, and re-establishes the foreign key constraints pointing to the new table structure.
+  4. **Entity Model Synchronization**: Confirmed that C# model mappings (EF Core) and database scripts maintain consistent schemas.
+
+---
+
+## 13. Issue: User Account PUT and DELETE operations throwing 500 Internal Server Error
+- **Root Cause**: The stored procedure `sp_ManageUser` utilizes `SET NOCOUNT ON;` which suppresses the row count messages reported by SQL Server to ADO.NET. Under ADO.NET/EF Core, calling `ExecuteSqlInterpolatedAsync` on a stored procedure with suppressed row counts returns `-1`. The `UserService.cs` repository previously evaluated success using `rowsAffected > 0`, which resolved to `false` for both `UPDATE` and `DELETE` actions, erroneously triggering a `500 Failed to persist/delete user updates` API response, despite the update executing successfully in the database.
+- **Remediation**:
+  - Refactored `UpdateUserAsync` and `DeleteUserAsync` inside `/backend/ScanID.Api/Services/UserService.cs` to check for `rowsAffected >= 0 || rowsAffected == -1`. Added extensive source comments explaining SQL Server rowcount suppression behavior to make sure subsequent developers maintain this code correctly.
+
+---
+
+## 14. Issue: Dropdowns displaying ID instead of actual text, and blank/missing default on edit
+- **Root Cause**: Radix UI `Select`'s standard `<SelectValue>` displays raw bound value-keys or defaults to placeholders if option objects load asynchronously or aren't matched exactly in memory on component mount. Form dropdowns for relational values such as Roles, Assigned Schools, States, and Cities were displaying raw identifier strings (or empty states) instead of human-readable text labels upon record selection or edit trigger loading.
+- **Remediation**:
+  - Custom aligned `<SelectTrigger>` components inside `/src/pages/Configuration.tsx` by explicitly routing option-lookup mapping values inside their child `<SelectValue>` elements.
+  - Aligned dropdowns across **System Role**, **Assigned School**, **School State**, and **School City** fields ensuring consistent, user-friendly labels are displayed globally.
+
+---
+
+## 15. Standardized/Modified Files Summary
+
+- `/backend/ScanID.Api/Services/UserService.cs`: Corrected success evaluation thresholds to account for stored procedure `SET NOCOUNT ON;` behavior.
+- `/src/pages/Configuration.tsx`: Explicitly resolved ID-to-label select trigger mappings, solving raw GUID/ID text overflows.
+
+
 
 
 

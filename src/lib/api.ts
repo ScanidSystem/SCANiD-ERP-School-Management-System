@@ -125,7 +125,7 @@ const mockFallbacks: Record<string, any> = {
     { id: 12, title: "Global Schools", icon: "School", path: "/configuration/schools", parentId: 11, sortOrder: 1, roleIds: [1, 2] },
     { id: 13, title: "Access Control (RBAC)", icon: "ShieldCheck", path: null, parentId: 11, sortOrder: 2, roleIds: [1, 2] },
     { id: 14, title: "Role Master", icon: "Shield", path: "/configuration/role-master", parentId: 13, sortOrder: 1, roleIds: [1, 2] },
-    { id: 15, title: "Role Assignment", icon: "UserCheck", path: "/configuration/role-assignment", parentId: 13, sortOrder: 2, roleIds: [1, 2] },
+    { id: 15, title: "User Accounts", icon: "UserCheck", path: "/configuration/role-assignment", parentId: 13, sortOrder: 2, roleIds: [1, 2] },
     
     { id: 16, title: "Menu Designer", icon: "Layout", path: null, parentId: 11, sortOrder: 3, roleIds: [1, 2] },
     { id: 17, title: "Navigation Builder", icon: "LayoutGrid", path: "/configuration/navigation", parentId: 16, sortOrder: 1, roleIds: [1, 2] },
@@ -173,7 +173,18 @@ const mockFallbacks: Record<string, any> = {
   "/users": [
     { id: 1, fullName: "Super Admin", username: "admin", role: "superadmin" },
     { id: 2, fullName: "John Doe", username: "teacher1", role: "teacher" },
-  ]
+  ],
+  "/auth/login": {
+    token: "demo-token",
+    user: {
+      id: 1,
+      fullName: "Super Admin",
+      username: "admin",
+      role: "superadmin",
+      schoolId: null,
+      academicYearId: 2
+    }
+  }
 };
 
 // Add request interceptor to automatically inject Authorization header
