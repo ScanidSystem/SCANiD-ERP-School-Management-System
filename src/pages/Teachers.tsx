@@ -337,27 +337,36 @@ export default function Teachers({ user }: { user: any }) {
     setIsEditing(false);
     setFormErrors({});
   };
-
   const handleCreateOrUpdate = async () => {
     const newErrors: Record<string, string> = {};
     let firstErrorField = "";
 
-    const checkField = (field: string, condition: boolean, message: string) => {
+    const checkField = (key: string, condition: boolean, message: string) => {
       if (condition) {
-        newErrors[field] = message;
-        if (!firstErrorField) firstErrorField = field;
+        newErrors[key] = message;
+        if (!firstErrorField) firstErrorField = key;
       }
     };
 
-    checkField("schoolId", !formData.schoolId || formData.schoolId === "none", "Campus Branch is required");
-    checkField("status", !formData.status || formData.status === "none", "Access Status is required");
-    checkField("firstName", !formData.firstName?.trim(), "First Name is required");
-    checkField("lastName", !formData.lastName?.trim(), "Last Name is required");
-    checkField("email", !formData.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email), "Valid Email Protocol is required");
-    checkField("phone", !formData.phone?.trim() || !/^\d{10}$/.test(formData.phone.replace(/\D/g, "")), "10-digit Direct Line is required");
-    checkField("qualification", !formData.qualification?.trim(), "Education Deck is required");
-    checkField("subject", !formData.subject?.trim(), "Primary Domain is required");
-
+    checkField("schoolId", !formData.schoolId || formData.schoolId === "none", "Assigned School Branch required");
+    checkField("firstName", !formData.firstName?.trim(), "First Name required");
+    checkField("lastName", !formData.lastName?.trim(), "Last Name required");
+    checkField("email", !formData.email?.trim() || !/\S+@\S+\.\S+/.test(formData.email), "Valid Email Protocol required");
+    checkField("phone", !formData.phone?.trim() || formData.phone.length !== 10, "10-digit Direct Line required");
+    checkField("qualification", !formData.qualification?.trim(), "Education Deck required");
+    checkField("subject", !formData.subject?.trim(), "Primary Domain required");
+    checkField("status", !formData.status || formData.status === "none", "Access Status required");
+    checkField("employeeId", !formData.employeeId?.trim(), "Staff Payroll ID required");
+    checkField("employeeType", !formData.employeeType || formData.employeeType === "none", "Employee Category required");
+    checkField("gender", !formData.gender || formData.gender === "none", "Gender Identity required");
+    checkField("dob", !formData.dob, "Date of Birth required");
+    checkField("joiningDate", !formData.joiningDate, "Onboarding Date required");
+    checkField("experience", !formData.experience?.trim(), "Professional Tenure required");
+    checkField("standard", !formData.standard?.trim(), "Grade Level required");
+    checkField("address", !formData.address?.trim(), "Residential Address required");
+    checkField("RFID", !formData.RFID?.trim(), "Biometric RFID required");
+    checkField("RFID2", !formData.RFID2?.trim(), "Payroll Card Number required");
+    checkField("bloodGroup", !formData.bloodGroup || formData.bloodGroup === "none", "Blood Group required");
     setFormErrors(newErrors);
 
     if (firstErrorField) {
@@ -683,7 +692,7 @@ export default function Teachers({ user }: { user: any }) {
                       <div className="md:col-span-8 space-y-6">
                         <div className="grid grid-cols-2 gap-5">
                           <div className="space-y-3">
-                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">First Name</Label>
+                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">First Name required</Label>
                             <div className="relative">
                               <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
                               <Input 
@@ -707,16 +716,17 @@ export default function Teachers({ user }: { user: any }) {
                             <div className="relative">
                               <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
                               <Input 
+                                ref={el => { inputRefs.current["middleName"] = el; }}
                                 value={formData.middleName} 
                                 onChange={e => setFormData({...formData, middleName: e.target.value})} 
                                 placeholder="Optional" 
-                                className="h-14 pl-12 border-2 border-slate-200 bg-white font-bold rounded-2xl text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all placeholder:text-slate-500 shadow-sm text-slate-950" 
+                                className="h-14 pl-12 border-2 border-slate-200 bg-white font-bold rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all placeholder:text-slate-500 shadow-sm text-slate-950" 
                               />
                             </div>
                           </div>
                         </div>
                           <div className="space-y-3">
-                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Last Name</Label>
+                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Last Name required</Label>
                             <div className="relative">
                               <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
                               <Input 
@@ -747,7 +757,7 @@ export default function Teachers({ user }: { user: any }) {
                       </div>
                       <div className="space-y-6">
                         <div className="space-y-3">
-                          <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Email Protocol</Label>
+                          <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Email Protocol required</Label>
                           <Input 
                             ref={el => { inputRefs.current["email"] = el; }}
                             type="email" 
@@ -765,7 +775,7 @@ export default function Teachers({ user }: { user: any }) {
                           {formErrors.email && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.email}</p>}
                         </div>
                         <div className="space-y-3">
-                          <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Direct Line</Label>
+                          <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Direct Line required</Label>
                           <Input 
                             ref={el => { inputRefs.current["phone"] = el; }}
                             value={formData.phone} 
@@ -793,7 +803,7 @@ export default function Teachers({ user }: { user: any }) {
                       </div>
                       <div className="space-y-6">
                         <div className="space-y-3">
-                          <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Education Deck</Label>
+                          <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Education Deck required</Label>
                           <Input 
                             ref={el => { inputRefs.current["qualification"] = el; }}
                             value={formData.qualification} 
@@ -811,7 +821,19 @@ export default function Teachers({ user }: { user: any }) {
                         </div>
                         <div className="space-y-3">
                           <Label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Tenure (Years)</Label>
-                          <Input value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} placeholder="5 Years" className="h-14 border-2 border-slate-200 bg-white font-bold rounded-2xl text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all shadow-sm placeholder:text-slate-500 text-slate-950" />
+                          <Input 
+                            ref={el => { inputRefs.current["experience"] = el; }}
+                            value={formData.experience} 
+                            onChange={e => {
+                               setFormData({...formData, experience: e.target.value});
+                               if (formErrors.experience) setFormErrors(prev => ({ ...prev, experience: "" }));
+                            }} 
+                            placeholder="5 Years" 
+                            className={cn(
+                              "h-14 border-2 bg-white font-bold rounded-2xl text-sm transition-all shadow-sm placeholder:text-slate-500 text-slate-950 focus:outline-none focus:ring-offset-0",
+                              formErrors.experience ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
+                            )}
+                          />
                         </div>
                       </div>
                     </section>
@@ -824,7 +846,7 @@ export default function Teachers({ user }: { user: any }) {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-3">
-                        <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Primary Domain</Label>
+                        <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Primary Domain required</Label>
                         <Input 
                           ref={el => { inputRefs.current["subject"] = el; }}
                           value={formData.subject} 
@@ -842,10 +864,22 @@ export default function Teachers({ user }: { user: any }) {
                       </div>
                       <div className="space-y-3">
                         <Label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Assigned Grade</Label>
-                        <Input value={formData.standard} onChange={e => setFormData({...formData, standard: e.target.value})} placeholder="10th" className="h-14 border-2 border-slate-200 bg-white font-bold rounded-2xl text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all shadow-sm placeholder:text-slate-500 text-slate-950" />
+                        <Input 
+                          ref={el => { inputRefs.current["standard"] = el; }}
+                          value={formData.standard} 
+                          onChange={e => {
+                            setFormData({...formData, standard: e.target.value});
+                            if (formErrors.standard) setFormErrors(prev => ({ ...prev, standard: "" }));
+                          }} 
+                          placeholder="10th" 
+                          className={cn(
+                            "h-14 border-2 bg-white font-bold rounded-2xl text-sm transition-all shadow-sm placeholder:text-slate-500 text-slate-950 focus:outline-none focus:ring-offset-0",
+                            formErrors.standard ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
+                          )}
+                        />
                       </div>
                       <div className="space-y-3">
-                        <Label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Access Status</Label>
+                        <Label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Access Status required</Label>
                         <Select 
                           value={formData.status} 
                           onValueChange={v => {

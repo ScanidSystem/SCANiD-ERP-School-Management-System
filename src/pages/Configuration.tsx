@@ -150,7 +150,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
   const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
   const [localPhotoPreview, setLocalPhotoPreview] = useState<string | null>(null);
 
-  const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const inputRefs = useRef<Record<string, any>>({});
 
   // Form states
@@ -344,41 +344,44 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
   };
 
   const handleSave = async () => {
-    const newErrors: Record<string, boolean> = {};
+    const newErrors: Record<string, string> = {};
+    const checkField = (key: string, condition: boolean, message: string) => {
+      if (condition) {
+        newErrors[key] = message;
+      }
+    };
 
     // Core Field Validation
     if (activeTab === "navigation") {
-      if (!formData.title?.trim()) newErrors.title = true;
-      if (!formData.path?.trim()) newErrors.path = true;
+      checkField("title", !formData.title?.trim(), "Navigation Title required");
+      checkField("path", !formData.path?.trim(), "Navigation Path required");
+    } else if (activeTab === "role-assignment") {
+      checkField("name", !formData.name?.trim(), "Full Name required");
     } else {
-      if (!formData.name?.trim()) newErrors.name = true;
+      checkField("name", !formData.name?.trim(), `${MASTER_TYPES[activeTab].label} Name required`);
     }
 
-    // Tab-Specific Mandatory Fields
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (activeTab === "schools") {
-      if (!formData.email?.trim()) {
-        newErrors.email = true;
-      } else if (!emailRegex.test(formData.email)) {
-        newErrors.emailFormat = true;
+      checkField("email", !formData.email?.trim(), "School Email required");
+      if (formData.email?.trim() && !emailRegex.test(formData.email)) {
+        checkField("emailFormat", true, "Valid Email Format required");
       }
-
-      if (!formData.phone?.trim()) newErrors.phone = true;
-      if (!formData.address?.trim()) newErrors.address = true;
+      checkField("phone", !formData.phone?.trim(), "Contact Phone required");
+      checkField("address", !formData.address?.trim(), "School Address required");
     }
 
     if (activeTab === "role-assignment") {
-      if (!formData.email?.trim()) {
-        newErrors.email = true;
-      } else if (!emailRegex.test(formData.email)) {
-        newErrors.emailFormat = true;
+      checkField("email", !formData.email?.trim(), "User Email required");
+      if (formData.email?.trim() && !emailRegex.test(formData.email)) {
+        checkField("emailFormat", true, "Valid Email Format required");
       }
     }
 
-    if (activeTab === "houses" && !formData.color?.trim()) newErrors.color = true;
-    if (activeTab === "sub-castes" && !formData.casteId) newErrors.casteId = true;
-    if (activeTab === "cities" && !formData.stateId) newErrors.stateId = true;
+    if (activeTab === "houses") checkField("color", !formData.color?.trim(), "House Color required");
+    if (activeTab === "sub-castes") checkField("casteId", !formData.casteId, "Parent Caste required");
+    if (activeTab === "cities") checkField("stateId", !formData.stateId, "Parent State required");
 
     setFormErrors(newErrors);
 
@@ -1006,7 +1009,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                     {/* Navigation Title */}
                     <div className="space-y-2">
                       <Label className="text-slate-700 text-sm font-semibold pl-0.5">
-                        Navigation Title <span className="text-red-500">*</span>
+                        Navigation Title required
                       </Label>
                       <div className="relative group">
                         <div className={cn(
@@ -1027,7 +1030,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                           value={formData.title}
                           onChange={(e) => {
                             setFormData({ ...formData, title: e.target.value });
-                            if (formErrors.title) setFormErrors(prev => ({ ...prev, title: false }));
+                            if (formErrors.title) setFormErrors(prev => ({ ...prev, title: "" }));
                           }}
                         />
                       </div>
@@ -1039,7 +1042,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                     {/* Navigation Path */}
                     <div className="space-y-2">
                       <Label className="text-slate-700 text-sm font-semibold pl-0.5">
-                        Navigation Path <span className="text-red-500">*</span>
+                        Navigation Path required
                       </Label>
                       <div className="relative group">
                         <div className={cn(
@@ -1060,7 +1063,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                           value={formData.path}
                           onChange={(e) => {
                             setFormData({ ...formData, path: e.target.value });
-                            if (formErrors.path) setFormErrors(prev => ({ ...prev, path: false }));
+                            if (formErrors.path) setFormErrors(prev => ({ ...prev, path: "" }));
                           }}
                         />
                       </div>
@@ -1441,7 +1444,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
 
                       <div className="space-y-2">
                         <Label className="text-slate-500 text-[11px] font-black uppercase tracking-widest pl-0.5">
-                          SCHOOL NAME <span className="text-red-500">*</span>
+                          SCHOOL NAME required
                         </Label>
                         <div className="relative group">
                           <div className={cn("absolute left-5 top-1/2 -translate-y-1/2 transition-colors pointer-events-none z-10", formErrors.name ? "text-red-500" : "text-slate-400 group-focus-within:text-indigo-600")}>
@@ -1459,7 +1462,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                             value={formData.name}
                             onChange={(e) => {
                               setFormData({ ...formData, name: e.target.value });
-                              if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                              if (formErrors.name) setFormErrors(prev => ({ ...prev, name: "" }));
                             }}
                           />
                         </div>
@@ -1471,7 +1474,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label className="text-slate-500 text-[11px] font-black uppercase tracking-widest pl-0.5">
-                            Email Address <span className="text-red-500">*</span>
+                            Email Address required
                           </Label>
                           <div className="relative group">
                             <div className={cn("absolute left-5 top-1/2 -translate-y-1/2 transition-colors pointer-events-none z-10", (formErrors.email || formErrors.emailFormat) ? "text-red-500" : "text-slate-400 group-focus-within:text-indigo-600")}>
@@ -1489,7 +1492,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                               value={formData.email}
                               onChange={(e) => {
                                 setFormData({ ...formData, email: e.target.value });
-                                setFormErrors(prev => ({ ...prev, email: false, emailFormat: false }));
+                                setFormErrors(prev => ({ ...prev, email: "", emailFormat: "" }));
                               }}
                             />
                           </div>
@@ -1502,7 +1505,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
 
                         <div className="space-y-2">
                           <Label className="text-slate-500 text-[11px] font-black uppercase tracking-widest pl-0.5">
-                            Phone Number <span className="text-red-500">*</span>
+                            Phone Number required
                           </Label>
                           <div className="relative group">
                             <div className={cn("absolute left-5 top-1/2 -translate-y-1/2 transition-colors pointer-events-none z-10", formErrors.phone ? "text-red-500" : "text-slate-400 group-focus-within:text-indigo-600")}>
@@ -1521,7 +1524,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                               onChange={(e) => {
                                 const val = e.target.value.replace(/\D/g, '').slice(0, 10);
                                 setFormData({ ...formData, phone: val });
-                                if (formErrors.phone) setFormErrors(prev => ({ ...prev, phone: false }));
+                                if (formErrors.phone) setFormErrors(prev => ({ ...prev, phone: "" }));
                               }}
                             />
                           </div>
@@ -1533,7 +1536,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
 
                       <div className="space-y-2 pt-2">
                         <Label className="text-slate-500 text-[11px] font-black uppercase tracking-widest pl-0.5">
-                          INSTITUTIONAL ADDRESS <span className="text-red-500">*</span>
+                          INSTITUTIONAL ADDRESS required
                         </Label>
                         <div className="relative group">
                           <div className={cn("absolute left-5 top-5 transition-colors pointer-events-none z-10", formErrors.address ? "text-red-500" : "text-slate-400 group-focus-within:text-indigo-600")}>
@@ -1550,7 +1553,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                             value={formData.address}
                             onChange={(e) => {
                               setFormData({ ...formData, address: e.target.value });
-                              if (formErrors.address) setFormErrors(prev => ({ ...prev, address: false }));
+                              if (formErrors.address) setFormErrors(prev => ({ ...prev, address: "" }));
                             }}
                           />
                         </div>
@@ -1637,7 +1640,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                 <>
                   <div className="space-y-2 mb-4">
                     <Label className="text-slate-900 text-sm font-bold pl-0.5 uppercase tracking-wide">
-                      NAME / LABEL <span className="text-red-500">*</span>
+                      NAME / LABEL required
                     </Label>
                     <div className="relative group">
                       <div className={cn("absolute left-5 top-1/2 -translate-y-1/2 transition-colors pointer-events-none z-10", formErrors.name ? "text-red-500" : "text-slate-400 group-focus-within:text-indigo-600")}>
@@ -1653,7 +1656,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                         value={formData.name}
                         onChange={(e) => {
                           setFormData({ ...formData, name: e.target.value });
-                          if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                          if (formErrors.name) setFormErrors(prev => ({ ...prev, name: "" }));
                         }}
                       />
                     </div>
@@ -1704,7 +1707,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                 <>
                   <div className="space-y-2 mb-6">
                     <Label className="text-slate-900 text-sm font-bold pl-0.5 uppercase tracking-wide">
-                      NAME / LABEL <span className="text-red-500">*</span>
+                      NAME / LABEL required
                     </Label>
                     <div className="relative group">
                       <div className={cn("absolute left-5 top-1/2 -translate-y-1/2 transition-colors pointer-events-none z-10", formErrors.name ? "text-red-500" : "text-indigo-600")}>
@@ -1722,7 +1725,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                         value={formData.name}
                         onChange={(e) => {
                           setFormData({ ...formData, name: e.target.value });
-                          if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                          if (formErrors.name) setFormErrors(prev => ({ ...prev, name: "" }));
                         }}
                       />
                     </div>
@@ -1769,7 +1772,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                     <div className="space-y-2">
                       <Label className="text-slate-900 text-sm font-bold pl-0.5 uppercase tracking-wide">
-                        NAME / LABEL <span className="text-red-500">*</span>
+                        NAME / LABEL required
                       </Label>
                       <div className="relative group">
                         <div className={cn("absolute left-4 top-1/2 -translate-y-1/2 transition-colors pointer-events-none z-10", formErrors.name ? "text-red-500" : "text-indigo-600")}>
@@ -1787,7 +1790,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                           value={formData.name}
                           onChange={(e) => {
                             setFormData({ ...formData, name: e.target.value });
-                            if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                            if (formErrors.name) setFormErrors(prev => ({ ...prev, name: "" }));
                           }}
                         />
                       </div>
@@ -1801,7 +1804,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                         value={formData.casteId}
                         onValueChange={(v) => {
                           setFormData({ ...formData, casteId: v });
-                          if (formErrors.casteId) setFormErrors(prev => ({ ...prev, casteId: false }));
+                          if (formErrors.casteId) setFormErrors(prev => ({ ...prev, casteId: "" }));
                         }}
                       >
                         <SelectTrigger
@@ -1848,7 +1851,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-slate-900 text-sm font-bold pl-0.5 uppercase tracking-wide">
-                        CITY / DISTRICT NAME <span className="text-red-500">*</span>
+                        CITY / DISTRICT NAME required
                       </Label>
                       <div className="relative group">
                         <div className={cn("absolute left-4 top-1/2 -translate-y-1/2 transition-colors pointer-events-none z-10", formErrors.name ? "text-red-500" : "text-indigo-600")}>
@@ -1866,7 +1869,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                           value={formData.name}
                           onChange={(e) => {
                             setFormData({ ...formData, name: e.target.value });
-                            if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                            if (formErrors.name) setFormErrors(prev => ({ ...prev, name: "" }));
                           }}
                         />
                       </div>
@@ -1880,7 +1883,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                         value={formData.stateId}
                         onValueChange={(v) => {
                           setFormData({ ...formData, stateId: v });
-                          if (formErrors.stateId) setFormErrors(prev => ({ ...prev, stateId: false }));
+                          if (formErrors.stateId) setFormErrors(prev => ({ ...prev, stateId: "" }));
                         }}
                       >
                         <SelectTrigger
@@ -2058,7 +2061,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                         value={formData.name}
                         onChange={(e) => {
                           setFormData({ ...formData, name: e.target.value });
-                          if (formErrors.name) setFormErrors({ ...formErrors, name: false });
+                          if (formErrors.name) setFormErrors({ ...formErrors, name: "" });
                         }}
                         placeholder="Enter role name or label"
                         className={cn(
@@ -2178,7 +2181,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-slate-900 text-sm font-bold pl-0.5">
-                        Full Name <span className="text-red-500">*</span>
+                        Full Name required
                       </Label>
                       <div className="relative group">
                         <div className={cn("absolute left-5 top-1/2 -translate-y-1/2 transition-colors", formErrors.name ? "text-red-500" : "text-indigo-600")}>
@@ -2191,7 +2194,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                           value={formData.name}
                           onChange={(e) => {
                             setFormData({ ...formData, name: e.target.value });
-                            if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                            if (formErrors.name) setFormErrors(prev => ({ ...prev, name: "" }));
                           }}
                           placeholder="Enter full name"
                           className={cn(
@@ -2207,7 +2210,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
 
                     <div className="space-y-2">
                       <Label className="text-slate-900 text-sm font-bold pl-0.5">
-                        Email Address <span className="text-red-500">*</span>
+                        Email Address required
                       </Label>
                       <div className="relative group">
                         <div className={cn("absolute left-5 top-1/2 -translate-y-1/2 transition-colors", (formErrors.email || formErrors.emailFormat) ? "text-red-500" : "text-indigo-600")}>
@@ -2220,7 +2223,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                           value={formData.email}
                           onChange={(e) => {
                             setFormData({ ...formData, email: e.target.value });
-                            setFormErrors(prev => ({ ...prev, email: false, emailFormat: false }));
+                            setFormErrors(prev => ({ ...prev, email: "", emailFormat: "" }));
                           }}
                           placeholder="Enter email address"
                           className={cn(
@@ -2365,7 +2368,7 @@ activeTab === "schools" ? "max-h-[75vh]" : "max-h-[55vh]"
                         value={formData.name}
                         onChange={(e) => {
                           setFormData({ ...formData, name: e.target.value });
-                          if (formErrors.name) setFormErrors(prev => ({ ...prev, name: false }));
+                          if (formErrors.name) setFormErrors(prev => ({ ...prev, name: "" }));
                         }}
                       />
                     </div>
