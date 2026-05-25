@@ -173,18 +173,7 @@ const mockFallbacks: Record<string, any> = {
   "/users": [
     { id: 1, fullName: "Super Admin", username: "admin", role: "superadmin" },
     { id: 2, fullName: "John Doe", username: "teacher1", role: "teacher" },
-  ],
-  "/auth/login": {
-    token: "demo-token",
-    user: {
-      id: 1,
-      fullName: "Super Admin",
-      username: "admin",
-      role: "superadmin",
-      schoolId: null,
-      academicYearId: 2
-    }
-  }
+  ]
 };
 
 // Add request interceptor to automatically inject Authorization header
