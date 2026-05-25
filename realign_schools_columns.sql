@@ -45,6 +45,21 @@ BEGIN TRY
     BEGIN
         EXEC sp_rename 'dbo.Schools', 'Schools_Temp';
         PRINT 'Renamed [dbo].[Schools] to [dbo].[Schools_Temp].';
+
+        -- DROP CONFLICTING CONSTRAINTS ON THE TEMPORARY TABLE TO AVOID THE "Could not create constraint or index" ERROR
+        DECLARE @DropConstraintSQL NVARCHAR(MAX) = '';
+        
+        -- Identify and drop any Primary Key, Foreign Key, Check, or Default Constraints associated with Schools_Temp
+        SELECT @DropConstraintSQL += 'ALTER TABLE [dbo].[Schools_Temp] DROP CONSTRAINT [' + name + ']; '
+        FROM sys.objects 
+        WHERE parent_object_id = OBJECT_ID('dbo.Schools_Temp') 
+          AND (type IN ('PK', 'F', 'D') OR name IN ('PK_Schools', 'DF_Schools_TotalStudents', 'DF_Schools_Status', 'DF_Schools_IsActive', 'DF_Schools_IsDeleted', 'DF_Schools_CreatedOn', 'DF_Schools_ModifiedOn'));
+
+        IF @DropConstraintSQL <> ''
+        BEGIN
+            EXEC sp_executesql @DropConstraintSQL;
+            PRINT 'Cleaned up constraints on Schools_Temp: ' + @DropConstraintSQL;
+        END
     END
     ELSE
     BEGIN
