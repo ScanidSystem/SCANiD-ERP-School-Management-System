@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
+  Calendar,
   Plus, 
   Search, 
   Download, 
@@ -37,7 +38,35 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  School2,
+  BookOpen,
+  LayoutGrid,
+  Layers3,
+  CalendarDays,
+  CalendarRange,
+  SunMoon,
+  Clock3,
+  Sparkles,
+  Landmark,
+  HeartPulse,
+  Droplets,
+  Users2,
+  BadgeInfo,
+  Layers,
+  Folders,
+  Home,
+  UserPlus,
+  Flag,
+  Users,
+  CircleOff,
+  Mars,
+  Venus,
+  VenusAndMars,
+  GitBranch,
+  House,
+  School,
+  ClipboardCheck
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -355,7 +384,7 @@ export default function Students({ user }: { user: UserType }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadResults, setUploadResults] = useState<any[]>([]);
   const bulkFileInputRef = useRef<HTMLInputElement>(null);
-  const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const inputRefs = useRef<Record<string, any>>({});
   
   const initialFormState = {
@@ -364,7 +393,7 @@ export default function Students({ user }: { user: UserType }) {
     FNAME: "",
     MNAME: "",
     LNAME: "",
-    GENDER: "Male",
+    GENDER: "",
     MOBILE: "",
     MOTHERNAME: "",
     ADDRESS: "",
@@ -802,28 +831,34 @@ export default function Students({ user }: { user: UserType }) {
   };
 
   const handleAddStudent = async () => {
-    const newErrors: Record<string, boolean> = {};
+    const newErrors: Record<string, string> = {};
     let firstErrorField = "";
 
-    const checkField = (field: string, condition: boolean) => {
+    const checkField = (field: string, condition: boolean, message: string) => {
       if (condition) {
-        newErrors[field] = true;
+        newErrors[field] = message;
         if (!firstErrorField) firstErrorField = field;
       }
     };
 
-    checkField("schoolId", !newStudentFormData.schoolId);
-    checkField("STD", !newStudentFormData.STD);
-    checkField("DIV", !newStudentFormData.DIV);
-    checkField("ROLLNO", !newStudentFormData.ROLLNO?.trim());
-    checkField("GENDER", !newStudentFormData.GENDER);
-    checkField("aadharcard", !newStudentFormData.aadharcard?.trim() || !/^\d{12}$/.test(newStudentFormData.aadharcard.replace(/\s/g, "")));
-    checkField("FNAME", !newStudentFormData.FNAME?.trim());
-    checkField("LNAME", !newStudentFormData.LNAME?.trim());
-    checkField("DOB", !newStudentFormData.DOB);
-    checkField("MOTHERNAME", !newStudentFormData.MOTHERNAME?.trim());
-    checkField("MOBILE", !newStudentFormData.MOBILE?.trim() || !/^\d{10}$/.test(newStudentFormData.MOBILE.replace(/\D/g, "")));
-    checkField("ADDRESS", !newStudentFormData.ADDRESS?.trim());
+    checkField("schoolId", !newStudentFormData.schoolId || (schools.length > 0 && !schools.find(s => s.id.toString() === newStudentFormData.schoolId.toString())), "Assigned School Branch is required");
+    checkField("STD", !newStudentFormData.STD, "Academic Grade is required");
+    checkField("DIV", !newStudentFormData.DIV, "Division / Section is required");
+    checkField("ROLLNO", !newStudentFormData.ROLLNO?.trim(), "Roll Number is required");
+    checkField("GENDER", !newStudentFormData.GENDER, "Gender is required");
+    checkField("aadharcard", !newStudentFormData.aadharcard?.trim() || !/^\d{12}$/.test(newStudentFormData.aadharcard.replace(/\s/g, "")), "Aadhar ID must be a valid 12-digit number");
+    checkField("FNAME", !newStudentFormData.FNAME?.trim(), "First Name is required");
+    checkField("LNAME", !newStudentFormData.LNAME?.trim(), "Last Name is required");
+    checkField("DOB", !newStudentFormData.DOB, "Date of Birth is required");
+    checkField("MOTHERNAME", !newStudentFormData.MOTHERNAME?.trim(), "Mother's Full Name is required");
+    checkField("MOBILE", !newStudentFormData.MOBILE?.trim() || !/^\d{10}$/.test(newStudentFormData.MOBILE.replace(/\D/g, "")), "Contact Mobile must be a valid 10-digit number");
+    checkField("ADDRESS", !newStudentFormData.ADDRESS?.trim(), "Permanent Address is required");
+    checkField("RELIGION", !newStudentFormData.RELIGION, "Religion is required");
+    checkField("BLOODGROUP", !newStudentFormData.BLOODGROUP, "Blood Group is required");
+    checkField("CASTE", !newStudentFormData.CASTE, "Caste is required");
+    checkField("CATEGORY", !newStudentFormData.CATEGORY, "Category is required");
+    checkField("house", !newStudentFormData.house, "School House is required");
+    checkField("admissiontype", !newStudentFormData.admissiontype, "Admission Type is required");
 
     setFormErrors(newErrors);
 
@@ -1013,7 +1048,7 @@ export default function Students({ user }: { user: UserType }) {
                       </div>
                       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                         <Button 
-                          className="flex-1 bg-slate-900 hover:bg-black text-white font-black rounded-2xl h-12 shadow-xl shadow-slate-200 active:scale-[0.98] transition-all"
+                          className="flex-1 bg-slate-900 hover:bg-black text-white font-black rounded-xl h-12 shadow-xl shadow-slate-200 active:scale-[0.98] transition-all"
                           onClick={() => bulkFileInputRef.current?.click()}
                           disabled={isProcessing}
                         >
@@ -1021,7 +1056,7 @@ export default function Students({ user }: { user: UserType }) {
                         </Button>
                         <Button
                           variant="outline"
-                          className="flex-1 border-slate-200 hover:bg-slate-50 font-black rounded-2xl h-12 transition-all gap-2 text-slate-600"
+                          className="flex-1 border-slate-200 hover:bg-slate-50 font-black rounded-xl h-12 transition-all gap-2 text-slate-600"
                           onClick={downloadSampleExcel}
                         >
                           <Download size={18} /> Sample Sheet
@@ -1049,7 +1084,7 @@ export default function Students({ user }: { user: UserType }) {
                         </div>
                       </div>
 
-                      <div className="border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+                      <div className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
                         <div className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 bg-slate-50/50">
                           <Table>
                             <TableHeader className="bg-white sticky top-0 z-10 shadow-sm">
@@ -1101,7 +1136,7 @@ export default function Students({ user }: { user: UserType }) {
                     </div>
                   )}
 
-                  <div className="bg-amber-50/50 border border-amber-100 p-5 rounded-2xl flex gap-4">
+                  <div className="bg-amber-50/50 border border-amber-100 p-5 rounded-xl flex gap-4">
                      <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center shrink-0">
                         <Filter className="text-amber-500" size={18} />
                      </div>
@@ -1161,638 +1196,1303 @@ export default function Students({ user }: { user: UserType }) {
                 title="Remove Student Record?"
                 description={`This will permanently delete ${deleteInfo?.name}'s profile, enrollment details, and academic history. This action cannot be reversed.`}
               />
-              <DialogContent className="sm:max-w-[900px] w-[95vw] max-h-[90vh] flex flex-col p-0 border-none shadow-3xl rounded-[2rem] overflow-hidden">
-                <div className="bg-slate-900 px-8 py-5 text-white relative shrink-0">
+              <DialogContent className="sm:max-w-[1000px] w-[95vw] max-h-[96vh] flex flex-col p-0 border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] rounded-[2.5rem] overflow-hidden bg-white group/modal">
+                {/* Premium Dark Header - Matches Reference */}
+                <div className="bg-slate-950 px-10 py-7 text-white relative shrink-0 overflow-hidden border-b border-white/5">
                   <div className="relative z-10 flex items-center justify-between">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-3">
-                        <div className="p-2 bg-blue-500 rounded-xl shadow-xl shadow-blue-500/20">
-                          <UserCircle size={22} className="text-white" />
-                        </div>
-                        {isEditMode ? "Modify Student Profile" : "Register Student"}
-                      </DialogTitle>
-                      <DialogDescription className="text-slate-400 text-[12px] mt-1 font-medium max-w-2xl leading-relaxed">
-                        {isEditMode 
-                          ? "Update critical student records and academic history." 
-                          : "Create a new permanent digital record for the enrolled student."}
-                      </DialogDescription>
-                    </DialogHeader>
+                    <div className="flex items-center gap-5">
+                      <div className="w-16 h-16 bg-indigo-600 rounded-[1.25rem] flex items-center justify-center shadow-2xl shadow-indigo-500/40 border border-white/10 transition-transform group-hover/modal:scale-105 duration-500">
+                        <UserCircle size={32} className="text-white fill-white/10" />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <DialogTitle className="text-2xl font-black tracking-tight leading-none">
+                          {isEditMode ? "Modify Student Profile" : "Register Student"}
+                        </DialogTitle>
+                        <DialogDescription className="text-slate-400 text-sm font-medium tracking-tight opacity-90">
+                          {isEditMode 
+                            ? "Update critical student records and academic history." 
+                            : "Create a new permanent digital record for the enrolled student."}
+                        </DialogDescription>
+                      </div>
+                    </div>
                   </div>
-                  <div className="absolute right-[-10%] top-[-10%] w-64 h-64 bg-blue-600/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+                  
+                  {/* Atmospheric Glow */}
+                  <div className="absolute right-[-5%] top-[-20%] w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] pointer-events-none animate-pulse"></div>
+                  <div className="absolute left-[-5%] bottom-[-20%] w-64 h-64 bg-blue-600/10 rounded-full blur-[80px] pointer-events-none"></div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-6 bg-white scrollbar-thin scrollbar-thumb-slate-200">
-                  <div className="max-w-4xl mx-auto space-y-8">
-                    <section>
-                      <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
-                        <div className="w-1.5 h-5 bg-blue-600 rounded-full"></div>
-                        <h3 className="text-sm font-black text-slate-900 tracking-tight">Academic Placement</h3>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                        {/* Form Fields Column (8/12 width) */}
-                        <div className="md:col-span-8">
-                          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-                            <div className="md:col-span-12 space-y-1.5">
-                              <Label htmlFor="school" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned School Branch</Label>
-                                <Select 
-                                  value={newStudentFormData.schoolId} 
-                                  onValueChange={(v) => {
-                                    setNewStudentFormData({...newStudentFormData, schoolId: v});
-                                    if (formErrors.schoolId) setFormErrors(prev => ({ ...prev, schoolId: false }));
-                                  }}
-                                  disabled={user.role !== "superadmin" && !!user.schoolId}
-                                >
-                                  <SelectTrigger 
-                                    ref={el => { inputRefs.current["schoolId"] = el; }}
-                                    id="school" 
-                                    className={cn(
-                                      "h-10 border-slate-200 bg-slate-50/50 font-bold text-slate-800 rounded-xl px-4 focus:ring-2 focus:ring-blue-500/5 transition-all text-sm",
-                                      formErrors.schoolId && "border-red-500 ring-2 ring-red-500/10",
-                                      (user.role !== "superadmin" && !!user.schoolId) && "opacity-80 cursor-not-allowed bg-slate-100"
-                                    )}
-                                  >
-                                    {/* Mapping logic to show only school name in trigger */}
-                                    <SelectValue placeholder="Select School Branch">
-                                      {newStudentFormData.schoolId ? schools.find(s => s.id.toString() === newStudentFormData.schoolId.toString())?.name : undefined}
-                                    </SelectValue>
-                                  </SelectTrigger>
-                                  <SelectContent className="max-h-68 rounded-2xl shadow-2xl border-slate-200 p-2">
-                                    <SelectItem value="" className="font-semibold py-2.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">
-                                      Select School Branch
-                                    </SelectItem>
-                                    {Array.isArray(schools) && schools.length > 0 ? (
-                                      schools.map(s => (
-                                        <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
-                                          <div className="flex flex-col gap-0.5">
-                                            <span className="text-sm font-bold">{s.name}</span>
-                                            <span className="text-[10px] text-slate-400 font-medium tracking-tight">ID: SCH-{s.id} • {s.address?.split(',')[0]}</span>
-                                          </div>
-                                        </SelectItem>
-                                      ))
-                                    ) : (
-                                      <div className="p-4 text-sm text-slate-500 text-center italic flex flex-col items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
-                                        Loading registered branches...
-                                      </div>
-                                    )}
-                                  </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="md:col-span-6 space-y-1.5">
-                              <Label htmlFor="STD" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.STD ? "text-red-500" : "text-slate-500")}>Academic Grade {formErrors.STD && "*"}</Label>
-                              <Select 
-                                value={newStudentFormData.STD} 
-                                onValueChange={(v) => {
-                                  setNewStudentFormData({...newStudentFormData, STD: v});
-                                  if (formErrors.STD) setFormErrors(prev => ({ ...prev, STD: false }));
-                                }}
-                              >
-                                <SelectTrigger 
-                                  ref={el => { inputRefs.current["STD"] = el; }}
-                                  id="STD" 
-                                  className={cn(
-                                    "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                                    formErrors.STD && "border-red-500 ring-2 ring-red-500/10"
-                                  )}
-                                >
-                                  <SelectValue placeholder="Select Academic Grade">
-                                    {newStudentFormData.STD || undefined}
-                                  </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                                  <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Grade</SelectItem>
-                                  {Array.isArray(standardsMaster) && standardsMaster.map(std => (
-                                    <SelectItem key={std.id} value={std.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{std.name}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <div className="md:col-span-6 space-y-1.5">
-                              <Label htmlFor="DIV" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.DIV ? "text-red-500" : "text-slate-500")}>Division/Section {formErrors.DIV && "*"}</Label>
-                              <Select 
-                                value={newStudentFormData.DIV} 
-                                onValueChange={(v) => {
-                                  setNewStudentFormData({...newStudentFormData, DIV: v});
-                                  if (formErrors.DIV) setFormErrors(prev => ({ ...prev, DIV: false }));
-                                }}
-                              >
-                                <SelectTrigger 
-                                  ref={el => { inputRefs.current["DIV"] = el; }}
-                                  id="DIV" 
-                                  className={cn(
-                                    "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                                    formErrors.DIV && "border-red-500 ring-2 ring-red-500/10"
-                                  )}
-                                >
-                                  <SelectValue placeholder="Select Section/Division">
-                                    {newStudentFormData.DIV ? `Section ${newStudentFormData.DIV}` : undefined}
-                                  </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                                  <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Section/Division</SelectItem>
-                                  {Array.isArray(sectionsMaster) && sectionsMaster.map(sec => (
-                                    <SelectItem key={sec.id} value={sec.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Section {sec.name}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <div className="md:col-span-6 space-y-1.5">
-                              <Label htmlFor="academicyear" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Joining Year</Label>
-                              <Select 
-                                value={newStudentFormData.academicyear} 
-                                onValueChange={(v) => setNewStudentFormData({...newStudentFormData, academicyear: v})}
-                              >
-                                <SelectTrigger id="academicyear" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                  <SelectValue placeholder="Select Academic Year">
-                                    {newStudentFormData.academicyear ? academicYears.find(y => y.id.toString() === newStudentFormData.academicyear)?.name : undefined}
-                                  </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                                  <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Academic Year</SelectItem>
-                                  {Array.isArray(academicYears) && academicYears.map(y => (
-                                    <SelectItem key={y.id} value={y.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{y.name} {y.isCurrent ? "(Current)" : ""}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <div className="md:col-span-6 space-y-1.5">
-                              <Label htmlFor="SHIFTNAME" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Assigned Shift</Label>
-                              <Select 
-                                value={newStudentFormData.SHIFTNAME} 
-                                onValueChange={(v) => setNewStudentFormData({...newStudentFormData, SHIFTNAME: v})}
-                              >
-                                <SelectTrigger id="SHIFTNAME" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                  <SelectValue placeholder="Select Shift">
-                                    {newStudentFormData.SHIFTNAME || undefined}
-                                  </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                                  <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Shift</SelectItem>
-                                  {Array.isArray(shifts) && shifts.map(s => (
-                                    <SelectItem key={s.id} value={s.name} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{s.name}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
+                <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-8 bg-[#FDFDFF] custom-scrollbar">
+                  <div className="space-y-10">
+                    {/* TOP SECTION: Academic + Profile Photo */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                      {/* Academic Placement (8/12) */}
+                      <div className="lg:col-span-8 space-y-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-1.5 h-6 bg-indigo-600 rounded-full"></div>
+                          <GraduationCap className="size-5 text-indigo-600" />
+                          <h3 className="text-base font-black text-slate-900 tracking-tight">Academic Placement</h3>
                         </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="md:col-span-2 space-y-2">
+                            <Label htmlFor="school" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Assigned School Branch</Label>
+                            <div className="relative group">
+                              <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-600 size-5 z-20" />
+                             <Select 
+  value={newStudentFormData.schoolId}   
+  onValueChange={(v) => {
+    setNewStudentFormData({...newStudentFormData, schoolId: v});
+    if (formErrors.schoolId) setFormErrors(prev => ({ ...prev, schoolId: "" }));
+  }}
+  disabled={user.role !== "superadmin" && !!user.schoolId}
+>
+  <SelectTrigger 
+    ref={el => { inputRefs.current["schoolId"] = el; }}
+    id="school" 
+    className={cn(
+      "h-[68px] min-h-[68px] border-slate-200 bg-gradient-to-b from-white to-slate-50/80 font-bold text-slate-800 rounded-2xl pl-14 pr-5 shadow-[0_4px_20px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_30px_rgba(99,102,241,0.10)] transition-all duration-300 text-[15px] border-2 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 data-[state=open]:border-indigo-400 data-[state=open]:shadow-[0_10px_35px_rgba(99,102,241,0.14)]",
+      formErrors.schoolId && "border-red-500 focus:ring-red-500/10",
+      (user.role !== "superadmin" && !!user.schoolId) && "opacity-80 cursor-not-allowed bg-slate-50"
+    )}
+  >
+    <div className="flex items-center gap-3 w-full">
+      
+      {/* Left Icon Bubble */}
+      <div className="absolute left-4 flex items-center justify-center w-8 h-8 rounded-xl bg-indigo-100 shadow-sm">
+        <School2 className="w-4 h-4 text-indigo-600" />
+      </div>
 
-                        {/* Profile Image Display Section (4/12 width) - Available in Add & Edit Mode */}
-                        <div className="md:col-span-4 flex flex-col items-center justify-center border-l border-slate-100 pl-6">
-                           <div className="text-center space-y-4">
-                              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Profile Identity Image</Label>
-                              
-                              <div 
-                                className="relative group cursor-pointer"
-                                onClick={() => triggerPhotoUpload(isEditMode ? currentStudentId! : "new")}
-                              >
-                                <div className="w-44 h-44 rounded-3xl overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-200 bg-slate-50 flex items-center justify-center transition-all duration-300 group-hover:shadow-blue-200/50 group-hover:scale-[1.02]">
-                                  {(localPhotoPreview || newStudentFormData.ProfilePhotoPath) ? (
-                                    <img 
-                                      src={localPhotoPreview || resolvePhotoUrl(newStudentFormData.ProfilePhotoPath)} 
-                                      alt="Student Identity" 
-                                      className="w-full h-full object-cover"
-                                      onError={(e) => {
-                                        e.currentTarget.src = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + newStudentFormData.FNAME;
-                                      }}
-                                    />
-                                  ) : (
-                                    <div className="flex flex-col items-center gap-2 text-slate-300">
-                                      <div className="p-4 bg-slate-100 rounded-2xl">
-                                        <Edit2 size={32} className="opacity-20" />
-                                      </div>
-                                      <span className="text-[10px] font-bold uppercase tracking-widest">No Image Found</span>
-                                    </div>
-                                  )}
+      {/* Selected Value */}
+      <div className="flex flex-col text-left leading-tight">
 
-                                  {/* Update Overlay */}
-                                  <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
-                                    <div className="p-2 bg-white/20 rounded-full">
-                                      <Edit2 size={24} />
-                                    </div>
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Update Photo</span>
-                                  </div>
-                                </div>
-                                
-                                {(localPhotoPreview || newStudentFormData.ProfilePhotoPath) && (
-                                  <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
-                                    <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
-                                  </div>
-                                )}
+
+        <SelectValue placeholder="Select School Branch">
+          {(() => {
+            if (!newStudentFormData.schoolId) return "Select School Branch";
+            const match = schools.find(s => s.id.toString() === newStudentFormData.schoolId.toString());
+            if (match) return match.name;
+            if (schools.length === 0) return "Loading...";
+            return "Select School Branch";
+          })()}
+        </SelectValue>
+      </div>
+    </div>
+  </SelectTrigger>
+
+  <SelectContent 
+    className="min-w-[380px] max-h-80 rounded-2xl shadow-[0_20px_60px_rgba(15,23,42,0.18)] border border-slate-200 p-2 bg-white backdrop-blur-xl"
+  >
+    <SelectItem value="" className="italic text-slate-400 font-medium py-3 px-4 rounded-xl focus:bg-slate-50 cursor-pointer transition-all mb-1">
+      Select School Branch
+    </SelectItem>
+    {Array.isArray(schools) && schools.map(s => (
+      <SelectItem 
+        key={s.id} 
+        value={s.id.toString()} 
+        className="group relative font-semibold py-4 px-4 rounded-2xl focus:bg-indigo-50 focus:text-indigo-700 cursor-pointer transition-all duration-200"
+      >
+        <div className="flex items-center gap-3 w-full">
+          
+          {/* Mini Logo/Icon */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
+            <School2 className="w-4 h-4 text-indigo-600" />
+          </div>
+
+          {/* Text */}
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-extrabold text-slate-800">
+              {s.name}
+            </span>
+
+            <span className="text-[10px] text-slate-400 font-bold tracking-[0.12em] uppercase">
+              School ID • SCH-{s.id}
+            </span>
+          </div>
+        </div>
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+                            </div>
+                            {formErrors.schoolId && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.schoolId}</p>}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="STD" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Academic Grade</Label>
+                            <div className="relative">
+                              <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500 size-5 z-20" />
+                           <Select 
+  value={newStudentFormData.STD} 
+  onValueChange={(v) => {
+    setNewStudentFormData({...newStudentFormData, STD: v});
+    if (formErrors.STD) setFormErrors(prev => ({ ...prev, STD: "" }));
+  }}
+>
+  <SelectTrigger 
+    ref={el => { inputRefs.current["STD"] = el; }}
+    id="STD" 
+    className={cn(
+      "h-[68px] min-h-[68px] border-2 border-slate-200 bg-gradient-to-b from-white to-slate-50/80 font-bold rounded-2xl pl-14 pr-5 text-[15px] shadow-[0_4px_20px_rgba(15,23,42,0.06)] hover:shadow-[0_10px_35px_rgba(99,102,241,0.10)] transition-all duration-300 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 data-[state=open]:border-indigo-400 data-[state=open]:shadow-[0_12px_40px_rgba(99,102,241,0.14)]",
+      formErrors.STD && "border-red-500 focus:ring-red-500/10"
+    )}
+  >
+    <div className="flex items-center gap-3 w-full">
+      
+      {/* Left Icon */}
+      <div className="absolute left-4 flex items-center justify-center w-8 h-8 rounded-xl bg-indigo-100 shadow-sm">
+        <GraduationCap className="w-4 h-4 text-indigo-600" />
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-col text-left leading-tight">
+   
+
+        <SelectValue placeholder="Select Academic Grade" />
+      </div>
+    </div>
+  </SelectTrigger>
+
+  <SelectContent className="min-w-[280px] rounded-2xl shadow-[0_20px_60px_rgba(15,23,42,0.18)] border border-slate-200 p-2 bg-white backdrop-blur-xl">
+    <SelectItem value="" className="italic text-slate-400 font-medium py-3 px-4 rounded-xl focus:bg-slate-50 cursor-pointer transition-all mb-1">
+      Select Academic Grade
+    </SelectItem>
+    {Array.isArray(standardsMaster) && standardsMaster.map(std => (
+      <SelectItem 
+        key={std.id} 
+        value={std.name} 
+        className="group relative font-semibold py-4 px-4 rounded-2xl focus:bg-indigo-50 focus:text-indigo-700 cursor-pointer transition-all duration-200"
+      >
+        <div className="flex items-center gap-3">
+          
+          {/* Grade Icon */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
+            <BookOpen className="w-4 h-4 text-indigo-600" />
+          </div>
+
+          {/* Grade Text */}
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-extrabold text-slate-800">
+              {std.name}
+            </span>
+
+            <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+              Academic Standard
+            </span>
+          </div>
+        </div>
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+                            </div>
+                            {formErrors.STD && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.STD}</p>}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="DIV" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Division / Section</Label>
+                            <div className="relative">
+                              <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
+                                <Plus className="size-5 text-indigo-500 rotate-45" />
                               </div>
-                              
-                              <p className="text-[10px] text-slate-400 font-medium leading-relaxed max-w-[180px] mx-auto">
-                                Click the identity frame to upload or change the physical photograph.
-                              </p>
-                           </div>
+                              <Select 
+  value={newStudentFormData.DIV} 
+  onValueChange={(v) => {
+    setNewStudentFormData({...newStudentFormData, DIV: v});
+    if (formErrors.DIV) setFormErrors(prev => ({ ...prev, DIV: "" }));
+  }}
+>
+  <SelectTrigger 
+    ref={el => { inputRefs.current["DIV"] = el; }}
+    id="DIV" 
+    className={cn(
+      "h-[68px] min-h-[68px] border-2 border-slate-200 bg-gradient-to-b from-white to-slate-50/80 font-bold rounded-2xl pl-14 pr-5 text-[15px] shadow-[0_4px_20px_rgba(15,23,42,0.06)] hover:shadow-[0_10px_35px_rgba(99,102,241,0.10)] transition-all duration-300 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 data-[state=open]:border-indigo-400 data-[state=open]:shadow-[0_12px_40px_rgba(99,102,241,0.14)]",
+      formErrors.DIV && "border-red-500 focus:ring-red-500/10"
+    )}
+  >
+    <div className="flex items-center gap-3 w-full">
+      
+      {/* Left Icon */}
+      <div className="absolute left-4 flex items-center justify-center w-8 h-8 rounded-xl bg-indigo-100 shadow-sm">
+        <Layers3 className="w-4 h-4 text-indigo-600" />
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-col text-left leading-tight">
+     
+        <SelectValue placeholder="Select Section / Division" />
+      </div>
+    </div>
+  </SelectTrigger>
+
+  <SelectContent className="min-w-[280px] rounded-2xl shadow-[0_20px_60px_rgba(15,23,42,0.18)] border border-slate-200 p-2 bg-white backdrop-blur-xl">
+    <SelectItem value="" className="italic text-slate-400 font-medium py-3 px-4 rounded-xl focus:bg-slate-50 cursor-pointer transition-all mb-1">
+      Select Section / Division
+    </SelectItem>
+    {Array.isArray(sectionsMaster) && sectionsMaster.map(sec => (
+      <SelectItem 
+        key={sec.id} 
+        value={sec.name} 
+        className="group relative font-semibold py-4 px-4 rounded-2xl focus:bg-indigo-50 focus:text-indigo-700 cursor-pointer transition-all duration-200"
+      >
+        <div className="flex items-center gap-3">
+          
+          {/* Division Icon */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
+            <LayoutGrid className="w-4 h-4 text-indigo-600" />
+          </div>
+
+          {/* Text */}
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-extrabold text-slate-800">
+              Section {sec.name}
+            </span>
+
+            <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+              Division Group
+            </span>
+          </div>
+        </div>
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+                            </div>
+                            {formErrors.DIV && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.DIV}</p>}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="academicyear" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Joining Year</Label>
+                            <div className="relative">
+                              <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500 size-5 z-20" />
+                             <Select 
+  value={newStudentFormData.academicyear} 
+  onValueChange={(v) => 
+    setNewStudentFormData({...newStudentFormData, academicyear: v})
+  }
+>
+  <SelectTrigger 
+    id="academicyear" 
+    className="h-[68px] min-h-[68px] border-2 border-slate-200 bg-gradient-to-b from-white to-slate-50/80 font-bold rounded-2xl pl-14 pr-5 text-[15px] shadow-[0_4px_20px_rgba(15,23,42,0.06)] hover:shadow-[0_10px_35px_rgba(99,102,241,0.10)] transition-all duration-300 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 data-[state=open]:border-indigo-400 data-[state=open]:shadow-[0_12px_40px_rgba(99,102,241,0.14)]"
+  >
+    <div className="flex items-center gap-3 w-full">
+      
+      {/* Left Icon */}
+      <div className="absolute left-4 flex items-center justify-center w-8 h-8 rounded-xl bg-indigo-100 shadow-sm">
+        <CalendarRange className="w-4 h-4 text-indigo-600" />
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-col text-left leading-tight">
+      
+
+        <SelectValue placeholder="Select Joining Year">
+          {newStudentFormData.academicyear 
+            ? academicYears.find(
+                y => y.id.toString() === newStudentFormData.academicyear
+              )?.name 
+            : "Select Joining Year"
+          }
+        </SelectValue>
+      </div>
+    </div>
+  </SelectTrigger>
+
+  <SelectContent className="min-w-[320px] rounded-2xl shadow-[0_20px_60px_rgba(15,23,42,0.18)] border border-slate-200 p-2 bg-white backdrop-blur-xl">
+    <SelectItem value="" className="italic text-slate-400 font-medium py-3 px-4 rounded-xl focus:bg-slate-50 cursor-pointer transition-all mb-1">
+      Select Joining Year
+    </SelectItem>
+    {Array.isArray(academicYears) && academicYears.map(y => (
+      <SelectItem 
+        key={y.id} 
+        value={y.id.toString()} 
+        className="group relative font-semibold py-4 px-4 rounded-2xl focus:bg-indigo-50 focus:text-indigo-700 cursor-pointer transition-all duration-200"
+      >
+        <div className="flex items-center justify-between gap-3 w-full">
+          
+          {/* Left Side */}
+          <div className="flex items-center gap-3">
+            
+            {/* Icon */}
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
+              <CalendarDays className="w-4 h-4 text-indigo-600" />
+            </div>
+
+            {/* Text */}
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-extrabold text-slate-800">
+                {y.name}
+              </span>
+
+              <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+                Academic Session
+              </span>
+            </div>
+          </div>
+
+          {/* Current Badge */}
+          {y.isCurrent && (
+            <div className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-[0.12em] shadow-sm">
+              Current
+            </div>
+          )}
+        </div>
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="SHIFTNAME" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Assigned Shift</Label>
+                            <div className="relative">
+                              <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500 size-5 z-20" />
+                            <Select 
+  value={newStudentFormData.SHIFTNAME} 
+  onValueChange={(v) => 
+    setNewStudentFormData({...newStudentFormData, SHIFTNAME: v})
+  }
+>
+  <SelectTrigger 
+    id="SHIFTNAME" 
+    className="h-[68px] min-h-[68px] border-2 border-slate-200 bg-gradient-to-b from-white to-slate-50/80 font-bold rounded-2xl pl-14 pr-5 text-[15px] shadow-[0_4px_20px_rgba(15,23,42,0.06)] hover:shadow-[0_10px_35px_rgba(99,102,241,0.10)] transition-all duration-300 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 data-[state=open]:border-indigo-400 data-[state=open]:shadow-[0_12px_40px_rgba(99,102,241,0.14)]"
+  >
+    <div className="flex items-center gap-3 w-full">
+      
+      {/* Left Icon */}
+      <div className="absolute left-4 flex items-center justify-center w-8 h-8 rounded-xl bg-indigo-100 shadow-sm">
+        <Clock3 className="w-4 h-4 text-indigo-600" />
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-col text-left leading-tight">
+      
+
+        <SelectValue placeholder="Select Assigned Shift" />
+      </div>
+    </div>
+  </SelectTrigger>
+
+  <SelectContent className="min-w-[280px] rounded-2xl shadow-[0_20px_60px_rgba(15,23,42,0.18)] border border-slate-200 p-2 bg-white backdrop-blur-xl">
+    <SelectItem value="" className="italic text-slate-400 font-medium py-3 px-4 rounded-xl focus:bg-slate-50 cursor-pointer transition-all mb-1">
+      Select Assigned Shift
+    </SelectItem>
+    {Array.isArray(shifts) && shifts.map(s => (
+      <SelectItem 
+        key={s.id} 
+        value={s.name} 
+        className="group relative font-semibold py-4 px-4 rounded-2xl focus:bg-indigo-50 focus:text-indigo-700 cursor-pointer transition-all duration-200"
+      >
+        <div className="flex items-center gap-3">
+          
+          {/* Shift Icon */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
+            <SunMoon className="w-4 h-4 text-indigo-600" />
+          </div>
+
+          {/* Text */}
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-extrabold text-slate-800">
+              {s.name}
+            </span>
+
+            <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+              Timing Schedule
+            </span>
+          </div>
+        </div>
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </section>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      <section>
-                        <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
-                          <div className="w-1.5 h-5 bg-orange-500 rounded-full"></div>
-                          <h3 className="text-sm font-black text-slate-900 tracking-tight">Identity Details</h3>
+                      {/* Photo Section (4/12) */}
+                      <div className="lg:col-span-4 flex flex-col space-y-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
+                          <Camera className="size-5 text-emerald-500" />
+                          <h3 className="text-base font-black text-slate-900 tracking-tight">Profile Identity Image</h3>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1.5">
-                            <Label htmlFor="registrationNumber" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.registrationNumber ? "text-red-500" : "text-slate-500")}>Registration (GRNO) {formErrors.registrationNumber && "*"}</Label>
-                            <Input 
-                              ref={el => { inputRefs.current["registrationNumber"] = el; }}
-                              id="registrationNumber" 
-                              value={newStudentFormData.registrationNumber} 
-                              onChange={(e) => {
-                                setNewStudentFormData({...newStudentFormData, registrationNumber: e.target.value});
-                                if (formErrors.registrationNumber) setFormErrors(prev => ({ ...prev, registrationNumber: false }));
-                              }} 
-                              placeholder="e.g. REG-001"
-                              className={cn(
-                                "h-10 border-slate-200 bg-slate-50/30 font-mono font-black text-blue-600 rounded-xl px-4 text-sm",
-                                formErrors.registrationNumber && "border-red-500 ring-2 ring-red-500/10"
-                              )}
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label htmlFor="ROLLNO" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.ROLLNO ? "text-red-500" : "text-slate-500")}>Roll Number {formErrors.ROLLNO && "*"}</Label>
-                            <Input 
-                              ref={el => { inputRefs.current["ROLLNO"] = el; }}
-                              id="ROLLNO" 
-                              value={newStudentFormData.ROLLNO} 
-                              onChange={(e) => {
-                                setNewStudentFormData({...newStudentFormData, ROLLNO: e.target.value});
-                                if (formErrors.ROLLNO) setFormErrors(prev => ({ ...prev, ROLLNO: false }));
-                              }} 
-                              placeholder="e.g. 24"
-                              className={cn(
-                                "h-10 border-slate-200 bg-slate-50/30 font-black text-slate-800 rounded-xl px-4 text-sm",
-                                formErrors.ROLLNO && "border-red-500 ring-2 ring-red-500/10"
-                              )}
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label htmlFor="GENDER" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.GENDER ? "text-red-500" : "text-slate-500")}>Gender {formErrors.GENDER && "*"}</Label>
-                            <Select 
-                              value={newStudentFormData.GENDER} 
-                              onValueChange={(v) => {
-                                setNewStudentFormData({...newStudentFormData, GENDER: v});
-                                setFormErrors(prev => ({ ...prev, GENDER: false }));
-                              }}
-                            >
-                              <SelectTrigger 
-                                ref={el => { inputRefs.current["GENDER"] = el; }}
-                                id="GENDER" 
-                                className={cn(
-                                  "h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm",
-                                  formErrors.GENDER && "border-red-500 ring-2 ring-red-500/10"
-                                )}
-                              >
-                                <SelectValue placeholder="Select Student Gender">
-                                  {newStudentFormData.GENDER || undefined}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent className="rounded-xl border-slate-200">
-                                <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Gender</SelectItem>
-                                <SelectItem value="Male" className="font-semibold py-1.5 text-xs px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Male</SelectItem>
-                                <SelectItem value="Female" className="font-semibold py-1.5 text-xs px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Female</SelectItem>
-                                <SelectItem value="Other" className="font-semibold py-1.5 text-xs px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label htmlFor="aadharcard" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.aadharcard ? "text-red-500" : "text-slate-500")}>Aadhar ID {formErrors.aadharcard && "*"}</Label>
-                            <Input 
-                              ref={el => { inputRefs.current["aadharcard"] = el; }}
-                              id="aadharcard" 
-                              value={newStudentFormData.aadharcard} 
-                              maxLength={12}
-                              onChange={(e) => {
-                                const val = e.target.value.replace(/\D/g, "").slice(0, 12);
-                                setNewStudentFormData({...newStudentFormData, aadharcard: val});
-                                if (formErrors.aadharcard) setFormErrors(prev => ({ ...prev, aadharcard: false }));
-                              }} 
-                              placeholder="12-digit number" 
-                              className={cn(
-                                "h-10 border-slate-200 bg-slate-50/30 tracking-widest font-mono font-bold rounded-xl px-4 text-sm",
-                                formErrors.aadharcard && "border-red-500 ring-2 ring-red-500/10"
-                              )}
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label htmlFor="RFID" className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-500">RFID Card ID</Label>
-                            <Input 
-                              id="RFID" 
-                              value={newStudentFormData.RFID} 
-                              onChange={(e) => setNewStudentFormData({...newStudentFormData, RFID: e.target.value})} 
-                              placeholder="e.g. 1111111111" 
-                              className="h-10 border-slate-200 bg-slate-50/30 font-mono font-bold rounded-xl px-4 text-sm"
-                            />
-                          </div>
+                        
+                        <div 
+                          className="flex-1 min-h-[280px] border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-[2rem] bg-indigo-50/10 flex flex-col items-center justify-center p-8 transition-all group cursor-pointer hover:bg-indigo-50/30"
+                          onClick={() => triggerPhotoUpload(isEditMode ? currentStudentId! : "new")}
+                        >
+                          {(localPhotoPreview || newStudentFormData.ProfilePhotoPath) ? (
+                            <div className="w-full h-full relative rounded-xl overflow-hidden shadow-xl">
+                              <img 
+                                src={localPhotoPreview || resolvePhotoUrl(newStudentFormData.ProfilePhotoPath)} 
+                                alt="Student Identity" 
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                                <Upload className="text-white size-8" />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-5 text-center">
+                              <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center relative">
+                                <Camera size={32} className="text-indigo-600" />
+                                <div className="absolute bottom-0 right-0 w-7 h-7 bg-indigo-600 rounded-full flex items-center justify-center text-white border-4 border-white">
+                                  <Plus size={16} />
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">No image uploaded</p>
+                                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Click to upload or change</p>
+                                <p className="text-[10px] text-slate-300 font-medium">JPG, PNG (Max. 2MB)</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </section>
-
-                      <section>
-                        <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
-                          <div className="w-1.5 h-5 bg-emerald-500 rounded-full"></div>
-                          <h3 className="text-sm font-black text-slate-900 tracking-tight">Legal Profile</h3>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1.5">
-                            <Label htmlFor="FNAME" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.FNAME ? "text-red-500" : "text-slate-500")}>First Name {formErrors.FNAME && "*"}</Label>
-                            <Input 
-                              ref={el => { inputRefs.current["FNAME"] = el; }}
-                              id="FNAME" 
-                              value={newStudentFormData.FNAME} 
-                              onChange={(e) => {
-                                setNewStudentFormData({...newStudentFormData, FNAME: e.target.value});
-                                if (formErrors.FNAME) setFormErrors(prev => ({ ...prev, FNAME: false }));
-                              }} 
-                              placeholder="First name" 
-                              className={cn(
-                                "h-10 border-slate-200 font-bold rounded-xl px-4 text-sm",
-                                formErrors.FNAME && "border-red-500 ring-2 ring-red-500/10"
-                              )}
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label htmlFor="MNAME" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Middle Name</Label>
-                            <Input id="MNAME" value={newStudentFormData.MNAME} onChange={(e) => setNewStudentFormData({...newStudentFormData, MNAME: e.target.value})} placeholder="Middle name" className="h-10 border-slate-200 font-bold rounded-xl px-4 text-sm" />
-                          </div>
-                          <div className="md:col-span-2 space-y-1.5">
-                            <Label htmlFor="LNAME" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.LNAME ? "text-red-500" : "text-slate-500")}>Last Name {formErrors.LNAME && "*"}</Label>
-                            <Input 
-                              ref={el => { inputRefs.current["LNAME"] = el; }}
-                              id="LNAME" 
-                              value={newStudentFormData.LNAME} 
-                              onChange={(e) => {
-                                setNewStudentFormData({...newStudentFormData, LNAME: e.target.value});
-                                if (formErrors.LNAME) setFormErrors(prev => ({ ...prev, LNAME: false }));
-                              }} 
-                              placeholder="Last name" 
-                              className={cn(
-                                "h-10 border-slate-200 font-bold rounded-xl px-4 text-sm",
-                                formErrors.LNAME && "border-red-500 ring-2 ring-red-500/10"
-                              )}
-                            />
-                          </div>
-                          <div className="md:col-span-2 space-y-1.5">
-                            <Label htmlFor="DOB" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.DOB ? "text-red-500" : "text-slate-500")}>Date of Birth {formErrors.DOB && "*"}</Label>
-                            <Input 
-                              ref={el => { inputRefs.current["DOB"] = el; }}
-                              id="DOB" 
-                              type="date" 
-                              value={newStudentFormData.DOB} 
-                              onChange={(e) => {
-                                setNewStudentFormData({...newStudentFormData, DOB: e.target.value});
-                                if (formErrors.DOB) setFormErrors(prev => ({ ...prev, DOB: false }));
-                              }} 
-                              className={cn(
-                                "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                                formErrors.DOB && "border-red-500 ring-2 ring-red-500/10"
-                              )}
-                            />
-                          </div>
-                          
-                          <div className="space-y-1.5">
-                            <Label htmlFor="RELIGION" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Religion</Label>
-                            <Select 
-                              value={newStudentFormData.RELIGION} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, RELIGION: v})}
-                            >
-                              <SelectTrigger id="RELIGION" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student Religion">
-                                  {newStudentFormData.RELIGION ? religions.find(r => r.id.toString() === newStudentFormData.RELIGION)?.name : undefined}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                                <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Religion</SelectItem>
-                                {Array.isArray(religions) && religions.map(r => (
-                                  <SelectItem key={r.id} value={r.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{r.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label htmlFor="BLOODGROUP" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Blood Group</Label>
-                            <Select 
-                              value={newStudentFormData.BLOODGROUP} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, BLOODGROUP: v})}
-                            >
-                              <SelectTrigger id="BLOODGROUP" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student Blood Group">
-                                  {newStudentFormData.BLOODGROUP ? bloodGroups.find(bg => bg.id.toString() === newStudentFormData.BLOODGROUP)?.name : undefined}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                                <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Blood Group</SelectItem>
-                                {Array.isArray(bloodGroups) && bloodGroups.map(bg => (
-                                  <SelectItem key={bg.id} value={bg.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{bg.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                           <div className="space-y-1.5">
-                             <Label htmlFor="CASTE" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Caste</Label>
-                             <Select 
-                               value={newStudentFormData.CASTE} 
-                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, CASTE: v})}
-                             >
-                               <SelectTrigger id="CASTE" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                 <SelectValue placeholder="Select Caste">
-                                   {newStudentFormData.CASTE ? castes.find(c => c.id.toString() === newStudentFormData.CASTE)?.name : undefined}
-                                 </SelectValue>
-                               </SelectTrigger>
-                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                                 <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Caste</SelectItem>
-                                 {Array.isArray(castes) && castes.map(c => (
-                                   <SelectItem key={c.id} value={c.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{c.name}</SelectItem>
-                                 ))}
-                               </SelectContent>
-                             </Select>
-                           </div>
-
-                           <div className="space-y-1.5">
-                             <Label htmlFor="CATEGORY" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Category</Label>
-                             <Select 
-                               value={newStudentFormData.CATEGORY} 
-                               onValueChange={(v) => setNewStudentFormData({...newStudentFormData, CATEGORY: v})}
-                             >
-                               <SelectTrigger id="CATEGORY" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                 <SelectValue placeholder="Select Category">
-                                   {newStudentFormData.CATEGORY ? categories.find(c => c.id.toString() === newStudentFormData.CATEGORY)?.name : undefined}
-                                 </SelectValue>
-                               </SelectTrigger>
-                               <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                                 <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Category</SelectItem>
-                                 {Array.isArray(categories) && categories.map(c => (
-                                   <SelectItem key={c.id} value={c.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{c.name}</SelectItem>
-                                 ))}
-                               </SelectContent>
-                             </Select>
-                           </div>
-
-                          <div className="space-y-1.5">
-                            <Label htmlFor="subcaste" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Sub-Caste</Label>
-                            <Select 
-                              value={newStudentFormData.subcaste} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, subcaste: v})}
-                              disabled={!newStudentFormData.CASTE}
-                            >
-                              <SelectTrigger id="subcaste" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student Sub-Caste">
-                                  {newStudentFormData.subcaste ? subCastes.find(sc => sc.id.toString() === newStudentFormData.subcaste)?.name : undefined}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                                <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Sub-Caste</SelectItem>
-                                {Array.isArray(subCastes) && subCastes
-                                  .filter(sc => sc.casteId?.toString() === newStudentFormData.CASTE)
-                                  .map(sc => (
-                                    <SelectItem key={sc.id} value={sc.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{sc.name}</SelectItem>
-                                  ))
-                                }
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label htmlFor="house" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">School House</Label>
-                            <Select 
-                              value={newStudentFormData.house} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, house: v})}
-                            >
-                              <SelectTrigger id="house" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student House Group">
-                                  {newStudentFormData.house ? (
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: houses.find(h => h.id.toString() === newStudentFormData.house)?.color }}></div>
-                                      {houses.find(h => h.id.toString() === newStudentFormData.house)?.name}
-                                    </div>
-                                  ) : undefined}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student House Group</SelectItem>
-                              {Array.isArray(houses) && houses.map(h => (
-                                <SelectItem key={h.id} value={h.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: h.color }}></div>
-                                    {h.name}
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label htmlFor="admissiontype" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Admission Type</Label>
-                            <Select 
-                              value={newStudentFormData.admissiontype} 
-                              onValueChange={(v) => setNewStudentFormData({...newStudentFormData, admissiontype: v})}
-                            >
-                              <SelectTrigger id="admissiontype" className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm">
-                                <SelectValue placeholder="Select Student Admission Type">
-                                  {newStudentFormData.admissiontype ? admissionTypes.find(at => at.id.toString() === newStudentFormData.admissiontype)?.name : undefined}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select Student Admission Type</SelectItem>
-                              {Array.isArray(admissionTypes) && admissionTypes.map(at => (
-                                <SelectItem key={at.id} value={at.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">{at.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </section>
+                      </div>
                     </div>
 
-                    <section>
-                      <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
-                        <div className="w-1.5 h-5 bg-red-600 rounded-full"></div>
-                        <h3 className="text-sm font-black text-slate-900 tracking-tight">Family & Contact</h3>
+                    {/* IDENTITY & LEGAL SECTION */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                      {/* Identity Details */}
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
+                          <FileText className="size-5 text-orange-500" />
+                          <h3 className="text-base font-black text-slate-900 tracking-tight">Identity Details</h3>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-5">
+                          <div className="space-y-2">
+                            <Label htmlFor="registrationNumber" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Registration (GR No.)</Label>
+                            <div className="relative">
+                              <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-4 z-20 rotate-12" />
+                              <Input 
+                                ref={el => { inputRefs.current["registrationNumber"] = el; }}
+                                id="registrationNumber" 
+                                value={newStudentFormData.registrationNumber} 
+                                onChange={(e) => {
+                                  setNewStudentFormData({...newStudentFormData, registrationNumber: e.target.value});
+                                  if (formErrors.registrationNumber) setFormErrors(prev => ({ ...prev, registrationNumber: "" }));
+                                }} 
+                                placeholder="e.g. REG-001"
+                                className={cn(
+                                  "h-14 border-2 border-slate-200 bg-white font-mono font-bold text-indigo-600 rounded-xl pl-12 text-[15px] shadow-sm",
+                                  formErrors.registrationNumber && "border-red-500"
+                                )}
+                              />
+                            </div>
+                            {formErrors.registrationNumber && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.registrationNumber}</p>}
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="ROLLNO" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Roll Number</Label>
+                            <div className="relative">
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-lg z-20">#</span>
+                              <Input 
+                                ref={el => { inputRefs.current["ROLLNO"] = el; }}
+                                id="ROLLNO" 
+                                value={newStudentFormData.ROLLNO} 
+                                onChange={(e) => {
+                                  setNewStudentFormData({...newStudentFormData, ROLLNO: e.target.value});
+                                  if (formErrors.ROLLNO) setFormErrors(prev => ({ ...prev, ROLLNO: "" }));
+                                }} 
+                                placeholder="e.g. 24"
+                                className={cn(
+                                  "h-14 border-2 border-slate-200 bg-white font-black text-slate-800 rounded-xl pl-12 text-[15px] shadow-sm",
+                                  formErrors.ROLLNO && "border-red-500"
+                                )}
+                              />
+                            </div>
+                            {formErrors.ROLLNO && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.ROLLNO}</p>}
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="GENDER" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Gender</Label>
+                            <div className="relative">
+                              <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5 z-20" />
+                            <Select 
+  value={newStudentFormData.GENDER} 
+  onValueChange={(v) => {
+    setNewStudentFormData({...newStudentFormData, GENDER: v});
+    setFormErrors(prev => ({ ...prev, GENDER: "" }));
+  }}
+>
+  <SelectTrigger 
+    ref={el => { inputRefs.current["GENDER"] = el; }}
+    id="GENDER" 
+    className={cn(
+      "h-[58px] min-h-[58px] border-2 border-slate-200 bg-gradient-to-b from-white to-slate-50/80 font-bold rounded-2xl pl-12 pr-4 text-[13px] shadow-sm hover:shadow-md transition-all duration-300 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 data-[state=open]:border-indigo-400",
+      formErrors.GENDER && "border-red-500 focus:ring-red-500/10"
+    )}
+  >
+    <div className="flex items-center gap-2.5 w-full">
+      
+      {/* Left Icon */}
+      <div className="absolute left-3 flex items-center justify-center w-7 h-7 rounded-xl bg-indigo-100 shadow-sm">
+        <Users className="w-3.5 h-3.5 text-indigo-600" />
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-col text-left leading-tight truncate">
+      
+
+        <SelectValue placeholder="Select Gender" />
+      </div>
+    </div>
+  </SelectTrigger>
+
+  <SelectContent className="min-w-[240px] rounded-2xl shadow-[0_20px_60px_rgba(15,23,42,0.18)] border border-slate-200 p-2 bg-white backdrop-blur-xl">
+    
+    <SelectItem 
+      value="" 
+      className="group py-3 px-3 rounded-xl focus:bg-slate-50 cursor-pointer transition-all mb-1"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center">
+          <CircleOff className="w-3.5 h-3.5 text-slate-500" />
+        </div>
+
+        <span className="text-[13px] italic font-semibold text-slate-400">
+          Select Gender
+        </span>
+      </div>
+    </SelectItem>
+
+    <SelectItem 
+      value="Male" 
+      className="group font-semibold py-3 px-3 rounded-xl focus:bg-blue-50 focus:text-blue-700 cursor-pointer transition-all"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
+          <Mars className="w-3.5 h-3.5 text-blue-600" />
+        </div>
+
+        <span className="text-[13px] font-bold">
+          Male
+        </span>
+      </div>
+    </SelectItem>
+
+    <SelectItem 
+      value="Female" 
+      className="group font-semibold py-3 px-3 rounded-xl focus:bg-pink-50 focus:text-pink-700 cursor-pointer transition-all"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-xl bg-pink-100 flex items-center justify-center">
+          <Venus className="w-3.5 h-3.5 text-pink-600" />
+        </div>
+
+        <span className="text-[13px] font-bold">
+          Female
+        </span>
+      </div>
+    </SelectItem>
+
+    <SelectItem 
+      value="Other" 
+      className="group font-semibold py-3 px-3 rounded-xl focus:bg-violet-50 focus:text-violet-700 cursor-pointer transition-all"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center">
+          <VenusAndMars className="w-3.5 h-3.5 text-violet-600" />
+        </div>
+
+        <span className="text-[13px] font-bold">
+          Other
+        </span>
+      </div>
+    </SelectItem>
+
+  </SelectContent>
+</Select>
+                            </div>
+                            {formErrors.GENDER && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.GENDER}</p>}
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="aadharcard" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Aadhar ID</Label>
+                            <div className="relative">
+                              <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500 size-5 z-20 opacity-40" />
+                              <Input 
+                                ref={el => { inputRefs.current["aadharcard"] = el; }}
+                                id="aadharcard" 
+                                value={newStudentFormData.aadharcard} 
+                                maxLength={12}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/\D/g, "").slice(0, 12);
+                                  setNewStudentFormData({...newStudentFormData, aadharcard: val});
+                                  if (formErrors.aadharcard) setFormErrors(prev => ({ ...prev, aadharcard: "" }));
+                                }} 
+                                placeholder="12-digit number" 
+                                className={cn(
+                                  "h-14 border-2 border-slate-200 bg-white tracking-[0.1em] font-mono font-bold rounded-xl pl-12 text-[15px] shadow-sm text-slate-800",
+                                  formErrors.aadharcard && "border-red-500"
+                                )}
+                              />
+                            </div>
+                            {formErrors.aadharcard && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.aadharcard}</p>}
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="space-y-1.5">
-                          <Label htmlFor="MOTHERNAME" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.MOTHERNAME ? "text-red-500" : "text-slate-500")}>Mother's Name {formErrors.MOTHERNAME && "*"}</Label>
+                      {/* Legal Profile */}
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
+                          <Plus className="size-5 text-emerald-500" />
+                          <h3 className="text-base font-black text-slate-900 tracking-tight">Legal Profile</h3>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-5">
+                          <div className="space-y-2">
+                            <Label htmlFor="FNAME" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">First Name</Label>
+                            <div className="relative">
+                              <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5 z-20" />
+                              <Input 
+                                ref={el => { inputRefs.current["FNAME"] = el; }}
+                                id="FNAME" 
+                                value={newStudentFormData.FNAME} 
+                                onChange={(e) => {
+                                  setNewStudentFormData({...newStudentFormData, FNAME: e.target.value});
+                                  if (formErrors.FNAME) setFormErrors(prev => ({ ...prev, FNAME: "" }));
+                                }} 
+                                placeholder="First name" 
+                                className={cn(
+                                  "h-14 border-2 border-slate-200 font-bold rounded-xl pl-12 text-[15px] shadow-sm",
+                                  formErrors.FNAME && "border-red-500"
+                                )}
+                              />
+                            </div>
+                            {formErrors.FNAME && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.FNAME}</p>}
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="MNAME" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Middle Name</Label>
+                            <div className="relative">
+                              <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5 z-20 opacity-40" />
+                              <Input id="MNAME" value={newStudentFormData.MNAME} onChange={(e) => setNewStudentFormData({...newStudentFormData, MNAME: e.target.value})} placeholder="Middle name" className="h-14 border-2 border-slate-200 font-bold rounded-xl pl-12 text-[15px] shadow-sm" />
+                            </div>
+                          </div>
+                          <div className="col-span-2 space-y-2">
+                            <Label htmlFor="LNAME" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Last Name</Label>
+                            <div className="relative">
+                              <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5 z-20" />
+                              <Input 
+                                ref={el => { inputRefs.current["LNAME"] = el; }}
+                                id="LNAME" 
+                                value={newStudentFormData.LNAME} 
+                                onChange={(e) => {
+                                  setNewStudentFormData({...newStudentFormData, LNAME: e.target.value});
+                                  if (formErrors.LNAME) setFormErrors(prev => ({ ...prev, LNAME: "" }));
+                                }} 
+                                placeholder="Last name" 
+                                className={cn(
+                                  "h-14 border-2 border-slate-200 font-bold rounded-xl pl-12 text-[15px] shadow-sm",
+                                  formErrors.LNAME && "border-red-500"
+                                )}
+                              />
+                            </div>
+                            {formErrors.LNAME && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.LNAME}</p>}
+                          </div>
+                          <div className="col-span-2 space-y-2">
+                            <Label htmlFor="DOB" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Date of Birth</Label>
+                            <div className="relative">
+                              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500 size-5 z-20" />
+                              <Input 
+                                ref={el => { inputRefs.current["DOB"] = el; }}
+                                id="DOB" 
+                                type="date" 
+                                value={newStudentFormData.DOB} 
+                                onChange={(e) => {
+                                  setNewStudentFormData({...newStudentFormData, DOB: e.target.value});
+                                  if (formErrors.DOB) setFormErrors(prev => ({ ...prev, DOB: "" }));
+                                }} 
+                                className={cn(
+                                  "h-14 border-2 border-slate-200 bg-white font-bold rounded-xl pl-12 pr-6 text-[15px] shadow-sm",
+                                  formErrors.DOB && "border-red-500"
+                                )}
+                              />
+                            </div>
+                            {formErrors.DOB && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.DOB}</p>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Additional Demographics */}
+                    <div className="space-y-6 pt-5 border-t border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-6 bg-indigo-600 rounded-full"></div>
+                        <Users2 className="size-5 text-indigo-600" />
+                        <h3 className="text-base font-black text-slate-900 tracking-tight">Personal & Social Demographics</h3>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+
+  {/* Religion */}
+  <div className="space-y-1.5 min-w-0">
+    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.18em] ml-1">
+      Religion
+    </Label>
+
+   <Select 
+  value={newStudentFormData.RELIGION} 
+  onValueChange={(v) => {
+    setNewStudentFormData({...newStudentFormData, RELIGION: v});
+    if (formErrors.RELIGION) setFormErrors(prev => ({ ...prev, RELIGION: "" }));
+  }}
+>
+  <SelectTrigger 
+    ref={el => { inputRefs.current["RELIGION"] = el; }}
+    className={cn(
+      "relative h-[58px] min-h-[58px] border-2 border-slate-200 bg-gradient-to-b from-white to-slate-50/80 font-bold rounded-2xl pl-12 pr-4 text-[13px] shadow-sm hover:shadow-md transition-all duration-300 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400",
+      formErrors.RELIGION && "border-red-500 focus:ring-red-500/10"
+    )}
+  >
+    {/* Left Icon */}
+    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-xl bg-indigo-100 shadow-sm">
+      <Landmark className="w-3.5 h-3.5 text-indigo-600" />
+    </div>
+
+    {/* Value */}
+    <div className="flex items-center w-full text-left truncate">
+      <SelectValue placeholder="Select Religion" />
+    </div>
+  </SelectTrigger>
+
+  <SelectContent className="min-w-[280px] rounded-2xl p-2 border border-slate-200 bg-white shadow-2xl">
+    <SelectItem 
+      value="" 
+      className="italic text-slate-400 font-medium py-3 px-4 rounded-xl focus:bg-slate-50 cursor-pointer transition-all mb-1"
+    >
+      Select Religion
+    </SelectItem>
+
+    {religions.map(r => (
+      <SelectItem 
+        key={r.id} 
+        value={r.id.toString()} 
+        className="group rounded-xl py-3 px-3 cursor-pointer focus:bg-indigo-50 transition-all"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+          </div>
+
+          <span className="text-[13px] font-bold text-slate-700">
+            {r.name}
+          </span>
+        </div>
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+    {formErrors.RELIGION && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.RELIGION}</p>}
+  </div>
+
+  {/* Blood Group */}
+  <div className="space-y-1.5 min-w-0">
+    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.18em] ml-1">
+      Blood Group
+    </Label>
+
+   <Select 
+  value={newStudentFormData.BLOODGROUP} 
+  onValueChange={(v) => {
+    setNewStudentFormData({...newStudentFormData, BLOODGROUP: v});
+    if (formErrors.BLOODGROUP) setFormErrors(prev => ({ ...prev, BLOODGROUP: "" }));
+  }}
+>
+  <SelectTrigger 
+    ref={el => { inputRefs.current["BLOODGROUP"] = el; }}
+    className={cn(
+      "relative h-[58px] min-h-[58px] border-2 border-slate-200 bg-gradient-to-b from-white to-slate-50/80 font-bold rounded-2xl pl-12 pr-4 text-[13px] shadow-sm hover:shadow-md transition-all duration-300 focus:ring-4 focus:ring-rose-500/10 focus:border-rose-400",
+      formErrors.BLOODGROUP && "border-red-500 focus:ring-red-500/10"
+    )}
+  >
+    {/* Left Icon */}
+    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-xl bg-rose-100 shadow-sm">
+      <Droplets className="w-3.5 h-3.5 text-rose-600" />
+    </div>
+
+    {/* Value */}
+    <div className="flex items-center w-full text-left truncate">
+      <SelectValue placeholder="Select Blood Group" />
+    </div>
+  </SelectTrigger>
+
+  <SelectContent className="min-w-[280px] rounded-2xl p-2 border border-slate-200 bg-white shadow-2xl">
+    
+    <SelectItem 
+      value="" 
+      className="italic text-slate-400 font-medium py-3 px-4 rounded-xl focus:bg-slate-50 cursor-pointer transition-all mb-1"
+    >
+      Select Blood Group
+    </SelectItem>
+
+    {bloodGroups.map(bg => (
+      <SelectItem 
+        key={bg.id} 
+        value={bg.id.toString()} 
+        className="group rounded-xl py-3 px-3 cursor-pointer focus:bg-rose-50 transition-all"
+      >
+        <div className="flex items-center gap-3">
+          
+          {/* Item Icon */}
+          <div className="w-8 h-8 rounded-xl bg-rose-100 flex items-center justify-center">
+            <HeartPulse className="w-3.5 h-3.5 text-rose-600" />
+          </div>
+
+          {/* Text */}
+          <span className="text-[13px] font-bold text-slate-700">
+            {bg.name}
+          </span>
+        </div>
+      </SelectItem>
+    ))}
+
+  </SelectContent>
+</Select>
+    {formErrors.BLOODGROUP && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.BLOODGROUP}</p>}
+  </div>
+
+  {/* Caste */}
+  <div className="space-y-1.5 min-w-0">
+    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.18em] ml-1">
+      Caste
+    </Label>
+
+   <Select 
+  value={newStudentFormData.CASTE} 
+  onValueChange={(v) => {
+    setNewStudentFormData({...newStudentFormData, CASTE: v});
+    if (formErrors.CASTE) setFormErrors(prev => ({ ...prev, CASTE: "" }));
+  }}
+>
+  <SelectTrigger 
+    ref={el => { inputRefs.current["CASTE"] = el; }}
+    className={cn(
+      "relative h-[58px] min-h-[58px] border-2 border-slate-200 bg-gradient-to-b from-white to-slate-50/80 font-bold rounded-2xl pl-12 pr-4 text-[13px] shadow-sm hover:shadow-md transition-all duration-300 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400",
+      formErrors.CASTE && "border-red-500 focus:ring-red-500/10"
+    )}
+  >
+    {/* Left Icon */}
+    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-xl bg-indigo-100 shadow-sm">
+      <Users2 className="w-3.5 h-3.5 text-indigo-600" />
+    </div>
+
+    {/* Value */}
+    <div className="flex items-center w-full text-left truncate">
+      <SelectValue placeholder="Select Caste" />
+    </div>
+  </SelectTrigger>
+
+  <SelectContent className="min-w-[280px] rounded-2xl p-2 border border-slate-200 bg-white shadow-2xl">
+    
+    <SelectItem 
+      value="" 
+      className="italic text-slate-400 font-medium py-3 px-4 rounded-xl focus:bg-slate-50 cursor-pointer transition-all mb-1"
+    >
+      Select Caste
+    </SelectItem>
+
+    {castes.map(c => (
+      <SelectItem 
+        key={c.id} 
+        value={c.id.toString()} 
+        className="group rounded-xl py-3 px-3 cursor-pointer focus:bg-indigo-50 transition-all"
+      >
+        <div className="flex items-center gap-3">
+          
+          {/* Item Icon */}
+          <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center">
+            <BadgeInfo className="w-3.5 h-3.5 text-indigo-600" />
+          </div>
+
+          {/* Text */}
+          <span className="text-[13px] font-bold text-slate-700">
+            {c.name}
+          </span>
+        </div>
+      </SelectItem>
+    ))}
+
+  </SelectContent>
+</Select>
+    {formErrors.CASTE && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.CASTE}</p>}
+  </div>
+
+  {/* Category */}
+  <div className="space-y-1.5 min-w-0">
+    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.18em] ml-1">
+      Category
+    </Label>
+<Select 
+  value={newStudentFormData.CATEGORY} 
+  onValueChange={(v) => {
+    setNewStudentFormData({...newStudentFormData, CATEGORY: v});
+    if (formErrors.CATEGORY) setFormErrors(prev => ({ ...prev, CATEGORY: "" }));
+  }}
+>
+  <SelectTrigger 
+    ref={el => { inputRefs.current["CATEGORY"] = el; }}
+    className={cn(
+      "relative h-[58px] min-h-[58px] border-2 border-slate-200 bg-gradient-to-b from-white to-slate-50/80 font-bold rounded-2xl pl-12 pr-4 text-[13px] shadow-sm hover:shadow-md transition-all duration-300 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400",
+      formErrors.CATEGORY && "border-red-500 focus:ring-red-500/10"
+    )}
+  >
+    {/* Left Icon */}
+    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-xl bg-indigo-100 shadow-sm">
+      <Layers3 className="w-3.5 h-3.5 text-indigo-600" />
+    </div>
+
+    {/* Value */}
+    <div className="flex items-center w-full text-left truncate">
+      <SelectValue placeholder="Select Category" />
+    </div>
+  </SelectTrigger>
+
+  <SelectContent className="min-w-[280px] rounded-2xl p-2 border border-slate-200 bg-white shadow-2xl">
+    
+    <SelectItem 
+      value="" 
+      className="italic text-slate-400 font-medium py-3 px-4 rounded-xl focus:bg-slate-50 cursor-pointer transition-all mb-1"
+    >
+      Select Category
+    </SelectItem>
+
+    {categories.map(c => (
+      <SelectItem 
+        key={c.id} 
+        value={c.id.toString()} 
+        className="group rounded-xl py-3 px-3 cursor-pointer focus:bg-indigo-50 transition-all"
+      >
+        <div className="flex items-center gap-3">
+          
+          {/* Item Icon */}
+          <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center">
+            <Folders className="w-3.5 h-3.5 text-indigo-600" />
+          </div>
+
+          {/* Text */}
+          <span className="text-[13px] font-bold text-slate-700">
+            {c.name}
+          </span>
+        </div>
+      </SelectItem>
+    ))}
+
+  </SelectContent>
+</Select>
+    {formErrors.CATEGORY && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.CATEGORY}</p>}
+  </div>
+
+  {/* Sub-Caste */}
+  <div className="space-y-1.5 min-w-0">
+    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.18em] ml-1">
+      Sub-Caste
+    </Label>
+
+  <Select 
+  value={newStudentFormData.subcaste} 
+  onValueChange={(v) => 
+    setNewStudentFormData({...newStudentFormData, subcaste: v})
+  }
+  disabled={!newStudentFormData.CASTE}
+>
+  <SelectTrigger 
+    className={cn(
+      "relative h-[58px] min-h-[58px] border-2 border-slate-200 bg-gradient-to-b from-white to-slate-50/80 font-bold rounded-2xl pl-12 pr-4 text-[13px] shadow-sm hover:shadow-md transition-all duration-300 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-400",
+      !newStudentFormData.CASTE && "opacity-50 cursor-not-allowed bg-slate-100"
+    )}
+  >
+    {/* Left Icon */}
+    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-xl bg-orange-100 shadow-sm">
+      <GitBranch className="w-3.5 h-3.5 text-orange-600" />
+    </div>
+
+    {/* Value */}
+    <div className="flex items-center w-full text-left truncate">
+      <SelectValue 
+        placeholder={
+          newStudentFormData.CASTE 
+            ? "Select Sub-Caste" 
+            : "Select Caste first"
+        } 
+      />
+    </div>
+  </SelectTrigger>
+
+  <SelectContent className="min-w-[280px] rounded-2xl p-2 border border-slate-200 bg-white shadow-2xl">
+    
+    <SelectItem 
+      value="" 
+      className="italic text-slate-400 font-medium py-3 px-4 rounded-xl focus:bg-slate-50 cursor-pointer transition-all mb-1"
+    >
+      Select Sub-Caste
+    </SelectItem>
+
+    {subCastes
+      .filter(sc => sc.casteId?.toString() === newStudentFormData.CASTE?.toString())
+      .map(sc => (
+        <SelectItem 
+          key={sc.id} 
+          value={sc.id.toString()} 
+          className="group rounded-xl py-3 px-3 cursor-pointer focus:bg-orange-50 transition-all"
+        >
+          <div className="flex items-center gap-3">
+
+            {/* Item Icon */}
+            <div className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center">
+              <BadgeInfo className="w-3.5 h-3.5 text-orange-600" />
+            </div>
+
+            {/* Text */}
+            <span className="text-[13px] font-bold text-slate-700">
+              {sc.name}
+            </span>
+          </div>
+        </SelectItem>
+      ))}
+
+  </SelectContent>
+</Select>
+  </div>
+
+  {/* School House */}
+  <div className="space-y-1.5 min-w-0">
+    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.18em] ml-1">
+      School House
+    </Label>
+
+  <Select 
+  value={newStudentFormData.house} 
+  onValueChange={(v) => {
+    setNewStudentFormData({...newStudentFormData, house: v});
+    if (formErrors.house) setFormErrors(prev => ({ ...prev, house: "" }));
+  }}
+>
+  <SelectTrigger 
+    ref={el => { inputRefs.current["house"] = el; }}
+    className={cn(
+      "relative h-[58px] min-h-[58px] border-2 border-slate-200 bg-gradient-to-b from-white to-slate-50/80 font-bold rounded-2xl pl-12 pr-4 text-[13px] shadow-sm hover:shadow-md transition-all duration-300 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400",
+      formErrors.house && "border-red-500 focus:ring-red-500/10"
+    )}
+  >
+    {/* Left Icon */}
+    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-xl bg-emerald-100 shadow-sm">
+      <House className="w-3.5 h-3.5 text-emerald-600" />
+    </div>
+
+    {/* Value */}
+    <div className="flex items-center w-full text-left truncate">
+      <SelectValue placeholder="Select School House" />
+    </div>
+  </SelectTrigger>
+
+  <SelectContent className="min-w-[280px] rounded-2xl p-2 border border-slate-200 bg-white shadow-2xl">
+    
+    <SelectItem 
+      value="" 
+      className="italic text-slate-400 font-medium py-3 px-4 rounded-xl focus:bg-slate-50 cursor-pointer transition-all mb-1"
+    >
+      Select School House
+    </SelectItem>
+
+    {houses.map(h => (
+      <SelectItem 
+        key={h.id} 
+        value={h.id.toString()} 
+        className="group rounded-xl py-3 px-3 cursor-pointer focus:bg-emerald-50 transition-all"
+      >
+        <div className="flex items-center gap-3">
+
+          {/* Item Icon */}
+          <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center">
+            <School className="w-3.5 h-3.5 text-emerald-600" />
+          </div>
+
+          {/* House Color */}
+          <div 
+            className="w-4 h-4 rounded-full border border-white shadow-sm" 
+            style={{ backgroundColor: h.color }}
+          />
+
+          {/* Text */}
+          <span className="text-[13px] font-bold text-slate-700">
+            {h.name}
+          </span>
+        </div>
+      </SelectItem>
+    ))}
+
+  </SelectContent>
+</Select>
+    {formErrors.house && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.house}</p>}
+  </div>
+
+  {/* Admission Type */}
+  <div className="space-y-1.5 min-w-0">
+    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.18em] ml-1">
+      Admission Type
+    </Label>
+
+  <Select 
+  value={newStudentFormData.admissiontype} 
+  onValueChange={(v) => {
+    setNewStudentFormData({...newStudentFormData, admissiontype: v});
+    if (formErrors.admissiontype) setFormErrors(prev => ({ ...prev, admissiontype: "" }));
+  }}
+>
+  <SelectTrigger 
+    ref={el => { inputRefs.current["admissiontype"] = el; }}
+    className={cn(
+      "relative h-[58px] min-h-[58px] border-2 border-slate-200 bg-gradient-to-b from-white to-slate-50/80 font-bold rounded-2xl pl-12 pr-4 text-[13px] shadow-sm hover:shadow-md transition-all duration-300 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400",
+      formErrors.admissiontype && "border-red-500 focus:ring-red-500/10"
+    )}
+  >
+    {/* Left Icon */}
+    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-xl bg-blue-100 shadow-sm">
+      <ClipboardCheck className="w-3.5 h-3.5 text-blue-600" />
+    </div>
+
+    {/* Value */}
+    <div className="flex items-center w-full text-left truncate">
+      <SelectValue placeholder="Select Admission Type" />
+    </div>
+  </SelectTrigger>
+
+  <SelectContent className="rounded-2xl p-2 border border-slate-200 bg-white shadow-2xl">
+    
+    <SelectItem 
+      value="" 
+      className="italic text-slate-400 font-medium py-3 px-4 rounded-xl focus:bg-slate-50 cursor-pointer transition-all mb-1"
+    >
+      Select Admission Type
+    </SelectItem>
+
+    {admissionTypes.map(at => (
+      <SelectItem 
+        key={at.id} 
+        value={at.id.toString()} 
+        className="group rounded-xl py-3 px-3 cursor-pointer focus:bg-blue-50 transition-all"
+      >
+        <div className="flex items-center gap-3">
+
+          {/* Item Icon */}
+          <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
+            <Flag className="w-3.5 h-3.5 text-blue-600" />
+          </div>
+
+          {/* Text */}
+          <span className="text-[13px] font-bold text-slate-700">
+            {at.name}
+          </span>
+        </div>
+      </SelectItem>
+    ))}
+
+  </SelectContent>
+</Select>
+    {formErrors.admissiontype && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.admissiontype}</p>}
+  </div>
+</div>
+
+</div>
+                    {/* CONTACT INFO CARD */}
+                    <div className="bg-slate-50/80 rounded-xl p-10 border border-slate-200/60 space-y-8 relative overflow-hidden group/contact">
+                      <div className="flex items-center gap-4 relative z-10 transition-transform group-hover/contact:translate-x-1 duration-300">
+                        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                          <Plus className="text-white size-5" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 tracking-tight">Family & Contact Infrastructure</h3>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Mother's Full Name</Label>
                           <Input 
                             ref={el => { inputRefs.current["MOTHERNAME"] = el; }}
-                            id="MOTHERNAME" 
                             value={newStudentFormData.MOTHERNAME} 
                             onChange={(e) => {
                               setNewStudentFormData({...newStudentFormData, MOTHERNAME: e.target.value});
-                              if (formErrors.MOTHERNAME) setFormErrors(prev => ({ ...prev, MOTHERNAME: false }));
+                              if (formErrors.MOTHERNAME) setFormErrors(prev => ({ ...prev, MOTHERNAME: "" }));
                             }} 
                             placeholder="e.g. Mary Wilson" 
                             className={cn(
-                              "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                              formErrors.MOTHERNAME && "border-red-500 ring-2 ring-red-500/10"
+                              "h-14 border-2 border-slate-200 bg-white font-bold rounded-xl px-6 text-[15px] shadow-sm focus:bg-white transition-all",
+                              formErrors.MOTHERNAME && "border-red-500"
                             )}
                           />
+                          {formErrors.MOTHERNAME && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.MOTHERNAME}</p>}
                         </div>
-                        <div className="space-y-1.5">
-                          <Label htmlFor="MOBILE" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.MOBILE ? "text-red-500" : "text-slate-500")}>Mobile No. {formErrors.MOBILE && "*"}</Label>
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Security/Contact Mobile</Label>
                           <Input 
                             ref={el => { inputRefs.current["MOBILE"] = el; }}
-                            id="MOBILE" 
-                            type="tel" 
                             value={newStudentFormData.MOBILE} 
                             maxLength={10}
                             onChange={(e) => {
                               const val = e.target.value.replace(/\D/g, "").slice(0, 10);
                               setNewStudentFormData({...newStudentFormData, MOBILE: val});
-                              if (formErrors.MOBILE) setFormErrors(prev => ({ ...prev, MOBILE: false }));
+                              if (formErrors.MOBILE) setFormErrors(prev => ({ ...prev, MOBILE: "" }));
                             }} 
-                            placeholder="10-digit number" 
+                            placeholder="Primary 10-digit number" 
                             className={cn(
-                              "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                              formErrors.MOBILE && "border-red-500 ring-2 ring-red-500/10"
+                              "h-14 border-2 border-slate-200 bg-white font-bold rounded-xl px-6 text-[15px] shadow-sm focus:bg-white transition-all",
+                              formErrors.MOBILE && "border-red-500"
                             )}
                           />
+                          {formErrors.MOBILE && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.MOBILE}</p>}
                         </div>
-                        <div className="md:col-span-2 space-y-1.5">
-                          <Label htmlFor="ADDRESS" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.ADDRESS ? "text-red-500" : "text-slate-500")}>Residential Address {formErrors.ADDRESS && "*"}</Label>
+                        <div className="md:col-span-2 space-y-2">
+                          <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Permanent Residential Address</Label>
                           <Input 
                             ref={el => { inputRefs.current["ADDRESS"] = el; }}
-                            id="ADDRESS" 
                             value={newStudentFormData.ADDRESS} 
                             onChange={(e) => {
                               setNewStudentFormData({...newStudentFormData, ADDRESS: e.target.value});
-                              if (formErrors.ADDRESS) setFormErrors(prev => ({ ...prev, ADDRESS: false }));
+                              if (formErrors.ADDRESS) setFormErrors(prev => ({ ...prev, ADDRESS: "" }));
                             }} 
-                            placeholder="Enter complete residential address" 
+                            placeholder="Complete residential street address, state and pin" 
                             className={cn(
-                              "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                              formErrors.ADDRESS && "border-red-500 ring-2 ring-red-500/10"
+                              "h-14 border-2 border-slate-200 bg-white font-bold rounded-xl px-6 text-[15px] shadow-sm focus:bg-white transition-all",
+                              formErrors.ADDRESS && "border-red-500"
                             )}
                           />
+                          {formErrors.ADDRESS && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.ADDRESS}</p>}
                         </div>
                       </div>
-                    </section>
+                      
+                      {/* Decorative Background Element */}
+                      <div className="absolute right-[-2%] bottom-[-20%] w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                    </div>
                   </div>
                 </div>
 
-                <DialogFooter className="bg-slate-50 px-10 py-5 shrink-0 border-t border-slate-100 flex flex-row items-center justify-end gap-3">
-                  <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="h-9 px-5 font-bold text-slate-500 hover:text-slate-900 rounded-xl text-xs uppercase tracking-wider">
+                {/* PREMIUM FOOTER */}
+                <DialogFooter className="bg-white px-10 py-7 shrink-0 border-t border-slate-100 flex flex-row items-center justify-end gap-5">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setIsAddDialogOpen(false)} 
+                    className="h-14 px-10 font-black text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-xl text-[13px] uppercase tracking-[0.15em] transition-all active:scale-95"
+                  >
                     Cancel
                   </Button>
                   <Button 
                     onClick={handleAddStudent} 
                     disabled={isProcessing} 
-                    className="h-10 px-8 bg-blue-600 hover:bg-blue-700 font-black shadow-lg shadow-blue-600/20 rounded-xl transition-all active:scale-[0.98] text-xs uppercase tracking-wider"
+                    className="h-14 px-12 bg-indigo-600 hover:bg-indigo-700 font-black shadow-2xl shadow-indigo-600/30 rounded-xl transition-all active:scale-[0.98] text-[13px] uppercase tracking-[0.15em] relative group/btn"
                   >
-                    {isProcessing ? "Processing..." : isEditMode ? "Update Record" : "Enroll Student"}
+                    {isProcessing ? (
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 border-3 border-white/30 border-t-white animate-spin rounded-full"></div>
+                        <span>Finalizing...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Plus size={20} className="transition-transform group-hover/btn:rotate-90 duration-300" />
+                        <span>{isEditMode ? "Update Master" : "Enroll Student"}</span>
+                      </div>
+                    )}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -1809,20 +2509,20 @@ export default function Students({ user }: { user: UserType }) {
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
                 <Input 
                   placeholder="Filter by name, roll, or GR..." 
-                  className="pl-11 h-11 bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm font-medium rounded-2xl" 
+                  className="pl-11 h-11 bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm font-medium rounded-xl" 
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
               <div className="flex flex-wrap gap-3">
                 <Select value={standardFilter} onValueChange={setStandardFilter}>
-                  <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-2xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
+                  <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
                     {/* Explicit mapping to show "Grade X" or "All Grades" in trigger */}
                     <SelectValue placeholder="Standard">
                       {standardFilter === "all" ? "All Grades" : (standardFilter ? `Grade ${standardFilter}` : undefined)}
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
+                  <SelectContent className="rounded-xl border-slate-100 shadow-2xl p-2">
                     <SelectItem value="all" className="rounded-xl font-bold py-2.5">All Grades</SelectItem>
                     {Array.isArray(standardsMaster) && standardsMaster.map(std => (
                       <SelectItem key={std.id} value={std.name} className="rounded-xl font-bold py-2.5">Grade {std.name}</SelectItem>
@@ -1831,13 +2531,13 @@ export default function Students({ user }: { user: UserType }) {
                 </Select>
 
                 <Select value={sectionFilter} onValueChange={setSectionFilter}>
-                  <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-2xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
+                  <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
                     {/* Explicit mapping to show "Section X" or "All Sections" in trigger */}
                     <SelectValue placeholder="Section">
                       {sectionFilter === "all" ? "All Sections" : (sectionFilter ? `Section ${sectionFilter}` : undefined)}
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
+                  <SelectContent className="rounded-xl border-slate-100 shadow-2xl p-2">
                     <SelectItem value="all" className="rounded-xl font-bold py-2.5">All Sections</SelectItem>
                     {Array.isArray(sectionsMaster) && sectionsMaster.map(sec => (
                       <SelectItem key={sec.id} value={sec.name} className="rounded-xl font-bold py-2.5">Section {sec.name}</SelectItem>
@@ -1846,7 +2546,7 @@ export default function Students({ user }: { user: UserType }) {
                 </Select>
               </div>
             </div>
-            <div className="flex items-center gap-4 bg-slate-50/80 px-5 py-2.5 rounded-2xl border border-slate-100">
+            <div className="flex items-center gap-4 bg-slate-50/80 px-5 py-2.5 rounded-xl border border-slate-100">
               <div className="flex -space-x-2">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="w-7 h-7 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[10px] font-black text-slate-500">
@@ -2007,7 +2707,7 @@ export default function Students({ user }: { user: UserType }) {
                             </div>
                           }
                         />
-                        <DropdownMenuContent align="end" className="w-56 rounded-2xl border-slate-100 shadow-2xl p-2">
+                        <DropdownMenuContent align="end" className="w-56 rounded-xl border-slate-100 shadow-2xl p-2">
                           <DropdownMenuGroup>
                             <DropdownMenuItem className="gap-3 py-3 px-4 rounded-xl font-bold text-slate-700 cursor-pointer focus:bg-blue-50 focus:text-blue-700" onClick={() => triggerPhotoUpload(student.id)}>
                               <Camera size={16} /> Update Identity Image

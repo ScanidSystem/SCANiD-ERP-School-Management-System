@@ -11,7 +11,7 @@ async function startServer() {
   const app = express();
   const httpServer = http.createServer(app);
   // Enforce port 3000 for standard environment routing
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT || 3000);
 
   app.use(cors());
 
@@ -413,6 +413,7 @@ async function startServer() {
         name: "School Admin",
         email: "schooladmin@scanid.com",
         role: "admin",
+        roleId: 2,
         schoolId: "1",
         schoolName: "Greenwood High",
       });
@@ -422,6 +423,7 @@ async function startServer() {
         name: "Sarah Wilson",
         email: "sarah@greenwood.edu",
         role: "teacher",
+        roleId: 3,
         schoolId: "1",
         schoolName: "Greenwood High",
       });
@@ -431,6 +433,7 @@ async function startServer() {
         name: "Robert Johnson",
         email: "robert@example.com",
         role: "parent",
+        roleId: 5,
         schoolId: "1",
         schoolName: "Greenwood High",
       });
@@ -440,6 +443,7 @@ async function startServer() {
         name: "Alice Johnson",
         email: "alice@example.com",
         role: "student",
+        roleId: 4,
         schoolId: "1",
         schoolName: "Greenwood High",
       });
