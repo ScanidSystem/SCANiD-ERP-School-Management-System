@@ -868,7 +868,7 @@ export default function Teachers({ user }: { user: any }) {
                             </div>
                             <div className="flex flex-col text-left leading-tight ml-2">
                               <SelectValue placeholder="Select Access Status">
-                                {formData.status ? (
+                                {(formData.status && formData.status !== "none") ? (
                                   <div className="flex flex-col">
                                     <span className="text-[13px] font-extrabold">{formData.status}</span>
                                     <span className="text-[10px] text-slate-400 uppercase tracking-widest font-black">
@@ -876,7 +876,7 @@ export default function Teachers({ user }: { user: any }) {
                                        formData.status === "On Leave" ? "Temporary Break" : "No Longer Active"}
                                     </span>
                                   </div>
-                                ) : "Select Access Status"}
+                                ) : <span className="text-slate-400 font-medium">Select Access Status</span>}
                               </SelectValue>
                             </div>
                           </SelectTrigger>
