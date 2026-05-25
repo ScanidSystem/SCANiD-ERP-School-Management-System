@@ -49,7 +49,7 @@ namespace ScanID.Api.Models
     /// <summary>
     /// Represents a school registration.
     /// </summary>
-    public class School : BaseEntity
+    public class School
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -83,6 +83,14 @@ namespace ScanID.Api.Models
         // Navigation labels for representation
         public string? CityName { get; set; }
         public string? StateName { get; set; }
+
+        // Audit/status properties at the end of the class for complete UI/DB consistency
+        public bool IsActive { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
+        public string? CreatedBy { get; set; }
+        public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
+        public string? ModifiedBy { get; set; }
+        public DateTime ModifiedOn { get; set; } = DateTime.UtcNow;
     }
 
     /// <summary>

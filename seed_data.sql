@@ -247,64 +247,48 @@ SET IDENTITY_INSERT [dbo].[Students] ON;
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Students] WHERE [Id] = 1)
     INSERT [dbo].[Students] (
         [Id], [RegistrationNumber], [Name], [SchoolId], [Status], [RollNumber],
-        [STUDENTID], [FNAME], [MNAME], [LNAME], [FirstName], [MiddleName], [LastName],
-        [GRNO], [GENDER], [DOB], [DateOfBirth], [ADDRESS], [PIN], [FATHERNAME], [MOTHERNAME],
-        [MOBILE], [EMAIL], [DOA], [ProfilePhotoPath], [CARDID], [VALIDFROM], [VALIDTO], [sms],
-        [contact2], [ispromoted], [saralid], [aadharcard], [bankname], [bankacc], [cid], [fingerid],
-        [freeshiptype], [otp], [subjects], [placeofbirth], [birthtaluka], [birthdistrict], [birthstate],
-        [birthcountry], [mothertongue], [Nationality], [Lastschool], [Progress], [DateofLeaving],
-        [Reasonforleaving], [LCNo], [conduct], [remark], [dobwords], [admissionstd], [accountname],
-        [IQLD], [schoolsection], [leftstatus], [feesinstallment], [uniformid], [stdstudyingInWords],
-        [EntryDate], [PEN_No], [apaar_id], [RFID],
+        [FirstName], [MiddleName], [LastName],
+        [GrNo], [Gender], [DateOfBirth], [Address], [MotherName],
+        [FatherContactNo], [MotherContactNo], [AadharCard], [UniformId], [Rfid],
+        [SchoolSectionId], [AdmissionDate], [Email],
         [StandardId], [SectionId], [AcademicYearId], [CasteId], [SubCasteId], [ReligionId], [BloodGroupId],
         [HouseId], [AdmissionTypeId], [CityId], [StateId], [ShiftId], [CategoryId],
+        [Sms], [IsStateBoard], [ProfilePhotoPath], [DigitalUniform], [DigitalNotebook],
         [IsActive], [IsDeleted], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]
     ) 
     VALUES (
         1, N'REG1001', N'Shivansh Sanjay Khopkar', 1, N'Active', 1,
-        N'STD5422', N'Shivansh', N'Sanjay', N'Khopkar', N'Shivansh', N'Sanjay', N'Khopkar',
-        N'REG1001', N'Male', N'2015-05-20', N'2015-05-20', N'123 Education Lane, Mumbai', N'400001', N'Sanjay Khopkar', N'Shraddha Khopkar',
-        N'9876543210', N'shivansh@ Khopkar.com', N'2024-05-01', NULL, N'CARD9901', N'2024-06-01', N'2030-06-01', N'Yes',
-        N'9876543201', N'No', N'SAR00192', N'123456789012', N'State Bank of India', N'3304128911', N'CID992', N'FING6621',
-        N'Regular', N'8812', N'Math,Science,English', N'Mumbai', N'Mumbai', N'Mumbai', N'Maharashtra',
-        N'India', N'Marathi', N'Indian', N'Greenwoods Kindergarten', N'Excellent', NULL,
-        NULL, NULL, N'A', N'Good', N'Twentieth May Two Thousand Fifteen', N'1st', N'Shivansh Khopkar',
-        N'IQLD-Y', N'Primary Section', N'Studying', N'Full', N'UNIF-001', N'First Standard',
-        N'2024-05-01', N'PEN998822', N'APAAR776611', N'RF99221',
+        N'Shivansh', N'Sanjay', N'Khopkar',
+        N'REG1001', N'Male', N'2015-05-20', N'123 Education Lane, Mumbai', N'Shraddha Khopkar',
+        N'9876543210', N'9876543201', N'123456789012', N'UNIF-001', N'RF99221',
+        1, N'2024-05-01', N'shivansh@khopkar.com',
         1, 1, 2, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1,
+        1, 0, NULL, 0, 0,
         1, 0, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE()
     );
 
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Students] WHERE [Id] = 2)
     INSERT [dbo].[Students] (
         [Id], [RegistrationNumber], [Name], [SchoolId], [Status], [RollNumber],
-        [STUDENTID], [FNAME], [MNAME], [LNAME], [FirstName], [MiddleName], [LastName],
-        [GRNO], [GENDER], [DOB], [DateOfBirth], [ADDRESS], [PIN], [FATHERNAME], [MOTHERNAME],
-        [MOBILE], [EMAIL], [DOA], [ProfilePhotoPath], [CARDID], [VALIDFROM], [VALIDTO], [sms],
-        [contact2], [ispromoted], [saralid], [aadharcard], [bankname], [bankacc], [cid], [fingerid],
-        [freeshiptype], [otp], [subjects], [placeofbirth], [birthtaluka], [birthdistrict], [birthstate],
-        [birthcountry], [mothertongue], [Nationality], [Lastschool], [Progress], [DateofLeaving],
-        [Reasonforleaving], [LCNo], [conduct], [remark], [dobwords], [admissionstd], [accountname],
-        [IQLD], [schoolsection], [leftstatus], [feesinstallment], [uniformid], [stdstudyingInWords],
-        [EntryDate], [PEN_No], [apaar_id], [RFID],
+        [FirstName], [MiddleName], [LastName],
+        [GrNo], [Gender], [DateOfBirth], [Address], [MotherName],
+        [FatherContactNo], [MotherContactNo], [AadharCard], [UniformId], [Rfid],
+        [SchoolSectionId], [AdmissionDate], [Email],
         [StandardId], [SectionId], [AcademicYearId], [CasteId], [SubCasteId], [ReligionId], [BloodGroupId],
         [HouseId], [AdmissionTypeId], [CityId], [StateId], [ShiftId], [CategoryId],
+        [Sms], [IsStateBoard], [ProfilePhotoPath], [DigitalUniform], [DigitalNotebook],
         [IsActive], [IsDeleted], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]
     ) 
     VALUES (
         2, N'REG1002', N'Aavya Amit Patil', 1, N'Active', 2,
-        N'STD5423', N'Aavya', N'Amit', N'Patil', N'Aavya', N'Amit', N'Patil',
-        N'REG1002', N'Female', N'2015-08-15', N'2015-08-15', N'456 Ocean View, Pune', N'411001', N'Amit Patil', N'Alka Patil',
-        N'9876543211', N'aavya@patil.com', N'2024-05-01', NULL, N'CARD9902', N'2024-06-01', N'2030-06-01', N'Yes',
-        N'9876543202', N'No', N'SAR00193', N'987654321098', N'Bank of Maharashtra', N'1102938122', N'CID993', N'FING6622',
-        N'RTE quota', N'9442', N'Math,Science,English', N'Pune', N'Pune', N'Pune', N'Maharashtra',
-        N'India', N'Marathi', N'Indian', N'Pune Play School', N'Outstanding', NULL,
-        NULL, NULL, N'B', N'Excellent', N'Fifteenth August Two Thousand Fifteen', N'1st', N'Aavya Patil',
-        N'IQLD-Y', N'Primary Section', N'Studying', N'Monthly', N'UNIF-002', N'First Standard',
-        N'2024-05-01', N'PEN998823', N'APAAR776612', N'RF99222',
+        N'Aavya', N'Amit', N'Patil',
+        N'REG1002', N'Female', N'2015-08-15', N'456 Ocean View, Pune', N'Alka Patil',
+        N'9876543211', N'9876543202', N'987654321098', N'UNIF-002', N'RF99222',
+        1, N'2024-05-01', N'aavya@patil.com',
         1, 1, 2, 2, 2, 1, 2,
         2, 1, 2, 1, 1, 2,
+        1, 0, NULL, 0, 0,
         1, 0, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE()
     );
 SET IDENTITY_INSERT [dbo].[Students] OFF;

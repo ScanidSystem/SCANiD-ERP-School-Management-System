@@ -264,10 +264,15 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
           const castesData = castesRes.data?.data || castesRes.data || [];
           setDependencies(prev => ({ ...prev, castes: Array.isArray(castesData) ? castesData : [] }));
         }
-        if (activeTab === "cities") {
+        if (activeTab === "cities" || activeTab === "schools") {
           const statesRes = await apiService.getStates();
           const statesData = statesRes.data?.data || statesRes.data || [];
           setDependencies(prev => ({ ...prev, states: Array.isArray(statesData) ? statesData : [] }));
+        }
+        if (activeTab === "schools") {
+          const citiesRes = await apiService.getCities();
+          const citiesData = citiesRes.data?.data || citiesRes.data || [];
+          setDependencies(prev => ({ ...prev, cities: Array.isArray(citiesData) ? citiesData : [] }));
         }
         if (activeTab === "navigation") {
           const rolesRes = await apiService.getRoles();
@@ -334,7 +339,25 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       password: "",
       confirmPassword: "",
       role: item?.role ? item.role.toLowerCase().replace(/\s+/g, '') : "student",
-      schoolId: item?.schoolId ? item.schoolId.toString() : ""
+      schoolId: item?.schoolId ? item.schoolId.toString() : "",
+      // Extended school parameters for comprehensive UI form support
+      shortName: item?.shortName || "",
+      cityId: item?.cityId?.toString() || "",
+      pincode: item?.pincode || "",
+      smsLimit: item?.smsLimit?.toString() || "",
+      totalSMSSent: item?.totalSMSSent || 0,
+      smsBalance: item?.smsBalance || 0,
+      enableSMS: item?.enableSMS || false,
+      enablePresenteeSMS: item?.enablePresenteeSMS || false,
+      automaticBirthdaySMS: item?.automaticBirthdaySMS || false,
+      enableWhatsapp: item?.enableWhatsapp || false,
+      websiteUrl: item?.websiteUrl || "",
+      smsSenderID: item?.smsSenderID || "",
+      busNumbers: item?.busNumbers || "",
+      scanIDContact: item?.scanIDContact || "",
+      scanIDEmail: item?.scanIDEmail || "",
+      inChargeContact: item?.inChargeContact || "",
+      status: item?.status || "Active"
     });
     setIsDialogOpen(true);
   };
@@ -418,8 +441,25 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
         payload.address = formData.address;
         payload.phone = formData.phone;
         payload.email = formData.email;
-        // Keep school branding path aligned to avoid clearing it during name/address updates
         payload.profilePhotoPath = formData.profilePhotoPath;
+        payload.shortName = formData.shortName;
+        payload.cityId = formData.cityId ? parseSafeInt(formData.cityId) : null;
+        payload.stateId = formData.stateId ? parseSafeInt(formData.stateId) : null;
+        payload.pincode = formData.pincode;
+        payload.smsLimit = formData.smsLimit ? parseSafeInt(formData.smsLimit) : null;
+        payload.totalSMSSent = formData.totalSMSSent ? parseSafeInt(formData.totalSMSSent) : 0;
+        payload.smsBalance = formData.smsBalance ? parseSafeInt(formData.smsBalance) : 0;
+        payload.enableSMS = !!formData.enableSMS;
+        payload.enablePresenteeSMS = !!formData.enablePresenteeSMS;
+        payload.automaticBirthdaySMS = !!formData.automaticBirthdaySMS;
+        payload.enableWhatsapp = !!formData.enableWhatsapp;
+        payload.websiteUrl = formData.websiteUrl;
+        payload.smsSenderID = formData.smsSenderID;
+        payload.busNumbers = formData.busNumbers;
+        payload.scanIDContact = formData.scanIDContact;
+        payload.scanIDEmail = formData.scanIDEmail;
+        payload.inChargeContact = formData.inChargeContact;
+        payload.status = formData.status || "Active";
       } else if (activeTab === "role-assignment") {
         let matchedRole = Array.isArray(dependencies.roles) 
           ? dependencies.roles.find((r: any) => r.name.toLowerCase().replace(/\s+/g, '') === formData.role?.toLowerCase().replace(/\s+/g, '')) 
@@ -1105,19 +1145,6 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
             )}
 
             {activeTab === "schools" && (
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-black uppercase tracking-wider text-slate-400">Email Address</Label>
-                <Input 
-                  id="email" 
-                  placeholder="Enter email address..."
-                  className="h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                />
-              </div>
-            )}
-
-            {activeTab === "schools" && (
               <>
                 <div className="flex flex-col items-center gap-2 pb-4 border-b border-slate-50">
                   <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">School Logo / Branding</Label>
@@ -1155,6 +1182,85 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                     )}
                   </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="shortName" className="text-xs font-black uppercase tracking-wider text-slate-400">Short Name / Code</Label>
+                    <Input 
+                      id="shortName" 
+                      placeholder="e.g. SXIB-01"
+                      className="h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
+                      value={formData.shortName || ""}
+                      onChange={(e) => setFormData({...formData, shortName: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="pincode" className="text-xs font-black uppercase tracking-wider text-slate-400">Pincode</Label>
+                    <Input 
+                      id="pincode" 
+                      placeholder="e.g. 400001"
+                      className="h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
+                      value={formData.pincode || ""}
+                      onChange={(e) => setFormData({...formData, pincode: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-black uppercase tracking-wider text-slate-400">State</Label>
+                    <Select 
+                      value={formData.stateId || ""} 
+                      onValueChange={(v) => {
+                        const stateIdNum = parseInt(v);
+                        const currentCity = Array.isArray(dependencies.cities) && dependencies.cities.find(c => c.id === parseInt(formData.cityId));
+                        const cityBelongsToState = currentCity && (currentCity.stateId === stateIdNum);
+                        setFormData({
+                          ...formData,
+                          stateId: v,
+                          cityId: cityBelongsToState ? formData.cityId : ""
+                        });
+                      }}
+                    >
+                      <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white font-bold px-4">
+                        <SelectValue placeholder="Select State" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-200 shadow-xl max-h-48 overflow-y-auto">
+                        <SelectItem value="" className="font-semibold py-2 text-slate-400 italic">Select State</SelectItem>
+                        {Array.isArray(dependencies.states) && dependencies.states.map((s: any) => (
+                          <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2">
+                            {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-black uppercase tracking-wider text-slate-400">City</Label>
+                    <Select 
+                      value={formData.cityId || ""} 
+                      onValueChange={(v) => setFormData({...formData, cityId: v})}
+                      disabled={!formData.stateId}
+                    >
+                      <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white font-bold px-4 disabled:opacity-50">
+                        <SelectValue placeholder="Select City" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-200 shadow-xl max-h-48 overflow-y-auto">
+                        <SelectItem value="" className="font-semibold py-2 text-slate-400 italic">Select City</SelectItem>
+                        {Array.isArray(dependencies.cities) && dependencies.cities
+                          .filter((c: any) => c.stateId === parseInt(formData.stateId))
+                          .map((ct: any) => (
+                            <SelectItem key={ct.id} value={ct.id.toString()} className="font-semibold py-2">
+                              {ct.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="address" className={cn("text-xs font-black uppercase tracking-wider", formErrors.address ? "text-red-500" : "text-slate-400")}>Institutional Address {formErrors.address && "*"}</Label>
                   <Input 
@@ -1171,15 +1277,190 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                     }}
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-xs font-black uppercase tracking-wider text-slate-400">Phone Number</Label>
+                    <Input 
+                      id="phone" 
+                      placeholder="Office Phone"
+                      className="h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-xs font-black uppercase tracking-wider text-slate-400">Email Address</Label>
+                    <Input 
+                      id="email" 
+                      placeholder="office@school.com"
+                      className="h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-xs font-black uppercase tracking-wider text-slate-400">Phone Number</Label>
+                  <Label htmlFor="websiteUrl" className="text-xs font-black uppercase tracking-wider text-slate-400">Website URL</Label>
                   <Input 
-                    id="phone" 
-                    placeholder="Office Phone"
+                    id="websiteUrl" 
+                    placeholder="https://www.school.com"
                     className="h-12 rounded-xl border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    value={formData.websiteUrl || ""}
+                    onChange={(e) => setFormData({...formData, websiteUrl: e.target.value})}
                   />
+                </div>
+
+                {/* SMS & WhatsApp Support configurations */}
+                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 space-y-4">
+                  <h4 className="text-[11px] font-black text-slate-900 tracking-wider uppercase border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
+                    <div className="w-1.5 h-3 bg-blue-500 rounded-full"></div>
+                    SMS & WhatsApp Gateway Configuration
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="smsLimit" className="text-[10px] font-black uppercase tracking-wider text-slate-400">SMS Limit</Label>
+                      <Input 
+                        id="smsLimit" 
+                        type="number"
+                        placeholder="e.g. 5000"
+                        className="h-10 bg-white rounded-xl border-slate-200 font-bold"
+                        value={formData.smsLimit || ""}
+                        onChange={(e) => setFormData({...formData, smsLimit: e.target.value})}
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="smsSenderID" className="text-[10px] font-black uppercase tracking-wider text-slate-400">SMS Sender ID</Label>
+                      <Input 
+                        id="smsSenderID" 
+                        placeholder="e.g. SCNID"
+                        className="h-10 bg-white rounded-xl border-slate-200 font-bold"
+                        value={formData.smsSenderID || ""}
+                        onChange={(e) => setFormData({...formData, smsSenderID: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs font-bold pt-1">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="checkbox" 
+                        id="enableSMS"
+                        checked={!!formData.enableSMS}
+                        onChange={(e) => setFormData({...formData, enableSMS: e.target.checked})}
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="enableSMS" className="text-slate-600 cursor-pointer">Enable Core SMS</label>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="checkbox" 
+                        id="enablePresenteeSMS"
+                        checked={!!formData.enablePresenteeSMS}
+                        onChange={(e) => setFormData({...formData, enablePresenteeSMS: e.target.checked})}
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="enablePresenteeSMS" className="text-slate-600 cursor-pointer">Attendance SMS</label>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="checkbox" 
+                        id="automaticBirthdaySMS"
+                        checked={!!formData.automaticBirthdaySMS}
+                        onChange={(e) => setFormData({...formData, automaticBirthdaySMS: e.target.checked})}
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="automaticBirthdaySMS" className="text-slate-600 cursor-pointer">Birthday Greetings</label>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="checkbox" 
+                        id="enableWhatsapp"
+                        checked={!!formData.enableWhatsapp}
+                        onChange={(e) => setFormData({...formData, enableWhatsapp: e.target.checked})}
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="enableWhatsapp" className="text-slate-600 cursor-pointer">WhatsApp API</label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Transit & Helpline support */}
+                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 space-y-4">
+                  <h4 className="text-[11px] font-black text-slate-900 tracking-wider uppercase border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
+                    <div className="w-1.5 h-3 bg-indigo-500 rounded-full"></div>
+                    Transit & Administrative Helpdesks
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="scanIDContact" className="text-[10px] font-black uppercase tracking-wider text-slate-400">SCANiD Helpline</Label>
+                      <Input 
+                        id="scanIDContact" 
+                        placeholder="Helpline Contact"
+                        className="h-10 bg-white rounded-xl border-slate-200 font-bold"
+                        value={formData.scanIDContact || ""}
+                        onChange={(e) => setFormData({...formData, scanIDContact: e.target.value})}
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="scanIDEmail" className="text-[10px] font-black uppercase tracking-wider text-slate-400">SCANiD Email</Label>
+                      <Input 
+                        id="scanIDEmail" 
+                        placeholder="Support Email"
+                        className="h-10 bg-white rounded-xl border-slate-200 font-bold"
+                        value={formData.scanIDEmail || ""}
+                        onChange={(e) => setFormData({...formData, scanIDEmail: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5 col-span-2">
+                      <Label htmlFor="inChargeContact" className="text-[10px] font-black uppercase tracking-wider text-slate-400">School In-Charge Contact</Label>
+                      <Input 
+                        id="inChargeContact" 
+                        placeholder="School Administrator/In-Charge Contact"
+                        className="h-10 bg-white rounded-xl border-slate-200 font-bold"
+                        value={formData.inChargeContact || ""}
+                        onChange={(e) => setFormData({...formData, inChargeContact: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="busNumbers" className="text-[10px] font-black uppercase tracking-wider text-slate-400">Institutional Bus Fleet Numbers</Label>
+                    <textarea 
+                      id="busNumbers" 
+                      placeholder="e.g. Bus 1: MH-12-DT-2541, Bus 2: MH-12-AP-6512"
+                      className="w-full text-xs font-bold rounded-xl border border-slate-200 p-3 min-h-[60px] max-h-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      value={formData.busNumbers || ""}
+                      onChange={(e) => setFormData({...formData, busNumbers: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                {/* status / license configuration */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-black uppercase tracking-wider text-slate-400">System Status</Label>
+                  <Select 
+                    value={formData.status || "Active"} 
+                    onValueChange={(v) => setFormData({...formData, status: v})}
+                  >
+                    <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white font-bold px-4">
+                      <SelectValue placeholder="System Status" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-slate-200 shadow-xl">
+                      <SelectItem value="Active" className="font-semibold py-2">Active</SelectItem>
+                      <SelectItem value="Suspended" className="font-semibold py-2 text-red-500">Suspended</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </>
             )}
