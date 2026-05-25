@@ -115,7 +115,7 @@ namespace ScanID.Api.Controllers
                     Directory.CreateDirectory(webRootPath);
                 }
 
-                var relativeFolder = Path.Combine("uploads", "teachers");
+                var relativeFolder = Path.Combine("photos", "teachers", id.ToString());
                 var uploadsFolder = Path.Combine(webRootPath, relativeFolder);
                 
                 if (!Directory.Exists(uploadsFolder)) 
@@ -123,10 +123,12 @@ namespace ScanID.Api.Controllers
                     Directory.CreateDirectory(uploadsFolder);
                 }
 
-                var extension = Path.GetExtension(file.FileName);
-                var fileName = $"teacher_{id}_{DateTime.Now.Ticks}{extension}";
+                // Generate a 12-digit random number as requested by the user
+                var random = new Random();
+                var random12Digit = string.Concat(Enumerable.Range(0, 12).Select(_ => random.Next(10).ToString()));
+                var fileName = $"{random12Digit}.png";
                 var filePath = Path.Combine(uploadsFolder, fileName);
-                var relativePath = $"/{relativeFolder.Replace("\\", "/")}/{fileName}";
+                var relativePath = $"{relativeFolder.Replace("\\", "/")}/{fileName}";
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {

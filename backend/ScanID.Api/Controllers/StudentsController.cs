@@ -379,8 +379,7 @@ namespace ScanID.Api.Controllers
                     Directory.CreateDirectory(uploadsFolder);
                 }
 
-                var extension = Path.GetExtension(file.FileName);
-                if (string.IsNullOrEmpty(extension)) extension = ".jpg";
+                var extension = ".png";
                 
                 Random res = new Random();
                 string random12Digit = "";
@@ -397,7 +396,7 @@ namespace ScanID.Api.Controllers
                     await file.CopyToAsync(stream);
                 }
 
-                var relativePath = $"/photos/{schoolID}/{fileName}";
+                var relativePath = $"photos/{schoolID}/{fileName}";
 
                 if (!string.IsNullOrEmpty(student.ProfilePhotoPath))
                 {

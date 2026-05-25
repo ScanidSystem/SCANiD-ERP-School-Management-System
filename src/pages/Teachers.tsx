@@ -27,17 +27,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Download,
-  Loader2,
-  Home,
-  Save,
-  User,
-  Building2,
-  X,
-  School2,
-   ShieldCheck, 
-  BadgeCheck, 
-  Clock3, 
-  UserMinus 
+  Loader2
 } from "lucide-react";
 import { 
   Table, 
@@ -140,20 +130,6 @@ export default function Teachers({ user }: { user: any }) {
     status: "Active",
     schoolId: user.schoolId || ""
   });
-  const [pendingFocusField, setPendingFocusField] = useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (pendingFocusField && inputRefs.current[pendingFocusField]) {
-      const element = inputRefs.current[pendingFocusField];
-      setTimeout(() => {
-        element.focus();
-        if (element.scrollIntoView) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 50);
-      setPendingFocusField(null);
-    }
-  }, [pendingFocusField]);
 
   const fetchSchools = async () => {
     try {
@@ -327,10 +303,10 @@ export default function Teachers({ user }: { user: any }) {
       qualification: "",
       experience: "",
       subject: "",
-      standard: "",
-      section: "",
-      status: "",
-      schoolId: "",
+      standard: "10th",
+      section: "A",
+      status: "Active",
+      schoolId: user.schoolId || "",
       photo: ""
     });
     setSelectedTeacher(null);
@@ -339,30 +315,35 @@ export default function Teachers({ user }: { user: any }) {
   };
 
   const handleCreateOrUpdate = async () => {
-    const newErrors: Record<string, string> = {};
+    const newErrors: Record<string, boolean> = {};
     let firstErrorField = "";
 
-    const checkField = (field: string, condition: boolean, message: string) => {
+    const checkField = (field: string, condition: boolean) => {
       if (condition) {
-        newErrors[field] = message;
+        newErrors[field] = true;
         if (!firstErrorField) firstErrorField = field;
       }
     };
 
-    checkField("schoolId", !formData.schoolId || formData.schoolId === "none", "Campus Branch is required");
-    checkField("status", !formData.status || formData.status === "none", "Access Status is required");
-    checkField("firstName", !formData.firstName?.trim(), "First Name is required");
-    checkField("lastName", !formData.lastName?.trim(), "Last Name is required");
-    checkField("email", !formData.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email), "Valid Email Protocol is required");
-    checkField("phone", !formData.phone?.trim() || !/^\d{10}$/.test(formData.phone.replace(/\D/g, "")), "10-digit Direct Line is required");
-    checkField("qualification", !formData.qualification?.trim(), "Education Deck is required");
-    checkField("subject", !formData.subject?.trim(), "Primary Domain is required");
+    checkField("firstName", !formData.firstName?.trim());
+    checkField("lastName", !formData.lastName?.trim());
+    checkField("email", !formData.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email));
+    checkField("phone", !formData.phone?.trim() || !/^\d{10}$/.test(formData.phone.replace(/\D/g, "")));
+    checkField("qualification", !formData.qualification?.trim());
+    checkField("subject", !formData.subject?.trim());
+    checkField("schoolId", !formData.schoolId);
 
     setFormErrors(newErrors);
 
     if (firstErrorField) {
       toast.error("Please ensure all critical details are provided correctly.");
-      setPendingFocusField(firstErrorField);
+      const element = inputRefs.current[firstErrorField];
+      if (element) {
+        element.focus();
+        if (element.scrollIntoView) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
       return;
     }
 
@@ -500,7 +481,7 @@ export default function Teachers({ user }: { user: any }) {
       />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-           <div className="bg-[#4f46e5] p-4 rounded-[1.25rem] text-white shadow-2xl shadow-indigo-200 transition-transform hover:-rotate-3">
+           <div className="bg-blue-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:-rotate-3">
             <Users size={28} />
           </div>
           <div>
@@ -518,432 +499,310 @@ export default function Teachers({ user }: { user: any }) {
               title="Remove Faculty Member?"
               description={`This will permanently delete ${deleteInfo?.name}'s profile and employment records. Access to the portal for this user will be revoked.`}
             />
-            <DialogTrigger asChild>
-              <div className="flex items-center justify-center gap-2 h-11 px-8 rounded-2xl bg-[#4f46e5] hover:bg-[#4338ca] shadow-xl shadow-indigo-500/20 text-white border-none outline-none cursor-pointer font-black text-xs uppercase tracking-widest transition-all hover:-translate-y-0.5 active:scale-95">
-                <UserPlus size={18} className="stroke-[3]" /> Register Faculty
-              </div>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[850px] w-[95vw] max-h-[96vh] flex flex-col p-0 border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] rounded-[2.5rem] overflow-hidden bg-white group/modal">
-              <div className="bg-slate-950 px-10 py-7 text-white relative shrink-0 overflow-hidden border-b border-white/5">
-                <div className="relative z-10 flex items-center justify-between">
-                  <div className="flex items-center gap-5">
-                    <div className="w-16 h-16 bg-[#4f46e5] rounded-[1.25rem] flex items-center justify-center shadow-2xl shadow-indigo-500/40 border border-white/10 transition-transform group-hover/modal:scale-105 duration-500">
-                      <UserPlus size={32} className="text-white" />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <DialogHeader className="text-left p-0">
-                        <DialogTitle className="text-2xl font-black tracking-tight leading-none text-white">
-                          {isEditing ? "Modify Profile" : "Onboard Faculty"}
-                        </DialogTitle>
-                        <DialogDescription className="text-slate-400 text-[15px] font-black uppercase opacity-80 mt-1">
-                          {isEditing 
-                            ? "Update professional qualifications and work assignments." 
-                            : "Enter credentials and department assignments for new staff."}
-                        </DialogDescription>
-                      </DialogHeader>
-                    </div>
-                  </div>
+            <DialogTrigger
+              render={
+                <div className="flex items-center justify-center gap-2 h-11 px-8 rounded-2xl bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-500/20 text-white border-none outline-none cursor-pointer font-black text-xs uppercase tracking-widest transition-all hover:-translate-y-0.5 active:scale-95">
+                  <UserPlus size={18} className="stroke-[3]" /> Register Faculty
                 </div>
-                
-                {/* Atmospheric Glow */}
-                <div className="absolute right-[-5%] top-[-20%] w-80 h-80 bg-[#4f46e5]/20 rounded-full blur-[100px] pointer-events-none animate-pulse"></div>
-                <div className="absolute left-[-5%] bottom-[-20%] w-48 h-48 bg-indigo-600/10 rounded-full blur-[80px] pointer-events-none"></div>
-              </div>
-            
-              <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-10 bg-white custom-scrollbar">
-                <div className="max-w-3xl mx-auto space-y-12">
-                  <section>
-                    <div className="flex items-center gap-4 mb-8">
-                      <div className="w-1 h-6 bg-[#4f46e5] rounded-full"></div>
-                      <div className="flex items-center gap-2">
-                        <Building2 size={18} className="text-[#4f46e5]" />
+              }
+            />
+            <DialogContent className="sm:max-w-[850px] w-[95vw] max-h-[90vh] flex flex-col p-0 border-none shadow-3xl rounded-[2.5rem] overflow-hidden">
+                <div className="bg-slate-900 px-10 py-8 text-white relative shrink-0">
+                  <div className="relative z-10 flex items-center justify-between">
+                    <DialogHeader>
+                      <DialogTitle className="text-2xl font-black tracking-tight flex items-center gap-4">
+                        <div className="p-3 bg-blue-500 rounded-2xl shadow-2xl shadow-blue-500/20">
+                          <UserPlus size={24} className="text-white" />
+                        </div>
+                        {isEditing ? "Modify Profile" : "Onboard Faculty"}
+                      </DialogTitle>
+                      <DialogDescription className="text-slate-400 text-sm mt-2 font-bold max-w-2xl leading-relaxed uppercase tracking-wider">
+                        {isEditing 
+                          ? "Update professional qualifications and work assignments." 
+                          : "Enter credentials and department assignments for new staff."}
+                      </DialogDescription>
+                    </DialogHeader>
+                  </div>
+                  <div className="absolute right-[-5%] top-[-5%] w-72 h-72 bg-blue-600/20 rounded-full blur-[100px] pointer-events-none"></div>
+                </div>
+              
+                <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-8 bg-white custom-scrollbar">
+                  <div className="max-w-4xl mx-auto space-y-10">
+                    <section>
+                      <div className="flex items-center gap-4 mb-6 pb-2 border-b border-slate-50">
+                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
                         <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Institutional Context</h3>
                       </div>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">
-                        Campus Branch
-                      </Label>
-                      <Select 
-                        value={formData.schoolId?.toString()} 
-                        onValueChange={(v) => {
-                          setFormData({...formData, schoolId: v});
-                          if (formErrors.schoolId) setFormErrors(prev => ({ ...prev, schoolId: "" }));
-                        }}
-                        disabled={user.role !== "superadmin" && !!user.schoolId}
-                      >
-                        <SelectTrigger 
-                          ref={el => { inputRefs.current["schoolId"] = el; }}
-                          className={cn(
-                            "relative h-[68px] min-h-[68px] border-2 bg-gradient-to-b from-white to-slate-50/90 font-bold rounded-2xl pl-16 pr-5 text-[15px] transition-all duration-300 shadow-sm hover:shadow-md text-slate-800 focus:outline-none focus:ring-offset-0",
-                            formErrors.schoolId ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400",
-                            (user.role !== "superadmin" && !!user.schoolId) && "opacity-80 cursor-not-allowed bg-slate-50"
-                          )}
-                        >
-                          <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-50 shadow-sm transition-transform group-hover:scale-105">
-                            <School2 size={18} className="text-indigo-600" />
-                          </div>
-                          <div className="flex flex-col text-left leading-tight ml-2">
-                            <SelectValue placeholder="Select Campus Branch">
-                              {(formData.schoolId && formData.schoolId !== "none") ? (
-                                <div className="flex flex-col">
-                               
-                                  <span className="text-[14px] font-black text-slate-900 uppercase">
-                                    {schools.find(s => s.id.toString() === formData.schoolId.toString())?.name || "Campus Branch"}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400 font-bold mt-0.5">
-                                    ID: {formData.schoolId} • Cloud Preview
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="text-slate-400 font-bold">Select Campus Branch</span>
-                              )}
-                            </SelectValue>
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent className="rounded-[2rem] border border-slate-200 shadow-[0_20px_60px_rgba(15,23,42,0.15)] p-2 bg-white/95 backdrop-blur-xl min-w-[280px]">
-                          <SelectItem value="none" className="group rounded-[1.5rem] py-4 px-3 cursor-pointer data-[state=selected]:bg-indigo-50/30 focus:bg-slate-50 transition-all duration-200 mb-1">
-                            <div className="flex items-center h-11 pl-[60px]">
-                              <span className="text-[14px] font-medium text-slate-400 italic">Select School Branch</span>
-                            </div>
-                          </SelectItem>
-                          {Array.isArray(schools) && schools.length > 0 ? (
-                            schools.map(s => (
-                              <SelectItem key={s.id} value={s.id.toString()} className="group rounded-[1.5rem] py-4 px-3 cursor-pointer data-[state=selected]:bg-indigo-50 focus:bg-indigo-50/80 focus:text-indigo-700 transition-all duration-200 mb-1">
-                                <div className="flex items-center gap-4">
-                                  <div className="w-11 h-11 rounded-2xl bg-indigo-50 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
-                                    <Building2 className="w-5 h-5 text-indigo-600" />
-                                  </div>
-                                  <div className="flex flex-col leading-tight">
-                                    <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">{s.name}</span>
-                                    <span className="text-[10px] uppercase tracking-widest text-[#4f46e5]/40 font-black mt-0.5">SCHOOL ID • {s.id}</span>
-                                  </div>
-                                </div>
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <div className="py-10 px-4 text-center">
-                              <Loader2 size={24} className="animate-spin text-indigo-500 mx-auto mb-3" />
-                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hydrating Branches...</p>
-                            </div>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      {formErrors.schoolId && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.schoolId}</p>}
-                    </div>
-                  </section>
-
-                  <section>
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
-                      {/* Left: Identity Image */}
-                      <div className="md:col-span-4 flex flex-col gap-4">
-                        <Label className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Faculty Identity Photo</Label>
-                        <div 
-                          className="relative aspect-square rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/50 flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-white hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/5 transition-all group overflow-hidden"
-                          onClick={() => triggerPhotoUpload(isEditing ? selectedTeacher?.id!.toString() : "new")}
-                        >
-                          {(localPhotoPreview || formData.photo) ? (
-                            <img 
-                              src={localPhotoPreview || resolvePhotoUrl(formData.photo)} 
-                              alt="Faculty" 
-                              className="w-full h-full object-cover rounded-[1.25rem]"
-                              onError={(e) => {
-                                e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.firstName}`;
+                      
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                          <div className="md:col-span-12 space-y-2">
+                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.schoolId ? "text-red-500" : "text-slate-400")}>Campus Branch {formErrors.schoolId && "*"}</Label>
+                            <Select 
+                              value={formData.schoolId.toString()} 
+                              onValueChange={(v) => {
+                                setFormData({...formData, schoolId: v});
+                                if (formErrors.schoolId) setFormErrors(prev => ({ ...prev, schoolId: false }));
                               }}
-                            />
-                          ) : (
-                            <div className="flex flex-col items-center gap-4 py-8">
-                              <div className="relative">
-                                <div className="w-16 h-16 bg-slate-200/50 rounded-full flex items-center justify-center">
-                                  <Camera size={28} className="text-slate-400" />
-                                </div>
-                                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#4f46e5] rounded-full border-2 border-white flex items-center justify-center">
-                                  <Plus size={14} className="text-white" />
-                                </div>
-                              </div>
-                              <div className="text-center">
-                                <span className="block text-sm font-black text-slate-900">Upload Photo</span>
-                                <span className="block text-[10px] text-slate-400 font-bold mt-1 tracking-tight">JPG, PNG (Max. 2MB)</span>
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[1px]">
-                            <Camera size={24} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Update Photo</span>
-                          </div>
-                        </div>
-                        <p className="text-[10px] text-slate-400 font-medium text-center leading-relaxed px-2">
-                          Click frame to select or update professional photograph.
-                        </p>
-                      </div>
-
-                      {/* Right: Primary Bio */}
-                      <div className="md:col-span-8 space-y-6">
-                        <div className="grid grid-cols-2 gap-5">
-                          <div className="space-y-3">
-                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">First Name</Label>
-                            <div className="relative">
-                              <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-                              <Input 
-                                ref={el => { inputRefs.current["firstName"] = el; }}
-                                value={formData.firstName} 
-                                onChange={e => {
-                                  setFormData({...formData, firstName: e.target.value});
-                                  if (formErrors.firstName) setFormErrors(prev => ({ ...prev, firstName: "" }));
-                                }} 
-                                placeholder="Robert" 
+                              disabled={user.role !== "superadmin" && !!user.schoolId}
+                            >
+                              <SelectTrigger 
+                                ref={el => { inputRefs.current["schoolId"] = el; }}
                                 className={cn(
-                                  "h-14 pl-12 border-2 bg-white font-bold rounded-2xl text-sm transition-all placeholder:text-slate-500 shadow-sm text-slate-950 focus:outline-none focus:ring-offset-0",
-                                  formErrors.firstName ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
+                                  "h-12 border-slate-100 bg-slate-50/50 font-black text-slate-800 rounded-2xl px-5 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm",
+                                  formErrors.schoolId && "border-red-500 ring-2 ring-red-500/10",
+                                  (user.role !== "superadmin" && !!user.schoolId) && "opacity-80 cursor-not-allowed bg-slate-100"
                                 )}
-                              />
-                            </div>
-                            {formErrors.firstName && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.firstName}</p>}
-                          </div>
-                          <div className="space-y-3">
-                            <Label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Middle Name</Label>
-                            <div className="relative">
-                              <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-                              <Input 
-                                value={formData.middleName} 
-                                onChange={e => setFormData({...formData, middleName: e.target.value})} 
-                                placeholder="Optional" 
-                                className="h-14 pl-12 border-2 border-slate-200 bg-white font-bold rounded-2xl text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all placeholder:text-slate-500 shadow-sm text-slate-950" 
-                              />
-                            </div>
-                          </div>
-                        </div>
-                          <div className="space-y-3">
-                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Last Name</Label>
-                            <div className="relative">
-                              <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-                              <Input 
-                                ref={el => { inputRefs.current["lastName"] = el; }}
-                                value={formData.lastName} 
-                                onChange={e => {
-                                  setFormData({...formData, lastName: e.target.value});
-                                  if (formErrors.lastName) setFormErrors(prev => ({ ...prev, lastName: "" }));
-                                }} 
-                                placeholder="Smith" 
-                                className={cn(
-                                  "h-14 pl-12 border-2 bg-white font-bold rounded-2xl text-sm transition-all placeholder:text-slate-500 shadow-sm text-slate-950 focus:outline-none focus:ring-offset-0",
-                                  formErrors.lastName ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
+                              >
+                                {/* Custom label display to show only the name when a campus is selected, avoiding full ID/Address view in trigger */}
+                                <SelectValue placeholder="Select Campus">
+                                  {formData.schoolId ? schools.find(s => s.id.toString() === formData.schoolId.toString())?.name : undefined}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent className="max-h-80 rounded-[2rem] shadow-2xl border-slate-100 p-3">
+                                <SelectItem value="" className="font-bold py-3 px-4 rounded-xl focus:bg-slate-50 text-slate-400 italic">
+                                  Select Campus
+                                </SelectItem>
+                                {Array.isArray(schools) && schools.length > 0 ? (
+                                  schools.map(s => (
+                                    <SelectItem key={s.id} value={s.id.toString()} className="font-black py-4 px-4 rounded-2xl focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
+                                      <div className="flex flex-col gap-1">
+                                        <span className="text-sm uppercase tracking-tight">{s.name}</span>
+                                        <span className="text-[10px] text-slate-400 font-bold tracking-[0.1em]">ID: SCH-{s.id} • {s.address?.split(',')[0]}</span>
+                                      </div>
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <div className="p-6 text-xs font-black text-slate-400 text-center uppercase tracking-widest flex flex-col items-center gap-3 italic">
+                                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
+                                    Syncing branches...
+                                  </div>
                                 )}
-                              />
-                            </div>
-                            {formErrors.lastName && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.lastName}</p>}
+                              </SelectContent>
+                            </Select>
                           </div>
-                      </div>
-                    </div>
-                  </section>
+                        </div>                        <div className="flex flex-col md:flex-row gap-8 mt-8">
+                          {/* Left: Identity Image */}
+                          <div className="flex flex-col items-center gap-4">
+                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Faculty Identity Photo</Label>
+                            <div 
+                              className="relative group cursor-pointer"
+                              onClick={() => triggerPhotoUpload(isEditing ? selectedTeacher?.id!.toString() : "new")}
+                            >
+                              <div className="w-44 h-44 rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-100 bg-slate-50 flex items-center justify-center transition-all group-hover:shadow-blue-200/50 group-hover:scale-[1.02]">
+                                 {(localPhotoPreview || formData.photo) ? (
+                                   <img 
+                                     src={localPhotoPreview || resolvePhotoUrl(formData.photo)} 
+                                     alt="Faculty" 
+                                     className="w-full h-full object-cover"
+                                     onError={(e) => {
+                                       e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.firstName}`;
+                                     }}
+                                   />
+                                 ) : (
+                                   <div className="flex flex-col items-center gap-3 text-slate-300">
+                                     <div className="p-4 bg-slate-100 rounded-2xl">
+                                        <UserCircle size={36} className="opacity-20" />
+                                     </div>
+                                     <span className="text-[10px] font-black tracking-widest">NO IMAGE</span>
+                                   </div>
+                                 )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <section>
-                      <div className="flex items-center gap-4 mb-8">
-                        <div className="w-1 h-6 bg-[#4f46e5] rounded-full"></div>
-                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Connectability</h3>
-                      </div>
-                      <div className="space-y-6">
-                        <div className="space-y-3">
-                          <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Email Protocol</Label>
-                          <Input 
-                            ref={el => { inputRefs.current["email"] = el; }}
-                            type="email" 
-                            value={formData.email} 
-                            onChange={e => {
-                              setFormData({...formData, email: e.target.value});
-                              if (formErrors.email) setFormErrors(prev => ({ ...prev, email: "" }));
-                            }} 
-                            placeholder="faculty@college.edu" 
-                            className={cn(
-                              "h-14 border-2 bg-white font-bold rounded-2xl text-sm transition-all shadow-sm placeholder:text-slate-500 text-slate-950 focus:outline-none focus:ring-offset-0",
-                              formErrors.email ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
-                            )}
-                          />
-                          {formErrors.email && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.email}</p>}
+                                 <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
+                                    <div className="p-2 bg-white/20 rounded-full">
+                                      <Camera size={24} />
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Update Photo</span>
+                                 </div>
+                              </div>
+                              
+                              {(localPhotoPreview || formData.photo) && (
+                                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
+                                   <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-slate-400 font-bold max-w-[150px] text-center leading-relaxed">
+                              Click frame to select or update professional photograph.
+                            </p>
+                          </div>
+
+                          {/* Right: Primary Bio */}
+                          <div className="flex-1 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="space-y-2">
+                                <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.firstName ? "text-red-500" : "text-slate-400")}>First Name {formErrors.firstName && "*"}</Label>
+                                <Input 
+                                  ref={el => { inputRefs.current["firstName"] = el; }}
+                                  value={formData.firstName} 
+                                  onChange={e => {
+                                    setFormData({...formData, firstName: e.target.value});
+                                    if (formErrors.firstName) setFormErrors(prev => ({ ...prev, firstName: false }));
+                                  }} 
+                                  placeholder="Robert" 
+                                  className={cn(
+                                    "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300",
+                                    formErrors.firstName && "border-red-500 ring-2 ring-red-500/10"
+                                  )}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Middle Name</Label>
+                                <Input value={formData.middleName} onChange={e => setFormData({...formData, middleName: e.target.value})} placeholder="Optional" className="h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300" />
+                              </div>
+                              <div className="md:col-span-2 space-y-2">
+                                <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.lastName ? "text-red-500" : "text-slate-400")}>Last Name {formErrors.lastName && "*"}</Label>
+                                <Input 
+                                  ref={el => { inputRefs.current["lastName"] = el; }}
+                                  value={formData.lastName} 
+                                  onChange={e => {
+                                    setFormData({...formData, lastName: e.target.value});
+                                    if (formErrors.lastName) setFormErrors(prev => ({ ...prev, lastName: false }));
+                                  }} 
+                                  placeholder="Smith" 
+                                  className={cn(
+                                    "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300",
+                                    formErrors.lastName && "border-red-500 ring-2 ring-red-500/10"
+                                  )}
+                                />
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="space-y-3">
-                          <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Direct Line</Label>
-                          <Input 
-                            ref={el => { inputRefs.current["phone"] = el; }}
-                            value={formData.phone} 
-                            maxLength={10}
-                            onChange={e => {
-                              const val = e.target.value.replace(/\D/g, "").slice(0, 10);
-                              setFormData({...formData, phone: val});
-                              if (formErrors.phone) setFormErrors(prev => ({ ...prev, phone: "" }));
-                            }} 
-                            placeholder="10-digit mobile" 
-                            className={cn(
-                              "h-14 border-2 bg-white font-bold rounded-2xl text-sm transition-all shadow-sm placeholder:text-slate-500 text-slate-950 focus:outline-none focus:ring-offset-0",
-                              formErrors.phone ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
-                            )}
-                          />
-                          {formErrors.phone && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.phone}</p>}
-                        </div>
-                      </div>
                     </section>
 
-                    <section>
-                      <div className="flex items-center gap-4 mb-8">
-                        <div className="w-1 h-6 bg-[#4f46e5] rounded-full"></div>
-                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Professional Rank</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                      <section>
+                        <div className="flex items-center gap-4 mb-6 pb-2 border-b border-slate-50">
+                          <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
+                          <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Connectability</h3>
+                        </div>
+                        <div className="space-y-5">
+                          <div className="space-y-2">
+                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.email ? "text-red-500" : "text-slate-400")}>Email Protocol {formErrors.email && "*"}</Label>
+                            <Input 
+                              ref={el => { inputRefs.current["email"] = el; }}
+                              type="email" 
+                              value={formData.email} 
+                              onChange={e => {
+                                setFormData({...formData, email: e.target.value});
+                                if (formErrors.email) setFormErrors(prev => ({ ...prev, email: false }));
+                              }} 
+                              placeholder="faculty@college.edu" 
+                              className={cn(
+                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all",
+                                formErrors.email && "border-red-500 ring-2 ring-red-500/10"
+                              )}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.phone ? "text-red-500" : "text-slate-400")}>Direct Line {formErrors.phone && "*"}</Label>
+                            <Input 
+                              ref={el => { inputRefs.current["phone"] = el; }}
+                              value={formData.phone} 
+                              maxLength={10}
+                              onChange={e => {
+                                const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                                setFormData({...formData, phone: val});
+                                if (formErrors.phone) setFormErrors(prev => ({ ...prev, phone: false }));
+                              }} 
+                              placeholder="10-digit mobile" 
+                              className={cn(
+                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all",
+                                formErrors.phone && "border-red-500 ring-2 ring-red-500/10"
+                              )}
+                            />
+                          </div>
+                        </div>
+                      </section>
+
+                      <section>
+                        <div className="flex items-center gap-4 mb-6 pb-2 border-b border-slate-50">
+                          <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
+                          <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Professional Rank</h3>
+                        </div>
+                        <div className="space-y-5">
+                          <div className="space-y-2">
+                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.qualification ? "text-red-500" : "text-slate-400")}>Education Deck {formErrors.qualification && "*"}</Label>
+                            <Input 
+                              ref={el => { inputRefs.current["qualification"] = el; }}
+                              value={formData.qualification} 
+                              onChange={e => {
+                                setFormData({...formData, qualification: e.target.value});
+                                if (formErrors.qualification) setFormErrors(prev => ({ ...prev, qualification: false }));
+                              }} 
+                              placeholder="M.Ed, PhD" 
+                              className={cn(
+                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all",
+                                formErrors.qualification && "border-red-500 ring-2 ring-red-500/10"
+                              )}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Tenure (Years)</Label>
+                            <Input value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} placeholder="5 Years" className="h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all" />
+                          </div>
+                        </div>
+                      </section>
+                    </div>
+
+                    <section className="bg-slate-50/80 p-8 rounded-[2rem] border border-slate-100 shadow-sm transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-100/50">
+                      <div className="flex items-center gap-4 mb-6 pt-1">
+                        <div className="w-1.5 h-6 bg-red-600 rounded-full"></div>
+                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Departmental Payload</h3>
                       </div>
-                      <div className="space-y-6">
-                        <div className="space-y-3">
-                          <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Education Deck</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-2">
+                          <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.subject ? "text-red-500" : "text-slate-400")}>Primary Domain {formErrors.subject && "*"}</Label>
                           <Input 
-                            ref={el => { inputRefs.current["qualification"] = el; }}
-                            value={formData.qualification} 
+                            ref={el => { inputRefs.current["subject"] = el; }}
+                            value={formData.subject} 
                             onChange={e => {
-                              setFormData({...formData, qualification: e.target.value});
-                              if (formErrors.qualification) setFormErrors(prev => ({ ...prev, qualification: "" }));
+                              setFormData({...formData, subject: e.target.value});
+                              if (formErrors.subject) setFormErrors(prev => ({ ...prev, subject: false }));
                             }} 
-                            placeholder="M.Ed, PhD" 
+                            placeholder="Mathematics" 
                             className={cn(
-                              "h-14 border-2 bg-white font-bold rounded-2xl text-sm transition-all shadow-sm placeholder:text-slate-500 text-slate-950 focus:outline-none focus:ring-offset-0",
-                              formErrors.qualification ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
+                              "h-12 border-slate-100 bg-white font-black rounded-[1.25rem] px-5 text-sm focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:italic",
+                              formErrors.subject && "border-red-500 ring-2 ring-red-500/10"
                             )}
                           />
-                          {formErrors.qualification && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.qualification}</p>}
                         </div>
-                        <div className="space-y-3">
-                          <Label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Tenure (Years)</Label>
-                          <Input value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} placeholder="5 Years" className="h-14 border-2 border-slate-200 bg-white font-bold rounded-2xl text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all shadow-sm placeholder:text-slate-500 text-slate-950" />
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Assigned Grade</Label>
+                          <Input value={formData.standard} onChange={e => setFormData({...formData, standard: e.target.value})} placeholder="10th" className="h-12 border-slate-100 bg-white font-black rounded-[1.25rem] px-5 text-sm focus:ring-4 focus:ring-blue-500/5 transition-all" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Access Status</Label>
+                          <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
+                            <SelectTrigger className="h-12 border-slate-100 bg-white font-black rounded-[1.25rem] px-5 text-sm focus:ring-4 focus:ring-blue-500/5 transition-all">
+                              <SelectValue placeholder="Access Status">
+                              {formData.status || undefined}
+                            </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
+                              <SelectItem value="Active" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-blue-50 focus:text-blue-700">Active</SelectItem>
+                              <SelectItem value="On Leave" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-blue-50 focus:text-blue-700">On Leave</SelectItem>
+                              <SelectItem value="Resigned" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-blue-50 focus:text-blue-700">Resigned</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </section>
                   </div>
-
-                  <section className="bg-slate-50/50 p-8 rounded-[2rem] border border-slate-100/80 shadow-inner">
-                    <div className="flex items-center gap-4 mb-8">
-                      <div className="w-1 h-6 bg-[#4f46e5] rounded-full"></div>
-                      <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Departmental Payload</h3>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="space-y-3">
-                        <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Primary Domain</Label>
-                        <Input 
-                          ref={el => { inputRefs.current["subject"] = el; }}
-                          value={formData.subject} 
-                          onChange={e => {
-                            setFormData({...formData, subject: e.target.value});
-                            if (formErrors.subject) setFormErrors(prev => ({ ...prev, subject: "" }));
-                          }} 
-                          placeholder="Mathematics" 
-                          className={cn(
-                            "h-14 border-2 bg-white font-bold rounded-2xl text-sm transition-all shadow-sm placeholder:text-slate-500 text-slate-950 focus:outline-none focus:ring-offset-0",
-                            formErrors.subject ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
-                          )}
-                        />
-                        {formErrors.subject && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.subject}</p>}
-                      </div>
-                      <div className="space-y-3">
-                        <Label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Assigned Grade</Label>
-                        <Input value={formData.standard} onChange={e => setFormData({...formData, standard: e.target.value})} placeholder="10th" className="h-14 border-2 border-slate-200 bg-white font-bold rounded-2xl text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all shadow-sm placeholder:text-slate-500 text-slate-950" />
-                      </div>
-                      <div className="space-y-3">
-                        <Label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Access Status</Label>
-                        <Select 
-                          value={formData.status} 
-                          onValueChange={v => {
-                            setFormData({...formData, status: v});
-                            if (formErrors.status) setFormErrors(prev => ({ ...prev, status: "" }));
-                          }}
-                        >
-                          <SelectTrigger 
-                            ref={el => { inputRefs.current["status"] = el; }}
-                            className={cn(
-                              "relative h-[68px] min-h-[68px] border-2 bg-gradient-to-b from-white to-slate-50/90 font-bold rounded-2xl pl-16 pr-5 text-[15px] transition-all duration-300 shadow-sm hover:shadow-lg text-slate-800 focus:outline-none focus:ring-offset-0",
-                              formErrors.status ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
-                            )}
-                          >
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-100 shadow-sm transition-transform group-hover:scale-105">
-                              {formData.status === "Active" ? <BadgeCheck className="w-5 h-5 text-emerald-600" /> : 
-                               formData.status === "On Leave" ? <Clock3 className="w-5 h-5 text-amber-600" /> :
-                               formData.status === "Resigned" ? <UserMinus className="w-5 h-5 text-rose-600" /> :
-                               <ShieldCheck className="w-5 h-5 text-indigo-600" />}
-                            </div>
-                            <div className="flex flex-col text-left leading-tight ml-2">
-                              <SelectValue placeholder="Select Access Status">
-                                {(formData.status && formData.status !== "none") ? (
-                                  <div className="flex flex-col">
-                                    <span className="text-[13px] font-extrabold">{formData.status}</span>
-                                    <span className="text-[10px] text-slate-400 uppercase tracking-widest font-black">
-                                      {formData.status === "Active" ? "Currently Working" : 
-                                       formData.status === "On Leave" ? "Temporary Break" : "No Longer Active"}
-                                    </span>
-                                  </div>
-                                ) : <span className="text-slate-400 font-medium">Select Access Status</span>}
-                              </SelectValue>
-                            </div>
-                          </SelectTrigger>
-                          <SelectContent className="rounded-[2rem] border border-slate-200 shadow-[0_20px_60px_rgba(15,23,42,0.15)] p-2 bg-white/95 backdrop-blur-xl min-w-[280px]">
-                            <div className="px-4 py-4 mb-1">
-                              {/* <span className="text-[13px] font-bold italic text-slate-400">Select Access Status</span> */}
-                            </div>
-                            <SelectItem value="none" className="group rounded-[1.5rem] py-4 px-3 cursor-pointer data-[state=selected]:bg-slate-50 focus:bg-slate-50 transition-all duration-200 mb-1">
-                              <div className="flex items-center h-11 pl-[60px]">
-                                <span className="text-[14px] font-medium text-slate-400 italic">Select Access Status</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="Active" className="group rounded-[1.5rem] py-4 px-3 cursor-pointer data-[state=selected]:bg-emerald-50 focus:bg-emerald-50/80 focus:text-emerald-700 transition-all duration-200 mb-1">
-                              <div className="flex items-center gap-4">
-                                <div className="w-11 h-11 rounded-2xl bg-emerald-100 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
-                                  <BadgeCheck className="w-5 h-5 text-emerald-600" />
-                                </div>
-                                <div className="flex flex-col leading-tight">
-                                  <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Active</span>
-                                  <span className="text-[10px] uppercase tracking-widest text-emerald-600/40 font-black mt-0.5">CURRENTLY WORKING</span>
-                                </div>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="On Leave" className="group rounded-[1.5rem] py-4 px-3 cursor-pointer data-[state=selected]:bg-amber-50 focus:bg-amber-50/80 focus:text-amber-700 transition-all duration-200 mb-1">
-                              <div className="flex items-center gap-4">
-                                <div className="w-11 h-11 rounded-2xl bg-amber-100 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
-                                  <Clock3 className="w-5 h-5 text-amber-600" />
-                                </div>
-                                <div className="flex flex-col leading-tight">
-                                  <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">On Leave</span>
-                                  <span className="text-[10px] uppercase tracking-widest text-amber-600/40 font-black mt-0.5">TEMPORARY BREAK</span>
-                                </div>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="Resigned" className="group rounded-[1.5rem] py-4 px-3 cursor-pointer data-[state=selected]:bg-rose-50 focus:bg-rose-50/80 focus:text-rose-700 transition-all duration-200">
-                              <div className="flex items-center gap-4">
-                                <div className="w-11 h-11 rounded-2xl bg-rose-100 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
-                                  <UserMinus className="w-5 h-5 text-rose-600" />
-                                </div>
-                                <div className="flex flex-col leading-tight">
-                                  <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Resigned</span>
-                                  <span className="text-[10px] uppercase tracking-widest text-rose-600/40 font-black mt-0.5">NO LONGER ACTIVE</span>
-                                </div>
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {formErrors.status && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.status}</p>}
-                      </div>
-                    </div>
-                  </section>
                 </div>
-              </div>
 
-              <DialogFooter className="bg-white px-10 py-8 shrink-0 border-t border-slate-100 flex flex-row items-center justify-end gap-6">
-                <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="h-12 px-6 font-black text-slate-400 hover:text-slate-900 transition-all text-xs uppercase tracking-[0.2em]">
-                  Dismiss
-                </Button>
-                <Button 
-                  onClick={handleCreateOrUpdate} 
-                  className="h-14 px-10 bg-[#4f46e5] hover:bg-[#4338ca] text-white font-black shadow-2xl shadow-indigo-500/20 rounded-2xl transition-all active:scale-[0.98] text-xs uppercase tracking-[0.2em] flex items-center gap-3"
-                >
-                  <Save size={20} />
-                  {isEditing ? "Update Record" : "Commit Record"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
+                <DialogFooter className="bg-slate-50 px-10 py-6 shrink-0 border-t border-slate-100 flex flex-row items-center justify-end gap-4">
+                  <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="h-11 px-8 font-black text-slate-400 hover:text-slate-900 rounded-2xl text-[10px] uppercase tracking-[0.2em] transition-all">
+                    Dismiss
+                  </Button>
+                  <Button 
+                    onClick={handleCreateOrUpdate} 
+                    className="h-12 px-10 bg-slate-900 hover:bg-blue-600 text-white font-black shadow-2xl shadow-slate-200/50 rounded-2xl transition-all active:scale-[0.98] text-[10px] uppercase tracking-[0.2em] border-none"
+                  >
+                    {isEditing ? "Apply Updates" : "Commit Record"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
           </Dialog>
         )}
       </div>
@@ -952,10 +811,10 @@ export default function Teachers({ user }: { user: any }) {
         <CardHeader className="p-8 border-b border-slate-50 bg-white/50 backdrop-blur-sm">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="relative group flex-1 max-w-sm">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#4f46e5] transition-colors" size={20} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
               <Input 
                 placeholder="Query faculty index..." 
-                className="pl-12 h-12 bg-slate-50/50 border-slate-100 focus:border-[#4f46e5] focus:bg-white focus:ring-4 focus:ring-[#4f46e5]/5 transition-all text-sm font-bold rounded-2xl"
+                className="pl-12 h-12 bg-slate-50/50 border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm font-bold rounded-2xl"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
@@ -965,7 +824,7 @@ export default function Teachers({ user }: { user: any }) {
                   <Download size={16} className="mr-2" /> Export
                 </Button>
                 <div className="h-6 w-px bg-slate-100 mx-2" />
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Total Records: {Array.isArray(filteredTeachers) ? filteredTeachers.length : 0}</p>
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Total Records: {Array.isArray(filteredTeachers) ? filteredTeachers.length : 0}</p>
             </div>
           </div>
         </CardHeader>
@@ -973,7 +832,7 @@ export default function Teachers({ user }: { user: any }) {
           {loading ? (
              <div className="flex flex-col items-center justify-center p-24 gap-4 animate-pulse">
                <div className="p-4 bg-slate-50 rounded-full">
-                  <Loader2 size={32} className="animate-spin text-[#4f46e5]" />
+                  <Loader2 size={32} className="animate-spin text-blue-600" />
                </div>
                <p className="font-black text-slate-300 uppercase tracking-widest text-[10px]">Syncing cloud data...</p>
              </div>
@@ -982,27 +841,27 @@ export default function Teachers({ user }: { user: any }) {
               <TableHeader className="bg-slate-50/30">
                 <TableRow className="h-16 border-slate-50">
                   <TableHead className="w-[140px] pl-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('employeeId')}>
-                    <div className="flex items-center gap-2 group-hover:text-[#4f46e5] transition-colors">
+                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
                       Index ID 
-                      {sortBy === 'employeeId' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-[#4f46e5]" /> : <ChevronDown size={14} className="opacity-100 text-[#4f46e5]" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
+                      {sortBy === 'employeeId' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('name')}>
-                    <div className="flex items-center gap-2 group-hover:text-[#4f46e5] transition-colors">
+                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
                       Faculty Entity 
-                      {sortBy === 'name' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-[#4f46e5]" /> : <ChevronDown size={14} className="opacity-100 text-[#4f46e5]" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
+                      {sortBy === 'name' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('subject')}>
-                    <div className="flex items-center gap-2 group-hover:text-[#4f46e5] transition-colors">
+                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
                       Core Expertise 
-                      {sortBy === 'subject' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-[#4f46e5]" /> : <ChevronDown size={14} className="opacity-100 text-[#4f46e5]" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
+                      {sortBy === 'subject' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('qualification')}>
-                    <div className="flex items-center gap-2 group-hover:text-[#4f46e5] transition-colors">
+                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
                       Credentials 
-                      {sortBy === 'qualification' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-[#4f46e5]" /> : <ChevronDown size={14} className="opacity-100 text-[#4f46e5]" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
+                      {sortBy === 'qualification' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Operational Status</TableHead>
@@ -1025,7 +884,7 @@ export default function Teachers({ user }: { user: any }) {
                   Array.isArray(filteredTeachers) && filteredTeachers.map((teacher) => (
                   <TableRow key={teacher.id} className="hover:bg-slate-50/50 transition-all group border-b border-slate-50/80 h-20">
                     <TableCell className="pl-8">
-                       <span className="font-mono text-[11px] font-black text-[#4f46e5] bg-blue-50/50 px-2.5 py-1 rounded-lg border border-blue-100/50 italic tracking-tighter">
+                       <span className="font-mono text-[11px] font-black text-blue-600 bg-blue-50/50 px-2.5 py-1 rounded-lg border border-blue-100/50 italic tracking-tighter">
                         {teacher.employeeId || teacher.id}
                        </span>
                     </TableCell>
@@ -1044,7 +903,7 @@ export default function Teachers({ user }: { user: any }) {
                               className="absolute -bottom-1 -right-1 bg-white p-1.5 rounded-full border border-slate-100 shadow-md opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95 cursor-pointer z-10"
                               aria-label="Change teacher photo"
                             >
-                              <Camera size={10} className="text-[#4f46e5]" />
+                              <Camera size={10} className="text-blue-600" />
                             </button>
                           </SimpleTooltip>
                         </div>
@@ -1055,7 +914,7 @@ export default function Teachers({ user }: { user: any }) {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="px-3 py-1 bg-slate-100/80 text-slate-900 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-200 group-hover:bg-[#4f46e5] group-hover:text-white group-hover:border-[#4f46e5] transition-all">
+                      <span className="px-3 py-1 bg-slate-100/80 text-slate-700 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-200 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all">
                         {teacher.subject}
                       </span>
                     </TableCell>
@@ -1075,7 +934,7 @@ export default function Teachers({ user }: { user: any }) {
                          <SimpleTooltip content="System Controls" side="left">
                             <DropdownMenuTrigger
                               render={
-                                <div className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-300 hover:text-[#4f46e5] hover:bg-white hover:shadow-sm transition-all cursor-pointer outline-none active:scale-90">
+                                <div className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-300 hover:text-blue-600 hover:bg-white hover:shadow-sm transition-all cursor-pointer outline-none active:scale-90">
                                   <MoreHorizontal size={18} />
                                 </div>
                               }
@@ -1114,7 +973,7 @@ export default function Teachers({ user }: { user: any }) {
                               </div>
                             </DropdownMenuItem>
                             <DropdownMenuItem className="gap-4 py-3 px-4 rounded-xl cursor-pointer focus:bg-blue-50 group/photo" onClick={() => triggerPhotoUpload(teacher.id)}>
-                              <div className="p-2.5 bg-blue-50 text-[#4f46e5] rounded-xl group-hover/photo:bg-[#4f46e5] group-hover/photo:text-white transition-colors">
+                              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl group-hover/photo:bg-blue-600 group-hover/photo:text-white transition-colors">
                                 <Plus size={16} />
                               </div>
                               <div className="flex flex-col">
@@ -1168,7 +1027,7 @@ export default function Teachers({ user }: { user: any }) {
                   <Button 
                     variant="outline" 
                     size="icon" 
-                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-[#4f46e5] disabled:opacity-30"
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
                     onClick={() => setPage(1)}
                     disabled={page === 1}
                   >
@@ -1177,7 +1036,7 @@ export default function Teachers({ user }: { user: any }) {
                   <Button 
                     variant="outline" 
                     size="icon" 
-                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-[#4f46e5] disabled:opacity-30"
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
                     onClick={() => setPage(prev => Math.max(1, prev - 1))}
                     disabled={page === 1}
                   >
@@ -1191,7 +1050,7 @@ export default function Teachers({ user }: { user: any }) {
                   <Button 
                     variant="outline" 
                     size="icon" 
-                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-[#4f46e5] disabled:opacity-30"
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
                     onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={page >= totalPages}
                   >
@@ -1200,7 +1059,7 @@ export default function Teachers({ user }: { user: any }) {
                   <Button 
                     variant="outline" 
                     size="icon" 
-                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-[#4f46e5] disabled:opacity-30"
+                    className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
                     onClick={() => setPage(totalPages)}
                     disabled={page >= totalPages}
                   >

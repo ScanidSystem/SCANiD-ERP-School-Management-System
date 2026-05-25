@@ -1,14 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Plus Jakarta Sans", "Inter", "Geist Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Outfit", sans-serif;
+  --font-sans: "Inter", "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
   --color-primary: #0f172a;
   --color-primary-foreground: #f8fafc;
   
-  --color-accent: #6366f1;
+  --color-accent: #3b82f6;
   --color-accent-foreground: #ffffff;
   
   --radius-lg: 1rem;
@@ -18,7 +17,7 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 antialiased selection:bg-indigo-100 selection:text-indigo-900;
+    @apply bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
   }
 }
@@ -47,22 +46,6 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-  
-  .floating-label-group {
-    @apply relative mb-8;
-  }
-  
-  .floating-label {
-    @apply absolute -top-2.5 left-5 bg-white px-2 text-[11px] font-black uppercase tracking-[0.15em] transition-all duration-200 z-10 select-none;
-  }
-  
-  .floating-input-container {
-    @apply flex items-center border-[2.5px] border-slate-200/80 rounded-2xl h-16 px-5 transition-all duration-300 focus-within:border-blue-700 focus-within:ring-4 focus-within:ring-blue-100/50 bg-white;
-  }
-  
-  .floating-input-icon {
-    @apply mr-4 transition-colors duration-300;
-  }
 
   ::-webkit-scrollbar {
     width: 5px;
@@ -83,8 +66,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: 'Outfit', sans-serif;
-    --font-sans: 'Plus Jakarta Sans', sans-serif;
+    --font-heading: var(--font-sans);
+    --font-sans: 'Geist Variable', sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
