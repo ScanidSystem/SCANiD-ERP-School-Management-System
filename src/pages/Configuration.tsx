@@ -1059,7 +1059,17 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                       }}
                     >
                       <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white font-bold px-4">
-                        <SelectValue placeholder="Select Role" />
+                        {/* Explicitly show role name to avoid ID or key display in trigger, keeping in sync with standard dropdowns */}
+                        <SelectValue placeholder="Select Role">
+                          {formData.role ? (
+                            dependencies.roles?.find((r: any) => r.name.toLowerCase().replace(/\s+/g, '') === formData.role)?.name || 
+                            (formData.role === "superadmin" ? "SuperAdmin" :
+                             formData.role === "admin" ? "Admin" :
+                             formData.role === "teacher" ? "Teacher" :
+                             formData.role === "student" ? "Student" :
+                             formData.role === "parent" ? "Parent" : formData.role)
+                          ) : undefined}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-slate-200 shadow-xl max-h-60 overflow-y-auto">
                         {Array.isArray(dependencies.roles) && dependencies.roles.length > 0 ? (
@@ -1091,7 +1101,10 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                       onValueChange={(v) => setFormData({...formData, schoolId: v})}
                     >
                       <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white font-bold px-4">
-                        <SelectValue placeholder="Global / Unassigned" />
+                        {/* Explicitly show school name to avoid ID display in trigger, keeping in sync with standard dropdowns */}
+                        <SelectValue placeholder="Global / Unassigned">
+                          {formData.schoolId ? (dependencies.schools?.find((s: any) => s.id.toString() === formData.schoolId)?.name || "Global / Unassigned") : "Global / Unassigned"}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-slate-200 shadow-xl max-h-60 overflow-y-auto">
                         <SelectItem value="" className="font-semibold py-2 text-slate-400 italic">Global / Unassigned</SelectItem>
@@ -1224,7 +1237,10 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                       }}
                     >
                       <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white font-bold px-4">
-                        <SelectValue placeholder="Select State" />
+                        {/* Explicitly show state name to avoid ID display in trigger, keeping in sync with standard dropdowns */}
+                        <SelectValue placeholder="Select State">
+                          {formData.stateId ? (dependencies.states?.find((s: any) => s.id.toString() === formData.stateId)?.name || "Select State") : "Select State"}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-slate-200 shadow-xl max-h-48 overflow-y-auto">
                         <SelectItem value="" className="font-semibold py-2 text-slate-400 italic">Select State</SelectItem>
@@ -1245,7 +1261,10 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                       disabled={!formData.stateId}
                     >
                       <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white font-bold px-4 disabled:opacity-50">
-                        <SelectValue placeholder="Select City" />
+                        {/* Explicitly show city name to avoid ID display in trigger, keeping in sync with standard dropdowns */}
+                        <SelectValue placeholder="Select City">
+                          {formData.cityId ? (dependencies.cities?.find((ct: any) => ct.id.toString() === formData.cityId)?.name || "Select City") : "Select City"}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-slate-200 shadow-xl max-h-48 overflow-y-auto">
                         <SelectItem value="" className="font-semibold py-2 text-slate-400 italic">Select City</SelectItem>
