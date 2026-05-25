@@ -120,6 +120,17 @@ This document records the exact changes, the root causes identified, and the fix
   2. **Audit Column Replication & Preservation**: The relocation script creates temporary holding columns, preserves all existing audit records, drops associated auto-generated constraint keys safely, drops original middle-aligned columns, appends the physical columns back at the absolute end, transfers back the saved audit states, reinstates default constraint rules, and prunes temporary fields cleanly.
   3. **Database & API Alignment**: Verified that all stored procedures utilizing dynamic SQL mapping, ADO.NET query definitions, and Entity Framework C# models execute consistently across the entire database layout.
 
+---
+
+## 12. Issue: Relocating Auditing Columns to the Absolute End of the Schools Table and Models
+- **Root Cause**: Similar to the Students table, adding legacy school information fields to `Schools` on live/running databases appended them after the audit columns (`IsActive`, `IsDeleted`, `CreatedBy`, `CreatedOn`, `ModifiedBy`, `ModifiedOn`). This resulted in audit columns residing in the middle of the table, causing structural discrepancies between model files and table definitions.
+- **Remediation**:
+  1. **Audit Column Realignment Query**: Created `/realign_schools_columns.sql` to carry out table realignment safely in live and production environments.
+  2. **Safe Constraint Handling**: The migration drops the foreign key relationships (`FK_Users_Schools_SchoolId`, `FK_Teachers_Schools_SchoolId`, `FK_Students_Schools_SchoolId`) to enable table renaming safely without orphan references.
+  3. **Data Preservation & Re-Alignment**: Renames the old `Schools` table, re-creates a fresh `Schools` table with audit cols placed at the absolute end, enables identity insert to map over records while fully preserving primary key IDs, inserts all back, removes the temporary holding table, and re-establishes the foreign key constraints pointing to the new table structure.
+  4. **Entity Model Synchronization**: Confirmed that C# model mappings (EF Core) and database scripts maintain consistent schemas.
+
+
 
 
 
