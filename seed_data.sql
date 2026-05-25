@@ -95,6 +95,14 @@ IF NOT EXISTS (SELECT 1 FROM [dbo].[Categories] WHERE [Id] = 5) INSERT [dbo].[Ca
 SET IDENTITY_INSERT [dbo].[Categories] OFF;
 GO
 
+-- 1.8.1. SCHOOLSECTIONS
+SET IDENTITY_INSERT [dbo].[SchoolSections] ON;
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SchoolSections] WHERE [Id] = 1) INSERT [dbo].[SchoolSections] ([Id], [Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) VALUES (1, N'Primary', 1, 0, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SchoolSections] WHERE [Id] = 2) INSERT [dbo].[SchoolSections] ([Id], [Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) VALUES (2, N'Secondary', 1, 0, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SchoolSections] WHERE [Id] = 3) INSERT [dbo].[SchoolSections] ([Id], [Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) VALUES (3, N'Higher Secondary', 1, 0, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());
+SET IDENTITY_INSERT [dbo].[SchoolSections] OFF;
+GO
+
 -- 1.9. STATES
 SET IDENTITY_INSERT [dbo].[States] ON;
 IF NOT EXISTS (SELECT 1 FROM [dbo].[States] WHERE [Id] = 1) INSERT [dbo].[States] ([Id], [Name], [IsActive], [IsDeleted], [CreatedBy], [CreatedOn], [ModifiedBy], [ModifiedOn]) VALUES (1, N'MAHARASHTRA', 1, 0, N'SYSTEM', GETUTCDATE(), N'SYSTEM', GETUTCDATE());

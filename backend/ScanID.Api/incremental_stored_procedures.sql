@@ -84,11 +84,15 @@ BEGIN
     SELECT s.*, 
            std.Name AS StandardName, 
            sec.Name AS SectionName, 
-           ay.Name AS AcademicYearName
+           ay.Name AS AcademicYearName,
+           c.Name AS CityName,
+           st.Name AS StateName
     FROM [dbo].[Students] s
     LEFT JOIN [dbo].[Standards] std ON s.StandardId = std.Id
     LEFT JOIN [dbo].[Sections] sec ON s.SectionId = sec.Id
     LEFT JOIN [dbo].[AcademicYears] ay ON s.AcademicYearId = ay.Id
+    LEFT JOIN [dbo].[Cities] c ON s.CityId = c.Id
+    LEFT JOIN [dbo].[States] st ON s.StateId = st.Id
     WHERE s.IsDeleted = 0
       AND (@SchoolId IS NULL OR s.SchoolId = @SchoolId)
       AND (@AcademicYearId IS NULL OR s.AcademicYearId = @AcademicYearId);
@@ -105,11 +109,15 @@ BEGIN
     SELECT s.*, 
            std.Name AS StandardName, 
            sec.Name AS SectionName, 
-           ay.Name AS AcademicYearName
+           ay.Name AS AcademicYearName,
+           c.Name AS CityName,
+           st.Name AS StateName
     FROM [dbo].[Students] s
     LEFT JOIN [dbo].[Standards] std ON s.StandardId = std.Id
     LEFT JOIN [dbo].[Sections] sec ON s.SectionId = sec.Id
     LEFT JOIN [dbo].[AcademicYears] ay ON s.AcademicYearId = ay.Id
+    LEFT JOIN [dbo].[Cities] c ON s.CityId = c.Id
+    LEFT JOIN [dbo].[States] st ON s.StateId = st.Id
     WHERE s.Id = @Id AND s.IsDeleted = 0;
 END;
 GO
@@ -177,25 +185,33 @@ CREATE PROCEDURE dbo.sp_ManageStudent
     @SectionId INT = NULL,
     @AcademicYearId INT = NULL,
     @RollNumber INT = NULL,
-    @GRNO NVARCHAR(100) = NULL,
-    @GENDER NVARCHAR(50) = NULL,
-    @DOB NVARCHAR(50) = NULL,
+    @GrNo NVARCHAR(100) = NULL,
+    @Gender NVARCHAR(50) = NULL,
+    @DateOfBirth NVARCHAR(50) = NULL,
     @CategoryId INT = NULL,
     @ReligionId INT = NULL,
     @CasteId INT = NULL,
     @Status NVARCHAR(50) = NULL,
-    @MOBILE NVARCHAR(50) = NULL,
-    @ADDRESS NVARCHAR(500) = NULL,
-    @MOTHERNAME NVARCHAR(100) = NULL,
-    @aadharcard NVARCHAR(100) = NULL,
-    @RFID NVARCHAR(100) = NULL,
+    @FatherContactNo NVARCHAR(200) = NULL,
+    @Address NVARCHAR(500) = NULL,
+    @MotherName NVARCHAR(100) = NULL,
+    @AadharCard NVARCHAR(100) = NULL,
+    @Rfid NVARCHAR(100) = NULL,
     @ShiftId INT = NULL,
     @BloodGroupId INT = NULL,
     @HouseId INT = NULL,
-    @sms NVARCHAR(10) = NULL,
-    @uniformid NVARCHAR(500) = NULL,
-    @contact2 NVARCHAR(255) = NULL,
-    @ProfilePhotoPath NVARCHAR(255) = NULL
+    @Sms BIT = 0,
+    @UniformId NVARCHAR(500) = NULL,
+    @MotherContactNo NVARCHAR(200) = NULL,
+    @ProfilePhotoPath NVARCHAR(255) = NULL,
+    @SchoolSectionId INT = NULL,
+    @AdmissionDate NVARCHAR(200) = NULL,
+    @Email NVARCHAR(255) = NULL,
+    @CityId INT = NULL,
+    @StateId INT = NULL,
+    @IsStateBoard BIT = 0,
+    @DigitalUniform BIT = 0,
+    @DigitalNotebook BIT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -213,14 +229,14 @@ BEGIN
 
             INSERT INTO [dbo].[Students] (
                 RegistrationNumber, Name, SchoolId, StandardId, SectionId, AcademicYearId, RollNumber, 
-                GRNO, GENDER, DOB, CategoryId, ReligionId, CasteId, Status, MOBILE, ADDRESS, 
-                MOTHERNAME, aadharcard, RFID, ShiftId, BloodGroupId, HouseId, sms, uniformid,
-                contact2, ProfilePhotoPath, IsActive, IsDeleted, CreatedOn, ModifiedOn
+                GrNo, Gender, DateOfBirth, CategoryId, ReligionId, CasteId, Status, FatherContactNo, Address, 
+                MotherName, AadharCard, Rfid, ShiftId, BloodGroupId, HouseId, Sms, UniformId,
+                MotherContactNo, ProfilePhotoPath, SchoolSectionId, AdmissionDate, Email, CityId, StateId, IsStateBoard, DigitalUniform, DigitalNotebook, IsActive, IsDeleted, CreatedOn, ModifiedOn
             ) VALUES (
                 @RegistrationNumber, @Name, @SchoolId, @StandardId, @SectionId, @AcademicYearId, @RollNumber,
-                @GRNO, @GENDER, @DOB, @CategoryId, @ReligionId, @CasteId, @Status, @MOBILE, @ADDRESS,
-                @MOTHERNAME, @aadharcard, @RFID, @ShiftId, @BloodGroupId, @HouseId, @sms, @uniformid,
-                @contact2, @ProfilePhotoPath, 1, 0, GETUTCDATE(), GETUTCDATE()
+                @GrNo, @Gender, @DateOfBirth, @CategoryId, @ReligionId, @CasteId, @Status, @FatherContactNo, @Address,
+                @MotherName, @AadharCard, @Rfid, @ShiftId, @BloodGroupId, @HouseId, @Sms, @UniformId,
+                @MotherContactNo, @ProfilePhotoPath, @SchoolSectionId, @AdmissionDate, @Email, @CityId, @StateId, @IsStateBoard, @DigitalUniform, @DigitalNotebook, 1, 0, GETUTCDATE(), GETUTCDATE()
             );
             SELECT SCOPE_IDENTITY();
         END
@@ -234,25 +250,33 @@ BEGIN
                 SectionId = ISNULL(@SectionId, SectionId),
                 AcademicYearId = ISNULL(@AcademicYearId, AcademicYearId),
                 RollNumber = ISNULL(@RollNumber, RollNumber),
-                GRNO = ISNULL(@GRNO, GRNO),
-                GENDER = ISNULL(@GENDER, GENDER),
-                DOB = ISNULL(@DOB, DOB),
+                GrNo = ISNULL(@GrNo, GrNo),
+                Gender = ISNULL(@Gender, Gender),
+                DateOfBirth = ISNULL(@DateOfBirth, DateOfBirth),
                 CategoryId = ISNULL(@CategoryId, CategoryId),
                 ReligionId = ISNULL(@ReligionId, ReligionId),
                 CasteId = ISNULL(@CasteId, CasteId),
                 Status = ISNULL(@Status, Status),
-                MOBILE = ISNULL(@MOBILE, MOBILE),
-                ADDRESS = ISNULL(@ADDRESS, ADDRESS),
-                MOTHERNAME = ISNULL(@MOTHERNAME, MOTHERNAME),
-                aadharcard = ISNULL(@aadharcard, aadharcard),
-                RFID = ISNULL(@RFID, RFID),
+                FatherContactNo = ISNULL(@FatherContactNo, FatherContactNo),
+                Address = ISNULL(@Address, Address),
+                MotherName = ISNULL(@MotherName, MotherName),
+                AadharCard = ISNULL(@AadharCard, AadharCard),
+                Rfid = ISNULL(@Rfid, Rfid),
                 ShiftId = ISNULL(@ShiftId, ShiftId),
                 BloodGroupId = ISNULL(@BloodGroupId, BloodGroupId),
                 HouseId = ISNULL(@HouseId, HouseId),
-                sms = ISNULL(@sms, sms),
-                uniformid = ISNULL(@uniformid, uniformid),
-                contact2 = ISNULL(@contact2, contact2),
+                Sms = ISNULL(@Sms, Sms),
+                UniformId = ISNULL(@UniformId, UniformId),
+                MotherContactNo = ISNULL(@MotherContactNo, MotherContactNo),
                 ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
+                SchoolSectionId = ISNULL(@SchoolSectionId, SchoolSectionId),
+                AdmissionDate = ISNULL(@AdmissionDate, AdmissionDate),
+                Email = ISNULL(@Email, Email),
+                CityId = ISNULL(@CityId, CityId),
+                StateId = ISNULL(@StateId, StateId),
+                IsStateBoard = ISNULL(@IsStateBoard, IsStateBoard),
+                DigitalUniform = ISNULL(@DigitalUniform, DigitalUniform),
+                DigitalNotebook = ISNULL(@DigitalNotebook, DigitalNotebook),
                 ModifiedOn = GETUTCDATE()
             WHERE Id = @Id;
         END
@@ -678,7 +702,13 @@ CREATE PROCEDURE dbo.sp_GetSchools
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT * FROM [dbo].[Schools] WHERE IsDeleted = 0;
+    SELECT s.*, 
+           c.Name AS CityName, 
+           st.Name AS StateName
+    FROM [dbo].[Schools] s
+    LEFT JOIN [dbo].[Cities] c ON s.CityId = c.Id
+    LEFT JOIN [dbo].[States] st ON s.StateId = st.Id
+    WHERE s.IsDeleted = 0;
 END;
 GO
 
@@ -692,16 +722,39 @@ CREATE PROCEDURE dbo.sp_ManageSchool
     @Address NVARCHAR(255) = NULL,
     @ContactNumber NVARCHAR(50) = NULL,
     @Email NVARCHAR(100) = NULL,
-    @CreatedBy NVARCHAR(100) = NULL
+    @CreatedBy NVARCHAR(100) = NULL,
+    @ShortName NVARCHAR(100) = NULL,
+    @CityId INT = NULL,
+    @StateId INT = NULL,
+    @Pincode NVARCHAR(100) = NULL,
+    @SMSLimit INT = NULL,
+    @TotalSMSSent INT = NULL,
+    @SMSBalance INT = NULL,
+    @EnableSMS BIT = NULL,
+    @EnablePresenteeSMS BIT = NULL,
+    @AutomaticBirthdaySMS BIT = NULL,
+    @EnableWhatsapp BIT = NULL,
+    @WebsiteUrl NVARCHAR(500) = NULL,
+    @SMSSenderID NVARCHAR(100) = NULL,
+    @BusNumbers NVARCHAR(MAX) = NULL,
+    @SCANiDContact NVARCHAR(100) = NULL,
+    @SCANiDEmail NVARCHAR(255) = NULL,
+    @InChargeContact NVARCHAR(100) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
     IF @Action = 'INSERT'
     BEGIN
         INSERT INTO [dbo].[Schools] (
-            Name, ProfilePhotoPath, Address, Phone, Email, IsActive, IsDeleted, CreatedOn, ModifiedOn, CreatedBy
+            Name, ProfilePhotoPath, Address, Phone, Email, IsActive, IsDeleted, CreatedOn, ModifiedOn, CreatedBy,
+            ShortName, CityId, StateId, Pincode, SMSLimit, TotalSMSSent, SMSBalance, EnableSMS,
+            EnablePresenteeSMS, AutomaticBirthdaySMS, EnableWhatsapp, WebsiteUrl, SMSSenderID, BusNumbers,
+            SCANiDContact, SCANiDEmail, InChargeContact
         ) VALUES (
-            @Name, @LogoPath, @Address, @ContactNumber, @Email, 1, 0, GETUTCDATE(), GETUTCDATE(), @CreatedBy
+            @Name, @LogoPath, @Address, @ContactNumber, @Email, 1, 0, GETUTCDATE(), GETUTCDATE(), @CreatedBy,
+            @ShortName, @CityId, @StateId, @Pincode, @SMSLimit, @TotalSMSSent, @SMSBalance, @EnableSMS,
+            @EnablePresenteeSMS, @AutomaticBirthdaySMS, @EnableWhatsapp, @WebsiteUrl, @SMSSenderID, @BusNumbers,
+            @SCANiDContact, @SCANiDEmail, @InChargeContact
         );
         SELECT SCOPE_IDENTITY();
     END
@@ -713,6 +766,23 @@ BEGIN
             Address = ISNULL(@Address, Address),
             Phone = ISNULL(@ContactNumber, Phone),
             Email = ISNULL(@Email, Email),
+            ShortName = ISNULL(@ShortName, ShortName),
+            CityId = ISNULL(@CityId, CityId),
+            StateId = ISNULL(@StateId, StateId),
+            Pincode = ISNULL(@Pincode, Pincode),
+            SMSLimit = ISNULL(@SMSLimit, SMSLimit),
+            TotalSMSSent = ISNULL(@TotalSMSSent, TotalSMSSent),
+            SMSBalance = ISNULL(@SMSBalance, SMSBalance),
+            EnableSMS = ISNULL(@EnableSMS, EnableSMS),
+            EnablePresenteeSMS = ISNULL(@EnablePresenteeSMS, EnablePresenteeSMS),
+            AutomaticBirthdaySMS = ISNULL(@AutomaticBirthdaySMS, AutomaticBirthdaySMS),
+            EnableWhatsapp = ISNULL(@EnableWhatsapp, EnableWhatsapp),
+            WebsiteUrl = ISNULL(@WebsiteUrl, WebsiteUrl),
+            SMSSenderID = ISNULL(@SMSSenderID, SMSSenderID),
+            BusNumbers = ISNULL(@BusNumbers, BusNumbers),
+            SCANiDContact = ISNULL(@SCANiDContact, SCANiDContact),
+            SCANiDEmail = ISNULL(@SCANiDEmail, SCANiDEmail),
+            InChargeContact = ISNULL(@InChargeContact, InChargeContact),
             ModifiedOn = GETUTCDATE()
         WHERE Id = @Id;
     END

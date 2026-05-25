@@ -156,6 +156,22 @@ CREATE TABLE [dbo].[Categories](
 END
 GO
 
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SchoolSections]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [dbo].[SchoolSections](
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Name] [nvarchar](100) NOT NULL,
+    [IsActive] [bit] NOT NULL DEFAULT (1),
+    [IsDeleted] [bit] NOT NULL DEFAULT (0),
+    [CreatedBy] [nvarchar](max) NULL,
+    [CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+    [ModifiedBy] [nvarchar](max) NULL,
+    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+ CONSTRAINT [PK_SchoolSections] PRIMARY KEY CLUSTERED ([Id] ASC)
+)
+END
+GO
+
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[States]') AND type in (N'U'))
 BEGIN
 CREATE TABLE [dbo].[States](
@@ -287,6 +303,25 @@ CREATE TABLE [dbo].[Schools](
 	[TotalStudents] [int] NOT NULL,
 	[ProfilePhotoPath] [nvarchar](max) NULL,
 	[Status] [nvarchar](max) NOT NULL DEFAULT (N'Active'),
+
+	-- --- Legacy Schools Details ---
+	[ShortName] [nvarchar](100) NULL,
+	[CityId] [int] NULL,
+	[StateId] [int] NULL,
+	[Pincode] [nvarchar](100) NULL,
+	[SMSLimit] [int] NULL,
+	[TotalSMSSent] [int] NULL,
+	[SMSBalance] [int] NULL,
+	[EnableSMS] [bit] NULL,
+	[EnablePresenteeSMS] [bit] NULL,
+	[AutomaticBirthdaySMS] [bit] NULL,
+	[EnableWhatsapp] [bit] NULL,
+	[WebsiteUrl] [nvarchar](500) NULL,
+	[SMSSenderID] [nvarchar](100) NULL,
+	[BusNumbers] [nvarchar](max) NULL,
+	[SCANiDContact] [nvarchar](100) NULL,
+	[SCANiDEmail] [nvarchar](255) NULL,
+	[InChargeContact] [nvarchar](100) NULL,
     [IsActive] [bit] NOT NULL DEFAULT (1),
     [IsDeleted] [bit] NOT NULL DEFAULT (0),
     [CreatedBy] [nvarchar](max) NULL,
@@ -356,28 +391,27 @@ IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[St
 BEGIN
 CREATE TABLE [dbo].[Students](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[RegistrationNumber] [nvarchar](max) NOT NULL,
-	[Name] [nvarchar](max) NOT NULL,
+	[RegistrationNumber] [nvarchar](100) NOT NULL,
+	[Name] [nvarchar](255) NOT NULL,
 	[SchoolId] [int] NOT NULL,
-	[Status] [nvarchar](max) NOT NULL DEFAULT (N'Active'),
+	[Status] [nvarchar](50) NOT NULL DEFAULT (N'Active'),
 	[RollNumber] [int] NOT NULL,
-	
-	[FNAME] [nvarchar](200) NULL,
-	[MNAME] [nvarchar](200) NULL,
-	[LNAME] [nvarchar](200) NULL,
-	[GRNO] [nvarchar](100) NULL,
-	[GENDER] [nvarchar](10) NULL,
-	[DOB] [nvarchar](200) NULL,
-	[ADDRESS] [nvarchar](500) NULL,
-	[MOTHERNAME] [nvarchar](200) NULL,
-	[MOBILE] [nvarchar](200) NULL,
-	[ProfilePhotoPath] [nvarchar](500) NULL,
-	[sms] [nvarchar](10) NULL,
-	[contact2] [nvarchar](255) NULL,
-	[aadharcard] [nvarchar](100) NULL,
-	[uniformid] [nvarchar](500) NULL,
-	[RFID] [nvarchar](100) NULL,
-
+	[FirstName] [nvarchar](200) NULL,
+	[MiddleName] [nvarchar](200) NULL,
+	[LastName] [nvarchar](200) NULL,
+	[GrNo] [nvarchar](100) NULL,
+	[Gender] [nvarchar](10) NULL,
+	[DateOfBirth] [nvarchar](200) NULL,
+	[Address] [nvarchar](500) NULL,
+	[MotherName] [nvarchar](200) NULL,
+	[FatherContactNo] [nvarchar](200) NULL,
+	[MotherContactNo] [nvarchar](200) NULL,
+	[AadharCard] [nvarchar](100) NULL,
+	[UniformId] [nvarchar](500) NULL,
+	[Rfid] [nvarchar](100) NULL,
+	[SchoolSectionId] [int] NULL,
+	[AdmissionDate] [nvarchar](200) NULL,
+	[Email] [nvarchar](255) NULL,
 	[StandardId] [int] NULL,
 	[SectionId] [int] NULL,
 	[AcademicYearId] [int] NULL,
@@ -391,13 +425,17 @@ CREATE TABLE [dbo].[Students](
 	[StateId] [int] NULL,
 	[ShiftId] [int] NULL,
 	[CategoryId] [int] NULL,
-
-    [IsActive] [bit] NOT NULL DEFAULT (1),
-    [IsDeleted] [bit] NOT NULL DEFAULT (0),
-    [CreatedBy] [nvarchar](max) NULL,
+	[Sms] [bit] NOT NULL DEFAULT (0),
+	[IsStateBoard] [bit] NOT NULL DEFAULT (0),
+	[ProfilePhotoPath] [nvarchar](500) NULL,
+	[DigitalUniform] [bit] NOT NULL DEFAULT (0),
+	[DigitalNotebook] [bit] NOT NULL DEFAULT (0),
+	[IsActive] [bit] NOT NULL DEFAULT (1),
+	[IsDeleted] [bit] NOT NULL DEFAULT (0),
+	[CreatedBy] [nvarchar](max) NULL,
 	[CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
-    [ModifiedBy] [nvarchar](max) NULL,
-    [ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+	[ModifiedBy] [nvarchar](max) NULL,
+	[ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
  CONSTRAINT [PK_Students] PRIMARY KEY CLUSTERED ([Id] ASC)
 )
 END
@@ -444,6 +482,9 @@ BEGIN
 
 	IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_Categories')
         ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_Categories] FOREIGN KEY([CategoryId]) REFERENCES [dbo].[Categories] ([Id]);
+
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_SchoolSections')
+        ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_SchoolSections] FOREIGN KEY([SchoolSectionId]) REFERENCES [dbo].[SchoolSections] ([Id]);
 END
 GO
 
@@ -801,11 +842,15 @@ BEGIN
     SELECT s.*, 
            std.Name AS StandardName, 
            sec.Name AS SectionName, 
-           ay.Name AS AcademicYearName
+           ay.Name AS AcademicYearName,
+           c.Name AS CityName,
+           st.Name AS StateName
     FROM [dbo].[Students] s
     LEFT JOIN [dbo].[Standards] std ON s.StandardId = std.Id
     LEFT JOIN [dbo].[Sections] sec ON s.SectionId = sec.Id
     LEFT JOIN [dbo].[AcademicYears] ay ON s.AcademicYearId = ay.Id
+    LEFT JOIN [dbo].[Cities] c ON s.CityId = c.Id
+    LEFT JOIN [dbo].[States] st ON s.StateId = st.Id
     WHERE s.IsDeleted = 0
       AND (@SchoolId IS NULL OR s.SchoolId = @SchoolId)
       AND (@AcademicYearId IS NULL OR s.AcademicYearId = @AcademicYearId);
@@ -822,11 +867,15 @@ BEGIN
     SELECT s.*, 
            std.Name AS StandardName, 
            sec.Name AS SectionName, 
-           ay.Name AS AcademicYearName
+           ay.Name AS AcademicYearName,
+           c.Name AS CityName,
+           st.Name AS StateName
     FROM [dbo].[Students] s
     LEFT JOIN [dbo].[Standards] std ON s.StandardId = std.Id
     LEFT JOIN [dbo].[Sections] sec ON s.SectionId = sec.Id
     LEFT JOIN [dbo].[AcademicYears] ay ON s.AcademicYearId = ay.Id
+    LEFT JOIN [dbo].[Cities] c ON s.CityId = c.Id
+    LEFT JOIN [dbo].[States] st ON s.StateId = st.Id
     WHERE s.Id = @Id AND s.IsDeleted = 0;
 END;
 GO
@@ -894,29 +943,37 @@ CREATE PROCEDURE dbo.sp_ManageStudent
     @SectionId INT = NULL,
     @AcademicYearId INT = NULL,
     @RollNumber INT = NULL,
-    @GRNO NVARCHAR(100) = NULL,
-    @GENDER NVARCHAR(50) = NULL,
-    @DOB NVARCHAR(50) = NULL,
+    @GrNo NVARCHAR(100) = NULL,
+    @Gender NVARCHAR(50) = NULL,
+    @DateOfBirth NVARCHAR(50) = NULL,
     @CategoryId INT = NULL,
     @ReligionId INT = NULL,
     @CasteId INT = NULL,
     @Status NVARCHAR(50) = NULL,
-    @MOBILE NVARCHAR(50) = NULL,
-    @ADDRESS NVARCHAR(500) = NULL,
-    @MOTHERNAME NVARCHAR(100) = NULL,
-    @aadharcard NVARCHAR(100) = NULL,
-    @RFID NVARCHAR(100) = NULL,
+    @FatherContactNo NVARCHAR(200) = NULL,
+    @Address NVARCHAR(500) = NULL,
+    @MotherName NVARCHAR(100) = NULL,
+    @AadharCard NVARCHAR(100) = NULL,
+    @Rfid NVARCHAR(100) = NULL,
     @ShiftId INT = NULL,
     @BloodGroupId INT = NULL,
     @HouseId INT = NULL,
-    @sms NVARCHAR(10) = NULL,
-    @uniformid NVARCHAR(500) = NULL,
-    @contact2 NVARCHAR(255) = NULL,
-    @ProfilePhotoPath NVARCHAR(255) = NULL
+    @Sms BIT = 0,
+    @UniformId NVARCHAR(500) = NULL,
+    @MotherContactNo NVARCHAR(200) = NULL,
+    @ProfilePhotoPath NVARCHAR(255) = NULL,
+    @SchoolSectionId INT = NULL,
+    @AdmissionDate NVARCHAR(200) = NULL,
+    @Email NVARCHAR(255) = NULL,
+    @CityId INT = NULL,
+    @StateId INT = NULL,
+    @IsStateBoard BIT = 0,
+    @DigitalUniform BIT = 0,
+    @DigitalNotebook BIT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
-    SET XACT_ABORT ON; -- Ensures instant rollback on any fatal SQL runtime errors
+    SET XACT_ABORT ON;
 
     BEGIN TRY
         BEGIN TRANSACTION;
@@ -930,14 +987,14 @@ BEGIN
 
             INSERT INTO [dbo].[Students] (
                 RegistrationNumber, Name, SchoolId, StandardId, SectionId, AcademicYearId, RollNumber, 
-                GRNO, GENDER, DOB, CategoryId, ReligionId, CasteId, Status, MOBILE, ADDRESS, 
-                MOTHERNAME, aadharcard, RFID, ShiftId, BloodGroupId, HouseId, sms, uniformid,
-                contact2, ProfilePhotoPath, IsActive, IsDeleted, CreatedOn, ModifiedOn
+                GrNo, Gender, DateOfBirth, CategoryId, ReligionId, CasteId, Status, FatherContactNo, Address, 
+                MotherName, AadharCard, Rfid, ShiftId, BloodGroupId, HouseId, Sms, UniformId,
+                MotherContactNo, ProfilePhotoPath, SchoolSectionId, AdmissionDate, Email, CityId, StateId, IsStateBoard, DigitalUniform, DigitalNotebook, IsActive, IsDeleted, CreatedOn, ModifiedOn
             ) VALUES (
                 @RegistrationNumber, @Name, @SchoolId, @StandardId, @SectionId, @AcademicYearId, @RollNumber,
-                @GRNO, @GENDER, @DOB, @CategoryId, @ReligionId, @CasteId, @Status, @MOBILE, @ADDRESS,
-                @MOTHERNAME, @aadharcard, @RFID, @ShiftId, @BloodGroupId, @HouseId, @sms, @uniformid,
-                @contact2, @ProfilePhotoPath, 1, 0, GETUTCDATE(), GETUTCDATE()
+                @GrNo, @Gender, @DateOfBirth, @CategoryId, @ReligionId, @CasteId, @Status, @FatherContactNo, @Address,
+                @MotherName, @AadharCard, @Rfid, @ShiftId, @BloodGroupId, @HouseId, @Sms, @UniformId,
+                @MotherContactNo, @ProfilePhotoPath, @SchoolSectionId, @AdmissionDate, @Email, @CityId, @StateId, @IsStateBoard, @DigitalUniform, @DigitalNotebook, 1, 0, GETUTCDATE(), GETUTCDATE()
             );
             SELECT SCOPE_IDENTITY();
         END
@@ -951,25 +1008,33 @@ BEGIN
                 SectionId = ISNULL(@SectionId, SectionId),
                 AcademicYearId = ISNULL(@AcademicYearId, AcademicYearId),
                 RollNumber = ISNULL(@RollNumber, RollNumber),
-                GRNO = ISNULL(@GRNO, GRNO),
-                GENDER = ISNULL(@GENDER, GENDER),
-                DOB = ISNULL(@DOB, DOB),
+                GrNo = ISNULL(@GrNo, GrNo),
+                Gender = ISNULL(@Gender, Gender),
+                DateOfBirth = ISNULL(@DateOfBirth, DateOfBirth),
                 CategoryId = ISNULL(@CategoryId, CategoryId),
                 ReligionId = ISNULL(@ReligionId, ReligionId),
                 CasteId = ISNULL(@CasteId, CasteId),
                 Status = ISNULL(@Status, Status),
-                MOBILE = ISNULL(@MOBILE, MOBILE),
-                ADDRESS = ISNULL(@ADDRESS, ADDRESS),
-                MOTHERNAME = ISNULL(@MOTHERNAME, MOTHERNAME),
-                aadharcard = ISNULL(@aadharcard, aadharcard),
-                RFID = ISNULL(@RFID, RFID),
+                FatherContactNo = ISNULL(@FatherContactNo, FatherContactNo),
+                Address = ISNULL(@Address, Address),
+                MotherName = ISNULL(@MotherName, MotherName),
+                AadharCard = ISNULL(@AadharCard, AadharCard),
+                Rfid = ISNULL(@Rfid, Rfid),
                 ShiftId = ISNULL(@ShiftId, ShiftId),
                 BloodGroupId = ISNULL(@BloodGroupId, BloodGroupId),
                 HouseId = ISNULL(@HouseId, HouseId),
-                sms = ISNULL(@sms, sms),
-                uniformid = ISNULL(@uniformid, uniformid),
-                contact2 = ISNULL(@contact2, contact2),
+                Sms = ISNULL(@Sms, Sms),
+                UniformId = ISNULL(@UniformId, UniformId),
+                MotherContactNo = ISNULL(@MotherContactNo, MotherContactNo),
                 ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
+                SchoolSectionId = ISNULL(@SchoolSectionId, SchoolSectionId),
+                AdmissionDate = ISNULL(@AdmissionDate, AdmissionDate),
+                Email = ISNULL(@Email, Email),
+                CityId = ISNULL(@CityId, CityId),
+                StateId = ISNULL(@StateId, StateId),
+                IsStateBoard = ISNULL(@IsStateBoard, IsStateBoard),
+                DigitalUniform = ISNULL(@DigitalUniform, DigitalUniform),
+                DigitalNotebook = ISNULL(@DigitalNotebook, DigitalNotebook),
                 ModifiedOn = GETUTCDATE()
             WHERE Id = @Id;
         END
@@ -1030,38 +1095,51 @@ CREATE PROCEDURE dbo.sp_ManageTeacher
 AS
 BEGIN
     SET NOCOUNT ON;
-    IF @Action = 'INSERT'
-    BEGIN
-        INSERT INTO [dbo].[Teachers] (
-            UserId, ContactNumber, Department, Qualification, Status, SchoolId, ProfilePhotoPath, IsActive, IsDeleted, CreatedOn, ModifiedOn
-        ) VALUES (
-            @UserId, @ContactNumber, @Department, @Qualification, @Status, @SchoolId, @ProfilePhotoPath, 1, 0, GETUTCDATE(), GETUTCDATE()
-        );
-        SELECT SCOPE_IDENTITY();
-    END
-    ELSE IF @Action = 'UPDATE'
-    BEGIN
-        UPDATE [dbo].[Teachers] SET
-            UserId = ISNULL(@UserId, UserId),
-            ContactNumber = ISNULL(@ContactNumber, ContactNumber),
-            Department = ISNULL(@Department, Department),
-            Qualification = ISNULL(@Qualification, Qualification),
-            Status = ISNULL(@Status, Status),
-            SchoolId = ISNULL(@SchoolId, SchoolId),
-            ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
-            ModifiedOn = GETUTCDATE()
-        WHERE Id = @Id;
-    END
-    ELSE IF @Action = 'DELETE'
-    BEGIN
-        UPDATE [dbo].[Teachers] SET IsDeleted = 1, IsActive = 0, ModifiedOn = GETUTCDATE() WHERE Id = @Id;
-        DECLARE @LinkedUserId INT;
-        SELECT @LinkedUserId = UserId FROM [dbo].[Teachers] WHERE Id = @Id;
-        IF @LinkedUserId IS NOT NULL
+    SET XACT_ABORT ON; -- Instantly rolls back on any fatal SQL runtime errors
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        IF @Action = 'INSERT'
         BEGIN
-            UPDATE [dbo].[Users] SET IsDeleted = 1, ModifiedOn = GETUTCDATE() WHERE Id = @LinkedUserId;
+            INSERT INTO [dbo].[Teachers] (
+                UserId, ContactNumber, Department, Qualification, Status, SchoolId, ProfilePhotoPath, IsActive, IsDeleted, CreatedOn, ModifiedOn
+            ) VALUES (
+                @UserId, @ContactNumber, @Department, @Qualification, @Status, @SchoolId, @ProfilePhotoPath, 1, 0, GETUTCDATE(), GETUTCDATE()
+            );
+            SELECT SCOPE_IDENTITY();
         END
-    END
+        ELSE IF @Action = 'UPDATE'
+        BEGIN
+            UPDATE [dbo].[Teachers] SET
+                UserId = ISNULL(@UserId, UserId),
+                ContactNumber = ISNULL(@ContactNumber, ContactNumber),
+                Department = ISNULL(@Department, Department),
+                Qualification = ISNULL(@Qualification, Qualification),
+                Status = ISNULL(@Status, Status),
+                SchoolId = ISNULL(@SchoolId, SchoolId),
+                ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
+                ModifiedOn = GETUTCDATE()
+            WHERE Id = @Id;
+        END
+        ELSE IF @Action = 'DELETE'
+        BEGIN
+            UPDATE [dbo].[Teachers] SET IsDeleted = 1, IsActive = 0, ModifiedOn = GETUTCDATE() WHERE Id = @Id;
+            DECLARE @LinkedUserId INT;
+            SELECT @LinkedUserId = UserId FROM [dbo].[Teachers] WHERE Id = @Id;
+            IF @LinkedUserId IS NOT NULL
+            BEGIN
+                UPDATE [dbo].[Users] SET IsDeleted = 1, ModifiedOn = GETUTCDATE() WHERE Id = @LinkedUserId;
+            END
+        END
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
 END;
 GO
 
@@ -1395,7 +1473,13 @@ CREATE PROCEDURE dbo.sp_GetSchools
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT * FROM [dbo].[Schools] WHERE IsDeleted = 0;
+    SELECT s.*, 
+           c.Name AS CityName, 
+           st.Name AS StateName
+    FROM [dbo].[Schools] s
+    LEFT JOIN [dbo].[Cities] c ON s.CityId = c.Id
+    LEFT JOIN [dbo].[States] st ON s.StateId = st.Id
+    WHERE s.IsDeleted = 0;
 END;
 GO
 
@@ -1409,16 +1493,39 @@ CREATE PROCEDURE dbo.sp_ManageSchool
     @Address NVARCHAR(255) = NULL,
     @ContactNumber NVARCHAR(50) = NULL,
     @Email NVARCHAR(100) = NULL,
-    @CreatedBy NVARCHAR(100) = NULL
+    @CreatedBy NVARCHAR(100) = NULL,
+    @ShortName NVARCHAR(100) = NULL,
+    @CityId INT = NULL,
+    @StateId INT = NULL,
+    @Pincode NVARCHAR(100) = NULL,
+    @SMSLimit INT = NULL,
+    @TotalSMSSent INT = NULL,
+    @SMSBalance INT = NULL,
+    @EnableSMS BIT = NULL,
+    @EnablePresenteeSMS BIT = NULL,
+    @AutomaticBirthdaySMS BIT = NULL,
+    @EnableWhatsapp BIT = NULL,
+    @WebsiteUrl NVARCHAR(500) = NULL,
+    @SMSSenderID NVARCHAR(100) = NULL,
+    @BusNumbers NVARCHAR(MAX) = NULL,
+    @SCANiDContact NVARCHAR(100) = NULL,
+    @SCANiDEmail NVARCHAR(255) = NULL,
+    @InChargeContact NVARCHAR(100) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
     IF @Action = 'INSERT'
     BEGIN
         INSERT INTO [dbo].[Schools] (
-            Name, ProfilePhotoPath, Address, Phone, Email, IsActive, IsDeleted, CreatedOn, ModifiedOn, CreatedBy
+            Name, ProfilePhotoPath, Address, Phone, Email, IsActive, IsDeleted, CreatedOn, ModifiedOn, CreatedBy,
+            ShortName, CityId, StateId, Pincode, SMSLimit, TotalSMSSent, SMSBalance, EnableSMS,
+            EnablePresenteeSMS, AutomaticBirthdaySMS, EnableWhatsapp, WebsiteUrl, SMSSenderID, BusNumbers,
+            SCANiDContact, SCANiDEmail, InChargeContact
         ) VALUES (
-            @Name, @LogoPath, @Address, @ContactNumber, @Email, 1, 0, GETUTCDATE(), GETUTCDATE(), @CreatedBy
+            @Name, @LogoPath, @Address, @ContactNumber, @Email, 1, 0, GETUTCDATE(), GETUTCDATE(), @CreatedBy,
+            @ShortName, @CityId, @StateId, @Pincode, @SMSLimit, @TotalSMSSent, @SMSBalance, @EnableSMS,
+            @EnablePresenteeSMS, @AutomaticBirthdaySMS, @EnableWhatsapp, @WebsiteUrl, @SMSSenderID, @BusNumbers,
+            @SCANiDContact, @SCANiDEmail, @InChargeContact
         );
         SELECT SCOPE_IDENTITY();
     END
@@ -1430,6 +1537,23 @@ BEGIN
             Address = ISNULL(@Address, Address),
             Phone = ISNULL(@ContactNumber, Phone),
             Email = ISNULL(@Email, Email),
+            ShortName = ISNULL(@ShortName, ShortName),
+            CityId = ISNULL(@CityId, CityId),
+            StateId = ISNULL(@StateId, StateId),
+            Pincode = ISNULL(@Pincode, Pincode),
+            SMSLimit = ISNULL(@SMSLimit, SMSLimit),
+            TotalSMSSent = ISNULL(@TotalSMSSent, TotalSMSSent),
+            SMSBalance = ISNULL(@SMSBalance, SMSBalance),
+            EnableSMS = ISNULL(@EnableSMS, EnableSMS),
+            EnablePresenteeSMS = ISNULL(@EnablePresenteeSMS, EnablePresenteeSMS),
+            AutomaticBirthdaySMS = ISNULL(@AutomaticBirthdaySMS, AutomaticBirthdaySMS),
+            EnableWhatsapp = ISNULL(@EnableWhatsapp, EnableWhatsapp),
+            WebsiteUrl = ISNULL(@WebsiteUrl, WebsiteUrl),
+            SMSSenderID = ISNULL(@SMSSenderID, SMSSenderID),
+            BusNumbers = ISNULL(@BusNumbers, BusNumbers),
+            SCANiDContact = ISNULL(@SCANiDContact, SCANiDContact),
+            SCANiDEmail = ISNULL(@SCANiDEmail, SCANiDEmail),
+            InChargeContact = ISNULL(@InChargeContact, InChargeContact),
             ModifiedOn = GETUTCDATE()
         WHERE Id = @Id;
     END

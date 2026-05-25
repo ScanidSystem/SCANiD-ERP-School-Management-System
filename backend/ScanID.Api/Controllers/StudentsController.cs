@@ -41,8 +41,8 @@ namespace ScanID.Api.Controllers
         /// <param name="sortBy">Field to sort by (e.g., name, grno, roll, standard, section).</param>
         /// <param name="sortOrder">Sort order direction: 'asc' or 'desc'.</param>
         /// <param name="search">Search query to match name, grno, standard, section, or roll number.</param>
-        /// <param name="standard">Specific standard/grade to filter by.</param>
-        /// <param name="section">Specific section/division to filter by.</param>
+        /// <param name="standardId">Specific standard/grade ID to filter by.</param>
+        /// <param name="sectionId">Specific section/division ID to filter by.</param>
         /// <returns>A paginated envelope containing student records matching the filters.</returns>
         [HttpGet]
         public async Task<ActionResult> GetStudents(
@@ -50,11 +50,11 @@ namespace ScanID.Api.Controllers
             [FromQuery] int? academicYearId,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
-            [FromQuery] string sortBy = null,
+            [FromQuery] string? sortBy = null,
             [FromQuery] string sortOrder = "asc",
-            [FromQuery] string search = null,
-            [FromQuery] string standard = null,
-            [FromQuery] string section = null)
+            [FromQuery] string? search = null,
+            [FromQuery] int? standardId = null,
+            [FromQuery] int? sectionId = null)
         {
             // Retrieve all raw students for the given school and academic year from backend SQL DB repository
             var studentsList = await _studentService.GetStudentsAsync(schoolId, academicYearId);
@@ -68,7 +68,7 @@ namespace ScanID.Api.Controllers
                 var searchLower = search.Trim().ToLower();
                 query = query.Where(s => 
                     (s.Name != null && s.Name.ToLower().Contains(searchLower)) ||
-                    (s.GRNO != null && s.GRNO.ToLower().Contains(searchLower)) ||
+                    (s.GrNo != null && s.GrNo.ToLower().Contains(searchLower)) ||
                     (s.RegistrationNumber != null && s.RegistrationNumber.ToLower().Contains(searchLower)) ||
                     s.RollNumber.ToString().Contains(searchLower) ||
                     (s.Standard != null && s.Standard.Name != null && s.Standard.Name.ToLower().Contains(searchLower)) ||
@@ -77,15 +77,15 @@ namespace ScanID.Api.Controllers
             }
 
             // 2. Apply academic Standard (Grade) filters
-            if (!string.IsNullOrWhiteSpace(standard) && !standard.Equals("all", StringComparison.OrdinalIgnoreCase))
+            if (standardId.HasValue)
             {
-                query = query.Where(s => s.Standard != null && s.Standard.Name != null && s.Standard.Name.Equals(standard, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(s => s.StandardId == standardId.Value);
             }
 
             // 3. Apply division Section filters
-            if (!string.IsNullOrWhiteSpace(section) && !section.Equals("all", StringComparison.OrdinalIgnoreCase))
+            if (sectionId.HasValue)
             {
-                query = query.Where(s => s.Section != null && s.Section.Name != null && s.Section.Name.Equals(section, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(s => s.SectionId == sectionId.Value);
             }
 
             // 4. Apply high-performance dynamic sorting
@@ -99,7 +99,7 @@ namespace ScanID.Api.Controllers
                         break;
                     case "grno":
                     case "registrationnumber":
-                        query = isDesc ? query.OrderByDescending(s => s.GRNO ?? s.RegistrationNumber) : query.OrderBy(s => s.GRNO ?? s.RegistrationNumber);
+                        query = isDesc ? query.OrderByDescending(s => s.GrNo ?? s.RegistrationNumber) : query.OrderBy(s => s.GrNo ?? s.RegistrationNumber);
                         break;
                     case "roll":
                     case "rollnumber":
@@ -185,38 +185,59 @@ namespace ScanID.Api.Controllers
             var students = await _studentService.GetStudentsForExportAsync(schoolId);
 
             var csv = new System.Text.StringBuilder();
-            // Cleaned Header
-            csv.AppendLine("RegistrationNumber,Name,Standard,Section,AcademicYear,RollNumber,GRNO,Gender,DOB,Category,Religion,Caste,Status,Mobile,Address,MotherName,AadharCard,RFID,Shift,BloodGroup,House,sms,uniformid,contact2,ProfilePhotoPath");
+            // Header matching database schema column layout, ending with IsActive, IsDeleted, CreatedBy, CreatedOn, ModifiedBy, ModifiedOn
+            csv.AppendLine("Id,RegistrationNumber,Name,SchoolId,Status,RollNumber,FirstName,MiddleName,LastName,GrNo,Gender,DateOfBirth,Address,MotherName,FatherContactNo,MotherContactNo,AadharCard,UniformId,Rfid,SchoolSection,AdmissionDate,Email,Standard,Section,AcademicYear,Caste,SubCaste,Religion,BloodGroup,House,AdmissionType,City,State,Shift,Category,Sms,IsStateBoard,ProfilePhotoPath,DigitalUniform,DigitalNotebook,IsActive,IsDeleted,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn");
 
             foreach (var s in students)
             {
                 var row = new List<string?>
                 {
+                    s.Id.ToString(),
                     s.RegistrationNumber,
                     s.Name,
+                    s.SchoolId.ToString(),
+                    s.Status,
+                    s.RollNumber.ToString(),
+                    s.FirstName,
+                    s.MiddleName,
+                    s.LastName,
+                    s.GrNo,
+                    s.Gender,
+                    s.DateOfBirth,
+                    s.Address != null ? "\"" + s.Address.Replace("\"", "\"\"") + "\"" : null,
+                    s.MotherName,
+                    s.FatherContactNo,
+                    s.MotherContactNo,
+                    s.AadharCard,
+                    s.UniformId,
+                    s.Rfid,
+                    s.SchoolSection?.Name,
+                    s.AdmissionDate,
+                    s.Email,
                     s.Standard?.Name,
                     s.Section?.Name,
                     s.AcademicYear?.Name,
-                    s.RollNumber.ToString(),
-                    s.GRNO,
-                    s.GENDER,
-                    s.DOB,
-                    s.Category?.Name,
-                    s.Religion?.Name,
                     s.Caste?.Name,
-                    s.Status,
-                    s.MOBILE,
-                    $"\"{s.ADDRESS?.Replace("\"", "\"\"")}\"",
-                    s.MOTHERNAME,
-                    s.aadharcard,
-                    s.RFID,
-                    s.Shift?.Name,
+                    s.SubCaste?.Name ?? "",
+                    s.Religion?.Name,
                     s.BloodGroup?.Name,
                     s.House?.Name,
-                    s.sms,
-                    s.uniformid,
-                    s.contact2,
-                    s.ProfilePhotoPath
+                    s.AdmissionType?.Name ?? "",
+                    s.City?.Name ?? "",
+                    s.State?.Name ?? "",
+                    s.Shift?.Name,
+                    s.Category?.Name,
+                    s.Sms.ToString().ToLower(),
+                    s.IsStateBoard.ToString().ToLower(),
+                    s.ProfilePhotoPath,
+                    s.DigitalUniform.ToString().ToLower(),
+                    s.DigitalNotebook.ToString().ToLower(),
+                    s.IsActive.ToString().ToLower(),
+                    s.IsDeleted.ToString().ToLower(),
+                    s.CreatedBy,
+                    s.CreatedOn.ToString("yyyy-MM-dd HH:mm:ss"),
+                    s.ModifiedBy,
+                    s.ModifiedOn.ToString("yyyy-MM-dd HH:mm:ss")
                 };
                 csv.AppendLine(string.Join(",", row));
             }
@@ -231,10 +252,10 @@ namespace ScanID.Api.Controllers
         public IActionResult GetSampleTemplate()
         {
             var csv = new System.Text.StringBuilder();
-            // Required Header reflecting all active table fields
-            csv.AppendLine("RegistrationNumber,Name,SchoolId,StandardId,SectionId,AcademicYearId,RollNumber,GRNO,Gender,DOB,CategoryId,ReligionId,CasteId,Mobile,Address,MotherName,AadharCard,RFID,ShiftId,BloodGroupId,HouseId,sms,uniformid,contact2,ProfilePhotoPath");
-            // Example data row
-            csv.AppendLine("REG001,John Doe,1,1,1,1,10,1234,Male,2015-05-15,1,1,1,9876543210,City Main Road,Jane Doe,123456789012,RF-123,1,1,1,SecondarySMS,UniformID,SecondContact,/photos/1/example.jpg");
+            // Required Header reflecting all active table fields in exact sequence ending with auditing columns
+            csv.AppendLine("RegistrationNumber,Name,SchoolId,Status,RollNumber,FirstName,MiddleName,LastName,GrNo,Gender,DateOfBirth,Address,MotherName,FatherContactNo,MotherContactNo,AadharCard,UniformId,Rfid,SchoolSectionName,AdmissionDate,Email,GradeName,SectionName,AcademicYear,CasteName,SubCasteName,ReligionName,BloodGroupName,HouseName,AdmissionType,CityName,StateName,ShiftName,CategoryName,Sms,IsStateBoard,ProfilePhotoPath,DigitalUniform,DigitalNotebook,IsActive,IsDeleted,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn");
+            // Example data row with Boolean sms/IsStateBoard mappings
+            csv.AppendLine("REG001,John Doe,1,Active,10,John,M.,Doe,1234,Male,2015-05-15,City Main Road,Jane Doe,9876543210,9876543211,123456789012,UniformID,RF-123,Primary,,john.doe@example.com,1,A,2024-25,General,,Hindu,B+,Red,Regular,,,Morning,General,true,false,/photos/1/example.jpg,true,false,true,false,Admin,2026-05-24 00:00:00,Admin,2026-05-24 00:00:00");
 
             return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "Student_Upload_Template.csv");
         }

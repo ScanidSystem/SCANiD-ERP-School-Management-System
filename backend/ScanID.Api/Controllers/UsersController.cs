@@ -54,6 +54,12 @@ namespace ScanID.Api.Controllers
                 return NotFound();
             }
 
+            // Fallback to preserve password hash if none supplied in client request
+            if (string.IsNullOrEmpty(user.PasswordHash))
+            {
+                user.PasswordHash = existingUser.PasswordHash;
+            }
+
             var success = await _userService.UpdateUserAsync(user);
             if (!success)
             {

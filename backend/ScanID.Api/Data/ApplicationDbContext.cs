@@ -49,6 +49,7 @@ namespace ScanID.Api.Data
         public DbSet<Designation> Designations { get; set; }
         public DbSet<Occupation> Occupations { get; set; }
         public DbSet<Role> Roles { get; set; }
+        public DbSet<SchoolSection> SchoolSections { get; set; }
 
         /// <summary>
         /// Configures the model, including global query filters for soft deletion.
@@ -94,6 +95,7 @@ namespace ScanID.Api.Data
             modelBuilder.Entity<Designation>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<Occupation>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<Role>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<SchoolSection>().HasQueryFilter(x => !x.IsDeleted);
         }
 
         /// <summary>

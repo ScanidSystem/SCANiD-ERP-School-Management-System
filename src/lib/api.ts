@@ -102,6 +102,11 @@ const mockFallbacks: Record<string, any> = {
   "/masters/categories": [
     { id: 1, name: "General", isActive: true },
   ],
+  "/masters/school-sections": [
+    { id: 1, name: "Primary", isActive: true },
+    { id: 2, name: "Secondary", isActive: true },
+    { id: 3, name: "Higher Secondary", isActive: true }
+  ],
   "/navigation": [
     { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roleIds: [1, 2, 3, 4, 5] },
     { id: 2, title: "Academic Operations", icon: "BookOpen", path: null, parentId: null, sortOrder: 2, roleIds: [1, 2, 3, 4, 5] },
@@ -138,6 +143,9 @@ const mockFallbacks: Record<string, any> = {
     { id: 454, title: "Sub-Caste Master", icon: "UserCircle", path: "/configuration/sub-castes", parentId: 45, sortOrder: 4, roleIds: [1, 2] },
     { id: 455, title: "School House", icon: "Home", path: "/configuration/houses", parentId: 45, sortOrder: 5, roleIds: [1, 2] },
     { id: 456, title: "Admission Types", icon: "UserCheck", path: "/configuration/admission-types", parentId: 45, sortOrder: 6, roleIds: [1, 2] },
+    { id: 457, title: "States Master", icon: "Map", path: "/configuration/states", parentId: 45, sortOrder: 7, roleIds: [1, 2] },
+    { id: 458, title: "Cities Master", icon: "MapPin", path: "/configuration/cities", parentId: 45, sortOrder: 8, roleIds: [1, 2] },
+    { id: 459, title: "School Sections", icon: "Layers", path: "/configuration/school-sections", parentId: 45, sortOrder: 9, roleIds: [1, 2] },
     
     { id: 23, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roleIds: [1] },
   ],
@@ -165,18 +173,7 @@ const mockFallbacks: Record<string, any> = {
   "/users": [
     { id: 1, fullName: "Super Admin", username: "admin", role: "superadmin" },
     { id: 2, fullName: "John Doe", username: "teacher1", role: "teacher" },
-  ],
-  "/auth/login": {
-    token: "demo-token",
-    user: {
-      id: 1,
-      fullName: "Super Admin",
-      username: "admin",
-      role: "superadmin",
-      schoolId: null,
-      academicYearId: 2
-    }
-  }
+  ]
 };
 
 // Add request interceptor to automatically inject Authorization header
@@ -400,6 +397,11 @@ export const apiService = {
   createReligion: (data: any) => api.post("/masters/religions", data),
   updateReligion: (id: number, data: any) => api.put(`/masters/religions/${id}`, data),
   deleteReligion: (id: number) => api.delete(`/masters/religions/${id}`),
+
+  getSchoolSections: (params?: PaginatedParams) => api.get("/masters/school-sections", { params }),
+  createSchoolSection: (data: any) => api.post("/masters/school-sections", data),
+  updateSchoolSection: (id: number, data: any) => api.put(`/masters/school-sections/${id}`, data),
+  deleteSchoolSection: (id: number) => api.delete(`/masters/school-sections/${id}`),
 
   getStates: (params?: PaginatedParams) => api.get("/masters/states", { params }),
   createState: (data: any) => api.post("/masters/states", data),

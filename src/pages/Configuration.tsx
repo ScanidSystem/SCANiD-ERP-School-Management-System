@@ -97,7 +97,7 @@ interface ConfigurationProps {
  * Defines metadata for each master type including its UI label, icon, 
  * description for headers, and the API prefix used for dynamic method calling.
  */
-const MASTER_TYPES: Record<string, { label: string, icon: any, description: string, apiPrefix: string }> = {
+const MASTER_TYPES: Record<string, { label: string, icon: any, description: string, apiPrefix: string, getMethod?: string }> = {
   "schools": { label: "Schools", icon: School, description: "Manage institutional branches", apiPrefix: "School" },
   "role-master": { label: "Role Master", icon: Shield, description: "Manage system access roles", apiPrefix: "Role" },
   "role-assignment": { label: "Role Assignment", icon: UserCheck, description: "Assign roles to system users", apiPrefix: "User" },
@@ -108,11 +108,12 @@ const MASTER_TYPES: Record<string, { label: string, icon: any, description: stri
   "sub-castes": { label: "Sub-Castes", icon: Users, description: "Manage specific sub-caste groups", apiPrefix: "SubCaste" },
   "religions": { label: "Religions", icon: Milestone, description: "Manage religious affiliations", apiPrefix: "Religion" },
   "states": { label: "States", icon: Map, description: "List of administrative states", apiPrefix: "State" },
-  "cities": { label: "Cities", icon: MapPin, description: "List of cities/towns", apiPrefix: "City" },
+  "cities": { label: "Cities", icon: MapPin, description: "List of cities/towns", apiPrefix: "City", getMethod: "getCities" },
+  "school-sections": { label: "School Sections", icon: Layers, description: "Manage school sections", apiPrefix: "SchoolSection" },
   "blood-groups": { label: "Blood Groups", icon: Droplet, description: "Manage emergency blood types", apiPrefix: "BloodGroup" },
   "houses": { label: "Houses", icon: Home, description: "Manage school house systems", apiPrefix: "House" },
   "admission-types": { label: "Admission Types", icon: FileText, description: "Manage enrollment categories", apiPrefix: "AdmissionType" },
-  "categories": { label: "Categories", icon: LayoutGrid, description: "Manage social categories", apiPrefix: "Category" },
+  "categories": { label: "Categories", icon: LayoutGrid, description: "Manage social categories", apiPrefix: "Category", getMethod: "getCategories" },
   "sessions": { label: "Sessions", icon: Clock, description: "Manage school sessions", apiPrefix: "Session" },
   "batches": { label: "Batches", icon: Users, description: "Manage student batches", apiPrefix: "Batch" },
   "shifts": { label: "Shifts", icon: Clock, description: "Manage staff/student shifts", apiPrefix: "Shift" },
@@ -208,7 +209,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
         try {
           const response = await apiService.uploadSchoolPhoto(editingItem.id, file);
           const newPath = response.data.data?.path || response.data.path;
-          setFormData(prev => ({ ...prev, profilePhotoPath: newPath }));
+          setFormData((prev: any) => ({ ...prev, profilePhotoPath: newPath }));
           toast.dismiss(loadingToast);
           toast.success("Institutional photo updated successfully");
           fetchData(); // Refresh to reflect in the grid
@@ -242,7 +243,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
         setMasterData(Array.isArray(usersData) ? usersData : []);
         setDependencies(prev => ({ ...prev, roles: Array.isArray(rolesData) ? rolesData : [] }));
       } else {
-        const getMethodName = `get${typeConfig.apiPrefix}s`;
+        const getMethodName = typeConfig.getMethod || `get${typeConfig.apiPrefix}s`;
         // @ts-ignore
         const response = await apiService[getMethodName]();
         // Handle potential { data: [...] } wrapper from interceptor or raw array

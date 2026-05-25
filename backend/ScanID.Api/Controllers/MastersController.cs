@@ -51,7 +51,15 @@ namespace ScanID.Api.Controllers
         /// </summary>
         private async Task<IActionResult> Update<T>(int id, T item) where T : BaseEntity
         {
-            _context.Entry(item).State = EntityState.Modified;
+            var existing = await _context.Set<T>().FindAsync(id);
+            if (existing == null) return NotFound();
+
+            // Set modified timestamp
+            item.ModifiedOn = DateTime.UtcNow;
+
+            // Safe incremental update via EF Core entry current values mapping
+            _context.Entry(existing).CurrentValues.SetValues(item);
+
             try
             {
                 await _context.SaveChangesAsync();
@@ -107,6 +115,9 @@ namespace ScanID.Api.Controllers
 
         [HttpPost("sections")]
         public async Task<ActionResult<Section>> CreateSection(Section section) => await Create(_context.Sections, section);
+
+        [HttpPut("sections/{id}")]
+        public async Task<IActionResult> UpdateSection(int id, Section section) => await Update(id, section);
 
         [HttpDelete("sections/{id}")]
         public async Task<IActionResult> DeleteSection(int id) => await Delete(_context.Sections, id);
@@ -165,6 +176,19 @@ namespace ScanID.Api.Controllers
 
         [HttpDelete("religions/{id}")]
         public async Task<IActionResult> DeleteReligion(int id) => await Delete(_context.Religions, id);
+
+        // --- School Sections ---
+        [HttpGet("school-sections")]
+        public async Task<ActionResult<IEnumerable<SchoolSection>>> GetSchoolSections() => await GetAll(_context.SchoolSections);
+
+        [HttpPost("school-sections")]
+        public async Task<ActionResult<SchoolSection>> CreateSchoolSection(SchoolSection item) => await Create(_context.SchoolSections, item);
+
+        [HttpPut("school-sections/{id}")]
+        public async Task<IActionResult> UpdateSchoolSection(int id, SchoolSection item) => await Update(id, item);
+
+        [HttpDelete("school-sections/{id}")]
+        public async Task<IActionResult> DeleteSchoolSection(int id) => await Delete(_context.SchoolSections, id);
 
         // --- States ---
         [HttpGet("states")]

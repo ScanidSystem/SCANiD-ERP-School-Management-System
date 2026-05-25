@@ -1,0 +1,125 @@
+# ScanID Solution Documentation - May 2026 Batch Fixes
+
+This document records the exact changes, the root causes identified, and the fixes applied to remediate the reported errors.
+
+---
+
+## 1. Issue: "Invalid object name 'SchoolSections'" in Live/Production DB
+- **Root Cause**: The tables `SchoolSections`, `States`, and `Cities` were defined in `database.sql` but was not yet created or synchronized inside the live connected SQL Server database.
+- **Remediation**:
+  1. **Self-Healing DB Initialization**: Configured a resilient schema validator in `Program.cs` that checks for the existence of `States`, `Cities`, and `SchoolSections` tables inside MS SQL Server at startup, and automatically creates and seeds them if missing. This prevents database 500 errors.
+  2. **Soft Deletion Global Query Filters**: Registered the `SchoolSection` model query filter in `ApplicationDbContext` to ensure consistency with standard master models.
+  3. **SQL DDL Scripting**: Provided complete database scripts including the updated comprehensive `/database.sql` and `/incremental_database_updates.sql`.
+
+---
+
+## 2. Issue: Columns Ordering Requirement ("IsActive, IsDeleted, CreatedBy, CreatedOn, ModifiedBy, ModifiedOn columns must be at the end of the table")
+- **Root Cause**: In several table definitions in `database.sql` (namely the `Schools` table), the audit and tracking columns were located in the middle of the schema definition before legacy fields.
+- **Remediation**: Ordered all columns in `database.sql` for the `Schools` table so that the tracking fields (`IsActive`, `IsDeleted`, `CreatedBy`, `CreatedOn`, `ModifiedBy`, `ModifiedOn`) are grouped cohesively right at the very end of the column blocks, adhering strictly to schema rules.
+
+---
+
+## 3. Frontend Master Tabs Alignment (Cities & Categories API)
+- **Root Cause**: In the Configuration page tabs, dynamic routing was failing due to calling `getCitys` instead of `getCities` and `getCategorys` instead of `getCategories`.
+- **Remediation**: Explicitly defined `getMethod: "getCities"` and `getMethod: "getCategories"` mapping configurations to resolve dynamic method issues without breaking existing CRUD configurations.
+
+---
+
+## 4. Modified Files List
+
+1. `/backend/ScanID.Api/Program.cs`:
+   - Embedded database self-healing checks on startup to automatically construct missing `States`, `Cities`, and `SchoolSections` tables.
+   
+2. `/backend/ScanID.Api/Data/ApplicationDbContext.cs`:
+   - Configured global query filter for `SchoolSection` soft deletion.
+
+3. `/database.sql`:
+   - Repositioned the metadata and audit fields for `Schools` to the end of the list.
+
+4. `/src/pages/Configuration.tsx`:
+   - Standardized API get method calls dynamically mapping `getCities` and `getCategories`.
+
+5. `/incremental_database_updates.sql`:
+   - Created standalone script ensuring smooth manual schema patch.
+
+---
+
+## 5. Issue: "School Section" Column Standardization & Integrity (Renaming and Reordering)
+- **Root Cause**: The `Students` table used a free-text `nvarchar(100)` column called `SchoolSection` to store school sections. This pattern does not enforce referential integrity nor follow database naming conventions where relational links should end with `*Id`. Additionally, auditing columns were not grouped cleanly at the end of every relational constraint.
+- **Remediation**:
+  1. **Relational Schema Integration**: Changed `Students.SchoolSection` column inside `database.sql` to `SchoolSectionId` (of type `INT NULL`), and introduced a foreign key constraint `FK_Students_SchoolSections` pointing to the `SchoolSections` master table.
+  2. **Stored Procedure Standardization**: Updated `sp_ManageStudent` stored procedure parameters and SQL statement definitions in both `database.sql` and `incremental_stored_procedures.sql` to map the normalized integer-based `@SchoolSectionId` parameter correctly.
+  3. **Backend Models & Dependency Injection**: Updated the `Student` C# model entity in `Models.cs` to map `SchoolSectionId` as an integer and configured a navigation property `[ForeignKey("SchoolSectionId")] public SchoolSection? SchoolSection { get; set; }`. Adjusted mappings inside the ADO.NET-based `StudentService.cs` repository methods to call correct Stored Procedure mappings safely.
+  4. **Frontend Form & Value Binding**: Refactored `Students.tsx` form state tracking properties to handle numeric values binding securely under `SchoolSectionId` instead of legacy strings, providing a seamless backwards-compatible fallback mapping for older datasets.
+
+## 6. Issue: "Invalid column name 'DOB'/ 'MOBILE'/ 'contact2'" on update_students_admission_email.sql Execution
+- **Root Cause**: An incremental database migration script `/update_students_admission_email.sql` contained an outdated definition for recreating the `dbo.sp_ManageStudent` stored procedure, which referenced legacy, dropped columns (`DOB`, `MOBILE`, and `contact2`) instead of the standardized and migrated column names (`DateOfBirth`, `FatherContactNo`, and `MotherContactNo`).
+- **Remediation**:
+  - Refactored `dbo.sp_ManageStudent` stored procedure definition inside `/update_students_admission_email.sql` to align its query parameters, schema mapping, and columns with the standardized database definitions.
+
+## 7. Modified Files List (New Updates)
+
+1. `/database.sql`:
+   - Altered table structure of `Students` changing `SchoolSection` to `SchoolSectionId INT NULL`.
+   - Added `FK_Students_SchoolSections` foreign key constraint linking students to school sections.
+   - Standardized `sp_ManageStudent` stored procedure parameter schemas.
+
+2. `/backend/ScanID.Api/Models/Models.cs`:
+   - Swapped `SchoolSection` string property in `Student` class for `SchoolSectionId` INT property mapping standard ForeignKey.
+
+3. `/backend/ScanID.Api/Services/StudentService.cs`:
+   - Unified ADO.NET parameters mapping `@SchoolSectionId` under standard db transaction context.
+
+4. `/backend/ScanID.Api/incremental_stored_procedures.sql` & `/update_students_admission_email.sql`:
+   - Renamed query parameters, INSERT/UPDATE schemas, and table modifications to follow robust standard database conventions.
+
+5. `/src/pages/Students.tsx`:
+   - Mated standard select bound items of School Section dropdown from plain text name value to numeric ID values, saving correct database foreign key items safely and automatically.
+
+---
+
+## 8. Issue: Student Management Enhancements, Field Renamings, and Excel Import/Export
+- **Root Cause**: Enhancements requested for Student Management user forms, field renaming, RFID constraints, "Digital Notebook/Digital Uniform" checkbox preferences, and the inclusion of "Uniform ID" in standard screens and Excel actions.
+- **Remediation**:
+  1. **User Form Renamings**: Applied global label changes across Student and Attendance screens: "Academic Grade" to "Standard", "Division/Section" to "Division", and "Joining Year" to "Academic Year".
+  2. **RFID Card ID Validation**: Implemented alphanumeric filtering, maximum of 24 characters length, and validated that only 11 or 24-digit codes are submitted.
+  3. **Digital Uniform/Notebook checkboxes**: Added corresponding boolean fields to state initialization, form mapping on edit dialogs, API payloads, and configured responsive UI toggle cards.
+  4. **Uniform ID visibility**: Added "Uniform ID" text inputs to student forms.
+  5. **Bulk Upload and Export**: Integrated "Digital Uniform", "Digital Notebook", and "Uniform ID" fields securely in sample template spreadsheet headers/values, XLSX file row mappings, and custom search filter standard query parameters.
+  6. **API Query Alignment**: Standardized query filters in `/api/students` (backend) and `Students.tsx` (frontend) to filter by standardId and sectionId integer IDs instead of string labels.
+
+---
+
+## 9. Issue: C# Backend Errors and ID-Based Standard/Section API Filtering
+- **Root Cause 1 (C# Namespace Errors)**: The C# compilation errors (e.g., `EntityFrameworkCore` namespace not found) displayed in VS Code arise because the .NET Core system has not yet performed a NuGet package restore locally on the developer's computer.
+- **Root Cause 2 (String instead of ID in APIs)**: The `GetStudents` endpoint inside `/backend/ScanID.Api/Controllers/StudentsController.cs` and the Attendance page dropdown filters originally relied on text strings (e.g., "1st", "A") instead of safe, structured master foreign key IDs.
+- **Remediation**:
+  1. **C# Error Correction Instructions**: Documented the localized requirements for restoring NuGet caches in `LOCAL_SETUP.md`. Running `dotnet restore` resolves missing EF Core, SQL Client, and Swagger references in the editor immediately.
+  2. **API Refactoring**: Changed the query parameters in `/backend/ScanID.Api/Controllers/StudentsController.cs` from strings `standard` and `section` to integers `standardId` and `sectionId`. Modified the database query logic to carry out filtering using direct integer identity matches (`s.StandardId == standardId.Value` and `s.SectionId == sectionId.Value`).
+  3. **Attendance Dropdowns Alignment**: Refactored `Attendance.tsx` page to bind Select values to database primary IDs (`std.id.toString()`) instead of text names. This makes sure that the exact standard ID and section ID are parsed and transmitted to the server.
+  4. **Active Re-Fetch Hook**: Added `selectedStandard` and `selectedSection` state dependencies to the student query hook in `Attendance.tsx`, which triggers automatic class roster reload whenever Standard or Section is selected in the UI.
+
+---
+
+## 10. Issue: Digital Uniform & Digital Notebook Backend Integration
+- **Root Cause**: While "Digital Uniform" and "Digital Notebook" UI checkbox states and Excel parsing maps were added on the frontend, the physical table schema, stored procedures, ADO.NET query parameter maps, custom CSV Export, and Bulk Upload Sample-Template endpoints in the .NET Core backend had no corresponding handlers, which meant student preferences were not persisted to the database.
+- **Remediation**:
+  1. **SQL Database Schema Expansion**: Added `DigitalUniform` and `DigitalNotebook` columns of type `BIT` (default `0`) to the `Students` table in `/database.sql`.
+  2. **Incremental Migration Scripting**: Appended self-healing migration parameters inside `/incremental_database_updates.sql` that conditionally run a DDL `ALTER TABLE` to append the columns and rebuild the `sp_ManageStudent` stored procedure safely.
+  3. **Stored Procedure Synchronization**: Updated the parameters, Insert mapping, and Update mappings of the `sp_ManageStudent` stored procedure in both `/database.sql` and `/backend/ScanID.Api/incremental_stored_procedures.sql` to accept and write `@DigitalUniform` and `@DigitalNotebook` BIT fields.
+  4. **C# Model Definition**: Declared the corresponding `DigitalUniform` and `DigitalNotebook` properties securely as `bool` types inside the `Student` entity in `/backend/ScanID.Api/Models/Models.cs`.
+  5. **ADO.NET parameter Mapping**: Updated parameter queries in `/backend/ScanID.Api/Services/StudentService.cs` (inside `CreateStudentAsync`, `UpdateStudentAsync`, and `CreateBulkStudentsAsync`) to transmit values to the SQL Server database.
+  6. **CSV Export Actions**: Extended `/backend/ScanID.Api/Controllers/StudentsController.cs` to add `DigitalUniform` and `DigitalNotebook` columns to CSV student list exports, and included them as boolean value examples in the student bulk upload master template CSV.
+
+---
+
+## 11. Issue: Relocating Auditing Columns to the End of the Students Table (Consistency Standards)
+- **Root Cause**: Over multiple incremental upgrades adding custom fields such as `DigitalUniform`, `DigitalNotebook`, and registration descriptors, the default SQL Server table append placed new columns after the existing audit columns (`IsActive`, `IsDeleted`, `CreatedBy`, `CreatedOn`, `ModifiedBy`, `ModifiedOn`) on live/local databases. This resulted in an inconsistent column layout where auditing fields were located in the middle of the database structure.
+- **Remediation**:
+  1. **Self-Healing Column Shifting**: Created an intelligent and repeatable SQL migration script within `/incremental_database_updates.sql` that manages transferring auditing columns dynamically to the end of the `Students` table.
+  2. **Audit Column Replication & Preservation**: The relocation script creates temporary holding columns, preserves all existing audit records, drops associated auto-generated constraint keys safely, drops original middle-aligned columns, appends the physical columns back at the absolute end, transfers back the saved audit states, reinstates default constraint rules, and prunes temporary fields cleanly.
+  3. **Database & API Alignment**: Verified that all stored procedures utilizing dynamic SQL mapping, ADO.NET query definitions, and Entity Framework C# models execute consistently across the entire database layout.
+
+
+
+
