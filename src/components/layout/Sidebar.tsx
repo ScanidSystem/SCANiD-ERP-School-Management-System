@@ -128,9 +128,97 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
             { id: 454, title: "Sub-Caste", icon: "UserCircle", path: "/configuration/sub-castes", parentId: 45, sortOrder: 4, roleIds: adminRoles },
             { id: 455, title: "School House", icon: "Home", path: "/configuration/houses", parentId: 45, sortOrder: 5, roleIds: adminRoles },
             { id: 456, title: "Admission Types", icon: "UserCheck", path: "/configuration/admission-types", parentId: 45, sortOrder: 6, roleIds: adminRoles },
+            { id: 457, title: "States Master", icon: "Map", path: "/configuration/states", parentId: 45, sortOrder: 7, roleIds: adminRoles },
+            { id: 458, title: "Cities Master", icon: "MapPin", path: "/configuration/cities", parentId: 45, sortOrder: 8, roleIds: adminRoles },
+            { id: 459, title: "School Sections", icon: "Layers", path: "/configuration/school-sections", parentId: 45, sortOrder: 9, roleIds: adminRoles },
 
             { id: 23, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roleIds: [1] }
           ];
+        }
+
+        // Dynamically ensure General Masters has States Master, Cities Master, and School Sections
+        const generalMastersItem = rawData.find((item: any) => item.title === "General Masters");
+        if (generalMastersItem) {
+          const generalMastersId = Number(generalMastersItem.id);
+          const adminRoles = [1, 2];
+
+          // 1. Ensure States Master (ID 457) is present under General Masters
+          const hasStates = rawData.some((item: any) => 
+            item.title === "States Master" || 
+            (item.path && item.path.includes("/states"))
+          );
+          if (!hasStates) {
+            rawData.push({
+              id: 457,
+              title: "States Master",
+              icon: "Map",
+              path: "/configuration/states",
+              parentId: generalMastersId,
+              sortOrder: 7,
+              roleIds: adminRoles
+            });
+          } else {
+            // If States exists but has wrong parentId (e.g. from static fallback mismatches), correct it
+            const statesItem = rawData.find((item: any) => 
+              item.title === "States Master" || 
+              (item.path && item.path.includes("/states"))
+            );
+            if (statesItem && Number(statesItem.parentId) !== generalMastersId) {
+              statesItem.parentId = generalMastersId;
+            }
+          }
+
+          // 2. Ensure Cities Master (ID 458) is present under General Masters
+          const hasCities = rawData.some((item: any) => 
+            item.title === "Cities Master" || 
+            (item.path && item.path.includes("/cities"))
+          );
+          if (!hasCities) {
+            rawData.push({
+              id: 458,
+              title: "Cities Master",
+              icon: "MapPin",
+              path: "/configuration/cities",
+              parentId: generalMastersId,
+              sortOrder: 8,
+              roleIds: adminRoles
+            });
+          } else {
+            // Correct parentId if mismatch
+            const citiesItem = rawData.find((item: any) => 
+              item.title === "Cities Master" || 
+              (item.path && item.path.includes("/cities"))
+            );
+            if (citiesItem && Number(citiesItem.parentId) !== generalMastersId) {
+              citiesItem.parentId = generalMastersId;
+            }
+          }
+
+          // 3. Ensure School Sections (ID 459) is present under General Masters
+          const hasSchoolSections = rawData.some((item: any) => 
+            item.title === "School Sections" || 
+            (item.path && item.path.includes("/school-sections"))
+          );
+          if (!hasSchoolSections) {
+            rawData.push({
+              id: 459,
+              title: "School Sections",
+              icon: "Layers",
+              path: "/configuration/school-sections",
+              parentId: generalMastersId,
+              sortOrder: 9,
+              roleIds: adminRoles
+            });
+          } else {
+            // Correct parentId if mismatch (e.g. from table seeding with parentId 45 instead of 17)
+            const schoolSecItem = rawData.find((item: any) => 
+              item.title === "School Sections" || 
+              (item.path && item.path.includes("/school-sections"))
+            );
+            if (schoolSecItem && Number(schoolSecItem.parentId) !== generalMastersId) {
+              schoolSecItem.parentId = generalMastersId;
+            }
+          }
         }
 
         // 1. Map to consistent NavItem format and normalize values

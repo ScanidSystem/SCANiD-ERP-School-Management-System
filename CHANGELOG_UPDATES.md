@@ -182,13 +182,25 @@ const sampleData = [
   }
 ];
 ```
-- Integrated dynamic name-to-ID mapping inside `handleBulkUpload` to lookup the respective `schoolId` based on the provided school name and fall back perfectly to the user's current session parameters:
+- Integrated dynamic name-to-ID mapping inside `handleBulkUpload` to lookup the respective `schoolId` based on the provided school name and fall back perfectly to the user's current session parameters. Specifically refined to run case-insensitive, trailing/leading whitespace trimmed lookup, ensuring robust matching:
 ```typescript
-const schName = item.SchoolName || item.schoolName || item.School;
+const schName = getFieldCleanVal(["SchoolName", "School", "school_name"]);
 const schMasterId = item.SchoolId || (schName ? schools.find((sch: any) => 
-  sch.name.toLowerCase() === schName.toString().toLowerCase()
+  sch.name.toLowerCase().trim() === schName.toLowerCase()
 )?.id : undefined);
 ```
+- Standardized the secondary telephone numbers to map as `"SecondaryMobile"` across both the template headers and our cleaner parser helpers, conforming exactly to institutional data layout constraints.
 - Bound the parsed `schoolId` safely into the database payload, ensuring pristine cross-institution stability and a flawless user experience.
+
+---
+
+## 8. Database Definition Order Correction for SSMS/MS SQL Compatibility
+### Issue
+Running the `database.sql` script on an MS SQL Server instance threw an error (Msg 1767, Foreign key 'FK_Students_Categories' references invalid table 'dbo.Categories'). This occurred because the `dbo.Students` table definition and its foreign keys were declared before the `dbo.Categories` table was defined, creating an unresolved forward-reference dependency.
+
+### Solution & Code Changes
+- Reordered `database.sql` to move the independent `dbo.Categories` master table definition up under `-- 2. Master Tables (Independent)`, directly succeeding the `dbo.Religions` table definition.
+- This ensures `dbo.Categories` is compiled and successfully present before the `dbo.Students` foreign key clause execution takes place, ensuring clean database bootstrap operations without any structural constraints failing.
+
 
 

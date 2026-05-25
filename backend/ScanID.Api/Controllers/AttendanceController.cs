@@ -1,22 +1,25 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ScanID.Api.Data;
+using ScanID.Api.Interfaces;
 using ScanID.Api.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ScanID.Api.Controllers
 {
     /// <summary>
     /// Controller for managing student attendance.
+    /// Supports Dependency Injection and decoupled operations.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class AttendanceController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IAttendanceService _attendanceService;
 
-        public AttendanceController(ApplicationDbContext context)
+        public AttendanceController(IAttendanceService attendanceService)
         {
-            _context = context;
+            _attendanceService = attendanceService;
         }
 
         /// <summary>
@@ -29,19 +32,8 @@ namespace ScanID.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Attendance>>> GetAttendance(DateTime date, int? schoolId, int? academicYearId)
         {
-            var query = _context.Attendance.Include(a => a.Student).AsNoTracking().AsQueryable();
-            
-            if (schoolId.HasValue)
-            {
-                query = query.Where(a => a.Student!.SchoolId == schoolId.Value);
-            }
-
-            if (academicYearId.HasValue)
-            {
-                query = query.Where(a => a.Student!.AcademicYearId == academicYearId.Value);
-            }
-
-            return await query.Where(a => a.Date.Date == date.Date).ToListAsync();
+            var records = await _attendanceService.GetAttendanceAsync(date, schoolId, academicYearId);
+            return Ok(records);
         }
 
         /// <summary>
@@ -52,8 +44,8 @@ namespace ScanID.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Attendance>> PostAttendance(Attendance attendance)
         {
-            _context.Attendance.Add(attendance);
-            await _context.SaveChangesAsync();
+            var success = await _attendanceService.SubmitAttendanceAsync(attendance);
+            if (!success) return StatusCode(500, "Failed to submit attendance record.");
             return Ok(attendance);
         }
 
@@ -65,10 +57,9 @@ namespace ScanID.Api.Controllers
         [HttpPost("bulk")]
         public async Task<IActionResult> PostBulkAttendance(List<Attendance> records)
         {
-            _context.Attendance.AddRange(records);
-            await _context.SaveChangesAsync();
+            var success = await _attendanceService.SubmitBulkAttendanceAsync(records);
+            if (!success) return StatusCode(500, "Failed to submit bulk attendance records.");
             return Ok();
         }
     }
-
 }

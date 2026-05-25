@@ -172,15 +172,6 @@ export default function SystemLogs({ user }: SystemLogsProps) {
 
   return (
     <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500 pb-10">
-      {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-        <Link to="/" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
-          <Home size={14} /> Home
-        </Link>
-        <ChevronRight size={12} />
-        <span className="text-slate-900">System Logs</span>
-      </div>
-
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
           <div className="bg-blue-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:rotate-3">

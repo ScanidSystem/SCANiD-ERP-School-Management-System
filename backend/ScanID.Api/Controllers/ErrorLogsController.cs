@@ -1,7 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ScanID.Api.Data;
+using ScanID.Api.Interfaces;
 using ScanID.Api.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ScanID.Api.Controllers
 {
@@ -12,25 +18,83 @@ namespace ScanID.Api.Controllers
     [ApiController]
     public class ErrorLogsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IErrorLogService _errorLogService;
 
-        public ErrorLogsController(ApplicationDbContext context)
+        public ErrorLogsController(IErrorLogService errorLogService)
         {
-            _context = context;
+            _errorLogService = errorLogService;
         }
 
         /// <summary>
-        /// Retrieves the most recent error logs.
+        /// Retrieves the error logs under full server-side pagination, sorting, and filtering.
         /// </summary>
-        /// <param name="limit">Number of records to return.</param>
-        /// <returns>A list of error logs.</returns>
+        /// <param name="page">The 1-indexed page number loaded dynamically.</param>
+        /// <param name="pageSize">Amount of logs in each layout slice.</param>
+        /// <param name="sortBy">The field determining ordering, e.g. timestamp, level, properties.</param>
+        /// <param name="sortOrder">Sort progression rule: 'asc' or 'desc'.</param>
+        /// <returns>A paginated logs matching filters.</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ErrorLog>>> GetErrorLogs([FromQuery] int limit = 100)
+        public async Task<ActionResult> GetErrorLogs(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string sortBy = "timestamp",
+            [FromQuery] string sortOrder = "desc")
         {
-            return await _context.ErrorLogs
-                .OrderByDescending(x => x.Timestamp)
-                .Take(limit)
-                .ToListAsync();
+            // Execute decoupled service to pull logs from sp_GetErrorLogs containing a robust buffer size
+            var logs = await _errorLogService.GetErrorLogsAsync(10000);
+            
+            // Map to Queryable for dynamic sorting, paging, and slicing
+            var query = logs.AsQueryable();
+            
+            // Apply sorting rules safely from query criteria
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                bool isDesc = sortOrder != null && sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase);
+                switch (sortBy.ToLower())
+                {
+                    case "timestamp":
+                    case "datetime":
+                    case "date":
+                    case "time":
+                        query = isDesc ? query.OrderByDescending(e => e.Timestamp) : query.OrderBy(e => e.Timestamp);
+                        break;
+                    case "level":
+                    case "severity":
+                        query = isDesc ? query.OrderByDescending(e => e.Level) : query.OrderBy(e => e.Level);
+                        break;
+                    case "properties":
+                    case "origin":
+                        query = isDesc ? query.OrderByDescending(e => e.Properties) : query.OrderBy(e => e.Properties);
+                        break;
+                    default:
+                        query = isDesc ? query.OrderByDescending(e => e.Timestamp) : query.OrderBy(e => e.Timestamp);
+                        break;
+                }
+            }
+            else
+            {
+                // Fall back sorting to keep recent entries showing up first
+                query = query.OrderByDescending(e => e.Timestamp);
+            }
+
+            var totalCount = query.Count();
+            var totalPages = (int)Math.Max(1, Math.Ceiling((double)totalCount / pageSize));
+            var currentPage = Math.Max(1, page);
+
+            var paginatedData = query.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+
+            // Return standardized paginated envelope
+            return Ok(new
+            {
+                data = paginatedData,
+                pagination = new
+                {
+                    totalCount,
+                    totalPages,
+                    page = currentPage,
+                    pageSize
+                }
+            });
         }
 
         /// <summary>
@@ -40,8 +104,7 @@ namespace ScanID.Api.Controllers
         [HttpDelete("clear")]
         public async Task<IActionResult> ClearLogs()
         {
-            _context.ErrorLogs.RemoveRange(_context.ErrorLogs);
-            await _context.SaveChangesAsync();
+            await _errorLogService.ClearErrorLogsAsync();
             return NoContent();
         }
 

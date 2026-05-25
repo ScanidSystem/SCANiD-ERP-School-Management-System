@@ -1,54 +1,147 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using ScanID.Api.Data;
+using ScanID.Api.Interfaces;
 using ScanID.Api.Models;
 using ScanID.Api.Utilities;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ScanID.Api.Controllers
 {
     /// <summary>
     /// Controller for managing student records.
+    /// This implementation adheres to SOLID Principles and is fully decoupled utilizing DI.
+    /// - High-level module (StudentsController) does not depend on low-level database schemas, but on the abstraction (IStudentService).
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class StudentsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IStudentService _studentService;
         private readonly IWebHostEnvironment _environment;
 
-        public StudentsController(ApplicationDbContext context, IWebHostEnvironment environment)
+        public StudentsController(IStudentService studentService, IWebHostEnvironment environment)
         {
-            _context = context;
+            _studentService = studentService;
             _environment = environment;
         }
 
         /// <summary>
-        /// Retrieves students for a specific school and optionally an academic year.
+        /// Retrieves students for a specific school and optionally an academic year. Supports pagination, sorting, searching, and custom filters.
         /// </summary>
         /// <param name="schoolId">Optional school ID filter.</param>
         /// <param name="academicYearId">Optional academic year ID filter.</param>
-        /// <returns>A list of students.</returns>
+        /// <param name="page">The page number, 1-indexed.</param>
+        /// <param name="pageSize">Number of items per page.</param>
+        /// <param name="sortBy">Field to sort by (e.g., name, grno, roll, standard, section).</param>
+        /// <param name="sortOrder">Sort order direction: 'asc' or 'desc'.</param>
+        /// <param name="search">Search query to match name, grno, standard, section, or roll number.</param>
+        /// <param name="standardId">Specific standard/grade ID to filter by.</param>
+        /// <param name="sectionId">Specific section/division ID to filter by.</param>
+        /// <returns>A paginated envelope containing student records matching the filters.</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Student>>> GetStudents(int? schoolId, int? academicYearId)
+        public async Task<ActionResult> GetStudents(
+            [FromQuery] int? schoolId, 
+            [FromQuery] int? academicYearId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? sortBy = null,
+            [FromQuery] string sortOrder = "asc",
+            [FromQuery] string? search = null,
+            [FromQuery] int? standardId = null,
+            [FromQuery] int? sectionId = null)
         {
-            IQueryable<Student> query = _context.Students
-                .Include(s => s.Standard)
-                .Include(s => s.Section)
-                .Include(s => s.AcademicYear)
-                .Where(s => !s.IsDeleted)
-                .AsNoTracking();
+            // Retrieve all raw students for the given school and academic year from backend SQL DB repository
+            var studentsList = await _studentService.GetStudentsAsync(schoolId, academicYearId);
+            
+            // Convert to queryable list for high-performance in-memory sorting and filtering
+            var query = studentsList.AsQueryable();
 
-            if (schoolId.HasValue)
+            // 1. Apply robust server-side text matching/searching
+            if (!string.IsNullOrWhiteSpace(search))
             {
-                query = query.Where(s => s.SchoolId == schoolId.Value);
+                var searchLower = search.Trim().ToLower();
+                query = query.Where(s => 
+                    (s.Name != null && s.Name.ToLower().Contains(searchLower)) ||
+                    (s.GrNo != null && s.GrNo.ToLower().Contains(searchLower)) ||
+                    (s.RegistrationNumber != null && s.RegistrationNumber.ToLower().Contains(searchLower)) ||
+                    s.RollNumber.ToString().Contains(searchLower) ||
+                    (s.Standard != null && s.Standard.Name != null && s.Standard.Name.ToLower().Contains(searchLower)) ||
+                    (s.Section != null && s.Section.Name != null && s.Section.Name.ToLower().Contains(searchLower))
+                );
             }
 
-            if (academicYearId.HasValue)
+            // 2. Apply academic Standard (Grade) filters
+            if (standardId.HasValue)
             {
-                query = query.Where(s => s.AcademicYearId == academicYearId.Value);
+                query = query.Where(s => s.StandardId == standardId.Value);
             }
 
-            return await query.ToListAsync();
+            // 3. Apply division Section filters
+            if (sectionId.HasValue)
+            {
+                query = query.Where(s => s.SectionId == sectionId.Value);
+            }
+
+            // 4. Apply high-performance dynamic sorting
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                bool isDesc = sortOrder != null && sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase);
+                switch (sortBy.ToLower())
+                {
+                    case "name":
+                        query = isDesc ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name);
+                        break;
+                    case "grno":
+                    case "registrationnumber":
+                        query = isDesc ? query.OrderByDescending(s => s.GrNo ?? s.RegistrationNumber) : query.OrderBy(s => s.GrNo ?? s.RegistrationNumber);
+                        break;
+                    case "roll":
+                    case "rollnumber":
+                        query = isDesc ? query.OrderByDescending(s => s.RollNumber) : query.OrderBy(s => s.RollNumber);
+                        break;
+                    case "standard":
+                        query = isDesc ? query.OrderByDescending(s => s.Standard != null ? s.Standard.Name : string.Empty) : query.OrderBy(s => s.Standard != null ? s.Standard.Name : string.Empty);
+                        break;
+                    case "section":
+                        query = isDesc ? query.OrderByDescending(s => s.Section != null ? s.Section.Name : string.Empty) : query.OrderBy(s => s.Section != null ? s.Section.Name : string.Empty);
+                        break;
+                    default:
+                        query = isDesc ? query.OrderByDescending(s => s.Id) : query.OrderBy(s => s.Id);
+                        break;
+                }
+            }
+            else
+            {
+                // Default fallback sorting to guarantee deterministic response matching
+                query = query.OrderBy(s => s.Id);
+            }
+
+            // 5. Build pagination parameters
+            var totalCount = query.Count();
+            var totalPages = (int)Math.Max(1, Math.Ceiling((double)totalCount / pageSize));
+
+            // Adjust pages limits safely to avoid out-of-bounds queries
+            var currentPage = Math.Max(1, page);
+            var safeDataSlice = query.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+
+            // Return enveloped paginated model perfectly parsed by React UI
+            return Ok(new
+            {
+                data = safeDataSlice,
+                pagination = new
+                {
+                    totalCount,
+                    totalPages,
+                    page = currentPage,
+                    pageSize
+                }
+            });
         }
 
         /// <summary>
@@ -59,14 +152,14 @@ namespace ScanID.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Student>> GetStudent(int id)
         {
-            var student = await _context.Students.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id);
+            var student = await _studentService.GetStudentByIdAsync(id);
 
             if (student == null)
             {
                 return NotFound();
             }
 
-            return student;
+            return Ok(student);
         }
 
         /// <summary>
@@ -77,16 +170,8 @@ namespace ScanID.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Student>> PostStudent(Student student)
         {
-            // Set audit fields
-            student.CreatedOn = DateTime.Now;
-            student.ModifiedOn = DateTime.Now;
-            student.IsActive = true;
-            student.IsDeleted = false;
-
-            _context.Students.Add(student);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetStudent", new { id = student.Id }, student);
+            var createdStudent = await _studentService.CreateStudentAsync(student);
+            return CreatedAtAction("GetStudent", new { id = createdStudent.Id }, createdStudent);
         }
 
         /// <summary>
@@ -97,60 +182,62 @@ namespace ScanID.Api.Controllers
         [HttpGet("export")]
         public async Task<IActionResult> ExportStudents(int? schoolId)
         {
-            var query = _context.Students
-                .Include(s => s.Standard)
-                .Include(s => s.Section)
-                .Include(s => s.AcademicYear)
-                .Include(s => s.Caste)
-                .Include(s => s.Religion)
-                .Include(s => s.Category)
-                .Include(s => s.BloodGroup)
-                .Include(s => s.House)
-                .Include(s => s.Shift)
-                .Where(s => !s.IsDeleted);
-
-            if (schoolId.HasValue)
-            {
-                query = query.Where(s => s.SchoolId == schoolId.Value);
-            }
-
-            var students = await query.ToListAsync();
+            var students = await _studentService.GetStudentsForExportAsync(schoolId);
 
             var csv = new System.Text.StringBuilder();
-            // Comprehensive Header
-            csv.AppendLine("RegistrationNumber,Name,Standard,Section,AcademicYear,RollNumber,GRNO,Gender,DOB,Category,Religion,Caste,Status,Mobile,Email,Address,MotherName,AadharCard,RFID,Shift,BloodGroup,House,AdmissionDate,FatherName,NationalId,BankAcc,ProfilePhotoPath");
+            // Header matching database schema column layout, ending with IsActive, IsDeleted, CreatedBy, CreatedOn, ModifiedBy, ModifiedOn
+            csv.AppendLine("Id,RegistrationNumber,Name,SchoolId,Status,RollNumber,FirstName,MiddleName,LastName,GrNo,Gender,DateOfBirth,Address,MotherName,FatherContactNo,MotherContactNo,AadharCard,UniformId,Rfid,SchoolSection,AdmissionDate,Email,Standard,Section,AcademicYear,Caste,SubCaste,Religion,BloodGroup,House,AdmissionType,City,State,Shift,Category,Sms,IsStateBoard,ProfilePhotoPath,DigitalUniform,DigitalNotebook,IsActive,IsDeleted,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn");
 
             foreach (var s in students)
             {
                 var row = new List<string?>
                 {
+                    s.Id.ToString(),
                     s.RegistrationNumber,
                     s.Name,
+                    s.SchoolId.ToString(),
+                    s.Status,
+                    s.RollNumber.ToString(),
+                    s.FirstName,
+                    s.MiddleName,
+                    s.LastName,
+                    s.GrNo,
+                    s.Gender,
+                    s.DateOfBirth,
+                    s.Address != null ? "\"" + s.Address.Replace("\"", "\"\"") + "\"" : null,
+                    s.MotherName,
+                    s.FatherContactNo,
+                    s.MotherContactNo,
+                    s.AadharCard,
+                    s.UniformId,
+                    s.Rfid,
+                    s.SchoolSection?.Name,
+                    s.AdmissionDate,
+                    s.Email,
                     s.Standard?.Name,
                     s.Section?.Name,
                     s.AcademicYear?.Name,
-                    s.RollNumber.ToString(),
-                    s.GRNO,
-                    s.GENDER,
-                    s.DOB,
-                    s.Category?.Name,
-                    s.Religion?.Name,
                     s.Caste?.Name,
-                    s.Status,
-                    s.MOBILE,
-                    s.EMAIL,
-                    $"\"{s.ADDRESS?.Replace("\"", "\"\"")}\"",
-                    s.MOTHERNAME,
-                    s.aadharcard,
-                    s.RFID,
-                    s.Shift?.Name,
+                    s.SubCaste?.Name ?? "",
+                    s.Religion?.Name,
                     s.BloodGroup?.Name,
                     s.House?.Name,
-                    s.DOA,
-                    s.FATHERNAME,
-                    s.PEN_No,
-                    s.bankacc,
-                    s.ProfilePhotoPath
+                    s.AdmissionType?.Name ?? "",
+                    s.City?.Name ?? "",
+                    s.State?.Name ?? "",
+                    s.Shift?.Name,
+                    s.Category?.Name,
+                    s.Sms.ToString().ToLower(),
+                    s.IsStateBoard.ToString().ToLower(),
+                    s.ProfilePhotoPath,
+                    s.DigitalUniform.ToString().ToLower(),
+                    s.DigitalNotebook.ToString().ToLower(),
+                    s.IsActive.ToString().ToLower(),
+                    s.IsDeleted.ToString().ToLower(),
+                    s.CreatedBy,
+                    s.CreatedOn.ToString("yyyy-MM-dd HH:mm:ss"),
+                    s.ModifiedBy,
+                    s.ModifiedOn.ToString("yyyy-MM-dd HH:mm:ss")
                 };
                 csv.AppendLine(string.Join(",", row));
             }
@@ -165,10 +252,10 @@ namespace ScanID.Api.Controllers
         public IActionResult GetSampleTemplate()
         {
             var csv = new System.Text.StringBuilder();
-            // Required Header reflecting all critical table fields
-            csv.AppendLine("RegistrationNumber,Name,SchoolId,StandardId,SectionId,AcademicYearId,RollNumber,GRNO,Gender,DOB,CategoryId,ReligionId,CasteId,Mobile,Email,Address,MotherName,AadharCard,RFID,ShiftId,BloodGroupId,HouseId,DOA,FatherName,PEN_No,BankAcc,ProfilePhotoPath");
-            // Example data row
-            csv.AppendLine("REG001,John Doe,1,1,1,1,10,1234,Male,2015-05-15,1,1,1,9876543210,john@example.com,City Main Road,Jane Doe,123456789012,RF-123,1,1,1,2024-06-01,Robert Doe,PEN123,ACC12345,/photos/1/example.jpg");
+            // Required Header reflecting all active table fields in exact sequence ending with auditing columns
+            csv.AppendLine("RegistrationNumber,Name,SchoolId,Status,RollNumber,FirstName,MiddleName,LastName,GrNo,Gender,DateOfBirth,Address,MotherName,FatherContactNo,MotherContactNo,AadharCard,UniformId,Rfid,SchoolSectionName,AdmissionDate,Email,GradeName,SectionName,AcademicYear,CasteName,SubCasteName,ReligionName,BloodGroupName,HouseName,AdmissionType,CityName,StateName,ShiftName,CategoryName,Sms,IsStateBoard,ProfilePhotoPath,DigitalUniform,DigitalNotebook,IsActive,IsDeleted,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn");
+            // Example data row with Boolean sms/IsStateBoard mappings
+            csv.AppendLine("REG001,John Doe,1,Active,10,John,M.,Doe,1234,Male,2015-05-15,City Main Road,Jane Doe,9876543210,9876543211,123456789012,UniformID,RF-123,Primary,,john.doe@example.com,1,A,2024-25,General,,Hindu,B+,Red,Regular,,,Morning,General,true,false,/photos/1/example.jpg,true,false,true,false,Admin,2026-05-24 00:00:00,Admin,2026-05-24 00:00:00");
 
             return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "Student_Upload_Template.csv");
         }
@@ -184,15 +271,14 @@ namespace ScanID.Api.Controllers
         {
             if (id != student.Id) return BadRequest();
 
-            _context.Entry(student).State = EntityState.Modified;
-
-            // Ensure auditing and non-schema fields are preserved if not sent
-            // or just let EF handle it. Here we use Entry(student).State = Modified.
-            // But we should ensure we don't accidentally overwrite IsDeleted etc if not in payload.
-
             try
             {
-                await _context.SaveChangesAsync();
+                var success = await _studentService.UpdateStudentAsync(student);
+                if (!success)
+                {
+                    if (!await StudentExistsAsync(id)) return NotFound();
+                    return StatusCode(500, "Failed to persist student record updates.");
+                }
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -205,6 +291,7 @@ namespace ScanID.Api.Controllers
 
         /// <summary>
         /// Bulk registers multiple students.
+        /// Encapsulates validations inside Domain logic.
         /// </summary>
         /// <param name="students">List of students.</param>
         /// <returns>Count of registered students.</returns>
@@ -213,44 +300,34 @@ namespace ScanID.Api.Controllers
         {
             if (students == null || !students.Any()) return BadRequest("No student data provided.");
 
-            foreach (var student in students)
+            try
             {
-                student.CreatedOn = DateTime.Now;
-                student.ModifiedOn = DateTime.Now;
-                student.IsActive = true;
-                student.IsDeleted = false;
-
-                // Ensure RegistrationNumber is set if missing
-                if (string.IsNullOrEmpty(student.RegistrationNumber))
-                {
-                    student.RegistrationNumber = "REG-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper();
-                }
+                var response = await _studentService.CreateBulkStudentsAsync(students);
+                return Ok(response);
             }
-
-            _context.Students.AddRange(students);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { count = students.Count(), message = "Bulk upload successful" });
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
-        /// Removes a student record (soft delete handled by context).
+        /// Removes a student record (soft delete handled by service).
         /// </summary>
         /// <param name="id">The student ID to delete.</param>
         /// <returns>No content on success.</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStudent(int id)
         {
-            var student = await _context.Students.FindAsync(id);
-            if (student == null) return NotFound();
-
-            // Set IsDeleted for soft delete
-            student.IsDeleted = true;
-            await _context.SaveChangesAsync();
+            var success = await _studentService.DeleteStudentAsync(id);
+            if (!success) return NotFound();
 
             return NoContent();
         }
-
 
         /// <summary>
         /// Updates a student's profile picture by saving it to the server filesystem.
@@ -263,7 +340,6 @@ namespace ScanID.Api.Controllers
         {
             if (file == null || file.Length == 0)
             {
-                // Inspecting the request more closely for diagnostics
                 var contentType = Request.ContentType ?? "null";
                 var bodyLength = Request.ContentLength ?? 0;
                 return BadRequest(new { 
@@ -273,11 +349,7 @@ namespace ScanID.Api.Controllers
                 });
             }
 
-            var student = await _context.Students
-                .Include(s => s.School)
-                .Include(s => s.Standard)
-                .Include(s => s.Section)
-                .FirstOrDefaultAsync(s => s.Id == id);
+            var student = await _studentService.GetStudentWithPhotoDetailsAsync(id);
 
             if (student == null)
             {
@@ -289,15 +361,12 @@ namespace ScanID.Api.Controllers
                 var schoolID = SanitizeFolderName(student.School?.Id.ToString() ?? student.SchoolId.ToString());
                 var relativeFolder = Path.Combine("photos", schoolID);
 
-                // Enhanced path resolution for robust folder creation across different environments
                 string webRootPath = _environment.WebRootPath;
                 if (string.IsNullOrEmpty(webRootPath))
                 {
-                    // Fallback 1: Try to find wwwroot in current directory
                     webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
                 }
 
-                // Fallback 2: If we are in a subfolder or different context, ensure we have a base
                 if (!Directory.Exists(webRootPath))
                 {
                     Directory.CreateDirectory(webRootPath);
@@ -305,7 +374,6 @@ namespace ScanID.Api.Controllers
 
                 var uploadsFolder = Path.Combine(webRootPath, relativeFolder);
 
-                // Ensure the hierarchical directory structure exists
                 if (!Directory.Exists(uploadsFolder))
                 {
                     Directory.CreateDirectory(uploadsFolder);
@@ -314,7 +382,6 @@ namespace ScanID.Api.Controllers
                 var extension = Path.GetExtension(file.FileName);
                 if (string.IsNullOrEmpty(extension)) extension = ".jpg";
                 
-                // Generate a 12-digit random number for the filename as requested
                 Random res = new Random();
                 string random12Digit = "";
                 for (int i = 0; i < 12; i++)
@@ -330,7 +397,6 @@ namespace ScanID.Api.Controllers
                     await file.CopyToAsync(stream);
                 }
 
-                // Path for storage in DB and serving to frontend
                 var relativePath = $"/photos/{schoolID}/{fileName}";
 
                 if (!string.IsNullOrEmpty(student.ProfilePhotoPath))
@@ -345,7 +411,7 @@ namespace ScanID.Api.Controllers
                 student.ProfilePhotoPath = relativePath;
                 student.ModifiedOn = DateTime.Now;
 
-                await _context.SaveChangesAsync();
+                await _studentService.SaveChangesAsync();
 
                 return Ok(new
                 {
@@ -355,7 +421,7 @@ namespace ScanID.Api.Controllers
             }
             catch (Exception ex)
             {
-                ScanID.Api.Utilities.FileLogger.LogError(ex);
+                FileLogger.LogError(ex);
                 return StatusCode(500, new { message = "Physical storage failed: " + ex.Message });
             }
         }
@@ -367,17 +433,16 @@ namespace ScanID.Api.Controllers
         {
             if (string.IsNullOrWhiteSpace(name)) return "Unassigned";
 
-            // Remove illegal characters from path
             var invalidChars = Path.GetInvalidFileNameChars();
             var sanitized = new string(name.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray());
 
-            // Further cleaning to ensure it's a slick folder name
             return sanitized.Replace(" ", "_").Trim('_');
         }
 
         private async Task<bool> StudentExistsAsync(int id)
         {
-            return await _context.Students.AnyAsync(e => e.Id == id);
+            var std = await _studentService.GetStudentByIdAsync(id);
+            return std != null;
         }
     }
 }

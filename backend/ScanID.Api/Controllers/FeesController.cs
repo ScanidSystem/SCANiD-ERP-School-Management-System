@@ -1,22 +1,24 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ScanID.Api.Data;
+using ScanID.Api.Interfaces;
 using ScanID.Api.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ScanID.Api.Controllers
 {
     /// <summary>
     /// Controller for managing student fee records.
+    /// Perfectly decoupled and adheres to SOLID.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class FeesController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IFeeService _feeService;
 
-        public FeesController(ApplicationDbContext context)
+        public FeesController(IFeeService feeService)
         {
-            _context = context;
+            _feeService = feeService;
         }
 
         /// <summary>
@@ -29,18 +31,8 @@ namespace ScanID.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Fee>>> GetFees(int? studentId, int? schoolId, int? academicYearId)
         {
-            var query = _context.Fees.Include(f => f.Student).AsNoTracking().AsQueryable();
-            
-            if (studentId.HasValue)
-                query = query.Where(f => f.StudentId == studentId.Value);
-            
-            if (schoolId.HasValue)
-                query = query.Where(f => f.Student!.SchoolId == schoolId.Value);
-
-            if (academicYearId.HasValue)
-                query = query.Where(f => f.Student!.AcademicYearId == academicYearId.Value);
-
-            return await query.ToListAsync();
+            var fees = await _feeService.GetFeesAsync(studentId, schoolId, academicYearId);
+            return Ok(fees);
         }
 
         /// <summary>
@@ -51,10 +43,9 @@ namespace ScanID.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Fee>> PostFee(Fee fee)
         {
-            _context.Fees.Add(fee);
-            await _context.SaveChangesAsync();
+            var success = await _feeService.CreateFeeAsync(fee);
+            if (!success) return StatusCode(500, "Failed to submit fee record.");
             return Ok(fee);
         }
     }
-
 }

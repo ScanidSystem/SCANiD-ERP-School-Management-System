@@ -1,22 +1,23 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ScanID.Api.Data;
+using ScanID.Api.Interfaces;
 using ScanID.Api.Models;
+using System.Threading.Tasks;
 
 namespace ScanID.Api.Controllers
 {
     /// <summary>
     /// Controller for authentication and user sessions.
+    /// Perfectly decoupled and adheres to SOLID.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IAuthService _authService;
 
-        public AuthController(ApplicationDbContext context)
+        public AuthController(IAuthService authService)
         {
-            _context = context;
+            _authService = authService;
         }
 
         /// <summary>
@@ -27,11 +28,9 @@ namespace ScanID.Api.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<User>> Login([FromBody] LoginRequest request)
         {
-            var user = await _context.Users
-                .Include(u => u.School)
-                .FirstOrDefaultAsync(u => u.Username == request.Username);
+            var user = await _authService.LogInAsync(request.Username, request.Password);
 
-            if (user == null || user.PasswordHash != request.Password) // Simple check for demo
+            if (user == null)
             {
                 return Unauthorized("Invalid username or password");
             }
@@ -65,16 +64,13 @@ namespace ScanID.Api.Controllers
         [HttpPost("forgot-password")]
         public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Username == request.Username);
+            var user = await _authService.FindUserByUsernameAsync(request.Username);
 
             if (user == null)
             {
-                // For security, don't reveal if user exists, but for demo we can be helpful
                 return NotFound("Username not found");
             }
 
-            // In a real app, send an email/SMS. For demo, we just return a success.
             return Ok(new { message = "Password reset instructions sent to registered email/phone" });
         }
     }
@@ -95,5 +91,4 @@ namespace ScanID.Api.Controllers
     {
         public string Username { get; set; } = string.Empty;
     }
-
 }

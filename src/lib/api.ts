@@ -102,6 +102,11 @@ const mockFallbacks: Record<string, any> = {
   "/masters/categories": [
     { id: 1, name: "General", isActive: true },
   ],
+  "/masters/school-sections": [
+    { id: 1, name: "Primary", isActive: true },
+    { id: 2, name: "Secondary", isActive: true },
+    { id: 3, name: "Higher Secondary", isActive: true }
+  ],
   "/navigation": [
     { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roleIds: [1, 2, 3, 4, 5] },
     { id: 2, title: "Academic Operations", icon: "BookOpen", path: null, parentId: null, sortOrder: 2, roleIds: [1, 2, 3, 4, 5] },
@@ -138,6 +143,9 @@ const mockFallbacks: Record<string, any> = {
     { id: 454, title: "Sub-Caste Master", icon: "UserCircle", path: "/configuration/sub-castes", parentId: 45, sortOrder: 4, roleIds: [1, 2] },
     { id: 455, title: "School House", icon: "Home", path: "/configuration/houses", parentId: 45, sortOrder: 5, roleIds: [1, 2] },
     { id: 456, title: "Admission Types", icon: "UserCheck", path: "/configuration/admission-types", parentId: 45, sortOrder: 6, roleIds: [1, 2] },
+    { id: 457, title: "States Master", icon: "Map", path: "/configuration/states", parentId: 45, sortOrder: 7, roleIds: [1, 2] },
+    { id: 458, title: "Cities Master", icon: "MapPin", path: "/configuration/cities", parentId: 45, sortOrder: 8, roleIds: [1, 2] },
+    { id: 459, title: "School Sections", icon: "Layers", path: "/configuration/school-sections", parentId: 45, sortOrder: 9, roleIds: [1, 2] },
     
     { id: 23, title: "System Audit", icon: "Terminal", path: "/system-logs", parentId: null, sortOrder: 6, roleIds: [1] },
   ],
@@ -168,9 +176,45 @@ const mockFallbacks: Record<string, any> = {
   ]
 };
 
+// Add request interceptor to automatically inject Authorization header
+api.interceptors.request.use(
+  (config) => {
+    try {
+      const savedUserStr = localStorage.getItem("user");
+      let token = localStorage.getItem("token");
+      
+      if (savedUserStr) {
+        const savedUser = JSON.parse(savedUserStr);
+        if (savedUser && savedUser.token) {
+          token = savedUser.token;
+        }
+      }
+      
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (err) {
+      console.error("Error setting Authorization header:", err);
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Check for 401 Unauthorized - Session expired or invalid token
+    if (error.response && error.response.status === 401) {
+      console.warn("Session expired or unauthorized (401). Redirecting to login...");
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login?expired=true";
+      }
+      return Promise.reject(error);
+    }
+
     const isNetworkError = error.message?.includes("Network Error") || 
                            error.code === "ECONNABORTED" || 
                            error.message?.includes("ERR_CONNECTION_REFUSED");
@@ -305,7 +349,12 @@ export const apiService = {
   // Attendance
   getAttendance: (date: string, schoolId?: number, academicYearId?: number, params?: PaginatedParams) =>
     api.get("/attendance", { params: { date, schoolId, academicYearId, ...params } }),
-  markAttendance: (data: any) => api.post("/attendance", data),
+  markAttendance: (data: any) => {
+    if (Array.isArray(data)) {
+      return api.post("/attendance/bulk", data);
+    }
+    return api.post("/attendance", data);
+  },
 
   // Fees
   getFees: (schoolId?: number, academicYearId?: number, params?: PaginatedParams) => api.get("/fees", { params: { schoolId, academicYearId, ...params } }),
@@ -348,6 +397,11 @@ export const apiService = {
   createReligion: (data: any) => api.post("/masters/religions", data),
   updateReligion: (id: number, data: any) => api.put(`/masters/religions/${id}`, data),
   deleteReligion: (id: number) => api.delete(`/masters/religions/${id}`),
+
+  getSchoolSections: (params?: PaginatedParams) => api.get("/masters/school-sections", { params }),
+  createSchoolSection: (data: any) => api.post("/masters/school-sections", data),
+  updateSchoolSection: (id: number, data: any) => api.put(`/masters/school-sections/${id}`, data),
+  deleteSchoolSection: (id: number) => api.delete(`/masters/school-sections/${id}`),
 
   getStates: (params?: PaginatedParams) => api.get("/masters/states", { params }),
   createState: (data: any) => api.post("/masters/states", data),

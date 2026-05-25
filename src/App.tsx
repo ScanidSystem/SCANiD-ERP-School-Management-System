@@ -91,6 +91,7 @@ export default function App() {
               onUserUpdate={handleUpdateUser} 
               toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
             />
+            <Breadcrumbs />
             <main className="flex-1 overflow-auto p-6 min-w-0">
               <Routes>
                 <Route path="/" element={<Dashboard user={user} />} />
@@ -124,6 +125,7 @@ export default function App() {
                     <Route path="/configuration/religions" element={<Configuration user={user} defaultTab="religions" />} />
                     <Route path="/configuration/states" element={<Configuration user={user} defaultTab="states" />} />
                     <Route path="/configuration/cities" element={<Configuration user={user} defaultTab="cities" />} />
+                    <Route path="/configuration/school-sections" element={<Configuration user={user} defaultTab="school-sections" />} />
                     <Route path="/configuration/blood-groups" element={<Configuration user={user} defaultTab="blood-groups" />} />
                     <Route path="/configuration/houses" element={<Configuration user={user} defaultTab="houses" />} />
                     <Route path="/configuration/admission-types" element={<Configuration user={user} defaultTab="admission-types" />} />
