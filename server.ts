@@ -24,6 +24,36 @@ async function startServer() {
     next();
   });
 
+  // Keep track of the real .NET backend online status via periodic health checks
+  let isBackendOnline = false;
+  function checkBackendHealth() {
+    const req = http.get("http://127.0.0.1:5000/api/health", (res) => {
+      isBackendOnline = res.statusCode === 200;
+      req.destroy();
+    });
+    req.on("error", () => {
+      isBackendOnline = false;
+    });
+    req.setTimeout(1000, () => {
+      isBackendOnline = false;
+      req.destroy();
+    });
+  }
+  checkBackendHealth();
+  // Probe the .NET backend API every 5 seconds
+  setInterval(checkBackendHealth, 5000);
+
+  // Dynamic route redirection middleware: Proxy to the real .NET API if it is running,
+  // else fall back to the in-memory mock handlers registered below. This ensures seamless
+  // transitions between mocked offline state and active live DB workflows.
+  let apiProxyInstance: any = null;
+  app.use((req, res, next) => {
+    if (isBackendOnline && apiProxyInstance && (req.url.startsWith('/api') || req.url.startsWith('/uploads') || req.url.startsWith('/photos') || req.url.startsWith('/SCANiD_ERP_API'))) {
+      return apiProxyInstance(req, res, next);
+    }
+    next();
+  });
+
   const dbPath = path.join(process.cwd(), "database", "db.json");
   const backendWwwRoot = path.join(process.cwd(), 'backend', 'ScanID.Api', 'wwwroot');
   const uploadsDir = path.join(backendWwwRoot, 'uploads');
@@ -1100,6 +1130,7 @@ async function startServer() {
       }
     }
   });
+  apiProxyInstance = apiProxy;
 
   // Proxy as a fallback for routes NOT handled by the mocks above
   app.use(['/api', '/uploads', '/photos', '/SCANiD_ERP_API'], apiProxy);

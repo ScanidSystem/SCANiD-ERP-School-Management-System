@@ -379,6 +379,19 @@ namespace ScanID.Api.Services
             );
         }
 
+        public async Task<bool> SavePhotoPathAsync(int id, string path)
+        {
+            return await ExecuteWithRetryAsync(async () =>
+            {
+                // Execute a direct parameterized raw SQL query to update the photo path, 
+                // avoiding any EF Core change tracking issues with disconnected entities.
+                var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"UPDATE [dbo].[Students] SET [ProfilePhotoPath] = {path}, [ModifiedOn] = GETUTCDATE() WHERE [Id] = {id}"
+                );
+                return rowsAffected > 0;
+            });
+        }
+
         public async Task<bool> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync() > 0;

@@ -51,6 +51,11 @@ namespace ScanID.Api.Interfaces
         Task<IEnumerable<Student>> GetStudentsForExportAsync(int? schoolId);
 
         /// <summary>
+        /// Saves the student profile photo path securely and directly to the database.
+        /// </summary>
+        Task<bool> SavePhotoPathAsync(int id, string path);
+
+        /// <summary>
         /// Commits all entity tracking modifications.
         /// </summary>
         Task<bool> SaveChangesAsync();

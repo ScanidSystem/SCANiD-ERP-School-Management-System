@@ -420,7 +420,8 @@ namespace ScanID.Api.Controllers
                 student.ProfilePhotoPath = relativePath;
                 student.ModifiedOn = DateTime.Now;
 
-                await _studentService.SaveChangesAsync();
+                var success = await _studentService.SavePhotoPathAsync(id, relativePath);
+                if (!success) return StatusCode(500, "Failed to save student photo path to database.");
 
                 return Ok(new
                 {

@@ -86,6 +86,20 @@ namespace ScanID.Api.Controllers
         }
 
         /// <summary>
+        /// Removes a school record (soft delete handled by service).
+        /// </summary>
+        /// <param name="id">The school ID to delete.</param>
+        /// <returns>No content on success.</returns>
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteSchool(int id)
+        {
+            var success = await _schoolService.DeleteSchoolAsync(id);
+            if (!success) return NotFound();
+
+            return NoContent();
+        }
+
+        /// <summary>
         /// Updates a school's identity image (logo) by saving it to the server filesystem.
         /// </summary>
         /// <param name="id">The school ID.</param>

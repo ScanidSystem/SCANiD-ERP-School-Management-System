@@ -162,12 +162,12 @@ namespace ScanID.Api.Services
         {
             return await ExecuteWithRetryAsync(async () =>
             {
-                var school = await _context.Schools.FindAsync(id);
-                if (school == null) return false;
-
-                school.ProfilePhotoPath = path;
-                school.ModifiedOn = DateTime.Now;
-                return await _context.SaveChangesAsync() > 0;
+                // Core optimization: Update ProfilePhotoPath directly with parameterized SQL execution
+                // to completely bypass EF Core ChangeTracker and avoid save-concurrency issues.
+                var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"UPDATE [dbo].[Schools] SET [ProfilePhotoPath] = {path}, [ModifiedOn] = GETUTCDATE() WHERE [Id] = {id}"
+                );
+                return rowsAffected > 0;
             });
         }
     }
