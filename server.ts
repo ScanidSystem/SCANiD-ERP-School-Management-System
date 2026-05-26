@@ -6,6 +6,8 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import http from "http";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import fs from "fs";
+import multer from "multer";
 
 async function startServer() {
   const app = express();
@@ -22,13 +24,51 @@ async function startServer() {
     next();
   });
 
-  // Mock data arrays for basic management
-  let schools = [
+  const dbPath = path.join(process.cwd(), "database", "db.json");
+  const backendWwwRoot = path.join(process.cwd(), 'backend', 'ScanID.Api', 'wwwroot');
+  const uploadsDir = path.join(backendWwwRoot, 'uploads');
+  const photosDir = path.join(backendWwwRoot, 'photos');
+
+  // Create folders dynamically if they do not exist
+  if (!fs.existsSync(path.dirname(dbPath))) {
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+  }
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  if (!fs.existsSync(photosDir)) {
+    fs.mkdirSync(photosDir, { recursive: true });
+  }
+
+  // Multer Storage Configuration
+  const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, uploadsDir);
+    },
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname) || ".png";
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, uniqueSuffix + ext);
+    }
+  });
+  const upload = multer({ storage });
+
+  let dbData: any = {};
+  if (fs.existsSync(dbPath)) {
+    try {
+      dbData = JSON.parse(fs.readFileSync(dbPath, "utf8"));
+    } catch (e) {
+      console.error("Error loading db.json, using defaults", e);
+    }
+  }
+
+  // Mock data arrays for basic management (persisted dynamically in db.json)
+  let schools = dbData.schools || [
     { id: 1, name: "SCANiD PRIMARY SCHOOL", code: "SPS001", address: "MUMBAI, MAHARASHTRA", email: "pri@scanid.com", phone: "9876543210", totalStudents: 450, status: "Active" },
     { id: 2, name: "SCANiD SECONDARY HIGH SCHOOL", code: "SSHS002", address: "PUNE, MAHARASHTRA", email: "sec@scanid.com", phone: "9876543211", totalStudents: 620, status: "Active" }
   ];
 
-  let teachers = [
+  let teachers = dbData.teachers || [
     { 
       id: 1, 
       userId: 3, 
@@ -46,7 +86,7 @@ async function startServer() {
     }
   ];
 
-  let students: any[] = [
+  let students: any[] = dbData.students || [
     { 
       id: 1, 
       grNo: "REG1001", 
@@ -180,44 +220,44 @@ async function startServer() {
   ];
   
   // Master Data Mock Arrays
-  let standards = [{ id: 1, name: "1st" }, { id: 2, name: "2nd" }, { id: 3, name: "3rd" }, { id: 4, name: "4th" }, { id: 5, name: "5th" }, { id: 6, name: "LKG" }, { id: 7, name: "UKG" }];
-  let sections = [{ id: 1, name: "A" }, { id: 2, name: "B" }, { id: 3, name: "C" }];
-  let academicYears = [{ id: 1, name: "2024-2025", isCurrent: false }, { id: 2, name: "2025-2026", isCurrent: true }];
-  let castes = [{ id: 1, name: "OPEN" }, { id: 2, name: "OBC" }, { id: 3, name: "SC" }, { id: 4, name: "ST" }];
-  let subCastes = [{ id: 1, casteId: 2, name: "General" }, { id: 2, casteId: 2, name: "Kunbi" }];
-  let religions = [{ id: 1, name: "HINDU" }, { id: 2, name: "MUSLIM" }, { id: 3, name: "CHRISTIAN" }, { id: 4, name: "SIKH" }];
-  let states = [{ id: 1, name: "Maharashtra" }];
-  let cities = [{ id: 1, stateId: 1, name: "Mumbai" }];
-  let bloodGroups = [{ id: 1, name: "A+" }, { id: 2, name: "B+" }, { id: 3, name: "O+" }, { id: 4, name: "AB+" }];
-  let houses = [{ id: 1, name: "RED", color: "#EF4444" }, { id: 2, name: "BLUE", color: "#3B82F6" }, { id: 3, name: "GREEN", color: "#10B981" }, { id: 4, name: "YELLOW", color: "#F59E0B" }];
-  let admissionTypes = [{ id: 1, name: "REGULAR" }, { id: 2, name: "RTE" }, { id: 3, name: "STAFF CHILD" }];
-  let categories = [{ id: 1, name: "General" }];
-  let sessions = [{ id: 1, name: "Morning" }];
-  let batches = [{ id: 1, name: "Batch A" }];
-  let shifts = [{ id: 1, name: "MORNING" }, { id: 2, name: "AFTERNOON" }];
-  let subjects = [{ id: 1, name: "Mathematics" }, { id: 2, name: "Science" }];
-  let examTypes = [{ id: 1, name: "Mid-Term" }, { id: 2, name: "Final" }];
-  let designations = [{ id: 1, name: "Principal" }, { id: 2, name: "Teacher" }];
-  let occupations = [{ id: 1, name: "Service" }, { id: 2, name: "Business" }];
-  let schoolSections = [{ id: 1, name: "Primary" }, { id: 2, name: "Secondary" }, { id: 3, name: "Higher Secondary" }];
-  let roles = [{ id: 1, name: "superadmin" }, { id: 2, name: "admin" }, { id: 3, name: "teacher" }];
+  let standards = dbData.standards || [{ id: 1, name: "1st" }, { id: 2, name: "2nd" }, { id: 3, name: "3rd" }, { id: 4, name: "4th" }, { id: 5, name: "5th" }, { id: 6, name: "LKG" }, { id: 7, name: "UKG" }];
+  let sections = dbData.sections || [{ id: 1, name: "A" }, { id: 2, name: "B" }, { id: 3, name: "C" }];
+  let academicYears = dbData.academicYears || [{ id: 1, name: "2024-2025", isCurrent: false }, { id: 2, name: "2025-2026", isCurrent: true }];
+  let castes = dbData.castes || [{ id: 1, name: "OPEN" }, { id: 2, name: "OBC" }, { id: 3, name: "SC" }, { id: 4, name: "ST" }];
+  let subCastes = dbData.subCastes || [{ id: 1, casteId: 2, name: "General" }, { id: 2, casteId: 2, name: "Kunbi" }];
+  let religions = dbData.religions || [{ id: 1, name: "HINDU" }, { id: 2, name: "MUSLIM" }, { id: 3, name: "CHRISTIAN" }, { id: 4, name: "SIKH" }];
+  let states = dbData.states || [{ id: 1, name: "Maharashtra" }];
+  let cities = dbData.cities || [{ id: 1, stateId: 1, name: "Mumbai" }];
+  let bloodGroups = dbData.bloodGroups || [{ id: 1, name: "A+" }, { id: 2, name: "B+" }, { id: 3, name: "O+" }, { id: 4, name: "AB+" }];
+  let houses = dbData.houses || [{ id: 1, name: "RED", color: "#EF4444" }, { id: 2, name: "BLUE", color: "#3B82F6" }, { id: 3, name: "GREEN", color: "#10B981" }, { id: 4, name: "YELLOW", color: "#F59E0B" }];
+  let admissionTypes = dbData.admissionTypes || [{ id: 1, name: "REGULAR" }, { id: 2, name: "RTE" }, { id: 3, name: "STAFF CHILD" }];
+  let categories = dbData.categories || [{ id: 1, name: "General" }];
+  let sessions = dbData.sessions || [{ id: 1, name: "Morning" }];
+  let batches = dbData.batches || [{ id: 1, name: "Batch A" }];
+  let shifts = dbData.shifts || [{ id: 1, name: "MORNING" }, { id: 2, name: "AFTERNOON" }];
+  let subjects = dbData.subjects || [{ id: 1, name: "Mathematics" }, { id: 2, name: "Science" }];
+  let examTypes = dbData.examTypes || [{ id: 1, name: "Mid-Term" }, { id: 2, name: "Final" }];
+  let designations = dbData.designations || [{ id: 1, name: "Principal" }, { id: 2, name: "Teacher" }];
+  let occupations = dbData.occupations || [{ id: 1, name: "Service" }, { id: 2, name: "Business" }];
+  let schoolSections = dbData.schoolSections || [{ id: 1, name: "Primary" }, { id: 2, name: "Secondary" }, { id: 3, name: "Higher Secondary" }];
+  let roles = dbData.roles || [{ id: 1, name: "superadmin" }, { id: 2, name: "admin" }, { id: 3, name: "teacher" }];
 
-  let attendance = [
+  let attendance = dbData.attendance || [
     { id: 1, studentId: 1, date: new Date().toISOString().split('T')[0], status: "Present" },
     { id: 2, studentId: 2, date: new Date().toISOString().split('T')[0], status: "Absent" }
   ];
 
-  let notifications = [
+  let notifications = dbData.notifications || [
     { id: 1, title: "System Update", message: "New academic module is live.", type: "info", isRead: false, createdAt: new Date().toISOString() },
     { id: 2, title: "Fee Reminder", message: "Late fee applies after 30th May.", type: "warning", isRead: true, createdAt: new Date().toISOString() }
   ];
 
-  let messages = [
+  let messages = dbData.messages || [
     { id: 1, senderId: 1, receiverId: 2, subject: "Meeting Invitation", content: "Let's discuss the new curriculum.", isRead: false, type: "Direct", createdAt: new Date().toISOString() },
     { id: 2, senderId: 2, receiverId: 1, subject: "Re: Meeting Invitation", content: "Sure, let's meet tomorrow.", isRead: true, type: "Direct", createdAt: new Date().toISOString() }
   ];
 
-  let navigationItems = [
+  let navigationItems = dbData.navigationItems || [
     // IDs: SuperAdmin=1, Admin=2, Teacher=3, Student=4, Parent=5, All=0
     // Root level items
     { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roleIds: [1, 2, 3, 4, 5] },
@@ -309,10 +349,49 @@ async function startServer() {
   };
 
   // Users
-  let users = [
+  let users = dbData.users || [
     { id: 1, fullName: "Global Admin", username: "superadmin", email: "admin@scanid.com", role: "superadmin", status: "Active" },
     { id: 2, fullName: "Teacher One", username: "teacher01", email: "teacher01@scanid.com", role: "teacher", status: "Active" }
   ];
+
+  const saveDb = () => {
+    try {
+      const data = {
+        schools,
+        teachers,
+        students,
+        users,
+        navigationItems,
+        attendance,
+        notifications,
+        messages,
+        standards,
+        sections,
+        academicYears,
+        castes,
+        subCastes,
+        religions,
+        states,
+        cities,
+        bloodGroups,
+        houses,
+        admissionTypes,
+        categories,
+        sessions,
+        batches,
+        shifts,
+        subjects,
+        examTypes,
+        designations,
+        occupations,
+        schoolSections,
+        roles
+      };
+      fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), "utf8");
+    } catch (e) {
+      console.error("Error saving to db.json", e);
+    }
+  };
 
   const applySortingAndPagination = (data: any[], query: any) => {
     let result = [...data];
@@ -418,8 +497,9 @@ async function startServer() {
     res.json(applySortingAndPagination(schools, req.query));
   });
   app.post("/api/schools", (req, res) => {
-    const newItem = { id: schools.length + 1, ...req.body };
+    const newItem = { id: schools.length > 0 ? Math.max(...schools.map(s => s.id)) + 1 : 1, ...req.body };
     schools.push(newItem);
+    saveDb();
     res.status(201).json({ data: newItem });
   });
 
@@ -428,6 +508,7 @@ async function startServer() {
     const index = schools.findIndex(s => s.id === id);
     if (index !== -1) {
       schools[index] = { ...schools[index], ...req.body };
+      saveDb();
       res.json({ data: schools[index] });
     } else {
       res.status(404).json({ message: "School not found" });
@@ -437,6 +518,7 @@ async function startServer() {
   app.delete("/api/schools/:id", (req, res) => {
     const id = parseInt(req.params.id);
     schools = schools.filter(s => s.id !== id);
+    saveDb();
     res.status(204).send();
   });
 
@@ -494,6 +576,7 @@ async function startServer() {
       uniformId: body.uniformId || body.uniformid || "",
     };
     students.push(newStudent);
+    saveDb();
     res.status(201).json({ data: newStudent });
   });
 
@@ -562,6 +645,7 @@ async function startServer() {
     }));
 
     students = [...students, ...newItems];
+    saveDb();
     res.status(201).json({ success: true, count: newItems.length });
   });
 
@@ -589,6 +673,7 @@ async function startServer() {
         fullName: body.fullName || `${body.firstName || body.FNAME || students[index].firstName || ""} ${body.lastName || body.LNAME || students[index].lastName || ""}`.trim()
       };
       students[index] = updated;
+      saveDb();
       res.json({ data: students[index] });
     } else {
       res.status(404).json({ message: "Student not found" });
@@ -598,33 +683,60 @@ async function startServer() {
   app.delete("/api/students/:id", (req, res) => {
     const id = parseInt(req.params.id);
     students = students.filter(s => s.id !== id);
+    saveDb();
     res.json({ success: true });
   });
 
-  app.post("/api/students/:id/photo", (req, res) => {
+  app.post("/api/students/:id/photo", upload.single("file"), (req, res) => {
     const id = parseInt(req.params.id);
     const index = students.findIndex(s => s.id === id);
-    const mockPath = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + id + "_" + Date.now();
-    if (index !== -1) {
-      // @ts-ignore
-      students[index].photo = mockPath;
-      // @ts-ignore
-      students[index].ProfilePhotoPath = mockPath;
+    if (req.file) {
+      const webPath = `/uploads/${req.file.filename}`;
+      if (index !== -1) {
+        students[index].photo = webPath;
+        students[index].profilePhotoPath = webPath;
+        students[index].ProfilePhotoPath = webPath;
+        saveDb();
+      }
+      res.json({ data: { path: webPath } });
+    } else {
+      res.status(400).json({ message: "No photo file provided" });
     }
-    res.json({ data: { path: mockPath } });
   });
 
-  app.post("/api/schools/:id/photo", (req, res) => {
+  app.post("/api/schools/:id/photo", upload.single("file"), (req, res) => {
     const id = parseInt(req.params.id);
     const index = schools.findIndex(s => s.id === id);
-    const mockPath = "https://api.dicebear.com/7.x/initials/svg?seed=" + id + "_" + Date.now();
-    if (index !== -1) {
-      // @ts-ignore
-      schools[index].ProfilePhotoPath = mockPath;
-      // @ts-ignore
-      schools[index].profilePhotoPath = mockPath;
+    if (req.file) {
+      const webPath = `/uploads/${req.file.filename}`;
+      if (index !== -1) {
+        schools[index].photo = webPath;
+        schools[index].profilePhotoPath = webPath;
+        schools[index].ProfilePhotoPath = webPath;
+        schools[index].logo = webPath;
+        saveDb();
+      }
+      res.json({ data: { path: webPath } });
+    } else {
+      res.status(400).json({ message: "No photo file provided" });
     }
-    res.json({ data: { path: mockPath } });
+  });
+
+  app.post("/api/teachers/:id/photo", upload.single("file"), (req, res) => {
+    const id = parseInt(req.params.id);
+    const index = teachers.findIndex(t => t.id === id);
+    if (req.file) {
+      const webPath = `/uploads/${req.file.filename}`;
+      if (index !== -1) {
+        teachers[index].photo = webPath;
+        teachers[index].profilePhotoPath = webPath;
+        teachers[index].ProfilePhotoPath = webPath;
+        saveDb();
+      }
+      res.json({ data: { path: webPath } });
+    } else {
+      res.status(400).json({ message: "No photo file provided" });
+    }
   });
 
   // Attendance
@@ -711,6 +823,7 @@ async function startServer() {
       ...req.body
     };
     teachers.push(newItem);
+    saveDb();
     res.status(201).json({ data: newItem });
   });
 
@@ -719,6 +832,7 @@ async function startServer() {
     const index = teachers.findIndex(t => t.id === id);
     if (index !== -1) {
       teachers[index] = { ...teachers[index], ...req.body };
+      saveDb();
       res.json({ data: teachers[index] });
     } else {
       res.status(404).json({ message: "Teacher not found" });
@@ -728,6 +842,7 @@ async function startServer() {
   app.delete("/api/teachers/:id", (req, res) => {
     const id = parseInt(req.params.id);
     teachers = teachers.filter(t => t.id !== id);
+    saveDb();
     res.status(204).send();
   });
   app.get("/api/fees", (req, res) => res.json({ data: [] }));
@@ -741,8 +856,9 @@ async function startServer() {
     });
     
     app.post(`/api/masters/${resourceName}`, (req, res) => {
-      const newItem = { id: dataArray.length + 1, ...req.body, isActive: true };
+      const newItem = { id: dataArray.length > 0 ? Math.max(...dataArray.map(item => item.id)) + 1 : 1, ...req.body, isActive: true };
       dataArray.push(newItem);
+      saveDb();
       res.status(201).json({ data: newItem });
     });
 
@@ -751,6 +867,7 @@ async function startServer() {
       const index = dataArray.findIndex(item => item.id === id);
       if (index !== -1) {
         dataArray[index] = { ...dataArray[index], ...req.body };
+        saveDb();
         res.json({ data: dataArray[index] });
       } else {
         res.status(404).json({ message: "Not found" });
@@ -762,6 +879,7 @@ async function startServer() {
       const index = dataArray.findIndex(item => item.id === id);
       if (index !== -1) {
         dataArray.splice(index, 1);
+        saveDb();
         res.status(204).send();
       } else {
         res.status(404).json({ message: "Not found" });
@@ -779,8 +897,9 @@ async function startServer() {
     res.json(applySortingAndPagination(filtered, req.query));
   });
   app.post("/api/users", (req, res) => {
-    const newItem = { id: users.length + 1, ...req.body, status: "Active" };
+    const newItem = { id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1, ...req.body, status: "Active" };
     users.push(newItem);
+    saveDb();
     res.status(201).json({ data: newItem });
   });
   app.put("/api/users/:id", (req, res) => {
@@ -788,6 +907,7 @@ async function startServer() {
     const index = users.findIndex(u => u.id === id);
     if (index !== -1) {
       users[index] = { ...users[index], ...req.body };
+      saveDb();
       res.json({ data: users[index] });
     } else {
       res.status(404).json({ message: "Not found" });
@@ -796,6 +916,7 @@ async function startServer() {
   app.delete("/api/users/:id", (req, res) => {
     const id = parseInt(req.params.id);
     users = users.filter(u => u.id !== id);
+    saveDb();
     res.status(204).send();
   });
   app.put("/api/users/:id/role", (req, res) => {
@@ -817,6 +938,7 @@ async function startServer() {
       userObj.roleId = roleId;
       userObj.RoleId = roleId; // Support both cases
       
+      saveDb();
       res.json({ success: true, data: userObj });
     } else {
       res.status(404).json({ message: "Not found" });
@@ -983,9 +1105,8 @@ async function startServer() {
   app.use(['/api', '/uploads', '/photos', '/SCANiD_ERP_API'], apiProxy);
 
   // Safeguard: Serve static files from backend/ScanID.Api/wwwroot for uploads and photos if the proxy backend is unavailable
-  const backendWwwRoot = path.join(process.cwd(), 'backend/ScanID.Api/wwwroot');
-  app.use('/uploads', express.static(path.join(backendWwwRoot, 'uploads')));
-  app.use('/photos', express.static(path.join(backendWwwRoot, 'photos')));
+  app.use('/uploads', express.static(uploadsDir));
+  app.use('/photos', express.static(photosDir));
 
   app.all("/api/*", (req, res) => {
     console.warn(`[404] API Route Not Found: ${req.method} ${req.url}`);

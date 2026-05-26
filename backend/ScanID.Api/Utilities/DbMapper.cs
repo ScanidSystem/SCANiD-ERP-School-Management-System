@@ -159,7 +159,11 @@ namespace ScanID.Api.Utilities
                 }
                 if (columns.Contains("SchoolName") && reader["SchoolName"] != DBNull.Value)
                 {
-                    student.School = new Models.School { Name = reader["SchoolName"].ToString() ?? string.Empty };
+                    student.School = new Models.School 
+                    { 
+                        Id = student.SchoolId,
+                        Name = reader["SchoolName"].ToString() ?? string.Empty 
+                    };
                 }
                 if (columns.Contains("CityName") && reader["CityName"] != DBNull.Value)
                 {

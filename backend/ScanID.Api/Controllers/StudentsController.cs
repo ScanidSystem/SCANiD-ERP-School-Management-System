@@ -358,7 +358,15 @@ namespace ScanID.Api.Controllers
 
             try
             {
-                var schoolIdVal = student.SchoolId > 0 ? student.SchoolId.ToString() : (student.School?.Id.ToString() ?? "0");
+                if (student.SchoolId <= 0)
+                {
+                    var fullStudent = await _studentService.GetStudentByIdAsync(id);
+                    if (fullStudent != null && fullStudent.SchoolId > 0)
+                    {
+                        student.SchoolId = fullStudent.SchoolId;
+                    }
+                }
+                var schoolIdVal = student.SchoolId > 0 ? student.SchoolId.ToString() : (student.School?.Id > 0 ? student.School.Id.ToString() : "1");
                 var schoolID = SanitizeFolderName(schoolIdVal);
                 var relativeFolder = Path.Combine("photos", schoolID);
 
