@@ -124,9 +124,11 @@ namespace ScanID.Api.Controllers
                 }
 
                 // Generate a 12-digit random number as requested by the user
+                var extension = Path.GetExtension(file.FileName);
+                if (string.IsNullOrEmpty(extension)) extension = ".png";
                 var random = new Random();
                 var random12Digit = string.Concat(Enumerable.Range(0, 12).Select(_ => random.Next(10).ToString()));
-                var fileName = $"{random12Digit}.png";
+                var fileName = $"{random12Digit}{extension}";
                 var filePath = Path.Combine(uploadsFolder, fileName);
                 var relativePath = $"{relativeFolder.Replace("\\", "/")}/{fileName}";
 

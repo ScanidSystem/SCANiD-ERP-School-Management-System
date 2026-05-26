@@ -423,6 +423,23 @@ async function startServer() {
     res.status(201).json({ data: newItem });
   });
 
+  app.put("/api/schools/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    const index = schools.findIndex(s => s.id === id);
+    if (index !== -1) {
+      schools[index] = { ...schools[index], ...req.body };
+      res.json({ data: schools[index] });
+    } else {
+      res.status(404).json({ message: "School not found" });
+    }
+  });
+
+  app.delete("/api/schools/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    schools = schools.filter(s => s.id !== id);
+    res.status(204).send();
+  });
+
   // Students
   app.get("/api/students", (req, res) => {
     const schoolId = req.query.schoolId ? parseInt(req.query.schoolId as string) : null;
@@ -785,8 +802,22 @@ async function startServer() {
     const id = parseInt(req.params.id);
     const index = users.findIndex(u => u.id === id);
     if (index !== -1) {
-      users[index].role = req.body.role;
-      res.json({ success: true, data: users[index] });
+      const roleStr = req.body.role || "";
+      const userObj: any = users[index];
+      userObj.role = roleStr;
+      
+      let roleId = 4; // default Student
+      const rLower = roleStr.toLowerCase().replace(/\s+/g, '');
+      if (rLower === "superadmin") roleId = 1;
+      else if (rLower === "admin") roleId = 2;
+      else if (rLower === "teacher") roleId = 3;
+      else if (rLower === "student") roleId = 4;
+      else if (rLower === "parent") roleId = 5;
+      
+      userObj.roleId = roleId;
+      userObj.RoleId = roleId; // Support both cases
+      
+      res.json({ success: true, data: userObj });
     } else {
       res.status(404).json({ message: "Not found" });
     }

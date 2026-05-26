@@ -71,6 +71,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn, parseSafeInt, resolvePhotoUrl } from "@/lib/utils";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 interface Teacher {
   id: string;
@@ -292,6 +293,35 @@ export default function Teachers({ user }: { user: any }) {
   };
 
   const filteredTeachers = teachers;
+
+  const handleExport = () => {
+    try {
+      const exportData = filteredTeachers.map((t: any) => ({
+        "Faculty ID": t.employeeId || t.id || "",
+        "Name": t.name || "",
+        "Email": t.email || "",
+        "Core Expertise": t.subject || t.department || "",
+        "Credentials": t.qualification || "",
+        "Status": t.status || "Active",
+        "Phone": t.contactNumber || t.phone || ""
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      XLSX.utils.book_append_sheet(wb, ws, "Faculty Registry");
+
+      const wscols = [
+        { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 12 }, { wch: 15 }
+      ];
+      ws['!cols'] = wscols;
+
+      XLSX.writeFile(wb, `Faculty_Registry_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success("Faculty registry exported to Excel successfully!");
+    } catch (e) {
+      console.error("Teacher export error:", e);
+      toast.error("Failed to generate Excel export.");
+    }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -820,7 +850,7 @@ export default function Teachers({ user }: { user: any }) {
               />
             </div>
             <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="h-10 px-4 rounded-xl border-slate-100 text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest">
+                <Button onClick={handleExport} variant="outline" size="sm" className="h-10 px-4 rounded-xl border-slate-100 text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest">
                   <Download size={16} className="mr-2" /> Export
                 </Button>
                 <div className="h-6 w-px bg-slate-100 mx-2" />

@@ -358,7 +358,8 @@ namespace ScanID.Api.Controllers
 
             try
             {
-                var schoolID = SanitizeFolderName(student.School?.Id.ToString() ?? student.SchoolId.ToString());
+                var schoolIdVal = student.SchoolId > 0 ? student.SchoolId.ToString() : (student.School?.Id.ToString() ?? "0");
+                var schoolID = SanitizeFolderName(schoolIdVal);
                 var relativeFolder = Path.Combine("photos", schoolID);
 
                 string webRootPath = _environment.WebRootPath;
@@ -379,7 +380,8 @@ namespace ScanID.Api.Controllers
                     Directory.CreateDirectory(uploadsFolder);
                 }
 
-                var extension = ".png";
+                var extension = Path.GetExtension(file.FileName);
+                if (string.IsNullOrEmpty(extension)) extension = ".png";
                 
                 Random res = new Random();
                 string random12Digit = "";

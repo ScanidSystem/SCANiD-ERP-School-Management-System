@@ -1008,7 +1008,7 @@ export default function Configuration({
                             </TableCell>
                             <TableCell>
                               <Select
-                                value={item.role}
+                                value={item.role ? item.role.toLowerCase().replace(/\s+/g, "") : ""}
                                 onValueChange={async (newRole) => {
                                   try {
                                     await apiService.updateUserRole(
@@ -1604,7 +1604,7 @@ export default function Configuration({
                       System Role
                     </Label>
                     <Select
-                      value={formData.role || "student"}
+                      value={formData.role ? formData.role.toLowerCase().replace(/\s+/g, "") : "student"}
                       onValueChange={(v) => {
                         setFormData({ ...formData, role: v });
                       }}
