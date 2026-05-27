@@ -935,45 +935,50 @@ IF OBJECT_ID('dbo.sp_ManageStudent', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_Mana
 GO
 CREATE PROCEDURE dbo.sp_ManageStudent
     @Action NVARCHAR(10), -- 'INSERT', 'UPDATE', 'DELETE', 'PHOTO'
-    @Id INT = NULL,
-    @RegistrationNumber NVARCHAR(100) = NULL,
-    @Name NVARCHAR(100) = NULL,
-    @SchoolId INT = NULL,
-    @StandardId INT = NULL,
-    @SectionId INT = NULL,
-    @AcademicYearId INT = NULL,
-    @RollNumber INT = NULL,
-    @GrNo NVARCHAR(100) = NULL,
-    @Gender NVARCHAR(50) = NULL,
-    @DateOfBirth NVARCHAR(50) = NULL,
-    @CategoryId INT = NULL,
-    @ReligionId INT = NULL,
-    @CasteId INT = NULL,
-    @Status NVARCHAR(50) = NULL,
-    @FatherContactNo NVARCHAR(200) = NULL,
-    @Address NVARCHAR(500) = NULL,
-    @MotherName NVARCHAR(100) = NULL,
-    @AadharCard NVARCHAR(100) = NULL,
-    @Rfid NVARCHAR(100) = NULL,
-    @ShiftId INT = NULL,
-    @BloodGroupId INT = NULL,
-    @HouseId INT = NULL,
-    @Sms BIT = 0,
-    @UniformId NVARCHAR(500) = NULL,
-    @MotherContactNo NVARCHAR(200) = NULL,
-    @ProfilePhotoPath NVARCHAR(255) = NULL,
-    @SchoolSectionId INT = NULL,
-    @AdmissionDate NVARCHAR(200) = NULL,
-    @Email NVARCHAR(255) = NULL,
-    @CityId INT = NULL,
-    @StateId INT = NULL,
-    @IsStateBoard BIT = 0,
-    @DigitalUniform BIT = 0,
-    @DigitalNotebook BIT = 0
+@Id INT = NULL,
+@RegistrationNumber NVARCHAR(100) = NULL,
+@Name NVARCHAR(100) = NULL,
+@FirstName NVARCHAR(100) = NULL,
+@MiddleName NVARCHAR(100) = NULL,
+@LastName NVARCHAR(100) = NULL,
+@SchoolId INT = NULL,
+@StandardId INT = NULL,
+@SectionId INT = NULL,
+@AcademicYearId INT = NULL,
+@RollNumber INT = NULL,
+@GrNo NVARCHAR(100) = NULL,
+@Gender NVARCHAR(50) = NULL,
+@DateOfBirth NVARCHAR(50) = NULL,
+@CategoryId INT = NULL,
+@ReligionId INT = NULL,
+@CasteId INT = NULL,
+@SubCasteId INT = NULL,
+@Status NVARCHAR(50) = NULL,
+@FatherContactNo NVARCHAR(200) = NULL,
+@Address NVARCHAR(500) = NULL,
+@MotherName NVARCHAR(100) = NULL,
+@AadharCard NVARCHAR(100) = NULL,
+@Rfid NVARCHAR(100) = NULL,
+@ShiftId INT = NULL,
+@BloodGroupId INT = NULL,
+@HouseId INT = NULL,
+@AdmissionTypeId INT = NULL,
+@Sms BIT = 0,
+@UniformId NVARCHAR(500) = NULL,
+@MotherContactNo NVARCHAR(200) = NULL,
+@ProfilePhotoPath NVARCHAR(255) = NULL,
+@SchoolSectionId INT = NULL,
+@AdmissionDate NVARCHAR(200) = NULL,
+@Email NVARCHAR(255) = NULL,
+@CityId INT = NULL,
+@StateId INT = NULL,
+@IsStateBoard BIT = 0,
+@DigitalUniform BIT = 0,
+@DigitalNotebook BIT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
-    SET XACT_ABORT ON;
+    SET XACT_ABORT ON; -- Ensures instant rollback on any fatal SQL runtime errors
 
     BEGIN TRY
         BEGIN TRANSACTION;
@@ -986,14 +991,14 @@ BEGIN
             END
 
             INSERT INTO [dbo].[Students] (
-                RegistrationNumber, Name, SchoolId, StandardId, SectionId, AcademicYearId, RollNumber, 
-                GrNo, Gender, DateOfBirth, CategoryId, ReligionId, CasteId, Status, FatherContactNo, Address, 
-                MotherName, AadharCard, Rfid, ShiftId, BloodGroupId, HouseId, Sms, UniformId,
+                RegistrationNumber, Name, FirstName, MiddleName, LastName, SchoolId, StandardId, SectionId, AcademicYearId, RollNumber, 
+                GrNo, Gender, DateOfBirth, CategoryId, ReligionId, CasteId, SubCasteId, Status, FatherContactNo, Address, 
+                MotherName, AadharCard, Rfid, ShiftId, BloodGroupId, HouseId, AdmissionTypeId, Sms, UniformId,
                 MotherContactNo, ProfilePhotoPath, SchoolSectionId, AdmissionDate, Email, CityId, StateId, IsStateBoard, DigitalUniform, DigitalNotebook, IsActive, IsDeleted, CreatedOn, ModifiedOn
             ) VALUES (
-                @RegistrationNumber, @Name, @SchoolId, @StandardId, @SectionId, @AcademicYearId, @RollNumber,
-                @GrNo, @Gender, @DateOfBirth, @CategoryId, @ReligionId, @CasteId, @Status, @FatherContactNo, @Address,
-                @MotherName, @AadharCard, @Rfid, @ShiftId, @BloodGroupId, @HouseId, @Sms, @UniformId,
+                @RegistrationNumber, @Name, @FirstName, @MiddleName, @LastName, @SchoolId, @StandardId, @SectionId, @AcademicYearId, @RollNumber,
+                @GrNo, @Gender, @DateOfBirth, @CategoryId, @ReligionId, @CasteId, @SubCasteId, @Status, @FatherContactNo, @Address,
+                @MotherName, @AadharCard, @Rfid, @ShiftId, @BloodGroupId, @HouseId, @AdmissionTypeId, @Sms, @UniformId,
                 @MotherContactNo, @ProfilePhotoPath, @SchoolSectionId, @AdmissionDate, @Email, @CityId, @StateId, @IsStateBoard, @DigitalUniform, @DigitalNotebook, 1, 0, GETUTCDATE(), GETUTCDATE()
             );
             SELECT SCOPE_IDENTITY();
@@ -1003,35 +1008,40 @@ BEGIN
             UPDATE [dbo].[Students] SET
                 RegistrationNumber = ISNULL(@RegistrationNumber, RegistrationNumber),
                 Name = ISNULL(@Name, Name),
-                SchoolId = ISNULL(@SchoolId, SchoolId),
-                StandardId = ISNULL(@StandardId, StandardId),
-                SectionId = ISNULL(@SectionId, SectionId),
-                AcademicYearId = ISNULL(@AcademicYearId, AcademicYearId),
+                FirstName = ISNULL(@FirstName, FirstName),
+                MiddleName = ISNULL(@MiddleName, MiddleName),
+                LastName = ISNULL(@LastName, LastName),
+                SchoolId = @SchoolId,
+                StandardId = @StandardId,
+                SectionId = @SectionId,
+                AcademicYearId = @AcademicYearId,
                 RollNumber = ISNULL(@RollNumber, RollNumber),
                 GrNo = ISNULL(@GrNo, GrNo),
                 Gender = ISNULL(@Gender, Gender),
                 DateOfBirth = ISNULL(@DateOfBirth, DateOfBirth),
-                CategoryId = ISNULL(@CategoryId, CategoryId),
-                ReligionId = ISNULL(@ReligionId, ReligionId),
-                CasteId = ISNULL(@CasteId, CasteId),
+                CategoryId = @CategoryId,
+                ReligionId = @ReligionId,
+                CasteId = @CasteId,
+                SubCasteId = @SubCasteId,                
                 Status = ISNULL(@Status, Status),
                 FatherContactNo = ISNULL(@FatherContactNo, FatherContactNo),
                 Address = ISNULL(@Address, Address),
                 MotherName = ISNULL(@MotherName, MotherName),
                 AadharCard = ISNULL(@AadharCard, AadharCard),
                 Rfid = ISNULL(@Rfid, Rfid),
-                ShiftId = ISNULL(@ShiftId, ShiftId),
-                BloodGroupId = ISNULL(@BloodGroupId, BloodGroupId),
-                HouseId = ISNULL(@HouseId, HouseId),
+                ShiftId = @ShiftId,
+                BloodGroupId = @BloodGroupId,
+                HouseId = @HouseId,
+                AdmissionTypeId = @AdmissionTypeId,
                 Sms = ISNULL(@Sms, Sms),
                 UniformId = ISNULL(@UniformId, UniformId),
                 MotherContactNo = ISNULL(@MotherContactNo, MotherContactNo),
                 ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
-                SchoolSectionId = ISNULL(@SchoolSectionId, SchoolSectionId),
+                SchoolSectionId = @SchoolSectionId,
                 AdmissionDate = ISNULL(@AdmissionDate, AdmissionDate),
                 Email = ISNULL(@Email, Email),
-                CityId = ISNULL(@CityId, CityId),
-                StateId = ISNULL(@StateId, StateId),
+                CityId = @CityId,
+                StateId = @StateId,
                 IsStateBoard = ISNULL(@IsStateBoard, IsStateBoard),
                 DigitalUniform = ISNULL(@DigitalUniform, DigitalUniform),
                 DigitalNotebook = ISNULL(@DigitalNotebook, DigitalNotebook),
@@ -1040,7 +1050,9 @@ BEGIN
         END
         ELSE IF @Action = 'DELETE'
         BEGIN
+        SET NOCOUNT OFF;  -- Temporarily allow row count to be returned
             UPDATE [dbo].[Students] SET IsDeleted = 1, IsActive = 0, ModifiedOn = GETUTCDATE() WHERE Id = @Id;
+         SET NOCOUNT ON;   -- Restore NOCOUNT
         END
         ELSE IF @Action = 'PHOTO'
         BEGIN

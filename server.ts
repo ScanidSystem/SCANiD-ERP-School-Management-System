@@ -1097,6 +1097,9 @@ async function startServer() {
     changeOrigin: true,
     secure: false,
     ws: true,
+    pathRewrite: {
+      "^/SCANiD_ERP_API": ""
+    },
     // Filter logic to only forward if it hasn't been handled by previous routes
     pathFilter: (pathname, req) => {
       return (pathname.startsWith('/api') || pathname.startsWith('/uploads') || pathname.startsWith('/photos') || pathname.startsWith('/SCANiD_ERP_API'));
@@ -1138,6 +1141,8 @@ async function startServer() {
   // Safeguard: Serve static files from backend/ScanID.Api/wwwroot for uploads and photos if the proxy backend is unavailable
   app.use('/uploads', express.static(uploadsDir));
   app.use('/photos', express.static(photosDir));
+  app.use('/SCANiD_ERP_API/uploads', express.static(uploadsDir));
+  app.use('/SCANiD_ERP_API/photos', express.static(photosDir));
 
   app.all("/api/*", (req, res) => {
     console.warn(`[404] API Route Not Found: ${req.method} ${req.url}`);
