@@ -859,7 +859,7 @@ async function startServer() {
 
   app.put("/api/teachers/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = teachers.findIndex(t => t.id === id);
+    const index = teachers.findIndex((t: any) => t.id === id);
     if (index !== -1) {
       teachers[index] = { ...teachers[index], ...req.body };
       saveDb();
@@ -871,7 +871,7 @@ async function startServer() {
 
   app.delete("/api/teachers/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    teachers = teachers.filter(t => t.id !== id);
+    teachers = teachers.filter((t: any) => t.id !== id);
     saveDb();
     res.status(204).send();
   });
@@ -922,19 +922,19 @@ async function startServer() {
     const roleId = req.query.roleId as string;
     let filtered = [...users];
     if (roleId) {
-      filtered = filtered.filter(u => u.role === roleId);
+      filtered = filtered.filter((u: any) => u.role === roleId);
     }
     res.json(applySortingAndPagination(filtered, req.query));
   });
   app.post("/api/users", (req, res) => {
-    const newItem = { id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1, ...req.body, status: "Active" };
+    const newItem = { id: users.length > 0 ? Math.max(...users.map((u: any) => u.id)) + 1 : 1, ...req.body, status: "Active" };
     users.push(newItem);
     saveDb();
     res.status(201).json({ data: newItem });
   });
   app.put("/api/users/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = users.findIndex(u => u.id === id);
+    const index = users.findIndex((u: any) => u.id === id);
     if (index !== -1) {
       users[index] = { ...users[index], ...req.body };
       saveDb();
@@ -945,13 +945,13 @@ async function startServer() {
   });
   app.delete("/api/users/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    users = users.filter(u => u.id !== id);
+    users = users.filter((u: any) => u.id !== id);
     saveDb();
     res.status(204).send();
   });
   app.put("/api/users/:id/role", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = users.findIndex(u => u.id === id);
+    const index = users.findIndex((u: any) => u.id === id);
     if (index !== -1) {
       const roleStr = req.body.role || "";
       const userObj: any = users[index];
@@ -979,13 +979,13 @@ async function startServer() {
   app.get("/api/notifications", (req, res) => res.json({ data: notifications }));
   app.get("/api/notifications/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const notif = notifications.find(n => n.id === id);
+    const notif = notifications.find((n: any) => n.id === id);
     if (notif) res.json({ data: notif });
     else res.status(404).json({ message: "Notification not found" });
   });
   app.put("/api/notifications/:id/read", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = notifications.findIndex(n => n.id === id);
+    const index = notifications.findIndex((n: any) => n.id === id);
     if (index !== -1) {
       notifications[index].isRead = true;
       res.json({ data: notifications[index] });
@@ -995,7 +995,7 @@ async function startServer() {
   });
   app.delete("/api/notifications/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    notifications = notifications.filter(n => n.id !== id);
+    notifications = notifications.filter((n: any) => n.id !== id);
     res.status(204).send();
   });
 
@@ -1003,7 +1003,7 @@ async function startServer() {
   app.get("/api/messages", (req, res) => res.json({ data: messages }));
   app.post("/api/messages", (req, res) => {
     const newMessage = {
-      id: messages.length > 0 ? Math.max(...messages.map(m => m.id)) + 1 : 1,
+      id: messages.length > 0 ? Math.max(...messages.map((m: any) => m.id)) + 1 : 1,
       senderId: req.body.senderId || 1,
       createdAt: new Date().toISOString(),
       isRead: false,
@@ -1014,7 +1014,7 @@ async function startServer() {
   });
   app.put("/api/messages/:id/read", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = messages.findIndex(m => m.id === id);
+    const index = messages.findIndex((m: any) => m.id === id);
     if (index !== -1) {
       messages[index].isRead = true;
       res.json({ data: messages[index] });
@@ -1030,7 +1030,7 @@ async function startServer() {
     if (roleId !== null) {
       // IDs: SuperAdmin=1 bypasses filter or matched directly
       if (roleId !== 1) {
-        filtered = navigationItems.filter(item => 
+        filtered = navigationItems.filter((item: any) => 
           Array.isArray(item.roleIds) && (item.roleIds.includes(roleId) || item.roleIds.includes(0))
         );
       }
@@ -1040,7 +1040,7 @@ async function startServer() {
 
   app.post("/api/navigation", (req, res) => {
     const newItem = { 
-      id: navigationItems.length > 0 ? Math.max(...navigationItems.map(n => n.id)) + 1 : 1, 
+      id: navigationItems.length > 0 ? Math.max(...navigationItems.map((n: any) => n.id)) + 1 : 1, 
       ...req.body,
       roles: Array.isArray(req.body.roles) ? req.body.roles : ["superadmin"]
     };
@@ -1050,7 +1050,7 @@ async function startServer() {
 
   app.put("/api/navigation/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = navigationItems.findIndex(n => n.id === id);
+    const index = navigationItems.findIndex((n: any) => n.id === id);
     if (index !== -1) {
       navigationItems[index] = { ...navigationItems[index], ...req.body };
       res.json({ data: navigationItems[index] });
@@ -1061,7 +1061,7 @@ async function startServer() {
 
   app.delete("/api/navigation/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = navigationItems.findIndex(n => n.id === id);
+    const index = navigationItems.findIndex((n: any) => n.id === id);
     if (index !== -1) {
       navigationItems.splice(index, 1);
       res.status(204).send();
