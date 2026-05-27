@@ -1104,7 +1104,11 @@ CREATE PROCEDURE dbo.sp_ManageTeacher
     @Status NVARCHAR(50) = NULL,
     @SchoolId INT = NULL,
     @ProfilePhotoPath NVARCHAR(255) = NULL,
-    @EmployeeId NVARCHAR(255) = NULL
+    @EmployeeId NVARCHAR(255) = NULL,
+    @Experience NVARCHAR(100) = NULL,
+    @Subject NVARCHAR(200) = NULL,
+    @StandardId INT = NULL,
+    @SectionId INT = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1116,16 +1120,16 @@ BEGIN
         IF @Action = 'INSERT'
         BEGIN
             INSERT INTO [dbo].[Teachers] (
-                UserId, SchoolId, EmployeeId, ContactNumber, Department, Qualification, Status, ProfilePhotoPath, IsActive, IsDeleted, CreatedOn, ModifiedOn
+                UserId, SchoolId, EmployeeId, ContactNumber, Department, Qualification, Status, ProfilePhotoPath, Experience, Subject, StandardId, SectionId, IsActive, IsDeleted, CreatedOn, ModifiedOn
             ) VALUES (
-                @UserId, ISNULL(@SchoolId, 1), ISNULL(@EmployeeId, ''), @ContactNumber, @Department, @Qualification, @Status, @ProfilePhotoPath, 1, 0, GETUTCDATE(), GETUTCDATE()
+                @UserId, ISNULL(@SchoolId, 1), ISNULL(@EmployeeId, ''), @ContactNumber, @Department, @Qualification, @Status, @ProfilePhotoPath, @Experience, @Subject, @StandardId, @SectionId, 1, 0, GETUTCDATE(), GETUTCDATE()
             );
             SELECT SCOPE_IDENTITY();
         END
         ELSE IF @Action = 'UPDATE'
         BEGIN
             UPDATE [dbo].[Teachers] SET
-                UserId = CASE WHEN @UserId IS NULL OR @UserId = 0 THEN UserId ELSE @UserId END,
+                UserId = CASE WHEN @UserId IS NULL OR @UserId <= 0 THEN UserId ELSE @UserId END,
                 ContactNumber = ISNULL(@ContactNumber, ContactNumber),
                 Department = ISNULL(@Department, Department),
                 Qualification = ISNULL(@Qualification, Qualification),
@@ -1133,6 +1137,10 @@ BEGIN
                 SchoolId = ISNULL(@SchoolId, SchoolId),
                 ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
                 EmployeeId = ISNULL(@EmployeeId, EmployeeId),
+                Experience = ISNULL(@Experience, Experience),
+                Subject = ISNULL(@Subject, Subject),
+                StandardId = ISNULL(@StandardId, StandardId),
+                SectionId = ISNULL(@SectionId, SectionId),
                 ModifiedOn = GETUTCDATE()
             WHERE Id = @Id;
         END
