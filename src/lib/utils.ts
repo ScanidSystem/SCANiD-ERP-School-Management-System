@@ -81,6 +81,9 @@ export function resolvePhotoUrl(path: string | undefined): string {
     }
   }
   
+  // Base URI selection core
+  let finalUrl = "";
+  
   // If absolute API URL (e.g., https://api.scaniderp.com/api)
   if (apiBase.startsWith("http://") || apiBase.startsWith("https://")) {
     const urlObj = new URL(apiBase);
@@ -88,32 +91,46 @@ export function resolvePhotoUrl(path: string | undefined): string {
     if (pathname.toLowerCase().endsWith("/api")) {
       pathname = pathname.slice(0, -4);
     }
-    return `${urlObj.origin}${pathname}/${cleanPath}`;
-  }
-  
-  // For relative paths:
-  if (apiBase.toLowerCase().endsWith("/api")) {
-    apiBase = apiBase.slice(0, -4); // e.g., "/SCANiD_ERP_API" or ""
+    finalUrl = `${urlObj.origin}${pathname}/${cleanPath}`;
+  } else {
+    // For relative paths:
+    if (apiBase.toLowerCase().endsWith("/api")) {
+      apiBase = apiBase.slice(0, -4); // e.g., "/SCANiD_ERP_API" or ""
+    }
+
+    // If a dynamic subpath was detected from the browser's active path (e.g., "/scanid_erp_api")
+    // and it matches the config path case-insensitively, we prefer the dynamic browser casing to ensure perfect routing.
+    if (dynamicSubpath) {
+      if (apiBase && apiBase.toLowerCase() === dynamicSubpath.toLowerCase()) {
+        finalUrl = `${dynamicSubpath}/${cleanPath}`;
+      }
+      // Fallback/Force prefixing if the route is served through subpath but apiBase is "/api"
+      else if (!apiBase || apiBase === "/api") {
+        finalUrl = `${dynamicSubpath}/${cleanPath}`;
+      }
+    }
+
+    if (!finalUrl) {
+      // If we have an override with a relative base path
+      if (apiBase && apiBase !== "/api") {
+        finalUrl = `${apiBase}/${cleanPath}`;
+      } else {
+        // Fallback to absolute root file path if no specific config is resolved
+        finalUrl = `/${cleanPath}`;
+      }
+    }
   }
 
-  // If a dynamic subpath was detected from the browser's active path (e.g., "/scanid_erp_api")
-  // and it matches the config path case-insensitively, we prefer the dynamic browser casing to ensure perfect routing.
-  if (dynamicSubpath) {
-    if (apiBase && apiBase.toLowerCase() === dynamicSubpath.toLowerCase()) {
-      return `${dynamicSubpath}/${cleanPath}`;
-    }
-    // Fallback/Force prefixing if the route is served through subpath but apiBase is "/api"
-    if (!apiBase || apiBase === "/api") {
-      return `${dynamicSubpath}/${cleanPath}`;
-    }
+  // 6. Mandatory CASE NORMALIZATION for nginx/virtual directories:
+  // Since Swagger or the verified endpoint works under "scanid_erp_api", any uppercase
+  // matching variants must be normalized to lowercase "/scanid_erp_api" to prevent case-sensitive 403 blocks.
+  if (finalUrl.includes("/SCANiD_ERP_API/")) {
+    finalUrl = finalUrl.replace(/\/SCANiD_ERP_API\//gi, "/scanid_erp_api/");
+  } else if (finalUrl.toLowerCase().includes("/scanid_erp_api/")) {
+    // Force standard lowercase matching for reverse proxy compliance
+    finalUrl = finalUrl.replace(/\/scanid_erp_api\//gi, "/scanid_erp_api/");
   }
 
-  // If we have an override with a relative base path
-  if (apiBase && apiBase !== "/api") {
-    return `${apiBase}/${cleanPath}`;
-  }
-  
-  // Fallback to absolute root file path if no specific config is resolved
-  return `/${cleanPath}`;
+  return finalUrl;
 }
 

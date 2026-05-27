@@ -1730,7 +1730,10 @@ export default function Students({ user }: { user: UserType }) {
                                     alt="Student Identity"
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
-                                      e.currentTarget.src = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + newStudentFormData.FNAME;
+                                      const fallbackUrl = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + newStudentFormData.FNAME;
+                                      const attemptedUrl = e.currentTarget.src;
+                                      console.error(`[IMAGE_LOAD_FAIL] Failed to load student profile image from URL: "${attemptedUrl}". Falling back to avatar illustration template.`, { attemptedUrl, fallbackUrl });
+                                      e.currentTarget.src = fallbackUrl;
                                     }}
                                   />
                                 ) : (
@@ -2517,7 +2520,13 @@ export default function Students({ user }: { user: UserType }) {
                         <div className="flex items-center gap-4">
                           <div className="relative shrink-0">
                             <Avatar className="h-11 w-11 border-2 border-white shadow-sm ring-1 ring-slate-100">
-                              <AvatarImage src={resolvePhotoUrl(student.profilePhotoPath || (student as any).ProfilePhotoPath || (student as any).photo)} alt={student.name} />
+                              <AvatarImage 
+                                src={resolvePhotoUrl(student.profilePhotoPath || (student as any).ProfilePhotoPath || (student as any).photo)} 
+                                alt={student.name} 
+                                onError={(e) => {
+                                  console.warn(`[IMAGE_LOAD_WARNING] List avatar photo failed to load for student "${student.name}" (ID: ${student.id}) from URL: "${e.currentTarget.src}". Fallback to text initials will be triggered.`);
+                                }}
+                              />
                               <AvatarFallback className="bg-gradient-to-br from-slate-100 to-slate-200 text-slate-700 text-xs font-black">
                                 {student.name ? student.name.split(" ").map((n: string) => n[0]).join("") : "S"}
                               </AvatarFallback>

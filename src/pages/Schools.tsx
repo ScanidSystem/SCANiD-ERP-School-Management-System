@@ -718,6 +718,7 @@ export default function Schools({ user }: { user: UserType }) {
                             alt="School"
                             className="w-full h-full object-cover"
                             onError={(e) => {
+                              console.error(`[IMAGE_LOAD_FAIL] School brand photo failed to load from URL: "${e.currentTarget.src}"`);
                               e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.name}`;
                             }}
                           />
@@ -1380,6 +1381,7 @@ export default function Schools({ user }: { user: UserType }) {
                             alt="School"
                             className="w-full h-full object-cover"
                             onError={(e) => {
+                              console.error(`[IMAGE_LOAD_FAIL] Edit dialog School brand photo failed to load from URL: "${e.currentTarget.src}"`);
                               e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.name}`;
                             }}
                           />
@@ -2131,6 +2133,9 @@ export default function Schools({ user }: { user: UserType }) {
                                 )}
                                 alt={school.name}
                                 className="object-cover"
+                                onError={(e) => {
+                                  console.warn(`[IMAGE_LOAD_WARNING] List avatar photo failed to load for school "${school.name}" (ID: ${school.id}) from URL: "${e.currentTarget.src}". Fallback symbols will render.`);
+                                }}
                               />
                               <AvatarFallback className="bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 font-black text-xs">
                                 {school.name
