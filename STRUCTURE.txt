@@ -1,0 +1,175 @@
+SCANiD-School-Management-System/
+├── .github/
+│   └── workflows/
+├── backend/
+│   └── ScanID.Api/
+│       ├── Controllers/
+│       │   ├── AttendanceController.cs
+│       │   ├── AuditLogsController.cs
+│       │   ├── AuthController.cs
+│       │   ├── DatabaseController.cs
+│       │   ├── ErrorLogsController.cs
+│       │   ├── FeesController.cs
+│       │   ├── MarksController.cs
+│       │   ├── MastersController.cs
+│       │   ├── NavigationController.cs
+│       │   ├── NotificationsController.cs
+│       │   ├── SchoolsController.cs
+│       │   ├── StatsController.cs
+│       │   ├── StudentsController.cs
+│       │   ├── TeachersController.cs
+│       │   └── UsersController.cs
+│       ├── Data/
+│       │   └── ApplicationDbContext.cs
+│       ├── Interfaces/
+│       │   ├── IAttendanceService.cs
+│       │   ├── IAuditLogService.cs
+│       │   ├── IAuthService.cs
+│       │   ├── IErrorLogService.cs
+│       │   ├── IFeeService.cs
+│       │   ├── IMarkService.cs
+│       │   ├── IRepository.cs
+│       │   ├── ISchoolService.cs
+│       │   ├── IStudentService.cs
+│       │   ├── ITeacherService.cs
+│       │   └── IUserService.cs
+│       ├── Migrations/
+│       │   ├── add_profile_photo_path_to_teachers.sql
+│       │   └── remove_legacy_columns_from_students.sql
+│       ├── Models/
+│       │   └── Models.cs
+│       ├── Properties/
+│       │   └── launchSettings.json
+│       ├── Services/
+│       │   ├── AttendanceService.cs
+│       │   ├── AuditLogService.cs
+│       │   ├── AuthService.cs
+│       │   ├── ErrorLogService.cs
+│       │   ├── FeeService.cs
+│       │   ├── MarkService.cs
+│       │   ├── Repository.cs
+│       │   ├── SchoolService.cs
+│       │   ├── StudentService.cs
+│       │   ├── TeacherService.cs
+│       │   └── UserService.cs
+│       ├── Utilities/
+│       │   ├── DbMapper.cs
+│       │   └── Logger.cs
+│       ├── wwwroot/
+│       │   ├── uploads/
+│       │   │   └── schools/
+│       │   │       └── Shivaji_Vidyalay/
+│       │   │           ├── school_5_639153173738748728.jpeg
+│       │   │           └── school_5_639153178536438059.jpeg
+│       │   └── readme.txt
+│       ├── appsettings.json
+│       ├── incremental_stored_procedures.sql
+│       ├── Program.cs
+│       └── ScanID.Api.csproj
+├── database/
+│   └── setup.sql
+├── public/
+│   ├── favicon.svg
+│   └── web.config
+├── src/
+│   ├── components/
+│   │   ├── layout/
+│   │   │   ├── Breadcrumbs.tsx
+│   │   │   ├── Navbar.tsx
+│   │   │   └── Sidebar.tsx
+│   │   ├── reports/
+│   │   │   ├── MarksEntry.tsx
+│   │   │   └── ReportBuilder.tsx
+│   │   ├── shared/
+│   │   │   ├── DeleteConfirmation.tsx
+│   │   │   ├── Logo.tsx
+│   │   │   └── SimpleTooltip.tsx
+│   │   └── ui/
+│   │       ├── alert-dialog.tsx
+│   │       ├── avatar.tsx
+│   │       ├── badge.tsx
+│   │       ├── button.tsx
+│   │       ├── calendar.tsx
+│   │       ├── card.tsx
+│   │       ├── checkbox.tsx
+│   │       ├── dialog.tsx
+│   │       ├── dropdown-menu.tsx
+│   │       ├── input.tsx
+│   │       ├── label.tsx
+│   │       ├── popover.tsx
+│   │       ├── scroll-area.tsx
+│   │       ├── select.tsx
+│   │       ├── sheet.tsx
+│   │       ├── skeleton.tsx
+│   │       ├── sonner.tsx
+│   │       ├── switch.tsx
+│   │       ├── table.tsx
+│   │       ├── tabs.tsx
+│   │       └── tooltip.tsx
+│   ├── lib/
+│   │   ├── api.ts
+│   │   ├── search-data.ts
+│   │   └── utils.ts
+│   ├── pages/
+│   │   ├── messages/
+│   │   │   └── CommunicationHub.tsx
+│   │   ├── Attendance.tsx
+│   │   ├── Configuration.tsx
+│   │   ├── Dashboard.tsx
+│   │   ├── Fees.tsx
+│   │   ├── Login.tsx
+│   │   ├── Marks.tsx
+│   │   ├── Messages.tsx
+│   │   ├── Notifications.tsx
+│   │   ├── Profile.tsx
+│   │   ├── Schools.tsx
+│   │   ├── Settings.tsx
+│   │   ├── Students.tsx
+│   │   ├── SystemLogs.tsx
+│   │   ├── Teachers.tsx
+│   │   └── Users.tsx
+│   ├── App.tsx
+│   ├── index.css
+│   ├── main.tsx
+│   ├── types.ts
+│   └── vite-env.d.ts
+├── .env
+├── .env.development
+├── .env.example
+├── .env.production
+├── .gitignore
+├── add_general_masters_navigation.sql
+├── CHANGELOG_UPDATES.md
+├── CHANGELOG.md
+├── CHANGES_DOCUMENTATION.md
+├── components.json
+├── database.sql
+├── fix_names.sql
+├── incremental_database_updates.sql
+├── incremental_navigation_update.sql
+├── index.html
+├── LOCAL_SETUP.md
+├── metadata.json
+├── package-lock.json
+├── package.json
+├── README.md
+├── realign_schools_columns.sql
+├── seed_data.sql
+├── server.ts
+├── setup_teachers.sql
+├── tsconfig.json
+├── update_communications_v1.sql
+├── update_navigation_v2.sql
+├── update_navigation_v3.sql
+├── update_navigation.sql
+├── update_notifications.sql
+├── update_schema.sql
+├── update_school_sections_master.sql
+├── update_schools_form_fields.sql
+├── update_schools_photo.sql
+├── update_students_admission_email.sql
+├── update_students_category_v4.sql
+├── update_students_schema.sql
+├── update_students_table_schema.sql
+├── update_user_accounts.sql
+└── vite.config.ts
