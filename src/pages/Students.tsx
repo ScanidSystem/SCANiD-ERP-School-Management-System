@@ -2428,7 +2428,7 @@ export default function Students({ user }: { user: UserType }) {
                 />
               </div>
               <div className="flex flex-wrap gap-3">
-                <Select value={standardFilter} onValueChange={setStandardFilter}>
+                <Select value={standardFilter} onValueChange={(val) => setStandardFilter(val || "all")}>
                   <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-2xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
                     {/* Explicit mapping to show "Grade X" or "All Grades" in trigger */}
                     <SelectValue placeholder="Standard">
@@ -2443,7 +2443,7 @@ export default function Students({ user }: { user: UserType }) {
                   </SelectContent>
                 </Select>
 
-                <Select value={sectionFilter} onValueChange={setSectionFilter}>
+                <Select value={sectionFilter} onValueChange={(val) => setSectionFilter(val || "all")}>
                   <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-2xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
                     {/* Explicit mapping to show "Section X" or "All Sections" in trigger */}
                     <SelectValue placeholder="Section">
@@ -2669,7 +2669,7 @@ export default function Students({ user }: { user: UserType }) {
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 mr-4">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rows per page</span>
-                <Select value={pageSize.toString()} onValueChange={(v) => { setPageSize(parseInt(v)); setPage(1); }}>
+                <Select value={pageSize.toString()} onValueChange={(v) => { if (v) { setPageSize(parseInt(v)); setPage(1); } }}>
                   <SelectTrigger className="w-[70px] h-8 bg-white border-slate-200 rounded-lg text-xs font-bold">
                     <SelectValue />
                   </SelectTrigger>

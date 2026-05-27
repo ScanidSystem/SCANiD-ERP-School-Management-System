@@ -527,7 +527,7 @@ async function startServer() {
     res.json(applySortingAndPagination(schools, req.query));
   });
   app.post("/api/schools", (req, res) => {
-    const newItem = { id: schools.length > 0 ? Math.max(...schools.map(s => s.id)) + 1 : 1, ...req.body };
+    const newItem = { id: schools.length > 0 ? Math.max(...schools.map((s: any) => s.id)) + 1 : 1, ...req.body };
     schools.push(newItem);
     saveDb();
     res.status(201).json({ data: newItem });
@@ -535,7 +535,7 @@ async function startServer() {
 
   app.put("/api/schools/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = schools.findIndex(s => s.id === id);
+    const index = schools.findIndex((s: any) => s.id === id);
     if (index !== -1) {
       schools[index] = { ...schools[index], ...req.body };
       saveDb();
@@ -547,7 +547,7 @@ async function startServer() {
 
   app.delete("/api/schools/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    schools = schools.filter(s => s.id !== id);
+    schools = schools.filter((s: any) => s.id !== id);
     saveDb();
     res.status(204).send();
   });
@@ -736,7 +736,7 @@ async function startServer() {
 
   app.post("/api/schools/:id/photo", upload.single("file"), (req, res) => {
     const id = parseInt(req.params.id);
-    const index = schools.findIndex(s => s.id === id);
+    const index = schools.findIndex((s: any) => s.id === id);
     if (req.file) {
       const webPath = `/uploads/${req.file.filename}`;
       if (index !== -1) {
@@ -754,7 +754,7 @@ async function startServer() {
 
   app.post("/api/teachers/:id/photo", upload.single("file"), (req, res) => {
     const id = parseInt(req.params.id);
-    const index = teachers.findIndex(t => t.id === id);
+    const index = teachers.findIndex((t: any) => t.id === id);
     if (req.file) {
       const webPath = `/uploads/${req.file.filename}`;
       if (index !== -1) {
@@ -774,7 +774,7 @@ async function startServer() {
     const date = req.query.date as string;
     let filtered = attendance;
     if (date) {
-      filtered = attendance.filter(a => a.date === date);
+      filtered = attendance.filter((a: any) => a.date === date);
     }
     res.json({ data: filtered });
   });
@@ -782,7 +782,7 @@ async function startServer() {
   app.post("/api/attendance", (req, res) => {
     const records = Array.isArray(req.body) ? req.body : [req.body];
     records.forEach(record => {
-      const existingIdx = attendance.findIndex(a => a.studentId === record.studentId && a.date === record.date);
+      const existingIdx = attendance.findIndex((a: any) => a.studentId === record.studentId && a.date === record.date);
       if (existingIdx !== -1) {
         attendance[existingIdx] = { ...attendance[existingIdx], ...record };
       } else {
@@ -849,7 +849,7 @@ async function startServer() {
 
   app.post("/api/teachers", (req, res) => {
     const newItem = {
-      id: teachers.length > 0 ? Math.max(...teachers.map(t => t.id)) + 1 : 1,
+      id: teachers.length > 0 ? Math.max(...teachers.map((t: any) => t.id)) + 1 : 1,
       ...req.body
     };
     teachers.push(newItem);
