@@ -1103,7 +1103,8 @@ CREATE PROCEDURE dbo.sp_ManageTeacher
     @Qualification NVARCHAR(100) = NULL,
     @Status NVARCHAR(50) = NULL,
     @SchoolId INT = NULL,
-    @ProfilePhotoPath NVARCHAR(255) = NULL
+    @ProfilePhotoPath NVARCHAR(255) = NULL,
+    @EmployeeId NVARCHAR(255) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1115,22 +1116,23 @@ BEGIN
         IF @Action = 'INSERT'
         BEGIN
             INSERT INTO [dbo].[Teachers] (
-                UserId, ContactNumber, Department, Qualification, Status, SchoolId, ProfilePhotoPath, IsActive, IsDeleted, CreatedOn, ModifiedOn
+                UserId, SchoolId, EmployeeId, ContactNumber, Department, Qualification, Status, ProfilePhotoPath, IsActive, IsDeleted, CreatedOn, ModifiedOn
             ) VALUES (
-                @UserId, @ContactNumber, @Department, @Qualification, @Status, @SchoolId, @ProfilePhotoPath, 1, 0, GETUTCDATE(), GETUTCDATE()
+                @UserId, ISNULL(@SchoolId, 1), ISNULL(@EmployeeId, ''), @ContactNumber, @Department, @Qualification, @Status, @ProfilePhotoPath, 1, 0, GETUTCDATE(), GETUTCDATE()
             );
             SELECT SCOPE_IDENTITY();
         END
         ELSE IF @Action = 'UPDATE'
         BEGIN
             UPDATE [dbo].[Teachers] SET
-                UserId = ISNULL(@UserId, UserId),
+                UserId = CASE WHEN @UserId IS NULL OR @UserId = 0 THEN UserId ELSE @UserId END,
                 ContactNumber = ISNULL(@ContactNumber, ContactNumber),
                 Department = ISNULL(@Department, Department),
                 Qualification = ISNULL(@Qualification, Qualification),
                 Status = ISNULL(@Status, Status),
                 SchoolId = ISNULL(@SchoolId, SchoolId),
                 ProfilePhotoPath = ISNULL(@ProfilePhotoPath, ProfilePhotoPath),
+                EmployeeId = ISNULL(@EmployeeId, EmployeeId),
                 ModifiedOn = GETUTCDATE()
             WHERE Id = @Id;
         END

@@ -79,23 +79,56 @@ namespace ScanID.Api.Services
         {
             return await ExecuteWithRetryAsync(async () =>
             {
-                // Execute the sp_ManageTeacher stored procedure safely using high-performance ADO.NET DbMapper 
-                // to retrieve the newly generated identity, completely avoiding EF Core query wrapping issues.
-                teacher.Id = await DbMapper.ExecuteScalarStoredProcedureAsync(
-                    _context,
-                    "dbo.sp_ManageTeacher",
-                    ("Action", "INSERT"),
-                    ("Id", null),
-                    ("UserId", teacher.UserId),
-                    ("ContactNumber", teacher.ContactNumber),
-                    ("Department", teacher.Department),
-                    ("Qualification", teacher.Qualification),
-                    ("Status", teacher.Status),
-                    ("SchoolId", teacher.SchoolId),
-                    ("ProfilePhotoPath", teacher.ProfilePhotoPath)
-                );
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                try
+                {
+                    // If no UserId represents a valid link, and a new nested User is available, register it first
+                    if (teacher.UserId <= 0 && teacher.User != null)
+                    {
+                        teacher.User.PasswordHash = string.IsNullOrEmpty(teacher.User.PasswordHash) ? "password123" : teacher.User.PasswordHash;
+                        teacher.User.Id = await DbMapper.ExecuteScalarStoredProcedureAsync(
+                            _context,
+                            "dbo.sp_ManageUser",
+                            ("Action", "INSERT"),
+                            ("Id", null),
+                            ("Username", teacher.User.Username),
+                            ("PasswordHash", teacher.User.PasswordHash),
+                            ("Name", teacher.User.Name),
+                            ("Email", teacher.User.Email),
+                            ("Role", teacher.User.Role),
+                            ("RoleId", teacher.User.RoleId),
+                            ("SchoolId", teacher.User.SchoolId),
+                            ("CreatedBy", teacher.CreatedBy)
+                        );
+                        teacher.UserId = teacher.User.Id;
+                    }
 
-                return teacher;
+                    // Execute the sp_ManageTeacher stored procedure safely using high-performance ADO.NET DbMapper 
+                    // to retrieve the newly generated identity, completely avoiding EF Core query wrapping issues.
+                    teacher.Id = await DbMapper.ExecuteScalarStoredProcedureAsync(
+                        _context,
+                        "dbo.sp_ManageTeacher",
+                        ("Action", "INSERT"),
+                        ("Id", null),
+                        ("UserId", teacher.UserId),
+                        ("ContactNumber", teacher.ContactNumber),
+                        ("Department", teacher.Department),
+                        ("Qualification", teacher.Qualification),
+                        ("Status", teacher.Status),
+                        ("SchoolId", teacher.SchoolId),
+                        ("ProfilePhotoPath", teacher.ProfilePhotoPath),
+                        ("EmployeeId", teacher.EmployeeId)
+                    );
+
+                    await transaction.CommitAsync();
+                    return teacher;
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    FileLogger.LogError(new Exception($"Failed to complete CreateTeacherAsync transaction for Teacher. Rolled back.", ex));
+                    throw;
+                }
             });
         }
 
@@ -107,11 +140,11 @@ namespace ScanID.Api.Services
                 try
                 {
                     var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
-                        $"EXEC dbo.sp_ManageTeacher 'UPDATE', {teacher.Id}, {teacher.UserId}, {teacher.ContactNumber}, {teacher.Department}, {teacher.Qualification}, {teacher.Status}, {teacher.SchoolId}, {teacher.ProfilePhotoPath}"
+                        $"EXEC dbo.sp_ManageTeacher 'UPDATE', {teacher.Id}, {teacher.UserId}, {teacher.ContactNumber}, {teacher.Department}, {teacher.Qualification}, {teacher.Status}, {teacher.SchoolId}, {teacher.ProfilePhotoPath}, {teacher.EmployeeId}"
                     );
 
                     // Also update the linked user account details if they were modified
-                    if (teacher.User != null)
+                    if (teacher.User != null && teacher.UserId > 0)
                     {
                         var user = await _context.Users.FindAsync(teacher.UserId);
                         if (user != null)
@@ -119,12 +152,12 @@ namespace ScanID.Api.Services
                             user.Name = teacher.User.Name;
                             user.Email = teacher.User.Email;
                             user.ModifiedOn = DateTime.Now;
-                            await _context.SaveChangesAsync();
+                            await _context.SaveChanges();
                         }
                     }
 
                     await transaction.CommitAsync();
-                    return rowsAffected > 0;
+                    return rowsAffected >= 0 || rowsAffected == -1;
                 }
                 catch (Exception ex)
                 {
@@ -142,7 +175,7 @@ namespace ScanID.Api.Services
                 var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
                     $"EXEC dbo.sp_ManageTeacher 'DELETE', {id}"
                 );
-                return rowsAffected > 0;
+                return rowsAffected >= 0 || rowsAffected == -1;
             });
         }
 

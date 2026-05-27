@@ -404,6 +404,8 @@ export default function Teachers({ user }: { user: any }) {
 
       if (isEditing && selectedTeacher) {
         payload.id = parseSafeInt(selectedTeacher.id) || 0;
+        payload.userId = parseSafeInt(selectedTeacher.userId) || 0;
+        payload.UserId = parseSafeInt(selectedTeacher.userId) || 0;
         if (payload.user && selectedTeacher.userId) {
           payload.user.id = parseSafeInt(selectedTeacher.userId) || 0;
         }
