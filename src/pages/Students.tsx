@@ -2302,24 +2302,6 @@ export default function Students({ user }: { user: UserType }) {
                           />
                         </div>
 
-                        {/* <div className="md:col-span-2 space-y-1.5">
-                            <Label htmlFor="AdmissionDate" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.AdmissionDate ? "text-red-500" : "text-slate-500")}>Date of Birth {formErrors.AdmissionDate && "*"}</Label>
-                            <Input 
-                              ref={el => { inputRefs.current["AdmissionDate"] = el; }}
-                              id="AdmissionDate" 
-                              type="date" 
-                              value={newStudentFormData.AdmissionDate} 
-                              onChange={(e) => {
-                                setNewStudentFormData({...newStudentFormData, AdmissionDate: e.target.value});
-                                if (formErrors.AdmissionDate) setFormErrors(prev => ({ ...prev, AdmissionDate: false }));
-                              }} 
-                              className={cn(
-                                "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                                formErrors.AdmissionDate && "border-red-500 ring-2 ring-red-500/10"
-                              )}
-                            />
-                          </div> */}
-
                         <div className="space-y-1.5">
                           <Label htmlFor="StateId" className={cn("text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1", formErrors.StateId ? "text-red-500" : "text-slate-500")}>
                             State Name {formErrors.StateId && "*"}
