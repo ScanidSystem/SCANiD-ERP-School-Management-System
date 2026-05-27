@@ -2517,7 +2517,7 @@ export default function Students({ user }: { user: UserType }) {
                         <div className="flex items-center gap-4">
                           <div className="relative shrink-0">
                             <Avatar className="h-11 w-11 border-2 border-white shadow-sm ring-1 ring-slate-100">
-                              <AvatarImage src={resolvePhotoUrl(student.profilePhotoPath)} alt={student.name} />
+                              <AvatarImage src={resolvePhotoUrl(student.profilePhotoPath || (student as any).ProfilePhotoPath || (student as any).photo)} alt={student.name} />
                               <AvatarFallback className="bg-gradient-to-br from-slate-100 to-slate-200 text-slate-700 text-xs font-black">
                                 {student.name ? student.name.split(" ").map((n: string) => n[0]).join("") : "S"}
                               </AvatarFallback>

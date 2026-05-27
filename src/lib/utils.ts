@@ -23,14 +23,55 @@ export function parseSafeInt(value: any): number | undefined {
  */
 export function resolvePhotoUrl(path: string | undefined): string {
   if (!path) return "";
+  
+  // If it's already an absolute URL or data URI, return directly
   if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
     return path;
   }
   
-  // Standardize the path by removing any leading slash
-  const cleanPath = path.startsWith("/") ? path.substring(1) : path;
+  // 1. Normalize Windows backslashes to standard URL forward slashes
+  let cleanPath = path.replace(/\\/g, "/");
   
-  // 1. Detect dynamic subpath prefix from browser URL window.location (self-healing for proxy/hosted subpaths)
+  // 2. Strip any Windows drive letter prefix (e.g. C:/)
+  const driveLetterMatch = cleanPath.match(/^[a-zA-Z]:\//);
+  if (driveLetterMatch) {
+    cleanPath = cleanPath.substring(driveLetterMatch[0].length);
+  }
+  
+  // 3. Strip any redundant "wwwroot/" directory folder prefix from C# wwwroot builds
+  const wwwrootIndex = cleanPath.indexOf("wwwroot/");
+  if (wwwrootIndex !== -1) {
+    cleanPath = cleanPath.substring(wwwrootIndex + 8);
+  } else {
+    // If the path contains "photos/" or "uploads/" deeper inside, extract from there
+    const photosIndex = cleanPath.indexOf("photos/");
+    const uploadsIndex = cleanPath.indexOf("uploads/");
+    if (photosIndex !== -1) {
+      cleanPath = cleanPath.substring(photosIndex);
+    } else if (uploadsIndex !== -1) {
+      cleanPath = cleanPath.substring(uploadsIndex);
+    }
+  }
+  
+  // 4. Remove any double leading slashes and standardize
+  while (cleanPath.startsWith("/")) {
+    cleanPath = cleanPath.substring(1);
+  }
+
+  // 2. Get the configured API Base URL
+  const rawApiBase = import.meta.env.VITE_API_BASE_URL || "/api";
+  let apiBase = rawApiBase.replace(/\/+$/, "");
+
+  // Prevent double prefixing if the path already starts with the apiBase directory segment
+  const scanidPrefix = "scanid_erp_api/";
+  if (cleanPath.toLowerCase().startsWith(scanidPrefix)) {
+    cleanPath = cleanPath.substring(scanidPrefix.length);
+  }
+  if (apiBase && apiBase.startsWith("/") && cleanPath.toLowerCase().startsWith(apiBase.substring(1).toLowerCase() + "/")) {
+    cleanPath = cleanPath.substring(apiBase.substring(1).length + 1);
+  }
+  
+  // 5. Detect dynamic subpath prefix from browser URL window.location (self-healing for proxy/hosted subpaths)
   let dynamicSubpath = "";
   if (typeof window !== "undefined" && window.location) {
     const pathname = window.location.pathname; // e.g., "/scanid_erp_api/teachers"
@@ -39,10 +80,6 @@ export function resolvePhotoUrl(path: string | undefined): string {
       dynamicSubpath = `/${segments[0]}`; // e.g., "/scanid_erp_api" matching the browser's exact casing
     }
   }
-
-  // 2. Get the configured API Base URL
-  const rawApiBase = import.meta.env.VITE_API_BASE_URL || "/api";
-  let apiBase = rawApiBase.replace(/\/+$/, "");
   
   // If absolute API URL (e.g., https://api.scaniderp.com/api)
   if (apiBase.startsWith("http://") || apiBase.startsWith("https://")) {

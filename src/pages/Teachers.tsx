@@ -922,7 +922,7 @@ export default function Teachers({ user }: { user: any }) {
                       <div className="flex items-center gap-4">
                         <div className="relative shrink-0">
                           <Avatar className="h-11 w-11 ring-4 ring-white shadow-lg shadow-slate-200 transition-transform group-hover:scale-105">
-                            <AvatarImage src={resolvePhotoUrl(teacher.photo)} />
+                            <AvatarImage src={resolvePhotoUrl(teacher.photo || (teacher as any).ProfilePhotoPath || (teacher as any).profilePhotoPath)} />
                             <AvatarFallback className="bg-indigo-600 text-white font-black uppercase text-sm">
                               {(teacher.name || "U")[0]}
                             </AvatarFallback>
