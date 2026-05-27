@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { 
-  DollarSign, 
+  IndianRupee, 
   CreditCard, 
   Download, 
   Plus,
@@ -80,7 +80,7 @@ export default function Fees({ user }: { user: any }) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
           <div className="bg-blue-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:rotate-3">
-             <DollarSign size={28} />
+             <IndianRupee size={28} />
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">Fee Management</h1>
@@ -131,13 +131,13 @@ export default function Fees({ user }: { user: any }) {
           <CardContent>
             <div className="flex items-end justify-between">
                 <div>
-                    <h2 className="text-4xl font-black">${(Array.isArray(fees) ? fees : []).reduce((acc, curr) => acc + curr.paidAmount, 0).toLocaleString()}</h2>
+                    <h2 className="text-4xl font-black">₹{(Array.isArray(fees) ? fees : []).reduce((acc, curr) => acc + curr.paidAmount, 0).toLocaleString()}</h2>
                     <p className="text-blue-200 text-sm mt-1 flex items-center gap-1">
                         <ArrowUpRight size={14} /> 12% increase from last term
                     </p>
                 </div>
                 <div className="p-3 bg-blue-500 rounded-xl">
-                    <DollarSign size={24} />
+                    <IndianRupee size={24} />
                 </div>
             </div>
           </CardContent>
@@ -150,7 +150,7 @@ export default function Fees({ user }: { user: any }) {
           <CardContent>
             <div className="flex items-end justify-between">
                 <div>
-                    <h2 className="text-4xl font-black text-amber-400">${(Array.isArray(fees) ? fees : []).reduce((acc, curr) => acc + (curr.totalAmount - curr.paidAmount), 0).toLocaleString()}</h2>
+                    <h2 className="text-4xl font-black text-amber-400">₹{(Array.isArray(fees) ? fees : []).reduce((acc, curr) => acc + (curr.totalAmount - curr.paidAmount), 0).toLocaleString()}</h2>
                     <p className="text-slate-400 text-sm mt-1">From {Array.isArray(fees) ? fees.length : 0} students</p>
                 </div>
                 <div className="p-3 bg-slate-800 rounded-xl">
@@ -167,7 +167,7 @@ export default function Fees({ user }: { user: any }) {
           <CardContent className="pb-8">
             <div className="flex items-end justify-between">
                 <div>
-                    <h2 className="text-4xl font-black text-slate-900 tracking-tight">$0</h2>
+                    <h2 className="text-4xl font-black text-slate-900 tracking-tight">₹0</h2>
                     <p className="text-slate-400 text-xs mt-2 font-bold uppercase tracking-widest">Financial Aid</p>
                 </div>
                 <div className="p-4 bg-slate-50 rounded-2xl shadow-sm">
@@ -212,8 +212,8 @@ export default function Fees({ user }: { user: any }) {
                     <TableCell className="pl-8 font-mono text-xs font-black text-blue-600 italic">GR-{fee.studentId}</TableCell>
                     <TableCell className="font-black text-slate-900 group-hover:text-blue-700 transition-colors">{fee.student?.fullName || "Student"}</TableCell>
                     <TableCell className="text-slate-500 font-bold text-sm tracking-tight">{fee.term}</TableCell>
-                    <TableCell className="font-black text-slate-900">${fee.totalAmount}</TableCell>
-                    <TableCell className="font-black text-emerald-600">${fee.paidAmount}</TableCell>
+                    <TableCell className="font-black text-slate-900">₹{fee.totalAmount}</TableCell>
+                    <TableCell className="font-black text-emerald-600">₹{fee.paidAmount}</TableCell>
                     <TableCell>
                       <Badge 
                         variant="secondary"
