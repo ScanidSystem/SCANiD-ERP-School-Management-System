@@ -332,7 +332,8 @@ BEGIN
     IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Students_Name_Search' AND object_id = OBJECT_ID('dbo.Students'))
     BEGIN
         CREATE NONCLUSTERED INDEX [IX_Students_Name_Search] 
-        ON [dbo].[Students] ([Name], [GrNo], [RegistrationNumber], [RollNumber]);
+        ON [dbo].[Students] ([GrNo], [RegistrationNumber], [RollNumber])
+        INCLUDE ([Name]);
     END;
 END;
 GO
