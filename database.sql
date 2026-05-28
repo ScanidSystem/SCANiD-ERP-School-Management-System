@@ -391,7 +391,6 @@ IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[St
 BEGIN
 CREATE TABLE [dbo].[Students](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[RegistrationNumber] [nvarchar](100) NOT NULL,
 	[Name] [nvarchar](255) NOT NULL,
 	[SchoolId] [int] NOT NULL,
 	[Status] [nvarchar](50) NOT NULL DEFAULT (N'Active'),
@@ -436,6 +435,7 @@ CREATE TABLE [dbo].[Students](
 	[CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
 	[ModifiedBy] [nvarchar](max) NULL,
 	[ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
+	[OptedForBus] [bit] NOT NULL DEFAULT (0),
  CONSTRAINT [PK_Students] PRIMARY KEY CLUSTERED ([Id] ASC)
 )
 END
@@ -936,7 +936,6 @@ GO
 CREATE PROCEDURE dbo.sp_ManageStudent
        @Action NVARCHAR(10), -- 'INSERT', 'UPDATE', 'DELETE', 'PHOTO'
     @Id INT = NULL,
-    @RegistrationNumber NVARCHAR(100) = NULL,
     @Name NVARCHAR(100) = NULL,
     @FirstName NVARCHAR(100) = NULL,
     @MiddleName NVARCHAR(100) = NULL,
@@ -974,7 +973,8 @@ CREATE PROCEDURE dbo.sp_ManageStudent
     @StateId INT = NULL,
     @IsStateBoard BIT = 0,
     @DigitalUniform BIT = 0,
-    @DigitalNotebook BIT = 0
+    @DigitalNotebook BIT = 0,
+    @OptedForBus BIT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -985,28 +985,22 @@ BEGIN
 
         IF @Action = 'INSERT'
         BEGIN
-            IF @RegistrationNumber IS NULL
-            BEGIN
-                SET @RegistrationNumber = 'REG-' + UPPER(LEFT(REPLACE(CAST(NEWID() as NVARCHAR(36)), '-', ''), 8));
-            END
-
             INSERT INTO [dbo].[Students] (
-                RegistrationNumber, Name, FirstName, MiddleName, LastName, SchoolId, StandardId, SectionId, AcademicYearId, RollNumber, 
+                Name, FirstName, MiddleName, LastName, SchoolId, StandardId, SectionId, AcademicYearId, RollNumber, 
                 GrNo, Gender, DateOfBirth, CategoryId, ReligionId, CasteId, SubCasteId, Status, FatherContactNo, Address, 
                 MotherName, AadharCard, Rfid, ShiftId, BloodGroupId, HouseId, AdmissionTypeId, Sms, UniformId,
-                MotherContactNo, ProfilePhotoPath, SchoolSectionId, AdmissionDate, Email, CityId, StateId, IsStateBoard, DigitalUniform, DigitalNotebook, IsActive, IsDeleted, CreatedOn, ModifiedOn
+                MotherContactNo, ProfilePhotoPath, SchoolSectionId, AdmissionDate, Email, CityId, StateId, IsStateBoard, DigitalUniform, DigitalNotebook, IsActive, IsDeleted, CreatedOn, ModifiedOn, OptedForBus
             ) VALUES (
-                @RegistrationNumber, @Name, @FirstName, @MiddleName, @LastName, @SchoolId, @StandardId, @SectionId, @AcademicYearId, @RollNumber,
+                @Name, @FirstName, @MiddleName, @LastName, @SchoolId, @StandardId, @SectionId, @AcademicYearId, @RollNumber,
                 @GrNo, @Gender, @DateOfBirth, @CategoryId, @ReligionId, @CasteId, @SubCasteId, @Status, @FatherContactNo, @Address,
                 @MotherName, @AadharCard, @Rfid, @ShiftId, @BloodGroupId, @HouseId, @AdmissionTypeId, @Sms, @UniformId,
-                @MotherContactNo, @ProfilePhotoPath, @SchoolSectionId, @AdmissionDate, @Email, @CityId, @StateId, @IsStateBoard, @DigitalUniform, @DigitalNotebook, 1, 0, GETUTCDATE(), GETUTCDATE()
+                @MotherContactNo, @ProfilePhotoPath, @SchoolSectionId, @AdmissionDate, @Email, @CityId, @StateId, @IsStateBoard, @DigitalUniform, @DigitalNotebook, 1, 0, GETUTCDATE(), GETUTCDATE(), @OptedForBus
             );
             SELECT SCOPE_IDENTITY();
         END
         ELSE IF @Action = 'UPDATE'
         BEGIN
             UPDATE [dbo].[Students] SET
-                RegistrationNumber = ISNULL(@RegistrationNumber, RegistrationNumber),
                 Name = ISNULL(@Name, Name),
                 FirstName = ISNULL(@FirstName, FirstName),
                 MiddleName = ISNULL(@MiddleName, MiddleName),
@@ -1045,6 +1039,7 @@ BEGIN
                 IsStateBoard = ISNULL(@IsStateBoard, IsStateBoard),
                 DigitalUniform = ISNULL(@DigitalUniform, DigitalUniform),
                 DigitalNotebook = ISNULL(@DigitalNotebook, DigitalNotebook),
+                OptedForBus = ISNULL(@OptedForBus, OptedForBus),
                 ModifiedOn = GETUTCDATE()
             WHERE Id = @Id;
         END

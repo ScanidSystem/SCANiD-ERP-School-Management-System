@@ -267,7 +267,8 @@ export default function Students({ user }: { user: UserType }) {
           isStateBoard: getVal("IsStateBoard") || getVal("isStateBoard") || s.isStateBoard || false,
           digitalUniform: getVal("DigitalUniform") || getVal("digitalUniform") || s.digitalUniform || false,
           digitalNotebook: getVal("DigitalNotebook") || getVal("digitalNotebook") || s.digitalNotebook || false,
-          status: getVal("Status") || s.status || "Active"
+          status: getVal("Status") || s.status || "Active",
+          optedForBus: getVal("OptedForBus") || getVal("optedForBus") || s.optedForBus || false
         };
       });
 
@@ -400,7 +401,7 @@ export default function Students({ user }: { user: UserType }) {
     shiftName: "",
     uniformId: "",
     motherContactNo: "",
-    sms: false,
+    sms: true,
     isStateBoard: false,
     digitalUniform: false,
     digitalNotebook: false,
@@ -409,7 +410,8 @@ export default function Students({ user }: { user: UserType }) {
     admissionDate: "",
     email: "",
     cityId: "",
-    stateId: ""
+    stateId: "",
+    optedForBus: false
   };
 
   const [newStudentFormData, setNewStudentFormData] = useState(initialFormState);
@@ -468,7 +470,8 @@ export default function Students({ user }: { user: UserType }) {
       admissionDate: student.admissionDate || "",
       email: student.email || "",
       cityId: student.cityId?.toString() || "",
-      stateId: student.stateId?.toString() || ""
+      stateId: student.stateId?.toString() || "",
+      optedForBus: student.optedForBus === "true" || student.optedForBus === true
     });
 
     setIsAddDialogOpen(true);
@@ -479,7 +482,7 @@ export default function Students({ user }: { user: UserType }) {
     try {
       // Prepare data for export including all important student fields
       const exportData = filteredStudents.map(s => ({
-        "Registration Number": s.grno || s.registrationNumber,
+        "GR Number": s.grno,
         "Name": s.name || `${s.firstName || ""} ${s.middleName || ""} ${s.lastName || ""}`.trim(),
         "School": schools.find(sch => sch.id?.toString() === s.schoolId?.toString())?.name || s.schoolId || "",
         "Status": s.status || "Active",
@@ -487,7 +490,6 @@ export default function Students({ user }: { user: UserType }) {
         "First Name": s.firstName,
         "Middle Name": s.middleName,
         "Last Name": s.lastName,
-        "GrNo": s.grno,
         "Gender": s.gender,
         "DateOfBirth": s.birthDate,
         "Address": s.address,
@@ -518,6 +520,7 @@ export default function Students({ user }: { user: UserType }) {
         "Profile Photo Path": s.profilePhotoPath,
         "Digital Uniform": s.digitalUniform ? "Yes" : "No",
         "Digital Notebook": s.digitalNotebook ? "Yes" : "No",
+        "Opted for Bus": s.optedForBus ? "Yes" : "No",
         "Is Active": s.isActive !== false ? "Yes" : "No",
         "Is Deleted": s.isDeleted ? "Yes" : "No",
         "Created By": s.createdBy,
@@ -860,6 +863,7 @@ export default function Students({ user }: { user: UserType }) {
               isStateBoard: getFieldCleanVal(["IsStateBoard", "isStateBoard"]) === "Yes" || getFieldCleanVal(["IsStateBoard", "isStateBoard"]).toLowerCase() === "true",
               profilePhotoPath: getFieldCleanVal(["ProfilePhotoPath", "profile_photo_path"]),
               status: getFieldCleanVal(["Status", "status"]) || "Active",
+              optedForBus: getFieldCleanVal(["OptedForBus", "opted_for_bus", "optedForBus", "bus"]) === "Yes" || getFieldCleanVal(["OptedForBus", "opted_for_bus", "optedForBus", "bus"]).toLowerCase() === "true",
               createdBy: user.name || user.email,
               modifiedBy: user.name || user.email
             };
@@ -890,6 +894,7 @@ export default function Students({ user }: { user: UserType }) {
         const existingAadhars = new Set<string>();
         const existingRfids = new Set<string>();
         const existingUniforms = new Set<string>();
+        const existingRollCombos = new Set<string>();
 
         existingStudentsDbList.forEach((s: any) => {
           const getVal = (prop: string, fallback?: any) => {
@@ -907,6 +912,14 @@ export default function Students({ user }: { user: UserType }) {
           if (aadhar) existingAadhars.add(aadhar);
           if (rfidVal) existingRfids.add(rfidVal);
           if (uniformVal) existingUniforms.add(uniformVal);
+
+          const rVal = (s.rollNumber || s.roll || "").toString().trim().toLowerCase();
+          const stdVal = (s.standardId || s.StandardId || "").toString().trim().toLowerCase();
+          const secVal = (s.sectionId || s.SectionId || "").toString().trim().toLowerCase();
+          const schVal = (s.schoolId || s.SchoolId || "").toString().trim().toLowerCase();
+          if (rVal && stdVal && secVal && schVal) {
+            existingRollCombos.add(`${schVal}_${stdVal}_${secVal}_${rVal}`);
+          }
         });
 
         // Set up sets for in-batch duplicates check
@@ -914,6 +927,7 @@ export default function Students({ user }: { user: UserType }) {
         const batchAadhars = new Set<string>();
         const batchRfids = new Set<string>();
         const batchUniforms = new Set<string>();
+        const batchRollCombos = new Set<string>();
 
         let totalValidationErrorsFound = 0;
         const validatedResults = initialResults.map((result: any, idx: number) => {
@@ -968,6 +982,22 @@ export default function Students({ user }: { user: UserType }) {
               rowError = `UniformID '${s.uniformId}' already exists in database.`;
             } else {
               batchUniforms.add(uniform);
+            }
+          }
+
+          // e) Roll Number combination uniqueness check
+          const roll = (s.rollNumber || "").toString().trim().toLowerCase();
+          const std = (s.standardId || "").toString().trim().toLowerCase();
+          const sec = (s.sectionId || "").toString().trim().toLowerCase();
+          const sch = (s.schoolId || "").toString().trim().toLowerCase();
+          if (!rowError && roll && std && sec && sch) {
+            const combo = `${sch}_${std}_${sec}_${roll}`;
+            if (batchRollCombos.has(combo)) {
+              rowError = `Duplicate Roll Number '${s.rollNumber}' for this School, Standard, and Division combination in the uploaded file.`;
+            } else if (existingRollCombos.has(combo)) {
+              rowError = `Roll Number '${s.rollNumber}' already exists for this School, Standard, and Division combination in the database.`;
+            } else {
+              batchRollCombos.add(combo);
             }
           }
 
@@ -1072,25 +1102,73 @@ export default function Students({ user }: { user: UserType }) {
     checkField("registrationNumber", !newStudentFormData.registrationNumber?.trim());
     checkField("rollNumber", !newStudentFormData.rollNumber?.trim());
     checkField("gender", !newStudentFormData.gender);
-    checkField("aadharCard", !newStudentFormData.aadharCard?.trim() || !/^\d{12}$/.test(newStudentFormData.aadharCard.replace(/\s/g, "")));
-    checkField("firstName", !newStudentFormData.firstName?.trim());
-    checkField("middleName", !newStudentFormData.middleName?.trim());
-    checkField("lastName", !newStudentFormData.lastName?.trim());
-    checkField("dateOfBirth", !newStudentFormData.dateOfBirth);
     checkField("schoolSectionId", !newStudentFormData.schoolSectionId);
-    checkField("motherName", !newStudentFormData.motherName?.trim());
     checkField("fatherContactNo", !newStudentFormData.fatherContactNo?.trim() || !/^\d{10}$/.test(newStudentFormData.fatherContactNo.replace(/\D/g, "")));
-    checkField("address", !newStudentFormData.address?.trim());
-    checkField("stateId", !newStudentFormData.stateId?.trim());
-    checkField("cityId", !newStudentFormData.cityId?.trim());
 
-
-    // Validate RFID Card ID length if entered (must be 11 or 24 alphanumeric digits)
-    if (newStudentFormData.rfid && newStudentFormData.rfid.trim() !== "") {
-      const rfidLen = newStudentFormData.rfid.trim().length;
-      if (rfidLen !== 11 && rfidLen !== 24) {
-        toast.error("RFID CARD ID must be either 11 or 24 alphanumeric characters.");
+    // Non-mandatory but format-validated fields
+    if (newStudentFormData.aadharCard && newStudentFormData.aadharCard.trim() !== "") {
+      const isInvalidAadhar = !/^\d{12}$/.test(newStudentFormData.aadharCard.replace(/\s/g, ""));
+      checkField("aadharCard", isInvalidAadhar);
+      if (isInvalidAadhar) {
+        toast.error("Aadhar Card ID must be a valid 12-digit number.");
         return;
+      }
+    }
+
+    // Email format validation if entered
+    if (newStudentFormData.email && newStudentFormData.email.trim() !== "") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const isInvalidEmail = !emailRegex.test(newStudentFormData.email.trim());
+      checkField("email", isInvalidEmail);
+      if (isInvalidEmail) {
+        toast.error("Please enter a valid email address.");
+        return;
+      }
+    }
+
+    // No-numeric checks for name fields
+    const hasNumeric = (str: string) => /\d/.test(str);
+
+    checkField("firstName", !newStudentFormData.firstName?.trim() || hasNumeric(newStudentFormData.firstName));
+    checkField("middleName", !newStudentFormData.middleName?.trim() || hasNumeric(newStudentFormData.middleName));
+    checkField("lastName", !newStudentFormData.lastName?.trim() || hasNumeric(newStudentFormData.lastName));
+    
+    if (newStudentFormData.firstName && hasNumeric(newStudentFormData.firstName)) {
+      toast.error("First Name must not contain numeric characters.");
+      return;
+    }
+    if (newStudentFormData.middleName && hasNumeric(newStudentFormData.middleName)) {
+      toast.error("Middle Name must not contain numeric characters.");
+      return;
+    }
+    if (newStudentFormData.lastName && hasNumeric(newStudentFormData.lastName)) {
+      toast.error("Last Name must not contain numeric characters.");
+      return;
+    }
+
+    if (newStudentFormData.motherName && newStudentFormData.motherName.trim() !== "") {
+      const isInvalidMotherName = hasNumeric(newStudentFormData.motherName);
+      checkField("motherName", isInvalidMotherName);
+      if (isInvalidMotherName) {
+        toast.error("Mother's Name must not contain numeric characters.");
+        return;
+      }
+    }
+
+    // RFID rule: Mandatory on ADD screen, disabled on EDIT screen. Length must be 10 or 24 alphanumeric.
+    if (!isEditMode) {
+      const rfidTrimmed = newStudentFormData.rfid?.trim() || "";
+      if (rfidTrimmed === "") {
+        checkField("rfid", true);
+        toast.error("RFID is mandatory on creation.");
+        return;
+      } else {
+        const rfidLen = rfidTrimmed.length;
+        if (rfidLen !== 10 && rfidLen !== 24) {
+          checkField("rfid", true);
+          toast.error("RFID must be either 10 or 24 alphanumeric characters.");
+          return;
+        }
       }
     }
 
@@ -1123,37 +1201,38 @@ export default function Students({ user }: { user: UserType }) {
         LastName: newStudentFormData.lastName,
         GrNo: newStudentFormData.registrationNumber,
         Gender: newStudentFormData.gender,
-        DateOfBirth: newStudentFormData.dateOfBirth,
+        DateOfBirth: newStudentFormData.dateOfBirth || null,
         FatherContactNo: newStudentFormData.fatherContactNo,
-        MotherContactNo: newStudentFormData.motherContactNo,
-        MotherName: newStudentFormData.motherName,
-        Address: newStudentFormData.address,
-        AadharCard: newStudentFormData.aadharCard,
-        Rfid: newStudentFormData.rfid,
-        UniformId: newStudentFormData.uniformId,
+        MotherContactNo: newStudentFormData.motherContactNo || null,
+        MotherName: newStudentFormData.motherName || null,
+        Address: newStudentFormData.address || null,
+        AadharCard: newStudentFormData.aadharCard || null,
+        Rfid: newStudentFormData.rfid || null,
+        UniformId: newStudentFormData.uniformId || null,
         Sms: !!newStudentFormData.sms,
         IsStateBoard: !!newStudentFormData.isStateBoard,
         DigitalUniform: !!newStudentFormData.digitalUniform,
         DigitalNotebook: !!newStudentFormData.digitalNotebook,
-        ProfilePhotoPath: newStudentFormData.profilePhotoPath,
+        ProfilePhotoPath: newStudentFormData.profilePhotoPath || null,
         SchoolSectionId: parseSafeInt(newStudentFormData.schoolSectionId) || null,
-        AdmissionDate: newStudentFormData.admissionDate,
-        Email: newStudentFormData.email,
+        AdmissionDate: newStudentFormData.admissionDate || null,
+        Email: newStudentFormData.email || null,
         CityId: parseSafeInt(newStudentFormData.cityId) || null,
         StateId: parseSafeInt(newStudentFormData.stateId) || null,
+        OptedForBus: !!newStudentFormData.optedForBus,
 
         // Map IDs from masters for manual data persistence
         StandardId: standardsMaster.find(s => s.name === newStudentFormData.standard)?.id,
         SectionId: sectionsMaster.find(s => s.name === newStudentFormData.division)?.id,
         AcademicYearId: parseSafeInt(newStudentFormData.academicYearId) || academicYears.find(ay => ay.name === newStudentFormData.academicYearId)?.id,
         ShiftId: shifts.find(s => s.name === newStudentFormData.shiftName)?.id,
-        BloodGroupId: parseSafeInt(newStudentFormData.bloodGroupId),
-        HouseId: parseSafeInt(newStudentFormData.houseId),
-        AdmissionTypeId: parseSafeInt(newStudentFormData.admissionTypeId),
-        ReligionId: parseSafeInt(newStudentFormData.religionId),
-        CasteId: parseSafeInt(newStudentFormData.casteId),
-        SubCasteId: parseSafeInt(newStudentFormData.subCasteId),
-        CategoryId: parseSafeInt(newStudentFormData.categoryId),
+        BloodGroupId: parseSafeInt(newStudentFormData.bloodGroupId) || null,
+        HouseId: parseSafeInt(newStudentFormData.houseId) || null,
+        AdmissionTypeId: parseSafeInt(newStudentFormData.admissionTypeId) || null,
+        ReligionId: parseSafeInt(newStudentFormData.religionId) || null,
+        CasteId: parseSafeInt(newStudentFormData.casteId) || null,
+        SubCasteId: parseSafeInt(newStudentFormData.subCasteId) || null,
+        CategoryId: parseSafeInt(newStudentFormData.categoryId) || null,
 
         // Audit fields: Ensure CreatedBy and ModifiedBy are captured for backend audit logging
         CreatedBy: isEditMode ? undefined : (user.name || user.email),
@@ -1757,7 +1836,7 @@ export default function Students({ user }: { user: UserType }) {
                             </Select>
                           </div>
                           <div className="space-y-1.5">
-                            <Label htmlFor="aadharCard" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.aadharCard ? "text-red-500" : "text-slate-500")}>Aadhar ID {formErrors.aadharCard && "*"}</Label>
+                            <Label htmlFor="aadharCard" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.aadharCard ? "text-red-500" : "text-slate-500")}>Aadhar ID {formErrors.aadharCard && " (Formatting Error)"}</Label>
                             <Input
                               ref={el => { inputRefs.current["aadharCard"] = el; }}
                               id="aadharCard"
@@ -1768,7 +1847,7 @@ export default function Students({ user }: { user: UserType }) {
                                 setNewStudentFormData({ ...newStudentFormData, aadharCard: val });
                                 if (formErrors.aadharCard) setFormErrors(prev => ({ ...prev, aadharCard: false }));
                               }}
-                              placeholder="12-digit number"
+                              placeholder="12-digit number (Optional)"
                               className={cn(
                                 "h-10 border-slate-200 bg-slate-50/30 tracking-widest font-mono font-bold rounded-xl px-4 text-sm",
                                 formErrors.aadharCard && "border-red-500 ring-2 ring-red-500/10"
@@ -1776,18 +1855,27 @@ export default function Students({ user }: { user: UserType }) {
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <Label htmlFor="rfid" className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-500">RFID Card ID</Label>
+                            <Label htmlFor="rfid" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.rfid ? "text-red-500" : "text-slate-500")}>
+                              RFID {!isEditMode ? <span className="text-red-500">*</span> : " (Disabled on Edit)"}
+                            </Label>
                             <Input
+                              ref={el => { inputRefs.current["rfid"] = el; }}
                               id="rfid"
                               value={newStudentFormData.rfid}
+                              disabled={isEditMode}
                               onChange={(e) => {
                                 const val = e.target.value.replace(/[^a-zA-Z0-9]/g, "");
                                 if (val.length <= 24) {
                                   setNewStudentFormData({ ...newStudentFormData, rfid: val });
+                                  if (formErrors.rfid) setFormErrors(prev => ({ ...prev, rfid: false }));
                                 }
                               }}
-                              placeholder="e.g. 11-digit or 24-digit alphanumeric"
-                              className="h-10 border-slate-200 bg-slate-50/30 font-mono font-bold rounded-xl px-4 text-sm"
+                              placeholder={isEditMode ? "RFID cannot be edited" : "e.g. 10 or 24 alphanumeric digits"}
+                              className={cn(
+                                "h-10 border-slate-200 bg-slate-50/30 font-mono font-bold rounded-xl px-4 text-sm",
+                                isEditMode && "bg-slate-100 cursor-not-allowed text-slate-400",
+                                formErrors.rfid && "border-red-500 ring-2 ring-red-500/10"
+                              )}
                             />
                           </div>
 
@@ -1940,7 +2028,7 @@ export default function Students({ user }: { user: UserType }) {
                             />
                           </div>
                           <div className="md:col-span-2 space-y-1.5">
-                            <Label htmlFor="dateOfBirth" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.dateOfBirth ? "text-red-500" : "text-slate-500")}>Date of Birth {formErrors.dateOfBirth && "*"}</Label>
+                            <Label htmlFor="dateOfBirth" className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-500">Date of Birth (Optional)</Label>
                             <Input
                               ref={el => { inputRefs.current["dateOfBirth"] = el; }}
                               id="dateOfBirth"
@@ -1950,10 +2038,7 @@ export default function Students({ user }: { user: UserType }) {
                                 setNewStudentFormData({ ...newStudentFormData, dateOfBirth: e.target.value });
                                 if (formErrors.dateOfBirth) setFormErrors(prev => ({ ...prev, dateOfBirth: false }));
                               }}
-                              className={cn(
-                                "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                                formErrors.dateOfBirth && "border-red-500 ring-2 ring-red-500/10"
-                              )}
+                              className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm"
                             />
                           </div>
 
@@ -2072,7 +2157,7 @@ export default function Students({ user }: { user: UserType }) {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="space-y-1.5">
-                          <Label htmlFor="motherName" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.motherName ? "text-red-500" : "text-slate-500")}>Mother's Name {formErrors.motherName && "*"}</Label>
+                          <Label htmlFor="motherName" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.motherName ? "text-red-500" : "text-slate-500")}>Mother's Name {formErrors.motherName && " (Formatting Error)"}</Label>
                           <Input
                             ref={el => { inputRefs.current["motherName"] = el; }}
                             id="motherName"
@@ -2081,7 +2166,7 @@ export default function Students({ user }: { user: UserType }) {
                               setNewStudentFormData({ ...newStudentFormData, motherName: e.target.value });
                               if (formErrors.motherName) setFormErrors(prev => ({ ...prev, motherName: false }));
                             }}
-                            placeholder="e.g. Mary Wilson"
+                            placeholder="e.g. Mary Wilson (Optional)"
                             className={cn(
                               "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
                               formErrors.motherName && "border-red-500 ring-2 ring-red-500/10"
@@ -2167,11 +2252,21 @@ export default function Students({ user }: { user: UserType }) {
                               />
                               <span className="text-xs font-bold text-slate-700">Digital Notebook</span>
                             </label>
+
+                            <label className="flex items-center gap-2.5 cursor-pointer p-2.5 bg-slate-50/50 rounded-xl border border-slate-100 hover:bg-slate-50 transition-all select-none">
+                              <input
+                                type="checkbox"
+                                checked={!!newStudentFormData.optedForBus}
+                                onChange={(e) => setNewStudentFormData({ ...newStudentFormData, optedForBus: e.target.checked })}
+                                className="h-4.5 w-4.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 accent-blue-600 cursor-pointer"
+                              />
+                              <span className="text-xs font-bold text-slate-700">Opted for Bus</span>
+                            </label>
                           </div>
                         </div>
 
                         <div className="md:col-span-2 space-y-1.5">
-                          <Label htmlFor="address" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.address ? "text-red-500" : "text-slate-500")}>Residential Address {formErrors.address && "*"}</Label>
+                          <Label htmlFor="address" className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-500">Residential Address (Optional)</Label>
                           <Input
                             ref={el => { inputRefs.current["address"] = el; }}
                             id="address"
@@ -2181,10 +2276,7 @@ export default function Students({ user }: { user: UserType }) {
                               if (formErrors.address) setFormErrors(prev => ({ ...prev, address: false }));
                             }}
                             placeholder="Enter complete residential address"
-                            className={cn(
-                              "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                              formErrors.address && "border-red-500 ring-2 ring-red-500/10"
-                            )}
+                            className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm"
                           />
                         </div>
                       </div>
@@ -2221,8 +2313,8 @@ export default function Students({ user }: { user: UserType }) {
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label htmlFor="stateId" className={cn("text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1", formErrors.stateId ? "text-red-500" : "text-slate-500")}>
-                            State Name {formErrors.stateId && "*"}
+                          <Label htmlFor="stateId" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                            State Name
                           </Label>
                           <Select
                             value={newStudentFormData.stateId}
@@ -2234,17 +2326,14 @@ export default function Students({ user }: { user: UserType }) {
                             <SelectTrigger
                               ref={el => { inputRefs.current["stateId"] = el; }}
                               id="stateId"
-                              className={cn(
-                                "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                                formErrors.stateId && "border-red-500 ring-2 ring-red-500/10"
-                              )}
+                              className="h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm"
                             >
-                              <SelectValue placeholder="Select State">
+                              <SelectValue placeholder="Select State (Optional)">
                                 {newStudentFormData.stateId ? states.find(st => st.id.toString() === newStudentFormData.stateId)?.name : undefined}
                               </SelectValue>
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select State</SelectItem>
+                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select State (Optional)</SelectItem>
                               {Array.isArray(states) && states.map(st => (
                                 <SelectItem key={st.id} value={st.id.toString()} className="font-semibold py-1.5 px-3 rounded-lg focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
                                   {st.name}
@@ -2255,8 +2344,8 @@ export default function Students({ user }: { user: UserType }) {
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label htmlFor="cityId" className={cn("text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1", formErrors.cityId ? "text-red-500" : "text-slate-500")}>
-                            City Name {formErrors.cityId && "*"}
+                          <Label htmlFor="cityId" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                            City Name
                           </Label>
                           <Select
                             value={newStudentFormData.cityId}
@@ -2271,16 +2360,15 @@ export default function Students({ user }: { user: UserType }) {
                               id="cityId"
                               className={cn(
                                 "h-10 border-slate-200 bg-slate-50/50 font-bold rounded-xl px-4 text-sm",
-                                formErrors.cityId && "border-red-500 ring-2 ring-red-500/10",
                                 !newStudentFormData.stateId && "opacity-80 cursor-not-allowed bg-slate-100"
                               )}
                             >
-                              <SelectValue placeholder="Select City">
+                              <SelectValue placeholder="Select City (Optional)">
                                 {newStudentFormData.cityId ? cities.find(c => c.id.toString() === newStudentFormData.cityId)?.name : undefined}
                               </SelectValue>
                             </SelectTrigger>
                             <SelectContent className="rounded-xl shadow-2xl border-slate-200">
-                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select City</SelectItem>
+                              <SelectItem value="" className="font-semibold py-1.5 px-3 rounded-lg focus:bg-slate-50 text-slate-400 italic">Select City (Optional)</SelectItem>
                               {Array.isArray(cities) && cities
                                 .filter(c => c.stateId?.toString() === newStudentFormData.stateId)
                                 .map(c => (

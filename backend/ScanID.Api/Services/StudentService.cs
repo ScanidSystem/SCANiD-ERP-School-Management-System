@@ -125,14 +125,13 @@ namespace ScanID.Api.Services
                 query = query.Where(s => s.SectionId == sectionId.Value);
             }
 
-            // Server-side search matching name, GRNO, registration number, or roll number
+            // Server-side search matching name, GRNO, or roll number
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var searchLower = search.Trim().ToLower();
                 query = query.Where(s => 
                     s.Name.ToLower().Contains(searchLower) ||
                     (s.GrNo != null && s.GrNo.ToLower().Contains(searchLower)) ||
-                    s.RegistrationNumber.ToLower().Contains(searchLower) ||
                     s.RollNumber.ToString().Contains(searchLower)
                 );
             }
@@ -157,7 +156,7 @@ namespace ScanID.Api.Services
                         break;
                     case "grno":
                     case "registrationnumber":
-                        query = isDesc ? query.OrderByDescending(s => s.GrNo ?? s.RegistrationNumber).ThenBy(s => s.Id) : query.OrderBy(s => s.GrNo ?? s.RegistrationNumber).ThenBy(s => s.Id);
+                        query = isDesc ? query.OrderByDescending(s => s.GrNo).ThenBy(s => s.Id) : query.OrderBy(s => s.GrNo).ThenBy(s => s.Id);
                         break;
                     case "roll":
                     case "rollnumber":
@@ -214,11 +213,35 @@ namespace ScanID.Api.Services
         /// </summary>
         public async Task<Student> CreateStudentAsync(Student student)
         {
-            student.RegistrationNumber = student.RegistrationNumber ?? "REG-" + UPPER_RAND_STRING();
             student.Status = student.Status ?? "Active";
 
             return await ExecuteWithRetryAsync(async () =>
             {
+                // Validate GrNo uniqueness from overall academics
+                if (!string.IsNullOrEmpty(student.GrNo))
+                {
+                    bool grNoExists = await _context.Students.AnyAsync(s => s.GrNo == student.GrNo && !s.IsDeleted);
+                    if (grNoExists)
+                    {
+                        throw new InvalidOperationException($"Student validation failed: GrNo '{student.GrNo}' already exists.");
+                    }
+                }
+
+                // Validate Roll No uniqueness per combination of school, standard, division
+                if (student.StandardId.HasValue && student.SectionId.HasValue)
+                {
+                    bool rollExists = await _context.Students.AnyAsync(s => 
+                        s.SchoolId == student.SchoolId && 
+                        s.StandardId == student.StandardId && 
+                        s.SectionId == student.SectionId && 
+                        s.RollNumber == student.RollNumber && 
+                        !s.IsDeleted);
+                    if (rollExists)
+                    {
+                        throw new InvalidOperationException($"Student validation failed: Roll No '{student.RollNumber}' already exists for this combination of Standard and Division.");
+                    }
+                }
+
                 // Execute the sp_ManageStudent stored procedure safely using high-performance ADO.NET DbMapper 
                 // to retrieve the newly generated identity, completely avoiding EF Core query wrapping issues.
                 student.Id = await DbMapper.ExecuteScalarStoredProcedureAsync(
@@ -226,7 +249,6 @@ namespace ScanID.Api.Services
                     "dbo.sp_ManageStudent",
                     ("Action", "INSERT"),
                     ("Id", null),
-                    ("RegistrationNumber", student.RegistrationNumber),
                     ("Name", student.Name),
                     ("FirstName", student.FirstName),
                     ("MiddleName", student.MiddleName),
@@ -264,7 +286,8 @@ namespace ScanID.Api.Services
                     ("StateId", student.StateId),
                     ("IsStateBoard", student.IsStateBoard),
                     ("DigitalUniform", student.DigitalUniform),
-                    ("DigitalNotebook", student.DigitalNotebook)
+                    ("DigitalNotebook", student.DigitalNotebook),
+                    ("OptedForBus", student.OptedForBus)
                 );
 
                 return student;
@@ -278,12 +301,37 @@ namespace ScanID.Api.Services
         {
             return await ExecuteWithRetryAsync(async () =>
             {
+                // Validate GrNo uniqueness from overall academics
+                if (!string.IsNullOrEmpty(student.GrNo))
+                {
+                    bool grNoExists = await _context.Students.AnyAsync(s => s.GrNo == student.GrNo && s.Id != student.Id && !s.IsDeleted);
+                    if (grNoExists)
+                    {
+                        throw new InvalidOperationException($"Student validation failed: GrNo '{student.GrNo}' already exists.");
+                    }
+                }
+
+                // Validate Roll No uniqueness per combination of school, standard, division
+                if (student.StandardId.HasValue && student.SectionId.HasValue)
+                {
+                    bool rollExists = await _context.Students.AnyAsync(s => 
+                        s.SchoolId == student.SchoolId && 
+                        s.StandardId == student.StandardId && 
+                        s.SectionId == student.SectionId && 
+                        s.RollNumber == student.RollNumber && 
+                        s.Id != student.Id && 
+                        !s.IsDeleted);
+                    if (rollExists)
+                    {
+                        throw new InvalidOperationException($"Student validation failed: Roll No '{student.RollNumber}' already exists for this combination of Standard and Division.");
+                    }
+                }
+
                 await DbMapper.ExecuteScalarStoredProcedureAsync(
                     _context,
                     "dbo.sp_ManageStudent",
                     ("Action", "UPDATE"),
                     ("Id", student.Id),
-                    ("RegistrationNumber", student.RegistrationNumber),
                     ("Name", student.Name),
                     ("FirstName", student.FirstName),
                     ("MiddleName", student.MiddleName),
@@ -321,7 +369,8 @@ namespace ScanID.Api.Services
                     ("StateId", student.StateId),
                     ("IsStateBoard", student.IsStateBoard),
                     ("DigitalUniform", student.DigitalUniform),
-                    ("DigitalNotebook", student.DigitalNotebook)
+                    ("DigitalNotebook", student.DigitalNotebook),
+                    ("OptedForBus", student.OptedForBus)
                 );
                 return true;
             });
@@ -337,7 +386,6 @@ namespace ScanID.Api.Services
 
             // Standard bulk business check for duplicates by querying only the database records that match the uploaded batch.
             // This is critically scale-robust and prevents loading millions of rows (OutOfMemoryException) into memory.
-            var incomingRegs = students.Select(s => s.RegistrationNumber).Where(r => !string.IsNullOrEmpty(r)).Distinct().ToList();
             var incomingGrNos = students.Select(s => s.GrNo).Where(g => !string.IsNullOrEmpty(g)).Distinct().ToList();
             var incomingAadhars = students.Select(s => s.AadharCard).Where(a => !string.IsNullOrEmpty(a)).Distinct().ToList();
             var incomingRfids = students.Select(s => s.Rfid).Where(r => !string.IsNullOrEmpty(r)).Distinct().ToList();
@@ -346,52 +394,57 @@ namespace ScanID.Api.Services
             var dbStudents = await _context.Students
                 .AsNoTracking()
                 .Where(s => !s.IsDeleted && (
-                    incomingRegs.Contains(s.RegistrationNumber) ||
                     (s.GrNo != null && incomingGrNos.Contains(s.GrNo)) ||
                     (s.AadharCard != null && incomingAadhars.Contains(s.AadharCard)) ||
                     (s.Rfid != null && incomingRfids.Contains(s.Rfid)) ||
                     (s.UniformId != null && incomingUniforms.Contains(s.UniformId))
                 ))
-                .Select(s => new { s.RegistrationNumber, s.GrNo, s.AadharCard, s.Rfid, s.UniformId })
+                .Select(s => new { s.GrNo, s.AadharCard, s.Rfid, s.UniformId })
                 .ToListAsync();
 
-            var dbRegs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var dbGrNos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var dbAadhars = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var dbRfids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var dbUniforms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var dbs in dbStudents)
             {
-                if (!string.IsNullOrEmpty(dbs.RegistrationNumber)) dbRegs.Add(dbs.RegistrationNumber.Trim());
-                if (!string.IsNullOrEmpty(dbs.GrNo)) dbRegs.Add(dbs.GrNo.Trim());
+                if (!string.IsNullOrEmpty(dbs.GrNo)) dbGrNos.Add(dbs.GrNo.Trim());
                 if (!string.IsNullOrEmpty(dbs.AadharCard)) dbAadhars.Add(dbs.AadharCard.Trim());
                 if (!string.IsNullOrEmpty(dbs.Rfid)) dbRfids.Add(dbs.Rfid.Trim());
                 if (!string.IsNullOrEmpty(dbs.UniformId)) dbUniforms.Add(dbs.UniformId.Trim());
             }
 
-            var batchRegs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            // Uniqueness check for RollNumber per SchoolId, StandardId, SectionId combo
+            var dbActiveRolls = await _context.Students
+                .AsNoTracking()
+                .Where(s => !s.IsDeleted && s.StandardId != null && s.SectionId != null)
+                .Select(s => new { s.SchoolId, s.StandardId, s.SectionId, s.RollNumber })
+                .ToListAsync();
+
+            var dbRollKeys = new HashSet<string>();
+            foreach (var r in dbActiveRolls)
+            {
+                dbRollKeys.Add($"{r.SchoolId}-{r.StandardId}-{r.SectionId}-{r.RollNumber}");
+            }
+
+            var batchGrNos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var batchAadhars = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var batchRfids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var batchUniforms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var batchRollKeys = new HashSet<string>();
 
             int index = 1;
             foreach (var s in students)
             {
-                var reg = (s.RegistrationNumber ?? s.GrNo ?? "").Trim();
-                if (!string.IsNullOrEmpty(reg))
-                {
-                    if (batchRegs.Contains(reg) || dbRegs.Contains(reg))
-                        throw new InvalidOperationException($"Row {index}: Duplicate Registration Number/GRNO '{reg}' detected.");
-                    batchRegs.Add(reg);
-                }
-
                 var grno = (s.GrNo ?? "").Trim();
-                if (!string.IsNullOrEmpty(grno))
+                if (string.IsNullOrEmpty(grno))
                 {
-                    if (batchRegs.Contains(grno) || dbRegs.Contains(grno))
-                        throw new InvalidOperationException($"Row {index}: Duplicate Registration Number/GRNO '{grno}' detected.");
-                    batchRegs.Add(grno);
+                    throw new InvalidOperationException($"Row {index}: GRNO is required and cannot be empty.");
                 }
+                if (batchGrNos.Contains(grno) || dbGrNos.Contains(grno))
+                    throw new InvalidOperationException($"Row {index}: Duplicate GRNO '{grno}' detected.");
+                batchGrNos.Add(grno);
 
                 var aadhar = (s.AadharCard ?? "").Trim();
                 if (!string.IsNullOrEmpty(aadhar))
@@ -405,7 +458,7 @@ namespace ScanID.Api.Services
                 if (!string.IsNullOrEmpty(rfid))
                 {
                     if (batchRfids.Contains(rfid) || dbRfids.Contains(rfid))
-                        throw new InvalidOperationException($"Row {index}: Duplicate RFID/CardID '{rfid}' detected.");
+                        throw new InvalidOperationException($"Row {index}: Duplicate RFID '{rfid}' detected.");
                     batchRfids.Add(rfid);
                 }
 
@@ -415,6 +468,14 @@ namespace ScanID.Api.Services
                     if (batchUniforms.Contains(uniform) || dbUniforms.Contains(uniform))
                         throw new InvalidOperationException($"Row {index}: Duplicate UniformID '{uniform}' detected.");
                     batchUniforms.Add(uniform);
+                }
+
+                if (s.StandardId.HasValue && s.SectionId.HasValue)
+                {
+                    var rollKey = $"{s.SchoolId}-{s.StandardId}-{s.SectionId}-{s.RollNumber}";
+                    if (batchRollKeys.Contains(rollKey) || dbRollKeys.Contains(rollKey))
+                        throw new InvalidOperationException($"Row {index}: Duplicate Roll Number '{s.RollNumber}' detected for this combination of School, Standard and Division.");
+                    batchRollKeys.Add(rollKey);
                 }
 
                 index++;
@@ -436,7 +497,6 @@ namespace ScanID.Api.Services
 
                     // Create a schema-aligned DataTable to stream student records via TDS bulk protocols
                     using var table = new System.Data.DataTable();
-                    table.Columns.Add("RegistrationNumber", typeof(string));
                     table.Columns.Add("Name", typeof(string));
                     table.Columns.Add("SchoolId", typeof(int));
                     table.Columns.Add("Status", typeof(string));
@@ -481,18 +541,11 @@ namespace ScanID.Api.Services
                     table.Columns.Add("CreatedOn", typeof(DateTime));
                     table.Columns.Add("ModifiedBy", typeof(string));
                     table.Columns.Add("ModifiedOn", typeof(DateTime));
+                    table.Columns.Add("OptedForBus", typeof(bool));
 
                     foreach (var s in students)
                     {
-                        var registrationNumber = s.RegistrationNumber;
-                        if (string.IsNullOrEmpty(registrationNumber))
-                        {
-                            registrationNumber = "REG-" + UPPER_RAND_STRING();
-                            s.RegistrationNumber = registrationNumber;
-                        }
-
                         table.Rows.Add(
-                            registrationNumber,
                             s.Name ?? string.Empty,
                             s.SchoolId,
                             s.Status ?? "Active",
@@ -536,7 +589,8 @@ namespace ScanID.Api.Services
                             (object)s.CreatedBy ?? "SYSTEM",
                             s.CreatedOn == default ? DateTime.UtcNow : s.CreatedOn,
                             (object)s.ModifiedBy ?? "SYSTEM",
-                            s.ModifiedOn == default ? DateTime.UtcNow : s.ModifiedOn
+                            s.ModifiedOn == default ? DateTime.UtcNow : s.ModifiedOn,
+                            s.OptedForBus
                         );
                     }
 
