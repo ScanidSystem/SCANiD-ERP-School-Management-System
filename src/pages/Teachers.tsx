@@ -484,7 +484,7 @@ export default function Teachers({ user }: { user: any }) {
         setTeachers(prev => prev.map(t => 
           t.id.toString() === teacherId.toString() ? { ...t, photo: newPath, profilePhotoPath: newPath, ProfilePhotoPath: newPath } : t
         ));
-        setFormData(prev => ({ ...prev, photo: newPath }));
+        setFormData((prev: any) => ({ ...prev, photo: newPath }));
         if (selectedTeacher && selectedTeacher.id.toString() === teacherId.toString()) {
           setSelectedTeacher(prev => prev ? { ...prev, photo: newPath } : null);
         }
@@ -618,7 +618,7 @@ export default function Teachers({ user }: { user: any }) {
                             <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Faculty Identity Photo</Label>
                             <div 
                               className="relative group cursor-pointer"
-                              onClick={() => triggerPhotoUpload(isEditing ? selectedTeacher?.id!.toString() : "new")}
+                              onClick={() => triggerPhotoUpload((isEditing && selectedTeacher?.id) ? selectedTeacher.id.toString() : "new")}
                             >
                               <div className="w-44 h-44 rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-100 bg-slate-50 flex items-center justify-center transition-all group-hover:shadow-blue-200/50 group-hover:scale-[1.02]">
                                  {(localPhotoPreview || formData.photo) ? (
@@ -1049,7 +1049,7 @@ export default function Teachers({ user }: { user: any }) {
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5 mr-4">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rows per page</span>
-                  <Select value={pageSize.toString()} onValueChange={(v) => { setPageSize(parseInt(v)); setPage(1); }}>
+                  <Select value={pageSize.toString()} onValueChange={(v) => { if (v !== null) { setPageSize(parseInt(v)); setPage(1); } }}>
                     <SelectTrigger className="w-[70px] h-8 bg-white border-slate-200 rounded-lg text-xs font-bold">
                       <SelectValue />
                     </SelectTrigger>
