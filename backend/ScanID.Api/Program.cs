@@ -9,7 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.Configure<RouteOptions>(options =>
+builder.Services.AddMemoryCache();
+builder.Services.Configure<RouteOptions>(options => 
 {
     options.LowercaseUrls = true;
     options.LowercaseQueryStrings = true;
@@ -56,6 +57,101 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Automatically check/create/remediate missing master tables in live DB to prevent 500 errors
+try
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        
+        // 1. Check if States table exists, if not create it (due to FK dependency in Cities)
+        context.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[States]') AND type in (N'U'))
+            BEGIN
+            CREATE TABLE [dbo].[States](
+                [Id] [int] IDENTITY(1,1) NOT NULL,
+                [Name] [nvarchar](100) NOT NULL,
+                [IsActive] [bit] NOT NULL CONSTRAINT [DF_States_IsActive] DEFAULT (1),
+                [IsDeleted] [bit] NOT NULL CONSTRAINT [DF_States_IsDeleted] DEFAULT (0),
+                [CreatedBy] [nvarchar](max) NULL,
+                [CreatedOn] [datetime2](7) NOT NULL CONSTRAINT [DF_States_CreatedOn] DEFAULT (GETUTCDATE()),
+                [ModifiedBy] [nvarchar](max) NULL,
+                [ModifiedOn] [datetime2](7) NOT NULL CONSTRAINT [DF_States_ModifiedOn] DEFAULT (GETUTCDATE()),
+             CONSTRAINT [PK_States] PRIMARY KEY CLUSTERED ([Id] ASC)
+            )
+            END
+        ");
+
+        // 2. Check if Cities table exists, if not create it
+        context.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Cities]') AND type in (N'U'))
+            BEGIN
+            CREATE TABLE [dbo].[Cities](
+                [Id] [int] IDENTITY(1,1) NOT NULL,
+                [StateId] [int] NOT NULL,
+                [Name] [nvarchar](100) NOT NULL,
+                [IsActive] [bit] NOT NULL CONSTRAINT [DF_Cities_IsActive] DEFAULT (1),
+                [IsDeleted] [bit] NOT NULL CONSTRAINT [DF_Cities_IsDeleted] DEFAULT (0),
+                [CreatedBy] [nvarchar](max) NULL,
+                [CreatedOn] [datetime2](7) NOT NULL CONSTRAINT [DF_Cities_CreatedOn] DEFAULT (GETUTCDATE()),
+                [ModifiedBy] [nvarchar](max) NULL,
+                [ModifiedOn] [datetime2](7) NOT NULL CONSTRAINT [DF_Cities_ModifiedOn] DEFAULT (GETUTCDATE()),
+             CONSTRAINT [PK_Cities] PRIMARY KEY CLUSTERED ([Id] ASC),
+             CONSTRAINT [FK_Cities_States] FOREIGN KEY([StateId]) REFERENCES [dbo].[States] ([Id])
+            )
+            END
+        ");
+
+        // 3. Check if SchoolSections table exists, if not create it
+        context.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SchoolSections]') AND type in (N'U'))
+            BEGIN
+            CREATE TABLE [dbo].[SchoolSections](
+                [Id] [int] IDENTITY(1,1) NOT NULL,
+                [Name] [nvarchar](100) NOT NULL,
+                [IsActive] [bit] NOT NULL CONSTRAINT [DF_SchoolSections_IsActive] DEFAULT (1),
+                [IsDeleted] [bit] NOT NULL CONSTRAINT [DF_SchoolSections_IsDeleted] DEFAULT (0),
+                [CreatedBy] [nvarchar](max) NULL,
+                [CreatedOn] [datetime2](7) NOT NULL CONSTRAINT [DF_SchoolSections_CreatedOn] DEFAULT (GETUTCDATE()),
+                [ModifiedBy] [nvarchar](max) NULL,
+                [ModifiedOn] [datetime2](7) NOT NULL CONSTRAINT [DF_SchoolSections_ModifiedOn] DEFAULT (GETUTCDATE()),
+             CONSTRAINT [PK_SchoolSections] PRIMARY KEY CLUSTERED ([Id] ASC)
+            )
+            END
+        ");
+
+        // 4. Seed initial data to the newly created / existing empty master tables
+        if (!context.SchoolSections.Any())
+        {
+            context.SchoolSections.Add(new SchoolSection { Name = "Primary", IsActive = true, IsDeleted = false, CreatedBy = "SYSTEM" });
+            context.SchoolSections.Add(new SchoolSection { Name = "Secondary", IsActive = true, IsDeleted = false, CreatedBy = "SYSTEM" });
+            context.SchoolSections.Add(new SchoolSection { Name = "Higher Secondary", IsActive = true, IsDeleted = false, CreatedBy = "SYSTEM" });
+            context.SaveChanges();
+        }
+
+        if (!context.States.Any())
+        {
+            var maharashtra = new State { Name = "MAHARASHTRA", IsActive = true, IsDeleted = false, CreatedBy = "SYSTEM" };
+            var delhi = new State { Name = "DELHI", IsActive = true, IsDeleted = false, CreatedBy = "SYSTEM" };
+            var karnataka = new State { Name = "KARNATAKA", IsActive = true, IsDeleted = false, CreatedBy = "SYSTEM" };
+            context.States.AddRange(maharashtra, delhi, karnataka);
+            context.SaveChanges();
+
+            if (!context.Cities.Any())
+            {
+                context.Cities.Add(new City { StateId = maharashtra.Id, Name = "Mumbai", IsActive = true, IsDeleted = false, CreatedBy = "SYSTEM" });
+                context.Cities.Add(new City { StateId = maharashtra.Id, Name = "Pune", IsActive = true, IsDeleted = false, CreatedBy = "SYSTEM" });
+                context.Cities.Add(new City { StateId = delhi.Id, Name = "New Delhi", IsActive = true, IsDeleted = false, CreatedBy = "SYSTEM" });
+                context.SaveChanges();
+            }
+        }
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine("Database self-healing/creation error: " + ex.Message);
+    FileLogger.LogError(ex);
+}
 
 // Global Exception Handler Middleware
 app.Use(async (context, next) =>
@@ -70,7 +166,7 @@ app.Use(async (context, next) =>
         FileLogger.LogError(ex);
 
         // Log to Database (optional, don't crash if DB is down)
-        try
+        try 
         {
             var db = context.RequestServices.GetRequiredService<ApplicationDbContext>();
             db.ErrorLogs.Add(new ErrorLog
@@ -87,13 +183,12 @@ app.Use(async (context, next) =>
         {
             FileLogger.LogError(new Exception("Failed to log error to database. " + dbEx.Message, dbEx));
         }
-
+        
         // Return a cleaner 500 error instead of throwing a raw exception that might leak info
         context.Response.StatusCode = 500;
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new
-        {
-            error = "Internal Server Error",
+        await context.Response.WriteAsJsonAsync(new { 
+            error = "Internal Server Error", 
             message = ex.Message,
             details = "Check server logs for more information."
         });
@@ -105,7 +200,6 @@ app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "ScanID API v1");
-    // c.SwaggerEndpoint("/scanid_erp_api/swagger/v1/swagger.json", "ScanID API v1");
     c.RoutePrefix = "swagger"; // Keep it at /swagger
 });
 
@@ -115,9 +209,9 @@ if (app.Environment.IsDevelopment())
     // In development, we might not have SSL certificates configured locally, 
     // so we skip redirection to prevent "Empty Response" errors.
 }
-else
+else 
 {
-    ///app.UseHttpsRedirection();
+    app.UseHttpsRedirection();
 }
 app.UseStaticFiles(); // Enable serving of static files from wwwroot
 app.UseCors("AllowReactApp");

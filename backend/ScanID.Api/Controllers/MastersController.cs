@@ -1,7 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using ScanID.Api.Data;
 using ScanID.Api.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ScanID.Api.Controllers
 {
@@ -10,24 +14,44 @@ namespace ScanID.Api.Controllers
     public class MastersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMemoryCache _cache;
 
-        public MastersController(ApplicationDbContext context)
+        public MastersController(ApplicationDbContext context, IMemoryCache cache)
         {
             _context = context;
+            _cache = cache;
         }
 
         // --- Generic CRUD Methods ---
 
         /// <summary>
-        /// Fetches all records from the specified table.
+        /// Clears the master cache for a given type.
         /// </summary>
-        private async Task<ActionResult<IEnumerable<T>>> GetAll<T>(DbSet<T> dbSet) where T : class
+        private void ClearCache<T>()
         {
-            return await dbSet.ToListAsync();
+            _cache.Remove($"Master_{typeof(T).Name}");
         }
 
         /// <summary>
-        /// Fetches a single record by its primary key.
+        /// Fetches all records from the specified table utilizing IMemoryCache layer.
+        /// </summary>
+        private async Task<ActionResult<IEnumerable<T>>> GetAll<T>(DbSet<T> dbSet) where T : class
+        {
+            string cacheKey = $"Master_{typeof(T).Name}";
+            if (!_cache.TryGetValue(cacheKey, out List<T>? cachedList))
+            {
+                // Retrieve using AsNoTracking for optimal EF Core reading performance
+                cachedList = await dbSet.AsNoTracking().ToListAsync();
+                var cacheOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(15))
+                    .SetSlidingExpiration(TimeSpan.FromMinutes(5));
+                _cache.Set(cacheKey, cachedList, cacheOptions);
+            }
+            return Ok(cachedList);
+        }
+
+        /// <summary>
+        /// Fetches a single record by its primary key using AsNoTracking.
         /// </summary>
         private async Task<ActionResult<T>> GetById<T>(DbSet<T> dbSet, int id) where T : class
         {
@@ -37,17 +61,18 @@ namespace ScanID.Api.Controllers
         }
 
         /// <summary>
-        /// Creates a new record in the specified table.
+        /// Creates a new record in the specified table. Evicts cache for T.
         /// </summary>
         private async Task<ActionResult<T>> Create<T>(DbSet<T> dbSet, T item) where T : class
         {
             dbSet.Add(item);
             await _context.SaveChangesAsync();
+            ClearCache<T>();
             return item;
         }
 
         /// <summary>
-        /// Updates an existing record with concurrency check.
+        /// Updates an existing record with concurrency check. Evicts cache for T.
         /// </summary>
         private async Task<IActionResult> Update<T>(int id, T item) where T : BaseEntity
         {
@@ -69,6 +94,8 @@ namespace ScanID.Api.Controllers
                 if (!await ItemExists(id, item)) return NotFound();
                 else throw;
             }
+
+            ClearCache<T>();
             return NoContent();
         }
 
@@ -82,7 +109,7 @@ namespace ScanID.Api.Controllers
         }
 
         /// <summary>
-        /// Performs a soft delete on the specified record.
+        /// Performs a soft delete on the specified record. Evicts cache for T.
         /// </summary>
         private async Task<IActionResult> Delete<T>(DbSet<T> dbSet, int id) where T : BaseEntity
         {
@@ -93,6 +120,7 @@ namespace ScanID.Api.Controllers
             item.IsActive = false;
             await _context.SaveChangesAsync();
 
+            ClearCache<T>();
             return NoContent();
         }
 
@@ -152,7 +180,13 @@ namespace ScanID.Api.Controllers
         [HttpGet("sub-castes")]
         public async Task<ActionResult<IEnumerable<SubCaste>>> GetSubCastes()
         {
-            return await _context.SubCastes.Include(s => s.Caste).ToListAsync();
+            const string cacheKey = "Master_SubCaste";
+            if (!_cache.TryGetValue(cacheKey, out List<SubCaste>? cachedList))
+            {
+                cachedList = await _context.SubCastes.Include(s => s.Caste).AsNoTracking().ToListAsync();
+                _cache.Set(cacheKey, cachedList, TimeSpan.FromMinutes(15));
+            }
+            return Ok(cachedList);
         }
 
         [HttpPost("sub-castes")]
@@ -207,7 +241,13 @@ namespace ScanID.Api.Controllers
         [HttpGet("cities")]
         public async Task<ActionResult<IEnumerable<City>>> GetCities()
         {
-            return await _context.Cities.Include(c => c.State).ToListAsync();
+            const string cacheKey = "Master_City";
+            if (!_cache.TryGetValue(cacheKey, out List<City>? cachedList))
+            {
+                cachedList = await _context.Cities.Include(c => c.State).AsNoTracking().ToListAsync();
+                _cache.Set(cacheKey, cachedList, TimeSpan.FromMinutes(15));
+            }
+            return Ok(cachedList);
         }
 
         [HttpPost("cities")]

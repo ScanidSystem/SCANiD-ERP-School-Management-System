@@ -1,7 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using ScanID.Api.Data;
 using ScanID.Api.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ScanID.Api.Controllers
 {
@@ -10,10 +15,18 @@ namespace ScanID.Api.Controllers
     public class NavigationController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMemoryCache _cache;
+        private const string CacheKey = "System_NavigationItems";
 
-        public NavigationController(ApplicationDbContext context)
+        public NavigationController(ApplicationDbContext context, IMemoryCache cache)
         {
             _context = context;
+            _cache = cache;
+        }
+
+        private void ClearNavigationCache()
+        {
+            _cache.Remove(CacheKey);
         }
 
         [HttpGet]
@@ -21,14 +34,18 @@ namespace ScanID.Api.Controllers
         {
             try
             {
-                var query = _context.NavigationItems
-                    .Include(n => n.NavigationRoles)
-                    .Where(n => n.IsActive);
-
-                var items = await query.ToListAsync();
+                if (!_cache.TryGetValue(CacheKey, out List<NavigationItem>? items))
+                {
+                    items = await _context.NavigationItems
+                        .Include(n => n.NavigationRoles)
+                        .Where(n => n.IsActive)
+                        .AsNoTracking()
+                        .ToListAsync();
+                    _cache.Set(CacheKey, items, TimeSpan.FromMinutes(30));
+                }
 
                 // If the NavigationItems table is empty, return a default set
-                if (items.Count == 0)
+                if (items!.Count == 0)
                 {
                     return Ok(new { data = GetDefaultNavigationItems() });
                 }
@@ -160,6 +177,7 @@ namespace ScanID.Api.Controllers
         {
             _context.NavigationItems.Add(item);
             await _context.SaveChangesAsync();
+            ClearNavigationCache();
             return CreatedAtAction(nameof(GetNavigations), new { id = item.Id }, item);
         }
 
@@ -169,6 +187,7 @@ namespace ScanID.Api.Controllers
             if (id != item.Id) return BadRequest();
             _context.Entry(item).State = EntityState.Modified;
             await _context.SaveChangesAsync();
+            ClearNavigationCache();
             return NoContent();
         }
 
@@ -179,6 +198,7 @@ namespace ScanID.Api.Controllers
             if (item == null) return NotFound();
             _context.NavigationItems.Remove(item);
             await _context.SaveChangesAsync();
+            ClearNavigationCache();
             return NoContent();
         }
     }

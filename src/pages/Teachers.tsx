@@ -343,36 +343,26 @@ export default function Teachers({ user }: { user: any }) {
     setIsEditing(false);
     setFormErrors({});
   };
+
   const handleCreateOrUpdate = async () => {
     const newErrors: Record<string, boolean> = {};
     let firstErrorField = "";
 
-    const checkField = (key: string, condition: boolean, message: string) => {
+    const checkField = (field: string, condition: boolean) => {
       if (condition) {
-        newErrors[key] = message;
-        if (!firstErrorField) firstErrorField = key;
+        newErrors[field] = true;
+        if (!firstErrorField) firstErrorField = field;
       }
     };
 
-    checkField("schoolId", !formData.schoolId || formData.schoolId === "none", "Assigned School Branch required");
-    checkField("firstName", !formData.firstName?.trim(), "First Name required");
-    checkField("lastName", !formData.lastName?.trim(), "Last Name required");
-    checkField("email", !formData.email?.trim() || !/\S+@\S+\.\S+/.test(formData.email), "Valid Email Protocol required");
-    checkField("phone", !formData.phone?.trim() || formData.phone.length !== 10, "10-digit Direct Line required");
-    checkField("qualification", !formData.qualification?.trim(), "Education Deck required");
-    checkField("subject", !formData.subject?.trim(), "Primary Domain required");
-    checkField("status", !formData.status || formData.status === "none", "Access Status required");
-    checkField("employeeId", !formData.employeeId?.trim(), "Staff Payroll ID required");
-    checkField("employeeType", !formData.employeeType || formData.employeeType === "none", "Employee Category required");
-    checkField("gender", !formData.gender || formData.gender === "none", "Gender Identity required");
-    checkField("dob", !formData.dob, "Date of Birth required");
-    checkField("joiningDate", !formData.joiningDate, "Onboarding Date required");
-    checkField("experience", !formData.experience?.trim(), "Professional Tenure required");
-    checkField("standard", !formData.standard?.trim(), "Grade Level required");
-    checkField("address", !formData.address?.trim(), "Residential Address required");
-    checkField("RFID", !formData.RFID?.trim(), "Biometric RFID required");
-    checkField("RFID2", !formData.RFID2?.trim(), "Payroll Card Number required");
-    checkField("bloodGroup", !formData.bloodGroup || formData.bloodGroup === "none", "Blood Group required");
+    checkField("firstName", !formData.firstName?.trim());
+    checkField("lastName", !formData.lastName?.trim());
+    checkField("email", !formData.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email));
+    checkField("phone", !formData.phone?.trim() || !/^\d{10}$/.test(formData.phone.replace(/\D/g, "")));
+    checkField("qualification", !formData.qualification?.trim());
+    checkField("subject", !formData.subject?.trim());
+    checkField("schoolId", !formData.schoolId);
+
     setFormErrors(newErrors);
 
     if (firstErrorField) {
@@ -711,117 +701,91 @@ export default function Teachers({ user }: { user: any }) {
                             </div>
                           </div>
                         </div>
-                        <p className="text-[10px] text-slate-400 font-medium text-center leading-relaxed px-2">
-                          Click frame to select or update professional photograph.
-                        </p>
-                      </div>
+                    </section>
 
-                      {/* Right: Primary Bio */}
-                      <div className="md:col-span-8 space-y-6">
-                        <div className="grid grid-cols-2 gap-5">
-                          <div className="space-y-3">
-                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">First Name required</Label>
-                            <div className="relative">
-                              <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-                              <Input 
-                                ref={el => { inputRefs.current["firstName"] = el; }}
-                                value={formData.firstName} 
-                                onChange={e => {
-                                  setFormData({...formData, firstName: e.target.value});
-                                  if (formErrors.firstName) setFormErrors(prev => ({ ...prev, firstName: "" }));
-                                }} 
-                                placeholder="Robert" 
-                                className={cn(
-                                  "h-14 pl-12 border-2 bg-white font-bold rounded-2xl text-sm transition-all placeholder:text-slate-500 shadow-sm text-slate-950 focus:outline-none focus:ring-offset-0",
-                                  formErrors.firstName ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
-                                )}
-                              />
-                            </div>
-                            {formErrors.firstName && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.firstName}</p>}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                      <section>
+                        <div className="flex items-center gap-4 mb-6 pb-2 border-b border-slate-50">
+                          <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
+                          <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Connectability</h3>
+                        </div>
+                        <div className="space-y-5">
+                          <div className="space-y-2">
+                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.email ? "text-red-500" : "text-slate-400")}>Email Protocol {formErrors.email && "*"}</Label>
+                            <Input 
+                              ref={el => { inputRefs.current["email"] = el; }}
+                              type="email" 
+                              value={formData.email} 
+                              onChange={e => {
+                                setFormData({...formData, email: e.target.value});
+                                if (formErrors.email) setFormErrors(prev => ({ ...prev, email: false }));
+                              }} 
+                              placeholder="faculty@college.edu" 
+                              className={cn(
+                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all",
+                                formErrors.email && "border-red-500 ring-2 ring-red-500/10"
+                              )}
+                            />
                           </div>
-                          <div className="space-y-3">
-                            <Label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Middle Name</Label>
-                            <div className="relative">
-                              <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-                              <Input 
-                                ref={el => { inputRefs.current["middleName"] = el; }}
-                                value={formData.middleName} 
-                                onChange={e => setFormData({...formData, middleName: e.target.value})} 
-                                placeholder="Optional" 
-                                className="h-14 pl-12 border-2 border-slate-200 bg-white font-bold rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all placeholder:text-slate-500 shadow-sm text-slate-950" 
-                              />
-                            </div>
+                          <div className="space-y-2">
+                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.phone ? "text-red-500" : "text-slate-400")}>Direct Line {formErrors.phone && "*"}</Label>
+                            <Input 
+                              ref={el => { inputRefs.current["phone"] = el; }}
+                              value={formData.phone} 
+                              maxLength={10}
+                              onChange={e => {
+                                const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                                setFormData({...formData, phone: val});
+                                if (formErrors.phone) setFormErrors(prev => ({ ...prev, phone: false }));
+                              }} 
+                              placeholder="10-digit mobile" 
+                              className={cn(
+                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all",
+                                formErrors.phone && "border-red-500 ring-2 ring-red-500/10"
+                              )}
+                            />
                           </div>
                         </div>
-                          <div className="space-y-3">
-                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Last Name required</Label>
-                            <div className="relative">
-                              <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-                              <Input 
-                                ref={el => { inputRefs.current["lastName"] = el; }}
-                                value={formData.lastName} 
-                                onChange={e => {
-                                  setFormData({...formData, lastName: e.target.value});
-                                  if (formErrors.lastName) setFormErrors(prev => ({ ...prev, lastName: "" }));
-                                }} 
-                                placeholder="Smith" 
-                                className={cn(
-                                  "h-14 pl-12 border-2 bg-white font-bold rounded-2xl text-sm transition-all placeholder:text-slate-500 shadow-sm text-slate-950 focus:outline-none focus:ring-offset-0",
-                                  formErrors.lastName ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
-                                )}
-                              />
-                            </div>
-                            {formErrors.lastName && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.lastName}</p>}
+                      </section>
+
+                      <section>
+                        <div className="flex items-center gap-4 mb-6 pb-2 border-b border-slate-50">
+                          <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
+                          <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Professional Rank</h3>
+                        </div>
+                        <div className="space-y-5">
+                          <div className="space-y-2">
+                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.qualification ? "text-red-500" : "text-slate-400")}>Education Deck {formErrors.qualification && "*"}</Label>
+                            <Input 
+                              ref={el => { inputRefs.current["qualification"] = el; }}
+                              value={formData.qualification} 
+                              onChange={e => {
+                                setFormData({...formData, qualification: e.target.value});
+                                if (formErrors.qualification) setFormErrors(prev => ({ ...prev, qualification: false }));
+                              }} 
+                              placeholder="M.Ed, PhD" 
+                              className={cn(
+                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all",
+                                formErrors.qualification && "border-red-500 ring-2 ring-red-500/10"
+                              )}
+                            />
                           </div>
-                      </div>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Tenure (Years)</Label>
+                            <Input value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} placeholder="5 Years" className="h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all" />
+                          </div>
+                        </div>
+                      </section>
                     </div>
-                  </section>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <section>
-                      <div className="flex items-center gap-4 mb-8">
-                        <div className="w-1 h-6 bg-[#4f46e5] rounded-full"></div>
-                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Connectability</h3>
+                    <section className="bg-slate-50/80 p-8 rounded-[2rem] border border-slate-100 shadow-sm transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-100/50">
+                      <div className="flex items-center gap-4 mb-6 pt-1">
+                        <div className="w-1.5 h-6 bg-red-600 rounded-full"></div>
+                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Departmental Payload</h3>
                       </div>
-                      <div className="space-y-6">
-                        <div className="space-y-3">
-                          <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Email Protocol required</Label>
-                          <Input 
-                            ref={el => { inputRefs.current["email"] = el; }}
-                            type="email" 
-                            value={formData.email} 
-                            onChange={e => {
-                              setFormData({...formData, email: e.target.value});
-                              if (formErrors.email) setFormErrors(prev => ({ ...prev, email: "" }));
-                            }} 
-                            placeholder="faculty@college.edu" 
-                            className={cn(
-                              "h-14 border-2 bg-white font-bold rounded-2xl text-sm transition-all shadow-sm placeholder:text-slate-500 text-slate-950 focus:outline-none focus:ring-offset-0",
-                              formErrors.email ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
-                            )}
-                          />
-                          {formErrors.email && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.email}</p>}
-                        </div>
-                        <div className="space-y-3">
-                          <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Direct Line required</Label>
-                          <Input 
-                            ref={el => { inputRefs.current["phone"] = el; }}
-                            value={formData.phone} 
-                            maxLength={10}
-                            onChange={e => {
-                              const val = e.target.value.replace(/\D/g, "").slice(0, 10);
-                              setFormData({...formData, phone: val});
-                              if (formErrors.phone) setFormErrors(prev => ({ ...prev, phone: "" }));
-                            }} 
-                            placeholder="10-digit mobile" 
-                            className={cn(
-                              "h-14 border-2 bg-white font-bold rounded-2xl text-sm transition-all shadow-sm placeholder:text-slate-500 text-slate-950 focus:outline-none focus:ring-offset-0",
-                              formErrors.phone ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
-                            )}
-                          />
-                          {formErrors.phone && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.phone}</p>}
-                        </div>
-                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-2">
+                          <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.subject ? "text-red-500" : "text-slate-400")}>Primary Domain {formErrors.subject && "*"}</Label>
                           <Input 
                             ref={el => { inputRefs.current["subject"] = el; }}
                             value={formData.subject} 
@@ -836,149 +800,28 @@ export default function Teachers({ user }: { user: any }) {
                             )}
                           />
                         </div>
-                        <div className="space-y-3">
-                          <Label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Tenure (Years)</Label>
-                          <Input 
-                            ref={el => { inputRefs.current["experience"] = el; }}
-                            value={formData.experience} 
-                            onChange={e => {
-                               setFormData({...formData, experience: e.target.value});
-                               if (formErrors.experience) setFormErrors(prev => ({ ...prev, experience: "" }));
-                            }} 
-                            placeholder="5 Years" 
-                            className={cn(
-                              "h-14 border-2 bg-white font-bold rounded-2xl text-sm transition-all shadow-sm placeholder:text-slate-500 text-slate-950 focus:outline-none focus:ring-offset-0",
-                              formErrors.experience ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
-                            )}
-                          />
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Assigned Grade</Label>
+                          <Input value={formData.standard} onChange={e => setFormData({...formData, standard: e.target.value})} placeholder="10th" className="h-12 border-slate-100 bg-white font-black rounded-[1.25rem] px-5 text-sm focus:ring-4 focus:ring-blue-500/5 transition-all" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Access Status</Label>
+                          <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
+                            <SelectTrigger className="h-12 border-slate-100 bg-white font-black rounded-[1.25rem] px-5 text-sm focus:ring-4 focus:ring-blue-500/5 transition-all">
+                              <SelectValue placeholder="Access Status">
+                              {formData.status || undefined}
+                            </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
+                              <SelectItem value="Active" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-blue-50 focus:text-blue-700">Active</SelectItem>
+                              <SelectItem value="On Leave" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-blue-50 focus:text-blue-700">On Leave</SelectItem>
+                              <SelectItem value="Resigned" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-blue-50 focus:text-blue-700">Resigned</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </section>
                   </div>
-
-                  <section className="bg-slate-50/50 p-8 rounded-[2rem] border border-slate-100/80 shadow-inner">
-                    <div className="flex items-center gap-4 mb-8">
-                      <div className="w-1 h-6 bg-[#4f46e5] rounded-full"></div>
-                      <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Departmental Payload</h3>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="space-y-3">
-                        <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900">Primary Domain required</Label>
-                        <Input 
-                          ref={el => { inputRefs.current["subject"] = el; }}
-                          value={formData.subject} 
-                          onChange={e => {
-                            setFormData({...formData, subject: e.target.value});
-                            if (formErrors.subject) setFormErrors(prev => ({ ...prev, subject: "" }));
-                          }} 
-                          placeholder="Mathematics" 
-                          className={cn(
-                            "h-14 border-2 bg-white font-bold rounded-2xl text-sm transition-all shadow-sm placeholder:text-slate-500 text-slate-950 focus:outline-none focus:ring-offset-0",
-                            formErrors.subject ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
-                          )}
-                        />
-                        {formErrors.subject && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.subject}</p>}
-                      </div>
-                      <div className="space-y-3">
-                        <Label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Assigned Grade</Label>
-                        <Input 
-                          ref={el => { inputRefs.current["standard"] = el; }}
-                          value={formData.standard} 
-                          onChange={e => {
-                            setFormData({...formData, standard: e.target.value});
-                            if (formErrors.standard) setFormErrors(prev => ({ ...prev, standard: "" }));
-                          }} 
-                          placeholder="10th" 
-                          className={cn(
-                            "h-14 border-2 bg-white font-bold rounded-2xl text-sm transition-all shadow-sm placeholder:text-slate-500 text-slate-950 focus:outline-none focus:ring-offset-0",
-                            formErrors.standard ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
-                          )}
-                        />
-                      </div>
-                      <div className="space-y-3">
-                        <Label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Access Status required</Label>
-                        <Select 
-                          value={formData.status} 
-                          onValueChange={v => {
-                            setFormData({...formData, status: v});
-                            if (formErrors.status) setFormErrors(prev => ({ ...prev, status: "" }));
-                          }}
-                        >
-                          <SelectTrigger 
-                            ref={el => { inputRefs.current["status"] = el; }}
-                            className={cn(
-                              "relative h-[68px] min-h-[68px] border-2 bg-gradient-to-b from-white to-slate-50/90 font-bold rounded-2xl pl-16 pr-5 text-[15px] transition-all duration-300 shadow-sm hover:shadow-lg text-slate-800 focus:outline-none focus:ring-offset-0",
-                              formErrors.status ? "border-red-500 focus:ring-4 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
-                            )}
-                          >
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-100 shadow-sm transition-transform group-hover:scale-105">
-                              {formData.status === "Active" ? <BadgeCheck className="w-5 h-5 text-emerald-600" /> : 
-                               formData.status === "On Leave" ? <Clock3 className="w-5 h-5 text-amber-600" /> :
-                               formData.status === "Resigned" ? <UserMinus className="w-5 h-5 text-rose-600" /> :
-                               <ShieldCheck className="w-5 h-5 text-indigo-600" />}
-                            </div>
-                            <div className="flex flex-col text-left leading-tight ml-2">
-                              <SelectValue placeholder="Select Access Status">
-                                {(formData.status && formData.status !== "none") ? (
-                                  <div className="flex flex-col">
-                                    <span className="text-[13px] font-extrabold">{formData.status}</span>
-                                    <span className="text-[10px] text-slate-400 uppercase tracking-widest font-black">
-                                      {formData.status === "Active" ? "Currently Working" : 
-                                       formData.status === "On Leave" ? "Temporary Break" : "No Longer Active"}
-                                    </span>
-                                  </div>
-                                ) : <span className="text-slate-400 font-medium">Select Access Status</span>}
-                              </SelectValue>
-                            </div>
-                          </SelectTrigger>
-                          <SelectContent className="rounded-[2rem] border border-slate-200 shadow-[0_20px_60px_rgba(15,23,42,0.15)] p-2 bg-white/95 backdrop-blur-xl min-w-[280px]">
-                            <div className="px-4 py-4 mb-1">
-                              {/* <span className="text-[13px] font-bold italic text-slate-400">Select Access Status</span> */}
-                            </div>
-                            <SelectItem value="none" className="group rounded-[1.5rem] py-4 px-3 cursor-pointer data-[state=selected]:bg-slate-50 focus:bg-slate-50 transition-all duration-200 mb-1">
-                              <div className="flex items-center h-11 pl-[60px]">
-                                <span className="text-[14px] font-medium text-slate-400 italic">Select Access Status</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="Active" className="group rounded-[1.5rem] py-4 px-3 cursor-pointer data-[state=selected]:bg-emerald-50 focus:bg-emerald-50/80 focus:text-emerald-700 transition-all duration-200 mb-1">
-                              <div className="flex items-center gap-4">
-                                <div className="w-11 h-11 rounded-2xl bg-emerald-100 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
-                                  <BadgeCheck className="w-5 h-5 text-emerald-600" />
-                                </div>
-                                <div className="flex flex-col leading-tight">
-                                  <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Active</span>
-                                  <span className="text-[10px] uppercase tracking-widest text-emerald-600/40 font-black mt-0.5">CURRENTLY WORKING</span>
-                                </div>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="On Leave" className="group rounded-[1.5rem] py-4 px-3 cursor-pointer data-[state=selected]:bg-amber-50 focus:bg-amber-50/80 focus:text-amber-700 transition-all duration-200 mb-1">
-                              <div className="flex items-center gap-4">
-                                <div className="w-11 h-11 rounded-2xl bg-amber-100 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
-                                  <Clock3 className="w-5 h-5 text-amber-600" />
-                                </div>
-                                <div className="flex flex-col leading-tight">
-                                  <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">On Leave</span>
-                                  <span className="text-[10px] uppercase tracking-widest text-amber-600/40 font-black mt-0.5">TEMPORARY BREAK</span>
-                                </div>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="Resigned" className="group rounded-[1.5rem] py-4 px-3 cursor-pointer data-[state=selected]:bg-rose-50 focus:bg-rose-50/80 focus:text-rose-700 transition-all duration-200">
-                              <div className="flex items-center gap-4">
-                                <div className="w-11 h-11 rounded-2xl bg-rose-100 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
-                                  <UserMinus className="w-5 h-5 text-rose-600" />
-                                </div>
-                                <div className="flex flex-col leading-tight">
-                                  <span className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Resigned</span>
-                                  <span className="text-[10px] uppercase tracking-widest text-rose-600/40 font-black mt-0.5">NO LONGER ACTIVE</span>
-                                </div>
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {formErrors.status && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.status}</p>}
-                      </div>
-                    </div>
-                  </section>
                 </div>
 
                 <DialogFooter className="bg-slate-50 px-10 py-6 shrink-0 border-t border-slate-100 flex flex-row items-center justify-end gap-4">
@@ -1269,4 +1112,3 @@ export default function Teachers({ user }: { user: any }) {
     </div>
   );
 }
-

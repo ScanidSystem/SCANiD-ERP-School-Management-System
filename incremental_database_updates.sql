@@ -315,3 +315,25 @@ BEGIN
 END;
 GO
 
+-- =========================================================================
+-- 7. High-Performance Database Indexing Strategy (Scalability Up To 90 Lakhs+ Records)
+-- =========================================================================
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND type in (N'U'))
+BEGIN
+    -- High Performance Composite Filter Index matching GetStudents queries
+    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Students_School_Academics_Filters' AND object_id = OBJECT_ID('dbo.Students'))
+    BEGIN
+        CREATE NONCLUSTERED INDEX [IX_Students_School_Academics_Filters] 
+        ON [dbo].[Students] ([SchoolId], [AcademicYearId], [StandardId], [SectionId], [IsDeleted])
+        INCLUDE ([Id], [RegistrationNumber], [Name], [RollNumber], [GrNo]);
+    END;
+
+    -- High Performance Index for Fast Dynamic Searching by Student details and GrNo
+    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Students_Name_Search' AND object_id = OBJECT_ID('dbo.Students'))
+    BEGIN
+        CREATE NONCLUSTERED INDEX [IX_Students_Name_Search] 
+        ON [dbo].[Students] ([Name], [GrNo], [RegistrationNumber], [RollNumber]);
+    END;
+END;
+GO
+
