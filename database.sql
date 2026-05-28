@@ -429,13 +429,13 @@ CREATE TABLE [dbo].[Students](
 	[ProfilePhotoPath] [nvarchar](500) NULL,
 	[DigitalUniform] [bit] NOT NULL DEFAULT (0),
 	[DigitalNotebook] [bit] NOT NULL DEFAULT (0),
+	[OptedForBus] [bit] NOT NULL DEFAULT (0),
 	[IsActive] [bit] NOT NULL DEFAULT (1),
 	[IsDeleted] [bit] NOT NULL DEFAULT (0),
 	[CreatedBy] [nvarchar](max) NULL,
 	[CreatedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
 	[ModifiedBy] [nvarchar](max) NULL,
 	[ModifiedOn] [datetime2](7) NOT NULL DEFAULT (GETUTCDATE()),
-	[OptedForBus] [bit] NOT NULL DEFAULT (0),
  CONSTRAINT [PK_Students] PRIMARY KEY CLUSTERED ([Id] ASC)
 )
 END

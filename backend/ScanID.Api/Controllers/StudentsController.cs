@@ -131,7 +131,7 @@ namespace ScanID.Api.Controllers
 
             var csv = new System.Text.StringBuilder();
             // Header matching database schema column layout, ending with IsActive, IsDeleted, CreatedBy, CreatedOn, ModifiedBy, ModifiedOn
-            csv.AppendLine("Id,Name,SchoolId,Status,RollNumber,FirstName,MiddleName,LastName,GrNo,Gender,DateOfBirth,Address,MotherName,FatherContactNo,MotherContactNo,AadharCard,UniformId,Rfid,SchoolSection,AdmissionDate,Email,Standard,Section,AcademicYear,Caste,SubCaste,Religion,BloodGroup,House,AdmissionType,City,State,Shift,Category,Sms,IsStateBoard,ProfilePhotoPath,DigitalUniform,DigitalNotebook,IsActive,IsDeleted,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn,OptedForBus");
+            csv.AppendLine("Id,Name,SchoolId,Status,RollNumber,FirstName,MiddleName,LastName,GrNo,Gender,DateOfBirth,Address,MotherName,FatherContactNo,MotherContactNo,AadharCard,UniformId,Rfid,SchoolSection,AdmissionDate,Email,Standard,Section,AcademicYear,Caste,SubCaste,Religion,BloodGroup,House,AdmissionType,City,State,Shift,Category,Sms,IsStateBoard,ProfilePhotoPath,DigitalUniform,DigitalNotebook,OptedForBus,IsActive,IsDeleted,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn");
 
             foreach (var s in students)
             {
@@ -176,13 +176,13 @@ namespace ScanID.Api.Controllers
                     s.ProfilePhotoPath,
                     s.DigitalUniform.ToString().ToLower(),
                     s.DigitalNotebook.ToString().ToLower(),
+                    s.OptedForBus.ToString().ToLower(),
                     s.IsActive.ToString().ToLower(),
                     s.IsDeleted.ToString().ToLower(),
                     s.CreatedBy,
                     s.CreatedOn.ToString("yyyy-MM-dd HH:mm:ss"),
                     s.ModifiedBy,
-                    s.ModifiedOn.ToString("yyyy-MM-dd HH:mm:ss"),
-                    s.OptedForBus.ToString().ToLower()
+                    s.ModifiedOn.ToString("yyyy-MM-dd HH:mm:ss")
                 };
                 csv.AppendLine(string.Join(",", row));
             }
@@ -198,9 +198,9 @@ namespace ScanID.Api.Controllers
         {
             var csv = new System.Text.StringBuilder();
             // Required Header reflecting all active table fields in exact sequence ending with auditing columns
-            csv.AppendLine("Name,SchoolId,Status,RollNumber,FirstName,MiddleName,LastName,GrNo,Gender,DateOfBirth,Address,MotherName,FatherContactNo,MotherContactNo,AadharCard,UniformId,Rfid,SchoolSectionName,AdmissionDate,Email,GradeName,SectionName,AcademicYear,CasteName,SubCasteName,ReligionName,BloodGroupName,HouseName,AdmissionType,CityName,StateName,ShiftName,CategoryName,Sms,IsStateBoard,ProfilePhotoPath,DigitalUniform,DigitalNotebook,IsActive,IsDeleted,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn,OptedForBus");
+            csv.AppendLine("Name,SchoolId,Status,RollNumber,FirstName,MiddleName,LastName,GrNo,Gender,DateOfBirth,Address,MotherName,FatherContactNo,MotherContactNo,AadharCard,UniformId,Rfid,SchoolSectionName,AdmissionDate,Email,GradeName,SectionName,AcademicYear,CasteName,SubCasteName,ReligionName,BloodGroupName,HouseName,AdmissionType,CityName,StateName,ShiftName,CategoryName,Sms,IsStateBoard,ProfilePhotoPath,DigitalUniform,DigitalNotebook,OptedForBus,IsActive,IsDeleted,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn");
             // Example data row with Boolean sms/IsStateBoard mappings
-            csv.AppendLine("John Doe,1,Active,10,John,M.,Doe,1234,Male,2015-05-15,City Main Road,Jane Doe,9876543210,9876543211,123456789012,UniformID,RF-123,Primary,,john.doe@example.com,1,A,2024-25,General,,Hindu,B+,Red,Regular,,,Morning,General,true,false,/photos/1/example.jpg,true,false,true,false,Admin,2026-05-24 00:00:00,Admin,2026-05-24 00:00:00,true");
+            csv.AppendLine("John Doe,1,Active,10,John,M.,Doe,1234,Male,2015-05-15,City Main Road,Jane Doe,9876543210,9876543211,123456789012,UniformID,RF-123,Primary,,john.doe@example.com,1,A,2024-25,General,,Hindu,B+,Red,Regular,,,Morning,General,true,false,/photos/1/example.jpg,true,false,true,true,false,Admin,2026-05-24 00:00:00,Admin,2026-05-24 00:00:00");
 
             return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "Student_Upload_Template.csv");
         }
