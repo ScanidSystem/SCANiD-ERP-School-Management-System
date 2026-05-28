@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { apiService } from "@/lib/api";
 import { SimpleTooltip } from "@/components/shared/SimpleTooltip";
-import { 
-  Plus, 
-  Search, 
-  MoreHorizontal, 
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
   Edit,
-  Edit2, 
-  Trash2, 
-  Mail, 
-  Phone, 
-  GraduationCap, 
-  BookOpen, 
+  Edit2,
+  Trash2,
+  Mail,
+  Phone,
+  GraduationCap,
+  BookOpen,
   Calendar,
   CheckCircle2,
   XCircle,
@@ -45,48 +45,49 @@ import {
   Venus,
   Droplets
 } from "lucide-react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DeleteConfirmation } from "@/components/shared/DeleteConfirmation";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { cn, parseSafeInt, resolvePhotoUrl } from "@/lib/utils";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 interface Teacher {
   id: string;
@@ -184,12 +185,12 @@ export default function Teachers({ user }: { user: any }) {
           subject: filterSubject === "all" ? undefined : filterSubject
         }
       );
-      
+
       const resData = res.data;
-      const rawTeachersList = Array.isArray(resData) 
-        ? resData 
+      const rawTeachersList = Array.isArray(resData)
+        ? resData
         : (resData && Array.isArray(resData.data) ? resData.data : []);
-      
+
       const formatted = rawTeachersList.map((t: any) => {
         const getVal = (prop: string, fallback?: any) => {
           if (!t) return fallback;
@@ -197,13 +198,13 @@ export default function Teachers({ user }: { user: any }) {
           // Search in both teacher object and nested user object
           const tKeys = Object.keys(t);
           const uKeys = Object.keys(userObj);
-          
+
           const tMatch = tKeys.find(k => k.toLowerCase() === prop.toLowerCase());
           if (tMatch) return t[tMatch];
-          
+
           const uMatch = uKeys.find(k => k.toLowerCase() === prop.toLowerCase());
           if (uMatch) return userObj[uMatch];
-          
+
           return fallback;
         };
 
@@ -226,15 +227,15 @@ export default function Teachers({ user }: { user: any }) {
       });
 
       const isServerPaged = resData && !!resData.pagination;
-      
+
       if (!isServerPaged) {
         // Robust client-side search, status and subject filters, sorting, and pagination
         let filtered = [...formatted];
-        
+
         // Search Filter
         const searchLower = searchQuery.trim().toLowerCase();
         if (searchLower) {
-          filtered = filtered.filter(item => 
+          filtered = filtered.filter(item =>
             item.name.toLowerCase().includes(searchLower) ||
             item.email.toLowerCase().includes(searchLower) ||
             item.phone.toLowerCase().includes(searchLower) ||
@@ -243,23 +244,23 @@ export default function Teachers({ user }: { user: any }) {
             item.subject.toLowerCase().includes(searchLower)
           );
         }
-        
+
         // Status Filter
         if (filterStatus !== "all") {
           filtered = filtered.filter(item => item.status === filterStatus);
         }
-        
+
         // Subject Filter
         if (filterSubject !== "all") {
           filtered = filtered.filter(item => item.subject === filterSubject);
         }
-        
+
         // Sorting
         if (sortBy) {
           filtered.sort((a: any, b: any) => {
             const valA = a[sortBy] || "";
             const valB = b[sortBy] || "";
-            
+
             if (valA === valB) return 0;
             let comparison = 0;
             if (typeof valA === "string" && typeof valB === "string") {
@@ -270,12 +271,12 @@ export default function Teachers({ user }: { user: any }) {
             return sortOrder === "desc" ? comparison * -1 : comparison;
           });
         }
-        
+
         // Pagination
         const total = filtered.length;
         setTotalCount(total);
         setTotalPages(Math.ceil(total / pageSize));
-        
+
         const startIndex = (page - 1) * pageSize;
         setTeachers(filtered.slice(startIndex, startIndex + pageSize));
       } else {
@@ -319,6 +320,35 @@ export default function Teachers({ user }: { user: any }) {
 
   const filteredTeachers = teachers;
 
+  const handleExport = () => {
+    try {
+      const exportData = filteredTeachers.map((t: any) => ({
+        "Faculty ID": t.employeeId || t.id || "",
+        "Name": t.name || "",
+        "Email": t.email || "",
+        "Core Expertise": t.subject || t.department || "",
+        "Credentials": t.qualification || "",
+        "Status": t.status || "Active",
+        "Phone": t.contactNumber || t.phone || ""
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      XLSX.utils.book_append_sheet(wb, ws, "Faculty Registry");
+
+      const wscols = [
+        { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 12 }, { wch: 15 }
+      ];
+      ws['!cols'] = wscols;
+
+      XLSX.writeFile(wb, `Faculty_Registry_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success("Faculty registry exported to Excel successfully!");
+    } catch (e) {
+      console.error("Teacher export error:", e);
+      toast.error("Failed to generate Excel export.");
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       firstName: "",
@@ -348,14 +378,15 @@ export default function Teachers({ user }: { user: any }) {
     setIsEditing(false);
     setFormErrors({});
   };
+
   const handleCreateOrUpdate = async () => {
     const newErrors: Record<string, any> = {};
     let firstErrorField = "";
 
-    const checkField = (key: string, condition: boolean, message: string) => {
+    const checkField = (field: string, condition: boolean) => {
       if (condition) {
-        newErrors[key] = message;
-        if (!firstErrorField) firstErrorField = key;
+        newErrors[field] = true;
+        if (!firstErrorField) firstErrorField = field;
       }
     };
 
@@ -406,12 +437,12 @@ export default function Teachers({ user }: { user: any }) {
         profilePhotoPath: formData.photo || "",
         ProfilePhotoPath: formData.photo || "",
         user: {
-           username: formData.email.split('@')[0] + Date.now(),
-           name: `${formData.firstName} ${formData.lastName}`.trim(),
-           passwordHash: "temp123",
-           email: formData.email,
-           role: "teacher",
-           schoolId: parseSafeInt(formData.schoolId) || 1
+          username: formData.email.split('@')[0] + Date.now(),
+          name: `${formData.firstName} ${formData.lastName}`.trim(),
+          passwordHash: "temp123",
+          email: formData.email,
+          role: "teacher",
+          schoolId: parseSafeInt(formData.schoolId) || 1
         },
         CreatedBy: isEditing ? undefined : (user.name || user.email),
         ModifiedBy: user.name || user.email
@@ -419,6 +450,8 @@ export default function Teachers({ user }: { user: any }) {
 
       if (isEditing && selectedTeacher) {
         payload.id = parseSafeInt(selectedTeacher.id) || 0;
+        payload.userId = parseSafeInt(selectedTeacher.userId) || 0;
+        payload.UserId = parseSafeInt(selectedTeacher.userId) || 0;
         if (payload.user && selectedTeacher.userId) {
           payload.user.id = parseSafeInt(selectedTeacher.userId) || 0;
         }
@@ -439,7 +472,7 @@ export default function Teachers({ user }: { user: any }) {
         }
         toast.success("Teacher profile saved to database");
       }
-      
+
       setIsAddDialogOpen(false);
       resetForm();
       fetchTeachers();
@@ -477,7 +510,7 @@ export default function Teachers({ user }: { user: any }) {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (uploadingTeacherId && e.target.files?.[0]) {
       const file = e.target.files[0];
-      
+
       if (uploadingTeacherId === "new") {
         setSelectedPhotoFile(file);
         setLocalPhotoPreview(URL.createObjectURL(file));
@@ -492,16 +525,16 @@ export default function Teachers({ user }: { user: any }) {
       try {
         const response = await apiService.uploadTeacherPhoto(Number(teacherId), file);
         const newPath = response.data.data?.path || response.data.path;
-        
+
         // Update list and the selected teacher's image binding with all key variants
-        setTeachers(prev => prev.map(t => 
+        setTeachers(prev => prev.map(t =>
           t.id.toString() === teacherId.toString() ? { ...t, photo: newPath, profilePhotoPath: newPath, ProfilePhotoPath: newPath } : t
         ));
         setFormData(prev => ({ ...prev, photo: newPath }));
         if (selectedTeacher && selectedTeacher.id.toString() === teacherId.toString()) {
           setSelectedTeacher(prev => prev ? { ...prev, photo: newPath } : null);
         }
-        
+
         toast.dismiss(loadingToast);
         toast.success("Profile photo updated successfully");
       } catch (error) {
@@ -517,11 +550,11 @@ export default function Teachers({ user }: { user: any }) {
 
   return (
     <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-500">
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleFileChange} 
-        className="hidden" 
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
         accept="image/*"
       />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -535,8 +568,8 @@ export default function Teachers({ user }: { user: any }) {
           </div>
         </div>
         {isAdmin && (
-          <Dialog open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if(!open) resetForm(); else fetchSchools(); }}>
-            <DeleteConfirmation 
+          <Dialog open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if (!open) resetForm(); else fetchSchools(); }}>
+            <DeleteConfirmation
               isOpen={isDeleteDialogOpen}
               onClose={() => setIsDeleteDialogOpen(false)}
               onConfirm={confirmDelete}
@@ -1303,55 +1336,55 @@ export default function Teachers({ user }: { user: any }) {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="relative group flex-1 max-w-sm">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
-              <Input 
-                placeholder="Query faculty index..." 
+              <Input
+                placeholder="Query faculty index..."
                 className="pl-12 h-12 bg-slate-50/50 border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm font-bold rounded-2xl"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
             <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="h-10 px-4 rounded-xl border-slate-100 text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest">
-                  <Download size={16} className="mr-2" /> Export
-                </Button>
-                <div className="h-6 w-px bg-slate-100 mx-2" />
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Total Records: {Array.isArray(filteredTeachers) ? filteredTeachers.length : 0}</p>
+              <Button onClick={handleExport} variant="outline" size="sm" className="h-10 px-4 rounded-xl border-slate-100 text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest">
+                <Download size={16} className="mr-2" /> Export
+              </Button>
+              <div className="h-6 w-px bg-slate-100 mx-2" />
+              <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Total Records: {Array.isArray(filteredTeachers) ? filteredTeachers.length : 0}</p>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-             <div className="flex flex-col items-center justify-center p-24 gap-4 animate-pulse">
-               <div className="p-4 bg-slate-50 rounded-full">
-                  <Loader2 size={32} className="animate-spin text-blue-600" />
-               </div>
-               <p className="font-black text-slate-300 uppercase tracking-widest text-[10px]">Syncing cloud data...</p>
-             </div>
+            <div className="flex flex-col items-center justify-center p-24 gap-4 animate-pulse">
+              <div className="p-4 bg-slate-50 rounded-full">
+                <Loader2 size={32} className="animate-spin text-blue-600" />
+              </div>
+              <p className="font-black text-slate-300 uppercase tracking-widest text-[10px]">Syncing cloud data...</p>
+            </div>
           ) : (
             <Table>
               <TableHeader className="bg-slate-50/30">
                 <TableRow className="h-16 border-slate-50">
                   <TableHead className="w-[140px] pl-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('employeeId')}>
                     <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                      Index ID 
+                      Index ID
                       {sortBy === 'employeeId' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('name')}>
                     <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                      Faculty Entity 
+                      Faculty Entity
                       {sortBy === 'name' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('subject')}>
                     <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                      Core Expertise 
+                      Core Expertise
                       {sortBy === 'subject' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('qualification')}>
                     <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                      Credentials 
+                      Credentials
                       {sortBy === 'qualification' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
@@ -1362,67 +1395,72 @@ export default function Teachers({ user }: { user: any }) {
               <TableBody>
                 {(!Array.isArray(filteredTeachers) || filteredTeachers.length === 0) ? (
                   <TableRow>
-                     <TableCell colSpan={6} className="h-64 text-center">
-                        <div className="flex flex-col items-center justify-center gap-3">
-                           <div className="p-6 bg-slate-50 rounded-full text-slate-200">
-                             <Users size={48} />
-                           </div>
-                           <p className="text-lg font-black text-slate-300 italic tracking-tight uppercase">No Faculty Matches Found</p>
+                    <TableCell colSpan={6} className="h-64 text-center">
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <div className="p-6 bg-slate-50 rounded-full text-slate-200">
+                          <Users size={48} />
                         </div>
-                     </TableCell>
+                        <p className="text-lg font-black text-slate-300 italic tracking-tight uppercase">No Faculty Matches Found</p>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ) : (
                   Array.isArray(filteredTeachers) && filteredTeachers.map((teacher) => (
-                  <TableRow key={teacher.id} className="hover:bg-slate-50/50 transition-all group border-b border-slate-50/80 h-20">
-                    <TableCell className="pl-8">
-                       <span className="font-mono text-[11px] font-black text-blue-600 bg-blue-50/50 px-2.5 py-1 rounded-lg border border-blue-100/50 italic tracking-tighter">
-                        {teacher.employeeId || teacher.id}
-                       </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-4">
-                        <div className="relative shrink-0">
-                          <Avatar className="h-11 w-11 ring-4 ring-white shadow-lg shadow-slate-200 transition-transform group-hover:scale-105">
-                            <AvatarImage src={resolvePhotoUrl(teacher.photo)} />
-                            <AvatarFallback className="bg-indigo-600 text-white font-black uppercase text-sm">
-                              {(teacher.name || "U")[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <SimpleTooltip content="Update photo" side="top">
-                            <button 
-                              onClick={() => triggerPhotoUpload(teacher.id)}
-                              className="absolute -bottom-1 -right-1 bg-white p-1.5 rounded-full border border-slate-100 shadow-md opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95 cursor-pointer z-10"
-                              aria-label="Change teacher photo"
-                            >
-                              <Camera size={10} className="text-blue-600" />
-                            </button>
-                          </SimpleTooltip>
+                    <TableRow key={teacher.id} className="hover:bg-slate-50/50 transition-all group border-b border-slate-50/80 h-20">
+                      <TableCell className="pl-8">
+                        <span className="font-mono text-[11px] font-black text-blue-600 bg-blue-50/50 px-2.5 py-1 rounded-lg border border-blue-100/50 italic tracking-tighter">
+                          {teacher.employeeId || teacher.id}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-4">
+                          <div className="relative shrink-0">
+                            <Avatar className="h-11 w-11 ring-4 ring-white shadow-lg shadow-slate-200 transition-transform group-hover:scale-105">
+                              <AvatarImage
+                                src={resolvePhotoUrl(teacher.photo || (teacher as any).ProfilePhotoPath || (teacher as any).profilePhotoPath)}
+                                onError={(e) => {
+                                  console.warn(`[IMAGE_LOAD_WARNING] List avatar image failed to load for teacher "${teacher.name}" (ID: ${teacher.id}) from URL: "${e.currentTarget.src}". Fallback to initials will trigger.`);
+                                }}
+                              />
+                              <AvatarFallback className="bg-indigo-600 text-white font-black uppercase text-sm">
+                                {(teacher.name || "U")[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <SimpleTooltip content="Update photo" side="top">
+                              <button
+                                onClick={() => triggerPhotoUpload(teacher.id)}
+                                className="absolute -bottom-1 -right-1 bg-white p-1.5 rounded-full border border-slate-100 shadow-md opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95 cursor-pointer z-10"
+                                aria-label="Change teacher photo"
+                              >
+                                <Camera size={10} className="text-blue-600" />
+                              </button>
+                            </SimpleTooltip>
+                          </div>
+                          <div className="flex flex-col truncate max-w-[180px]">
+                            <span className="font-black text-slate-900 leading-none text-sm tracking-tight mb-1">{teacher.name}</span>
+                            <span className="text-[10px] text-slate-400 font-bold italic truncate">{teacher.email}</span>
+                          </div>
                         </div>
-                        <div className="flex flex-col truncate max-w-[180px]">
-                          <span className="font-black text-slate-900 leading-none text-sm tracking-tight mb-1">{teacher.name}</span>
-                          <span className="text-[10px] text-slate-400 font-bold italic truncate">{teacher.email}</span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="px-3 py-1 bg-slate-100/80 text-slate-700 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-200 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all">
-                        {teacher.subject}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-[11px] font-black text-slate-400 italic tracking-tight overflow-hidden text-ellipsis max-w-[150px] whitespace-nowrap">
+                      </TableCell>
+                      <TableCell>
+                        <span className="px-3 py-1 bg-slate-100/80 text-slate-700 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-200 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all">
+                          {teacher.subject}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-[11px] font-black text-slate-400 italic tracking-tight overflow-hidden text-ellipsis max-w-[150px] whitespace-nowrap">
                         {teacher.qualification}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={cn(
-                        "font-black text-[9px] uppercase tracking-[0.1em] px-2.5 py-0.5 rounded-lg border-transparent",
-                        teacher.status === "Active" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"
-                      )} variant="outline">
-                        {teacher.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right pr-8">
-                       <DropdownMenu>
-                         <SimpleTooltip content="System Controls" side="left">
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={cn(
+                          "font-black text-[9px] uppercase tracking-[0.1em] px-2.5 py-0.5 rounded-lg border-transparent",
+                          teacher.status === "Active" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"
+                        )} variant="outline">
+                          {teacher.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right pr-8">
+                        <DropdownMenu>
+                          <SimpleTooltip content="System Controls" side="left">
                             <DropdownMenuTrigger
                               render={
                                 <div className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-300 hover:text-blue-600 hover:bg-white hover:shadow-sm transition-all cursor-pointer outline-none active:scale-90">
@@ -1507,7 +1545,7 @@ export default function Teachers({ user }: { user: any }) {
               <div className="text-xs font-bold text-slate-500 uppercase tracking-widest text-[10px]">
                 Showing <span className="text-slate-900 font-black">{teachers.length > 0 ? (page - 1) * pageSize + 1 : 0}</span> to <span className="text-slate-900 font-black">{Math.min(page * pageSize, totalCount)}</span> of <span className="text-slate-900 font-black">{totalCount}</span> entries
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5 mr-4">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rows per page</span>
@@ -1524,18 +1562,18 @@ export default function Teachers({ user }: { user: any }) {
                 </div>
 
                 <div className="flex items-center gap-1">
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
+                  <Button
+                    variant="outline"
+                    size="icon"
                     className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
                     onClick={() => setPage(1)}
                     disabled={page === 1}
                   >
                     <ChevronsLeft size={14} />
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
+                  <Button
+                    variant="outline"
+                    size="icon"
                     className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
                     onClick={() => setPage(prev => Math.max(1, prev - 1))}
                     disabled={page === 1}
@@ -1547,18 +1585,18 @@ export default function Teachers({ user }: { user: any }) {
                     Page {page} of {totalPages || 1}
                   </div>
 
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
+                  <Button
+                    variant="outline"
+                    size="icon"
                     className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
                     onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={page >= totalPages}
                   >
                     <ChevronRight size={14} />
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
+                  <Button
+                    variant="outline"
+                    size="icon"
                     className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
                     onClick={() => setPage(totalPages)}
                     disabled={page >= totalPages}
@@ -1574,4 +1612,3 @@ export default function Teachers({ user }: { user: any }) {
     </div>
   );
 }
-

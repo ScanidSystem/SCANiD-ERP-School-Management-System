@@ -71,6 +71,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 import { Navigate } from "react-router-dom";
 import { User as UserType } from "@/types";
 import { cn, resolvePhotoUrl } from "@/lib/utils";
@@ -611,6 +612,38 @@ export default function Schools({ user }: { user: UserType }) {
 
   const sortedSchools = schools;
 
+  const handleExport = () => {
+    try {
+      const exportData = sortedSchools.map((s: any) => ({
+        "School ID": s.id || "",
+        "Name": s.name || "",
+        "Short Name": s.shortName || s.ShortName || "",
+        "Address": s.address || "",
+        "Email": s.email || "",
+        "Phone": s.phone || s.contactNumber || s.ContactNumber || "",
+        "SMS Limit": s.smsLimit || s.SMSLimit || 0,
+        "SMS Balance": s.smsBalance || s.SMSBalance || 0,
+        "Total Students": s.totalStudents || 0,
+        "Status": s.status || "Active"
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      XLSX.utils.book_append_sheet(wb, ws, "Schools Registry");
+
+      const wscols = [
+        { wch: 12 }, { wch: 25 }, { wch: 15 }, { wch: 30 }, { wch: 25 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 12 }
+      ];
+      ws['!cols'] = wscols;
+
+      XLSX.writeFile(wb, `Schools_Registry_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success("Schools registry exported to Excel successfully!");
+    } catch (e) {
+      console.error("School export error:", e);
+      toast.error("Failed to generate Excel export.");
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -685,6 +718,7 @@ export default function Schools({ user }: { user: UserType }) {
                             alt="School"
                             className="w-full h-full object-cover"
                             onError={(e) => {
+                              console.error(`[IMAGE_LOAD_FAIL] School brand photo failed to load from URL: "${e.currentTarget.src}"`);
                               e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.name}`;
                             }}
                           />
@@ -1347,6 +1381,7 @@ export default function Schools({ user }: { user: UserType }) {
                             alt="School"
                             className="w-full h-full object-cover"
                             onError={(e) => {
+                              console.error(`[IMAGE_LOAD_FAIL] Edit dialog School brand photo failed to load from URL: "${e.currentTarget.src}"`);
                               e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.name}`;
                             }}
                           />
@@ -1997,6 +2032,16 @@ export default function Schools({ user }: { user: UserType }) {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={handleExport}
+                variant="outline"
+                size="sm"
+                className="h-10 px-4 rounded-xl border-slate-200 text-slate-600 hover:text-slate-900 font-bold text-xs uppercase tracking-widest gap-2"
+              >
+                <Download size={14} /> Export
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -2088,6 +2133,9 @@ export default function Schools({ user }: { user: UserType }) {
                                 )}
                                 alt={school.name}
                                 className="object-cover"
+                                onError={(e) => {
+                                  console.warn(`[IMAGE_LOAD_WARNING] List avatar photo failed to load for school "${school.name}" (ID: ${school.id}) from URL: "${e.currentTarget.src}". Fallback symbols will render.`);
+                                }}
                               />
                               <AvatarFallback className="bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 font-black text-xs">
                                 {school.name

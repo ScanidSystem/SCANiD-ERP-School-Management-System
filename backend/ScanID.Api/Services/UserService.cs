@@ -130,7 +130,36 @@ namespace ScanID.Api.Services
                 var user = await _context.Users.FindAsync(id);
                 if (user == null) return false;
 
-                user.Role = role;
+                // Find matching role dynamically from context
+                var matchedRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name.ToLower() == role.ToLower());
+                if (matchedRole != null)
+                {
+                    user.RoleId = matchedRole.Id;
+                    user.Role = matchedRole.Name;
+                }
+                else
+                {
+                    // Robust fallback roles identification
+                    var normalized = role.ToLower().Replace(" ", "").Replace("_", "");
+                    int? matchedId = null;
+                    string matchedName = role;
+                    if (normalized == "superadmin") { matchedId = 1; matchedName = "SuperAdmin"; }
+                    else if (normalized == "admin") { matchedId = 2; matchedName = "Admin"; }
+                    else if (normalized == "teacher") { matchedId = 3; matchedName = "Teacher"; }
+                    else if (normalized == "student") { matchedId = 4; matchedName = "Student"; }
+                    else if (normalized == "parent") { matchedId = 5; matchedName = "Parent"; }
+
+                    if (matchedId.HasValue)
+                    {
+                        user.RoleId = matchedId.Value;
+                        user.Role = matchedName;
+                    }
+                    else
+                    {
+                        user.Role = role;
+                    }
+                }
+
                 user.ModifiedOn = DateTime.Now;
                 return await _context.SaveChangesAsync() > 0;
             });

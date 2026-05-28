@@ -86,6 +86,20 @@ namespace ScanID.Api.Controllers
         }
 
         /// <summary>
+        /// Removes a school record (soft delete handled by service).
+        /// </summary>
+        /// <param name="id">The school ID to delete.</param>
+        /// <returns>No content on success.</returns>
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteSchool(int id)
+        {
+            var success = await _schoolService.DeleteSchoolAsync(id);
+            if (!success) return NotFound();
+
+            return NoContent();
+        }
+
+        /// <summary>
         /// Updates a school's identity image (logo) by saving it to the server filesystem.
         /// </summary>
         /// <param name="id">The school ID.</param>
@@ -129,9 +143,11 @@ namespace ScanID.Api.Controllers
                 }
 
                 // Generate a 12-digit random number as requested by the user
+                var extension = Path.GetExtension(file.FileName);
+                if (string.IsNullOrEmpty(extension)) extension = ".png";
                 var random = new Random();
                 var random12Digit = string.Concat(Enumerable.Range(0, 12).Select(_ => random.Next(10).ToString()));
-                var fileName = $"{random12Digit}.png";
+                var fileName = $"{random12Digit}{extension}";
                 var filePath = Path.Combine(uploadsFolder, fileName);
                 var relativePath = $"{relativeFolder.Replace("\\", "/")}/{fileName}";
 

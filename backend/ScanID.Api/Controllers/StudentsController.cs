@@ -358,7 +358,16 @@ namespace ScanID.Api.Controllers
 
             try
             {
-                var schoolID = SanitizeFolderName(student.School?.Id.ToString() ?? student.SchoolId.ToString());
+                if (student.SchoolId <= 0)
+                {
+                    var fullStudent = await _studentService.GetStudentByIdAsync(id);
+                    if (fullStudent != null && fullStudent.SchoolId > 0)
+                    {
+                        student.SchoolId = fullStudent.SchoolId;
+                    }
+                }
+                var schoolIdVal = student.SchoolId > 0 ? student.SchoolId.ToString() : (student.School?.Id > 0 ? student.School.Id.ToString() : "1");
+                var schoolID = SanitizeFolderName(schoolIdVal);
                 var relativeFolder = Path.Combine("photos", schoolID);
 
                 string webRootPath = _environment.WebRootPath;
@@ -379,7 +388,8 @@ namespace ScanID.Api.Controllers
                     Directory.CreateDirectory(uploadsFolder);
                 }
 
-                var extension = ".png";
+                var extension = Path.GetExtension(file.FileName);
+                if (string.IsNullOrEmpty(extension)) extension = ".png";
                 
                 Random res = new Random();
                 string random12Digit = "";
@@ -410,7 +420,8 @@ namespace ScanID.Api.Controllers
                 student.ProfilePhotoPath = relativePath;
                 student.ModifiedOn = DateTime.Now;
 
-                await _studentService.SaveChangesAsync();
+                var success = await _studentService.SavePhotoPathAsync(id, relativePath);
+                if (!success) return StatusCode(500, "Failed to save student photo path to database.");
 
                 return Ok(new
                 {

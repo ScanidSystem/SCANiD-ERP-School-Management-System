@@ -9,7 +9,7 @@ import {
   TrendingUp, 
   ArrowUpRight, 
   BookOpen,
-  DollarSign
+  IndianRupee
 } from "lucide-react";
 import { 
   LineChart, 
@@ -118,7 +118,7 @@ export default function Dashboard({ user }: DashboardProps) {
           title={isAdmin ? "Fee Collection" : "Upcoming Exams"}
           value={stats?.feeCollection || "..."}
           trend={isAdmin ? "85% Paid" : "Next: Math"}
-          icon={isAdmin ? DollarSign : BookOpen}
+          icon={isAdmin ? IndianRupee : BookOpen}
           color="bg-emerald-50 text-emerald-600"
           onClick={() => navigate(isAdmin ? "/fees" : "/marks")}
         />

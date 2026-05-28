@@ -157,7 +157,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
   const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
   const [localPhotoPreview, setLocalPhotoPreview] = useState<string | null>(null);
 
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
   const inputRefs = useRef<Record<string, any>>({});
 
   // Form states
@@ -390,29 +390,31 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
   };
 
   const handleSave = async () => {
-    const newErrors: Record<string, string> = {};
-    const checkField = (key: string, condition: boolean, message: string) => {
-      if (condition) {
-        newErrors[key] = message;
-      }
-    };
-
-    // Core Field Validation
+    const newErrors: Record<string, boolean> = {};
     if (activeTab === "navigation") {
-      checkField("title", !formData.title?.trim(), "Navigation Title required");
-      checkField("path", !formData.path?.trim(), "Navigation Path required");
-    } else if (activeTab === "role-assignment") {
-      checkField("name", !formData.name?.trim(), "Full Name required");
+      if (!formData.title?.trim()) newErrors.title = true;
+      // Path is only required for leaf nodes (items without children in common use,
+      // but here we allow empty path for parent items which act as containers)
     } else {
-      checkField("name", !formData.name?.trim(), `${MASTER_TYPES[activeTab].label} Name required`);
+      if (!formData.name?.trim()) newErrors.name = true;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+    if (activeTab === "sub-castes" && !formData.casteId)
+      newErrors.casteId = true;
+    if (activeTab === "cities" && !formData.stateId) newErrors.stateId = true;
     if (activeTab === "schools") {
-      checkField("email", !formData.email?.trim(), "School Email required");
-      if (formData.email?.trim() && !emailRegex.test(formData.email)) {
-        checkField("emailFormat", true, "Valid Email Format required");
+      if (!formData.address) newErrors.address = true;
+      if (
+        formData.email &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+      ) {
+        newErrors.email = true;
+      }
+      if (
+        formData.scanIDEmail &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.scanIDEmail)
+      ) {
+        newErrors.scanIDEmail = true;
       }
       checkField("phone", !formData.phone?.trim(), "Contact Phone required");
       checkField("address", !formData.address?.trim(), "School Address required");
@@ -423,17 +425,18 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
       checkField("smsLimit", !formData.smsLimit?.trim(), "SMS Limit required");
       checkField("smsSenderId", !formData.smsSenderId?.trim(), "SMS Sender ID required");
     }
-
     if (activeTab === "role-assignment") {
-      checkField("email", !formData.email?.trim(), "User Email required");
-      if (formData.email?.trim() && !emailRegex.test(formData.email)) {
-        checkField("emailFormat", true, "Valid Email Format required");
+      if (!formData.username?.trim()) newErrors.username = true;
+      if (!formData.email?.trim()) {
+        newErrors.email = true;
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        newErrors.email = true;
+      }
+      if (!editingItem && !formData.password?.trim()) newErrors.password = true;
+      if (formData.password && formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = true;
       }
     }
-
-    if (activeTab === "houses") checkField("color", !formData.color?.trim(), "House Color required");
-    if (activeTab === "sub-castes") checkField("casteId", !formData.casteId, "Parent Caste required");
-    if (activeTab === "cities") checkField("stateId", !formData.stateId, "Parent State required");
 
     setFormErrors(newErrors);
 
@@ -817,7 +820,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                             </TableCell>
                             <TableCell>
                               <Select
-                                value={item.role}
+                                value={item.role ? item.role.toLowerCase().replace(/\s+/g, "") : ""}
                                 onValueChange={async (newRole) => {
                                   try {
                                     await apiService.updateUserRole(item.id, newRole);

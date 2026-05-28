@@ -307,6 +307,10 @@ namespace ScanID.Api.Models
         public string? ContactNumber { get; set; }
         public string Status { get; set; } = "Active";
         public string? ProfilePhotoPath { get; set; }
+        public string? Experience { get; set; }
+        public string? Subject { get; set; }
+        public int? StandardId { get; set; }
+        public int? SectionId { get; set; }
 
         [ForeignKey("UserId")]
         public User? User { get; set; }

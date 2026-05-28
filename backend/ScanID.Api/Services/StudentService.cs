@@ -105,6 +105,9 @@ namespace ScanID.Api.Services
                     ("Id", null),
                     ("RegistrationNumber", student.RegistrationNumber),
                     ("Name", student.Name),
+                    ("FirstName", student.FirstName),
+                    ("MiddleName", student.MiddleName),
+                    ("LastName", student.LastName),
                     ("SchoolId", student.SchoolId),
                     ("StandardId", student.StandardId),
                     ("SectionId", student.SectionId),
@@ -116,6 +119,7 @@ namespace ScanID.Api.Services
                     ("CategoryId", student.CategoryId),
                     ("ReligionId", student.ReligionId),
                     ("CasteId", student.CasteId),
+                    ("SubCasteId", student.SubCasteId),
                     ("Status", student.Status),
                     ("FatherContactNo", student.FatherContactNo),
                     ("Address", student.Address),
@@ -125,6 +129,7 @@ namespace ScanID.Api.Services
                     ("ShiftId", student.ShiftId),
                     ("BloodGroupId", student.BloodGroupId),
                     ("HouseId", student.HouseId),
+                    ("AdmissionTypeId", student.AdmissionTypeId),
                     ("Sms", student.Sms),
                     ("UniformId", student.UniformId),
                     ("MotherContactNo", student.MotherContactNo),
@@ -157,6 +162,9 @@ namespace ScanID.Api.Services
                     ("Id", student.Id),
                     ("RegistrationNumber", student.RegistrationNumber),
                     ("Name", student.Name),
+                    ("FirstName", student.FirstName),
+                    ("MiddleName", student.MiddleName),
+                    ("LastName", student.LastName),
                     ("SchoolId", student.SchoolId),
                     ("StandardId", student.StandardId),
                     ("SectionId", student.SectionId),
@@ -168,6 +176,7 @@ namespace ScanID.Api.Services
                     ("CategoryId", student.CategoryId),
                     ("ReligionId", student.ReligionId),
                     ("CasteId", student.CasteId),
+                    ("SubCasteId", student.SubCasteId),
                     ("Status", student.Status),
                     ("FatherContactNo", student.FatherContactNo),
                     ("Address", student.Address),
@@ -177,6 +186,7 @@ namespace ScanID.Api.Services
                     ("ShiftId", student.ShiftId),
                     ("BloodGroupId", student.BloodGroupId),
                     ("HouseId", student.HouseId),
+                    ("AdmissionTypeId", student.AdmissionTypeId),
                     ("Sms", student.Sms),
                     ("UniformId", student.UniformId),
                     ("MotherContactNo", student.MotherContactNo),
@@ -291,6 +301,9 @@ namespace ScanID.Api.Services
                             ("Id", null),
                             ("RegistrationNumber", s.RegistrationNumber),
                             ("Name", s.Name),
+                            ("FirstName", s.FirstName),
+                            ("MiddleName", s.MiddleName),
+                            ("LastName", s.LastName),
                             ("SchoolId", s.SchoolId),
                             ("StandardId", s.StandardId),
                             ("SectionId", s.SectionId),
@@ -302,6 +315,7 @@ namespace ScanID.Api.Services
                             ("CategoryId", s.CategoryId),
                             ("ReligionId", s.ReligionId),
                             ("CasteId", s.CasteId),
+                            ("SubCasteId", s.SubCasteId),
                             ("Status", s.Status),
                             ("FatherContactNo", s.FatherContactNo),
                             ("Address", s.Address),
@@ -311,6 +325,7 @@ namespace ScanID.Api.Services
                             ("ShiftId", s.ShiftId),
                             ("BloodGroupId", s.BloodGroupId),
                             ("HouseId", s.HouseId),
+                            ("AdmissionTypeId", s.AdmissionTypeId),
                             ("Sms", s.Sms),
                             ("UniformId", s.UniformId),
                             ("MotherContactNo", s.MotherContactNo),
@@ -377,6 +392,19 @@ namespace ScanID.Api.Services
                 "dbo.sp_GetStudentsForExport",
                 ("SchoolId", schoolId)
             );
+        }
+
+        public async Task<bool> SavePhotoPathAsync(int id, string path)
+        {
+            return await ExecuteWithRetryAsync(async () =>
+            {
+                // Execute a direct parameterized raw SQL query to update the photo path, 
+                // avoiding any EF Core change tracking issues with disconnected entities.
+                var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"UPDATE [dbo].[Students] SET [ProfilePhotoPath] = {path}, [ModifiedOn] = GETUTCDATE() WHERE [Id] = {id}"
+                );
+                return rowsAffected > 0;
+            });
         }
 
         public async Task<bool> SaveChangesAsync()

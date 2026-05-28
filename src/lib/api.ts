@@ -17,7 +17,7 @@ const mockFallbacks: Record<string, any> = {
   "/stats": {
     totalStudents: 1248,
     totalTeachers: 84,
-    feeCollection: "$45,200",
+    feeCollection: "₹45,200",
     attendanceRate: "92%",
     performanceTrend: "+2.4%",
   },

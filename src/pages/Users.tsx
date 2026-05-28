@@ -216,7 +216,7 @@ export default function Users() {
         isActive: user.isActive !== false,
         password: "",
         confirmPassword: "",
-        schoolId: user.schoolId?.toString() || ""
+        schoolId: (user.schoolId && user.schoolId !== "0") ? user.schoolId.toString() : ""
       });
     } else {
       setFormData({
