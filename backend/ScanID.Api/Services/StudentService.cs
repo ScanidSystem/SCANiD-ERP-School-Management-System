@@ -535,13 +535,13 @@ namespace ScanID.Api.Services
                     table.Columns.Add("ProfilePhotoPath", typeof(string));
                     table.Columns.Add("DigitalUniform", typeof(bool));
                     table.Columns.Add("DigitalNotebook", typeof(bool));
+                    table.Columns.Add("OptedForBus", typeof(bool));
                     table.Columns.Add("IsActive", typeof(bool));
                     table.Columns.Add("IsDeleted", typeof(bool));
                     table.Columns.Add("CreatedBy", typeof(string));
                     table.Columns.Add("CreatedOn", typeof(DateTime));
                     table.Columns.Add("ModifiedBy", typeof(string));
                     table.Columns.Add("ModifiedOn", typeof(DateTime));
-                    table.Columns.Add("OptedForBus", typeof(bool));
 
                     foreach (var s in students)
                     {
@@ -550,47 +550,47 @@ namespace ScanID.Api.Services
                             s.SchoolId,
                             s.Status ?? "Active",
                             s.RollNumber,
-                            (object)s.FirstName ?? DBNull.Value,
-                            (object)s.MiddleName ?? DBNull.Value,
-                            (object)s.LastName ?? DBNull.Value,
-                            (object)s.GrNo ?? DBNull.Value,
-                            (object)s.Gender ?? DBNull.Value,
-                            (object)s.DateOfBirth ?? DBNull.Value,
-                            (object)s.Address ?? DBNull.Value,
-                            (object)s.MotherName ?? DBNull.Value,
-                            (object)s.FatherContactNo ?? DBNull.Value,
-                            (object)s.MotherContactNo ?? DBNull.Value,
-                            (object)s.AadharCard ?? DBNull.Value,
-                            (object)s.UniformId ?? DBNull.Value,
-                            (object)s.Rfid ?? DBNull.Value,
-                            (object)s.SchoolSectionId ?? DBNull.Value,
-                            (object)s.AdmissionDate ?? DBNull.Value,
-                            (object)s.Email ?? DBNull.Value,
-                            (object)s.StandardId ?? DBNull.Value,
-                            (object)s.SectionId ?? DBNull.Value,
-                            (object)s.AcademicYearId ?? DBNull.Value,
-                            (object)s.CasteId ?? DBNull.Value,
-                            (object)s.SubCasteId ?? DBNull.Value,
-                            (object)s.ReligionId ?? DBNull.Value,
-                            (object)s.BloodGroupId ?? DBNull.Value,
-                            (object)s.HouseId ?? DBNull.Value,
-                            (object)s.AdmissionTypeId ?? DBNull.Value,
-                            (object)s.CityId ?? DBNull.Value,
-                            (object)s.StateId ?? DBNull.Value,
-                            (object)s.ShiftId ?? DBNull.Value,
-                            (object)s.CategoryId ?? DBNull.Value,
+                            (object?)s.FirstName ?? DBNull.Value,
+                            (object?)s.MiddleName ?? DBNull.Value,
+                            (object?)s.LastName ?? DBNull.Value,
+                            (object?)s.GrNo ?? DBNull.Value,
+                            (object?)s.Gender ?? DBNull.Value,
+                            (object?)s.DateOfBirth ?? DBNull.Value,
+                            (object?)s.Address ?? DBNull.Value,
+                            (object?)s.MotherName ?? DBNull.Value,
+                            (object?)s.FatherContactNo ?? DBNull.Value,
+                            (object?)s.MotherContactNo ?? DBNull.Value,
+                            (object?)s.AadharCard ?? DBNull.Value,
+                            (object?)s.UniformId ?? DBNull.Value,
+                            (object?)s.Rfid ?? DBNull.Value,
+                            (object?)s.SchoolSectionId ?? DBNull.Value,
+                            (object?)s.AdmissionDate ?? DBNull.Value,
+                            (object?)s.Email ?? DBNull.Value,
+                            (object?)s.StandardId ?? DBNull.Value,
+                            (object?)s.SectionId ?? DBNull.Value,
+                            (object?)s.AcademicYearId ?? DBNull.Value,
+                            (object?)s.CasteId ?? DBNull.Value,
+                            (object?)s.SubCasteId ?? DBNull.Value,
+                            (object?)s.ReligionId ?? DBNull.Value,
+                            (object?)s.BloodGroupId ?? DBNull.Value,
+                            (object?)s.HouseId ?? DBNull.Value,
+                            (object?)s.AdmissionTypeId ?? DBNull.Value,
+                            (object?)s.CityId ?? DBNull.Value,
+                            (object?)s.StateId ?? DBNull.Value,
+                            (object?)s.ShiftId ?? DBNull.Value,
+                            (object?)s.CategoryId ?? DBNull.Value,
                             s.Sms,
                             s.IsStateBoard,
-                            (object)s.ProfilePhotoPath ?? DBNull.Value,
+                            (object?)s.ProfilePhotoPath ?? DBNull.Value,
                             s.DigitalUniform,
                             s.DigitalNotebook,
+                            s.OptedForBus,
                             s.IsActive,
                             s.IsDeleted,
-                            (object)s.CreatedBy ?? "SYSTEM",
+                            (object?)s.CreatedBy ?? "SYSTEM",
                             s.CreatedOn == default ? DateTime.UtcNow : s.CreatedOn,
-                            (object)s.ModifiedBy ?? "SYSTEM",
-                            s.ModifiedOn == default ? DateTime.UtcNow : s.ModifiedOn,
-                            s.OptedForBus
+                            (object?)s.ModifiedBy ?? "SYSTEM",
+                            s.ModifiedOn == default ? DateTime.UtcNow : s.ModifiedOn
                         );
                     }
 
