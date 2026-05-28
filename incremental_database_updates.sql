@@ -222,6 +222,17 @@ GO
 -- 6. Move IsActive, IsDeleted, CreatedBy, CreatedOn, ModifiedBy, ModifiedOn to the end of the Students table (Consistency Standard)
 IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND type in (N'U'))
 BEGIN
+    -- Drop dependent search/filter indexes if they already exist, to avoid preventing table/column modifications
+    IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Students_School_Academics_Filters' AND object_id = OBJECT_ID('dbo.Students'))
+    BEGIN
+        DROP INDEX [IX_Students_School_Academics_Filters] ON [dbo].[Students];
+    END;
+
+    IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Students_Name_Search' AND object_id = OBJECT_ID('dbo.Students'))
+    BEGIN
+        DROP INDEX [IX_Students_Name_Search] ON [dbo].[Students];
+    END;
+
     -- Only run relocation if IsActive exists and is not already near the last columns
     IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'IsActive')
     BEGIN
@@ -320,6 +331,10 @@ GO
 -- =========================================================================
 IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND type in (N'U'))
 BEGIN
+    -- Ensure columns have precise, non-MAX types for indexing compatibility in SQL Server
+    ALTER TABLE [dbo].[Students] ALTER COLUMN [RegistrationNumber] NVARCHAR(100) NOT NULL;
+    ALTER TABLE [dbo].[Students] ALTER COLUMN [GrNo] NVARCHAR(100) NULL;
+
     -- High Performance Composite Filter Index matching GetStudents queries
     IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Students_School_Academics_Filters' AND object_id = OBJECT_ID('dbo.Students'))
     BEGIN
