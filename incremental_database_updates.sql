@@ -90,6 +90,37 @@ BEGIN
     BEGIN
         ALTER TABLE [dbo].[Students] ADD [DigitalNotebook] [bit] NOT NULL CONSTRAINT [DF_Students_DigitalNotebook] DEFAULT (0);
     END;
+
+    -- Self-Healing: Safe recovery check for all standard columns if they were dropped in a prior interrupted run
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'IsActive')
+    BEGIN
+        ALTER TABLE [dbo].[Students] ADD [IsActive] [bit] NOT NULL CONSTRAINT [DF_Students_IsActive] DEFAULT (1);
+    END;
+
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'IsDeleted')
+    BEGIN
+        ALTER TABLE [dbo].[Students] ADD [IsDeleted] [bit] NOT NULL CONSTRAINT [DF_Students_IsDeleted] DEFAULT (0);
+    END;
+
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'CreatedBy')
+    BEGIN
+        ALTER TABLE [dbo].[Students] ADD [CreatedBy] [nvarchar](max) NULL;
+    END;
+
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'CreatedOn')
+    BEGIN
+        ALTER TABLE [dbo].[Students] ADD [CreatedOn] [datetime2](7) NOT NULL CONSTRAINT [DF_Students_CreatedOn] DEFAULT (GETUTCDATE());
+    END;
+
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'ModifiedBy')
+    BEGIN
+        ALTER TABLE [dbo].[Students] ADD [ModifiedBy] [nvarchar](max) NULL;
+    END;
+
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'ModifiedOn')
+    BEGIN
+        ALTER TABLE [dbo].[Students] ADD [ModifiedOn] [datetime2](7) NOT NULL CONSTRAINT [DF_Students_ModifiedOn] DEFAULT (GETUTCDATE());
+    END;
 END;
 GO
 
