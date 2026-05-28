@@ -47,13 +47,13 @@ namespace ScanID.Api.Controllers
 
             var totalStudents = await studentQuery.CountAsync();
             var totalTeachers = await teacherQuery.CountAsync();
-            
+
             // Simplified stats for demo
             return Ok(new
             {
                 totalStudents,
                 totalTeachers,
-                feeCollection = "$45,200", // Example static for now or join with Fees
+                feeCollection = "₹45,200", // Example static for now or join with Fees
                 attendanceRate = "92%",
                 performanceTrend = "+2.4%"
             });
