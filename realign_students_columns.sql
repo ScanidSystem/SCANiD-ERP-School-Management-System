@@ -11,13 +11,24 @@
 BEGIN TRANSACTION;
 BEGIN TRY
 
-    PRINT 'Realigning Students table layout...';
+    PRINT 'Dropping external foreign key constraints referencing Students...';
 
-    -- 1. Drop the sp_ManageStudent stored procedure referencing the table
+    -- Drop constraints of other tables pointing to Students
+    IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Attendance_Students_StudentId')
+        ALTER TABLE [dbo].[Attendance] DROP CONSTRAINT [FK_Attendance_Students_StudentId];
+
+    IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Fees_Students_StudentId')
+        ALTER TABLE [dbo].[Fees] DROP CONSTRAINT [FK_Fees_Students_StudentId];
+
+    IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Marks_Students_StudentId')
+        ALTER TABLE [dbo].[Marks] DROP CONSTRAINT [FK_Marks_Students_StudentId];
+
+    PRINT 'Dropping Students table internal constraints...';
+
+    -- Drop internal student table constraints
     IF OBJECT_ID('dbo.sp_ManageStudent', 'P') IS NOT NULL 
         DROP PROCEDURE dbo.sp_ManageStudent;
 
-    -- 2. Drop dependent foreign key constraints
     IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_Schools_SchoolId')
         ALTER TABLE [dbo].[Students] DROP CONSTRAINT [FK_Students_Schools_SchoolId];
 
@@ -60,14 +71,16 @@ BEGIN TRY
     IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Students_SchoolSections')
         ALTER TABLE [dbo].[Students] DROP CONSTRAINT [FK_Students_SchoolSections];
 
-    -- 3. Drop dependent indexes
+    -- Drop indexes
     IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Students_School_Academics_Filters' AND object_id = OBJECT_ID('dbo.Students'))
         DROP INDEX [IX_Students_School_Academics_Filters] ON [dbo].[Students];
 
     IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Students_Name_Search' AND object_id = OBJECT_ID('dbo.Students'))
         DROP INDEX [IX_Students_Name_Search] ON [dbo].[Students];
 
-    -- 4. Create new Students table with correct column order (OptedForBus after DigitalNotebook, and Audit trails at the end)
+    PRINT 'Creating new Students table layout...';
+
+    -- Create new Students table with correct column order (OptedForBus after DigitalNotebook, and Audit trails at the end)
     CREATE TABLE [dbo].[Students_New](
         [Id] [int] IDENTITY(1,1) NOT NULL,
         [Name] [nvarchar](255) NOT NULL,
@@ -118,7 +131,9 @@ BEGIN TRY
      CONSTRAINT [PK_Students_New] PRIMARY KEY CLUSTERED ([Id] ASC)
     );
 
-    -- 5. Copy data from original Students table to the temporary one
+    PRINT 'Copying data...';
+
+    -- Copy data from original Students table to the temporary one
     SET IDENTITY_INSERT [dbo].[Students_New] ON;
     
     INSERT INTO [dbo].[Students_New] (
@@ -140,16 +155,20 @@ BEGIN TRY
 
     SET IDENTITY_INSERT [dbo].[Students_New] OFF;
 
-    -- 6. Drop original table [dbo].[Students]
+    PRINT 'Replacing old table with new aligned table...';
+
+    -- Drop original table [dbo].[Students]
     DROP TABLE [dbo].[Students];
 
-    -- 7. Rename the [Students_New] table to [Students]
+    -- Rename the [Students_New] table to [Students]
     EXEC sp_rename 'dbo.Students_New', 'Students';
 
-    -- 8. Add Primary Key naming back to PK_Students
+    -- Add Primary Key naming back to PK_Students
     EXEC sp_rename 'dbo.PK_Students_New', 'PK_Students', 'OBJECT';
 
-    -- 9. Recreate and add all foreign key constraints
+    PRINT 'Recreating Students internal foreign keys...';
+
+    -- Recreate and add all foreign key constraints
     ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_Schools_SchoolId] FOREIGN KEY([SchoolId]) REFERENCES [dbo].[Schools] ([Id]) ON DELETE CASCADE;
     ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_Standards] FOREIGN KEY([StandardId]) REFERENCES [dbo].[Standards] ([Id]);
     ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_Sections] FOREIGN KEY([SectionId]) REFERENCES [dbo].[Sections] ([Id]);
@@ -165,7 +184,9 @@ BEGIN TRY
     ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_Categories] FOREIGN KEY([CategoryId]) REFERENCES [dbo].[Categories] ([Id]);
     ALTER TABLE [dbo].[Students] ADD CONSTRAINT [FK_Students_SchoolSections] FOREIGN KEY([SchoolSectionId]) REFERENCES [dbo].[SchoolSections] ([Id]);
 
-    -- 10. Re-create NONCLUSTERED Indexes
+    PRINT 'Recreating indexes...';
+
+    -- Re-create NONCLUSTERED Indexes
     CREATE NONCLUSTERED INDEX [IX_Students_School_Academics_Filters] 
     ON [dbo].[Students] ([SchoolId], [AcademicYearId], [StandardId], [SectionId], [IsDeleted])
     INCLUDE ([Id], [Name], [RollNumber], [GrNo]);
@@ -174,8 +195,15 @@ BEGIN TRY
     ON [dbo].[Students] ([GrNo], [RollNumber])
     INCLUDE ([Name]);
 
+    PRINT 'Recreating external foreign key constraints pointing to Students...';
+
+    -- Re-establish external relationships
+    ALTER TABLE [dbo].[Attendance] ADD CONSTRAINT [FK_Attendance_Students_StudentId] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([Id]) ON DELETE CASCADE;
+    ALTER TABLE [dbo].[Fees] ADD CONSTRAINT [FK_Fees_Students_StudentId] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([Id]) ON DELETE CASCADE;
+    ALTER TABLE [dbo].[Marks] ADD CONSTRAINT [FK_Marks_Students_StudentId] FOREIGN KEY([StudentId]) REFERENCES [dbo].[Students] ([Id]) ON DELETE CASCADE;
+
     COMMIT TRANSACTION;
-    PRINT 'SUCCESS: Table [dbo].[Students] columns realigned correctly!';
+    PRINT 'SUCCESS: Table [dbo].[Students] columns realigned correctly and all relationships restored!';
 
 END TRY
 BEGIN CATCH
