@@ -76,7 +76,7 @@ export default function Dashboard({ user }: DashboardProps) {
     <div className="space-y-4 sm:space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-          <div className="bg-blue-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:rotate-3">
+          <div className="bg-[#5a67f2] p-4 rounded-[1.25rem] text-white shadow-2xl shadow-[#5a67f2]/20 transition-transform hover:rotate-3">
              <TrendingUp size={28} />
           </div>
           <div>

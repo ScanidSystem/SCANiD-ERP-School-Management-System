@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
+  Calendar,
   Plus, 
   Search, 
   Download, 
@@ -80,7 +81,9 @@ import {
   LayoutPanelLeft,
   FileCheck,
   FolderKanban,
-  MapPinned
+  MapPinned,
+  BadgeCheck,
+  XCircle
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -232,8 +235,8 @@ export default function Students({ user }: { user: UserType }) {
           sortOrder,
           search,
           // @ts-ignore - adding filters to params
-          standardId: standardFilter === "all" ? undefined : parseSafeInt(standardFilter),
-          sectionId: sectionFilter === "all" ? undefined : parseSafeInt(sectionFilter)
+          standard: standardFilter === "all" ? undefined : standardFilter,
+          section: sectionFilter === "all" ? undefined : sectionFilter
         }
       );
       
@@ -264,11 +267,11 @@ export default function Students({ user }: { user: UserType }) {
 
         return {
           id: s.id?.toString() || "",
-          grno: getVal("GrNo") || getVal("GRNO") || s.registrationNumber || s.grno || getVal("registrationNumber") || "",
+          grno: getVal("GRNO") || s.registrationNumber || s.grno || getVal("registrationNumber") || "",
           schoolId: (s.schoolId || s.SchoolId)?.toString() || "",
-          firstName: getVal("FirstName") || getVal("FNAME") || s.firstName || (s.name || s.fullName)?.split(" ")[0] || "",
-          lastName: getVal("LastName") || getVal("LNAME") || s.lastName || (s.name || s.fullName)?.split(" ").slice(-1)[0] || "",
-          middleName: getVal("MiddleName") || getVal("MNAME") || s.middleName || ((s.name || s.fullName)?.split(" ").length > 2 ? (s.name || s.fullName)?.split(" ").slice(1, -1).join(" ") : ""),
+          firstName: getVal("FNAME") || s.firstName || (s.name || s.fullName)?.split(" ")[0] || "",
+          lastName: getVal("LNAME") || s.lastName || (s.name || s.fullName)?.split(" ").slice(-1)[0] || "",
+          middleName: getVal("MNAME") || s.middleName || ((s.name || s.fullName)?.split(" ").length > 2 ? (s.name || s.fullName)?.split(" ").slice(1, -1).join(" ") : ""),
           name: s.name || s.fullName || s.FullName || getVal("FullName") || getVal("Name") || "",
           standard: typeof getVal("STD") === "object" ? getVal("STD")?.name : (getVal("STD") || s.standard?.name || s.Standard?.name || s.standard || ""),
           section: typeof getVal("DIV") === "object" ? getVal("DIV")?.name : (getVal("DIV") || s.section?.name || s.Section?.name || s.section || ""),
@@ -352,12 +355,12 @@ export default function Students({ user }: { user: UserType }) {
         
         // Standard (Grade) Filter
         if (standardFilter !== "all") {
-          filtered = filtered.filter(item => (item.standardId || item.StandardId || "").toString() === standardFilter);
+          filtered = filtered.filter(item => item.standard === standardFilter);
         }
         
         // Section Filter
         if (sectionFilter !== "all") {
-          filtered = filtered.filter(item => (item.sectionId || item.SectionId || "").toString() === sectionFilter);
+          filtered = filtered.filter(item => item.section === sectionFilter);
         }
         
         // Sort
@@ -430,7 +433,7 @@ export default function Students({ user }: { user: UserType }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadResults, setUploadResults] = useState<any[]>([]);
   const bulkFileInputRef = useRef<HTMLInputElement>(null);
-  const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const inputRefs = useRef<Record<string, any>>({});
   
   const initialFormState = {
@@ -499,7 +502,7 @@ export default function Students({ user }: { user: UserType }) {
       MNAME: student.MNAME || student.middleName || "",
       LNAME: student.LNAME || student.lastName || "",
       GENDER: student.GENDER || student.gender || "Male",
-      MOBILE: student.MOBILE || student.contactNumber || student.fatherContactNo || "",
+      MOBILE: student.MOBILE || student.contactNumber || "",
       MOTHERNAME: student.MOTHERNAME || student.motherName || "",
       ADDRESS: student.ADDRESS || student.address || "",
       aadharcard: student.aadharcard || student.aadharCard || "",
@@ -540,50 +543,30 @@ export default function Students({ user }: { user: UserType }) {
       // Prepare data for export including all important student fields
       const exportData = filteredStudents.map(s => ({
         "Registration Number": s.grno || s.registrationNumber,
-        "Name": s.name || `${s.FNAME || s.firstName || ""} ${s.MNAME || s.middleName || ""} ${s.LNAME || s.lastName || ""}`.trim(),
-        "School": schools.find(sch => sch.id?.toString() === (s.schoolId || s.SchoolId)?.toString())?.name || s.schoolId || "",
-        "Status": s.status || "Active",
-        "Roll Number": s.roll || s.ROLLNO || s.rollNumber,
+        "Roll Number": s.roll,
         "First Name": s.FNAME || s.firstName,
         "Middle Name": s.MNAME || s.middleName,
         "Last Name": s.LNAME || s.lastName,
-        "GrNo": s.grno || s.GRNO || s.GrNo,
         "Gender": s.GENDER || s.gender,
-        "Date of Birth": s.DOB || s.birthDate || s.DateOfBirth,
-        "Address": s.ADDRESS || s.address || s.Address,
-        "Mother Name": s.MOTHERNAME || s.motherName || s.MotherName,
-        "Mobile": s.MOBILE || s.contactNumber || s.FatherContactNo,
-        "Secondary Mobile": s.contact2 || s.secondaryContact || s.MotherContactNo,
-        "Aadhar Card": s.aadharcard || s.aadharCard || s.AadharCard,
-        "Uniform ID": s.uniformid || s.uniformId || s.UniformId,
-        "RFID": s.RFID || s.rfid || s.Rfid,
-        "School Section": s.SchoolSectionId ? schoolSections.find(sec => sec.id?.toString() === s.SchoolSectionId?.toString())?.name : (s.schoolSection || ""),
-        "Admission Date": s.AdmissionDate || s.admissionDate,
-        "Email": s.EMAIL || s.email || s.Email,
-        "Standard": s.STD || s.standard || (s.StandardId ? standardsMaster.find(st => st.id?.toString() === s.StandardId?.toString())?.name : ""),
-        "Division": s.DIV || s.section || (s.SectionId ? sectionsMaster.find(sec => sec.id?.toString() === s.SectionId?.toString())?.name : ""),
-        "Academic Year": s.academicyear || s.joiningAcademicYearId || (s.AcademicYearId ? academicYears.find(ay => ay.id?.toString() === s.AcademicYearId?.toString())?.name : ""),
-        "Caste": s.CASTE || s.casteId ? (castes.find(c => c.id?.toString() === (s.CASTE || s.casteId || s.CasteId)?.toString())?.name || s.CASTE || s.casteId) : "",
-        "Sub-Caste": s.subcaste || s.subCasteId ? (subCastes.find(sc => sc.id?.toString() === (s.subcaste || s.subCasteId || s.SubCasteId)?.toString())?.name || s.subcaste || s.subCasteId) : "",
-        "Religion": s.RELIGION || s.religionId ? (religions.find(r => r.id?.toString() === (s.RELIGION || s.religionId || s.ReligionId)?.toString())?.name || s.RELIGION || s.religionId) : "",
-        "Blood Group": s.BLOODGROUP || s.bloodGroupId ? (bloodGroups.find(bg => bg.id?.toString() === (s.BLOODGROUP || s.bloodGroupId || s.BloodGroupId)?.toString())?.name || s.BLOODGROUP || s.bloodGroupId) : "",
-        "House": s.house || s.houseId ? (houses.find(h => h.id?.toString() === (s.house || s.houseId || s.HouseId)?.toString())?.name || s.house || s.houseId) : "",
-        "Admission Type": s.admissiontype || s.admissionTypeId ? (admissionTypes.find(at => at.id?.toString() === (s.admissiontype || s.admissionTypeId || s.AdmissionTypeId)?.toString())?.name || s.admissiontype || s.admissionTypeId) : "",
-        "City": s.CityId ? (cities.find(c => c.id?.toString() === s.CityId?.toString())?.name || s.CityId) : "",
-        "State": s.StateId ? (states.find(st => st.id?.toString() === s.StateId?.toString())?.name || s.StateId) : "",
-        "Shift Name": s.SHIFTNAME || (s.ShiftId ? (shifts.find(sh => sh.id?.toString() === s.ShiftId?.toString())?.name || s.ShiftId) : ""),
-        "Category": s.CATEGORY || s.categoryId ? (categories.find(c => c.id?.toString() === (s.CATEGORY || s.categoryId || s.CategoryId)?.toString())?.name || s.CATEGORY || s.categoryId) : "",
-        "Secondary SMS": s.sms ? "Yes" : "No",
-        "Is State Board": s.isStateBoard || s.IsStateBoard ? "Yes" : "No",
-        "Profile Photo Path": s.ProfilePhotoPath || s.profilePhotoPath,
-        "Digital Uniform": s.digitalUniform || s.DigitalUniform ? "Yes" : "No",
-        "Digital Notebook": s.digitalNotebook || s.DigitalNotebook ? "Yes" : "No",
-        "Is Active": s.isActive || s.IsActive || s.IsActive === undefined ? "Yes" : "No",
-        "Is Deleted": s.isDeleted || s.IsDeleted ? "Yes" : "No",
-        "Created By": s.createdBy || s.CreatedBy,
-        "Created On": s.createdOn || s.CreatedOn,
-        "Modified By": s.modifiedBy || s.ModifiedBy,
-        "Modified On": s.modifiedOn || s.ModifiedOn
+        "Date of Birth": s.DOB || s.birthDate,
+        "Mobile": s.MOBILE || s.contactNumber,
+        "Email": s.EMAIL || s.email,
+        "Standard": s.STD || s.standard,
+        "Division": s.DIV || s.section,
+        "Mother Name": s.MOTHERNAME || s.motherName,
+        "Address": s.ADDRESS || s.address,
+        "Aadhar Card": s.aadharcard || s.aadharCard,
+        "Blood Group": s.BLOODGROUP || s.bloodGroupId ? (bloodGroups.find(bg => bg.id?.toString() === (s.BLOODGROUP || s.bloodGroupId)?.toString())?.name || s.BLOODGROUP || s.bloodGroupId) : "",
+        "House": s.house || s.houseId ? (houses.find(h => h.id?.toString() === (s.house || s.houseId)?.toString())?.name || s.house || s.houseId) : "",
+        "Admission Type": s.admissiontype || s.admissionTypeId ? (admissionTypes.find(at => at.id?.toString() === (s.admissiontype || s.admissionTypeId)?.toString())?.name || s.admissiontype || s.admissionTypeId) : "",
+        "Religion": s.RELIGION || s.religionId ? (religions.find(r => r.id?.toString() === (s.RELIGION || s.religionId)?.toString())?.name || s.RELIGION || s.religionId) : "",
+        "Caste": s.CASTE || s.casteId ? (castes.find(c => c.id?.toString() === (s.CASTE || s.casteId)?.toString())?.name || s.CASTE || s.casteId) : "",
+        "Sub-Caste": s.subcaste || s.subCasteId ? (subCastes.find(sc => sc.id?.toString() === (s.subcaste || s.subCasteId)?.toString())?.name || s.subcaste || s.subCasteId) : "",
+        "Academic Year": s.academicyear || s.joiningAcademicYearId ? (academicYears.find(ay => ay.id?.toString() === (s.academicyear || s.joiningAcademicYearId)?.toString())?.name || s.academicyear || s.joiningAcademicYearId) : "",
+        "Category": s.CATEGORY || s.categoryId ? (categories.find(c => c.id?.toString() === (s.CATEGORY || s.categoryId)?.toString())?.name || s.CATEGORY || s.categoryId) : "",
+        "RFID": s.RFID,
+        "Shift Name": s.SHIFTNAME,
+        "Status": s.status
       }));
 
       // Create workbook and worksheet
@@ -593,15 +576,9 @@ export default function Students({ user }: { user: UserType }) {
 
       // Set column widths for better readability
       const wscols = [
-        {wch: 20}, {wch: 25}, {wch: 20}, {wch: 10}, {wch: 12},
-        {wch: 15}, {wch: 15}, {wch: 15}, {wch: 12}, {wch: 10},
-        {wch: 15}, {wch: 35}, {wch: 20}, {wch: 15}, {wch: 15},
-        {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15},
-        {wch: 25}, {wch: 15}, {wch: 10}, {wch: 15}, {wch: 15},
-        {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15},
-        {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 10},
-        {wch: 15}, {wch: 25}, {wch: 15}, {wch: 15}, {wch: 10},
-        {wch: 10}, {wch: 15}, {wch: 20}, {wch: 15}, {wch: 20}
+        {wch: 20}, {wch: 12}, {wch: 15}, {wch: 15}, {wch: 15},
+        {wch: 10}, {wch: 12}, {wch: 15}, {wch: 25}, {wch: 12},
+        {wch: 10}, {wch: 20}, {wch: 40}, {wch: 15}, {wch: 15}
       ];
       ws['!cols'] = wscols;
 
@@ -667,67 +644,48 @@ export default function Students({ user }: { user: UserType }) {
 
   const downloadSampleExcel = async () => {
     try {
-      // Define standard headers based on all current student table fields in exact sequence
+      // Define standard headers based on all current student table fields
       // Using user-friendly names that the mapper will convert to IDs
       const headers = [
-        "RegistrationNumber", "Name", "SchoolName", "Status", "RollNumber", 
-        "FirstName", "MiddleName", "LastName", "GrNo", "Gender", 
-        "DOB", "Address", "MotherName", "Mobile", "SecondaryMobile", 
-        "AadharCard", "UniformID", "RFID", "SchoolSectionName", "AdmissionDate", 
-        "Email", "GradeName", "SectionName", "AcademicYear", "CasteName", 
-        "SubCasteName", "ReligionName", "BloodGroupName", "HouseName", "AdmissionType", 
-        "CityName", "StateName", "ShiftName", "CategoryName", "SecondarySMS", 
-        "IsStateBoard", "ProfilePhotoPath", "DigitalUniform", "DigitalNotebook",
-        "IsActive", "IsDeleted", "CreatedBy", "CreatedOn", "ModifiedBy", "ModifiedOn"
+        "SchoolName", "RegistrationNumber", "RollNumber", "FirstName", "MiddleName", "LastName", 
+        "Gender", "Mobile", "Email", "MotherName", "Address", "AadharCard", "DOB",
+        "GradeName", "SectionName", "BloodGroupName", "HouseName", 
+        "AdmissionType", "ReligionName", "CasteName", "SubCasteName", 
+        "CategoryName", "AcademicYear", "ShiftName", "Status",
+        "RFID", "UniformID", "SecondaryContact", "SecondarySMS"
       ];
       
       const sampleData = [
         {
-          RegistrationNumber: "REG1001",
-          Name: "John Doe Smith",
           SchoolName: schools.find(sch => sch.id?.toString() === user.schoolId?.toString())?.name || schools[0]?.name || "Main Campus",
-          Status: "Active",
+          RegistrationNumber: "REG1001",
           RollNumber: "1",
           FirstName: "John",
           MiddleName: "Doe",
           LastName: "Smith",
-          GrNo: "REG1001",
           Gender: "Male",
-          DOB: "2010-05-20",
-          Address: "123 Education Lane, Sector 4",
-          MotherName: "Jane Smith",
           Mobile: "9876543210",
-          SecondaryMobile: "9876543211",
-          AadharCard: "123456789012",
-          UniformID: "UNIF-001",
-          RFID: "RF99221",
-          SchoolSectionName: schoolSections[0]?.name || "Primary",
-          AdmissionDate: "2026-05-24",
           Email: "john.smith@example.com",
+          MotherName: "Jane Smith",
+          Address: "123 Education Lane, Sector 4",
+          AadharCard: "123456789012",
+          DOB: "2010-05-20",
           GradeName: standardsMaster[0]?.name || "10th",
           SectionName: sectionsMaster[0]?.name || "A",
-          AcademicYear: academicYears.find(ay => ay.isCurrent)?.name || academicYears[0]?.name || "2024-25",
-          CasteName: castes[0]?.name || "General",
-          SubCasteName: subCastes[0]?.name || "None",
-          ReligionName: religions[0]?.name || "Hindu",
           BloodGroupName: bloodGroups[0]?.name || "O+",
           HouseName: houses[0]?.name || "Blue House",
           AdmissionType: admissionTypes[0]?.name || "Regular",
-          CityName: cities[0]?.name || "",
-          StateName: states[0]?.name || "",
-          ShiftName: shifts[0]?.name || "Morning",
+          ReligionName: religions[0]?.name || "Hindu",
+          CasteName: castes[0]?.name || "General",
+          SubCasteName: subCastes[0]?.name || "None",
           CategoryName: categories[0]?.name || "General",
-          SecondarySMS: "Yes",
-          IsStateBoard: "No",
-          ProfilePhotoPath: "/photos/1/example.jpg",
-          DigitalUniform: "Yes",
-          DigitalNotebook: "No",
-          IsActive: "Yes",
-          IsDeleted: "No",
-          CreatedBy: user.name || user.email,
-          CreatedOn: "2026-05-24 00:00:00",
-          ModifiedBy: user.name || user.email,
-          ModifiedOn: "2026-05-24 00:00:00"
+          AcademicYear: academicYears.find(ay => ay.isCurrent)?.name || academicYears[0]?.name || "2024-25",
+          ShiftName: shifts[0]?.name || "Morning",
+          Status: "Active",
+          RFID: "RF99221",
+          UniformID: "UNIF-001",
+          SecondaryContact: "9876543211",
+          SecondarySMS: "Yes"
         }
       ];
 
@@ -778,192 +736,93 @@ export default function Students({ user }: { user: UserType }) {
 
         const processedStudents = rawData.map((item: any, index: number) => {
           try {
-            // Helper helper to dynamically lookup keys case-insensitively and trim spaces
-            const getFieldCleanVal = (keysToSearch: string[]): string => {
-              for (const key of keysToSearch) {
-                const matchKey = Object.keys(item).find(k => k.toLowerCase() === key.toLowerCase());
-                if (matchKey && item[matchKey] !== undefined && item[matchKey] !== null) {
-                  return item[matchKey].toString().trim();
-                }
-              }
-              return "";
-            };
-
-            // 1. School Name Resolution
-            const schName = getFieldCleanVal(["SchoolName", "School", "school_name"]);
+            // Find school id by the provided School Name for institutional compliance
+            const schName = item.SchoolName || item.schoolName || item.School;
             const schMasterId = item.SchoolId || (schName ? schools.find((sch: any) => 
-              sch.name.toLowerCase().trim() === schName.toLowerCase()
+              sch.name.toLowerCase() === schName.toString().toLowerCase()
             )?.id : undefined);
 
-            // 2. Class/Grade/Standard Resolution
-            const stdName = getFieldCleanVal(["GradeName", "STD", "standard", "grade"]);
+            const stdName = item.GradeName || item.STD;
             const stdMasterId = item.StandardId || (stdName ? standardsMaster.find((s: any) => 
-              s.name.toLowerCase().trim() === stdName.toLowerCase()
+              s.name.toLowerCase() === stdName.toString().toLowerCase()
             )?.id : undefined);
             
-            // 3. Section/Division Resolution
-            const divName = getFieldCleanVal(["SectionName", "DIV", "section", "division"]);
+            const divName = item.SectionName || item.DIV;
             const divMasterId = item.SectionId || (divName ? sectionsMaster.find((s: any) => 
-              s.name.toLowerCase().trim() === divName.toLowerCase()
+              s.name.toLowerCase() === divName.toString().toLowerCase()
             )?.id : undefined);
             
-            // 4. Shift Resolution
-            const shiftName = getFieldCleanVal(["ShiftName", "SHIFTNAME", "shift"]);
+            const shiftName = item.ShiftName || item.SHIFTNAME;
             const shiftMasterId = item.ShiftId || (shiftName ? shifts.find((s: any) => 
-               s.name.toLowerCase().trim() === shiftName.toLowerCase()
+              s.name.toLowerCase() === shiftName.toString().toLowerCase()
             )?.id : undefined);
 
-            // 5. Academic Year Resolution
-            const ayName = getFieldCleanVal(["AcademicYear", "academicyear", "academic_year"]);
+            const ayName = item.AcademicYear || item.academicyear;
             const ayMasterId = item.AcademicYearId || (ayName ? academicYears.find((s: any) => 
-              s.name.toLowerCase().trim() === ayName.toLowerCase()
+              s.name.toLowerCase() === ayName.toString().toLowerCase()
             )?.id : undefined);
 
-            // 6. Blood Group Resolution
-            const bgName = getFieldCleanVal(["BloodGroupName", "BLOODGROUP", "blood_group"]);
+            const bgName = item.BloodGroupName || item.BLOODGROUP;
             const bgMasterId = item.BloodGroupId || (bgName ? bloodGroups.find((bg: any) => 
-              bg.name.toLowerCase().trim() === bgName.toLowerCase()
+              bg.name.toLowerCase() === bgName.toString().toLowerCase()
             )?.id : undefined);
 
-            // 7. Religion Resolution
-            const relName = getFieldCleanVal(["ReligionName", "RELIGION", "religion"]);
+            const relName = item.ReligionName || item.RELIGION;
             const religionMasterId = item.ReligionId || (relName ? religions.find((r: any) => 
-              r.name.toLowerCase().trim() === relName.toLowerCase()
+              r.name.toLowerCase() === relName.toString().toLowerCase()
             )?.id : undefined);
 
-            // 8. House Resolution
-            const houseName = getFieldCleanVal(["HouseName", "house"]);
+            const houseName = item.HouseName || item.house;
             const houseMasterId = item.HouseId || (houseName ? houses.find((h: any) => 
-              h.name.toLowerCase().trim() === houseName.toLowerCase()
+              h.name.toLowerCase() === houseName.toString().toLowerCase()
             )?.id : undefined);
 
-            // 9. Admission Type Resolution
-            const atName = getFieldCleanVal(["AdmissionType", "admissiontype", "admission_type"]);
+            const atName = item.AdmissionType || item.admissiontype;
             const admissionTypeMasterId = item.AdmissionTypeId || (atName ? admissionTypes.find((at: any) => 
-              at.name.toLowerCase().trim() === atName.toLowerCase()
+              at.name.toLowerCase() === atName.toString().toLowerCase()
             )?.id : undefined);
 
-            // 10. Caste Resolution
-            const cName = getFieldCleanVal(["CasteName", "CASTE", "caste"]);
+            const cName = item.CasteName || item.CASTE;
             const casteMasterId = item.CasteId || (cName ? castes.find((c: any) => 
-              c.name.toLowerCase().trim() === cName.toLowerCase()
+              c.name.toLowerCase() === cName.toString().toLowerCase()
             )?.id : undefined);
 
-            // 11. Category Resolution
-            const catName = getFieldCleanVal(["CategoryName", "CATEGORY", "category"]);
+            const catName = item.CategoryName || item.CATEGORY;
             const categoryMasterId = item.CategoryId || (catName ? categories.find((c: any) => 
-              c.name.toLowerCase().trim() === catName.toLowerCase()
+              c.name.toLowerCase() === catName.toString().toLowerCase()
             )?.id : undefined);
-
-            // 12. School Section Resolution
-            const schoolSectionName = getFieldCleanVal(["SchoolSectionName", "SchoolSection", "school_section", "schoolsectionname"]);
-            const schoolSectionId = item.SchoolSectionId || (schoolSectionName ? schoolSections.find((s: any) => 
-              s.name.toLowerCase().trim() === schoolSectionName.toLowerCase()
-            )?.id : undefined);
-
-            // 13. Sub-Caste Resolution
-            const subCasteName = getFieldCleanVal(["SubCasteName", "SubCaste", "sub_caste", "subcastename"]);
-            const subCasteId = item.SubCasteId || (subCasteName ? subCastes.find((sc: any) => 
-              sc.name.toLowerCase().trim() === subCasteName.toLowerCase()
-            )?.id : undefined);
-
-            // 14. City Resolution
-            const cityName = getFieldCleanVal(["CityName", "City", "city", "cityname"]);
-            const cityId = item.CityId || (cityName ? cities.find((c: any) => 
-              c.name.toLowerCase().trim() === cityName.toLowerCase()
-            )?.id : undefined);
-
-            // 15. State Resolution
-            const stateName = getFieldCleanVal(["StateName", "State", "state", "statename"]);
-            const stateId = item.StateId || (stateName ? states.find((s: any) => 
-              s.name.toLowerCase().trim() === stateName.toLowerCase()
-            )?.id : undefined);
-
-            // Map standard fields for DB persistence
-            const regNum = getFieldCleanVal(["RegistrationNumber", "GRNO", "registration_number", "student_id"]);
-            const fName = getFieldCleanVal(["FirstName", "FNAME", "first_name"]);
-            const mName = getFieldCleanVal(["MiddleName", "MNAME", "middle_name"]);
-            const lName = getFieldCleanVal(["LastName", "LNAME", "last_name"]);
 
             return {
-              registrationNumber: regNum || `REG-${Date.now()}-${index}`,
-              RegistrationNumber: regNum || `REG-${Date.now()}-${index}`,
-              name: `${fName} ${mName} ${lName}`.trim() || item.Name || `Student ${index + 1}`,
-              Name: `${fName} ${mName} ${lName}`.trim() || item.Name || `Student ${index + 1}`,
+              registrationNumber: (item.RegistrationNumber || item.GRNO || item.registrationNumber || `REG-${Date.now()}-${index}`).toString(),
+              name: item.Name || `${item.FirstName || item.FNAME || ""} ${item.MiddleName || item.MNAME || ""} ${item.LastName || item.LNAME || ""}`.trim(),
               schoolId: parseInt(schMasterId || item.SchoolId || user.schoolId || "1"),
-              SchoolId: parseInt(schMasterId || item.SchoolId || user.schoolId || "1"),
-              rollNumber: parseInt(getFieldCleanVal(["RollNumber", "ROLLNO", "roll_number"]) || "0"),
-              RollNumber: parseInt(getFieldCleanVal(["RollNumber", "ROLLNO", "roll_number"]) || "0"),
-              FirstName: fName,
-              MiddleName: mName,
-              LastName: lName,
-              GRNO: regNum,
-              GrNo: regNum,
-              GENDER: getFieldCleanVal(["Gender", "GENDER"]) || "Male",
-              Gender: getFieldCleanVal(["Gender", "GENDER"]) || "Male",
-              DOB: getFieldCleanVal(["DOB", "DateOfBirth", "dob", "birth_date"]),
-              DateOfBirth: getFieldCleanVal(["DOB", "DateOfBirth", "dob", "birth_date"]),
-              MOBILE: getFieldCleanVal(["Mobile", "MOBILE", "contact_number"]),
-              FatherContactNo: getFieldCleanVal(["Mobile", "MOBILE", "contact_number"]),
-              EMAIL: getFieldCleanVal(["Email", "EMAIL"]),
-              Email: getFieldCleanVal(["Email", "EMAIL"]),
-              ADDRESS: getFieldCleanVal(["Address", "ADDRESS"]),
-              Address: getFieldCleanVal(["Address", "ADDRESS"]),
-              MOTHERNAME: getFieldCleanVal(["MotherName", "MOTHERNAME"]),
-              MotherName: getFieldCleanVal(["MotherName", "MOTHERNAME"]),
-              aadharcard: getFieldCleanVal(["AadharCard", "aadharcard", "aadhar_card"]),
-              AadharCard: getFieldCleanVal(["AadharCard", "aadharcard", "aadhar_card"]),
-              RFID: getFieldCleanVal(["RFID", "CARDID", "card_id"]),
-              Rfid: getFieldCleanVal(["RFID", "CARDID", "card_id"]),
+              rollNumber: parseInt(item.RollNumber || item.ROLLNO || "0"),
+              GRNO: (item.GRNO || item.RegistrationNumber || item.registrationNumber || "").toString(),
+              GENDER: item.Gender || item.GENDER || "Male",
+              DOB: item.DOB || item.DateOfBirth,
+              MOBILE: (item.Mobile || item.MOBILE || item.contactNumber || "").toString(),
+              EMAIL: item.Email || item.EMAIL,
+              ADDRESS: item.Address || item.ADDRESS,
+              MOTHERNAME: item.MotherName || item.MOTHERNAME,
+              aadharcard: (item.AadharCard || item.aadharcard || "").toString(),
+              RFID: (item.RFID || item.CARDID || item.cardId || "").toString(),
               SHIFTNAME: shiftName,
               
               StandardId: stdMasterId,
-              standardId: stdMasterId,
               SectionId: divMasterId,
-              sectionId: divMasterId,
               ShiftId: shiftMasterId,
-              shiftId: shiftMasterId,
               AcademicYearId: ayMasterId,
-              academicYearId: ayMasterId,
               BloodGroupId: bgMasterId,
-              bloodGroupId: bgMasterId,
               ReligionId: religionMasterId,
-              religionId: religionMasterId,
               HouseId: houseMasterId,
-              houseId: houseMasterId,
               AdmissionTypeId: admissionTypeMasterId,
-              admissionTypeId: admissionTypeMasterId,
               CasteId: casteMasterId,
-              casteId: casteMasterId,
-              SubCasteId: subCasteId,
-              subCasteId: subCasteId,
               CategoryId: categoryMasterId,
-              categoryId: categoryMasterId,
-              CityId: cityId,
-              cityId: cityId,
-              StateId: stateId,
-              stateId: stateId,
-              SchoolSectionId: schoolSectionId,
-              schoolSectionId: schoolSectionId,
-              AdmissionDate: getFieldCleanVal(["AdmissionDate", "admission_date"]),
-              admissionDate: getFieldCleanVal(["AdmissionDate", "admission_date"]),
               
-              uniformid: getFieldCleanVal(["UniformID", "uniformid", "uniform_id"]),
-              UniformId: getFieldCleanVal(["UniformID", "uniformid", "uniform_id"]),
-              contact2: getFieldCleanVal(["SecondaryMobile", "SecondaryContact", "SecondaryPhone", "contact2"]),
-              MotherContactNo: getFieldCleanVal(["SecondaryMobile", "SecondaryContact", "SecondaryPhone", "contact2"]),
-              sms: getFieldCleanVal(["SecondarySMS", "sms"]) === "Yes" || getFieldCleanVal(["SecondarySMS", "sms"]).toLowerCase() === "true",
-              Sms: getFieldCleanVal(["SecondarySMS", "sms"]) === "Yes" || getFieldCleanVal(["SecondarySMS", "sms"]).toLowerCase() === "true",
-              digitalUniform: getFieldCleanVal(["DigitalUniform", "digital_uniform", "digitalUniform"]) === "Yes" || getFieldCleanVal(["DigitalUniform", "digital_uniform", "digitalUniform"]).toLowerCase() === "true",
-              DigitalUniform: getFieldCleanVal(["DigitalUniform", "digital_uniform", "digitalUniform"]) === "Yes" || getFieldCleanVal(["DigitalUniform", "digital_uniform", "digitalUniform"]).toLowerCase() === "true",
-              digitalNotebook: getFieldCleanVal(["DigitalNotebook", "digital_notebook", "digitalNotebook"]) === "Yes" || getFieldCleanVal(["DigitalNotebook", "digital_notebook", "digitalNotebook"]).toLowerCase() === "true",
-              DigitalNotebook: getFieldCleanVal(["DigitalNotebook", "digital_notebook", "digitalNotebook"]) === "Yes" || getFieldCleanVal(["DigitalNotebook", "digital_notebook", "digitalNotebook"]).toLowerCase() === "true",
-              IsStateBoard: getFieldCleanVal(["IsStateBoard", "isStateBoard"]) === "Yes" || getFieldCleanVal(["IsStateBoard", "isStateBoard"]).toLowerCase() === "true",
-              isStateBoard: getFieldCleanVal(["IsStateBoard", "isStateBoard"]) === "Yes" || getFieldCleanVal(["IsStateBoard", "isStateBoard"]).toLowerCase() === "true",
-              ProfilePhotoPath: getFieldCleanVal(["ProfilePhotoPath", "profile_photo_path"]),
-              profilePhotoPath: getFieldCleanVal(["ProfilePhotoPath", "profile_photo_path"]),
-              status: getFieldCleanVal(["Status", "status"]) || "Active",
-              Status: getFieldCleanVal(["Status", "status"]) || "Active",
+              uniformid: item.UniformID || item.uniformid,
+              contact2: item.SecondaryContact || item.contact2,
+              sms: item.SecondarySMS || item.sms,
+              status: item.Status || "Active",
               CreatedBy: user.name || user.email,
               ModifiedBy: user.name || user.email
             };
@@ -972,127 +831,6 @@ export default function Students({ user }: { user: UserType }) {
             return null;
           }
         });
-
-        // 1) Fetch existing students from the database for comprehensive pre-validation checks
-        let existingStudentsDbList: any[] = [];
-        try {
-          const allRes = await apiService.getStudents(
-            parseSafeInt(user.schoolId),
-            parseSafeInt(user.academicYearId),
-            { page: 1, pageSize: 100000 }
-          );
-          const allData = allRes.data;
-          existingStudentsDbList = Array.isArray(allData) 
-            ? allData 
-            : (allData && Array.isArray(allData.data) ? allData.data : []);
-        } catch (fetchErr) {
-          console.error("Could not load existing records for pre-validation:", fetchErr);
-        }
-
-        // Build Sets of existing unique identifiers for fast O(1) lookup
-        const existingRegs = new Set<string>();
-        const existingAadhars = new Set<string>();
-        const existingRfids = new Set<string>();
-        const existingUniforms = new Set<string>();
-
-        existingStudentsDbList.forEach((s: any) => {
-          const getVal = (prop: string, fallback?: any) => {
-            if (!s) return fallback;
-            const keys = Object.keys(s);
-            const match = keys.find(k => k.toLowerCase() === prop.toLowerCase());
-            return match ? s[match] : fallback;
-          };
-          const reg = (getVal("GRNO") || s.registrationNumber || s.grno || "").toString().trim().toLowerCase();
-          const aadhar = (getVal("aadharcard") || s.aadharCard || "").toString().trim().toLowerCase();
-          const rfidVal = (getVal("RFID") || s.rfid || s.CARDID || s.cardId || "").toString().trim().toLowerCase();
-          const uniformVal = (getVal("uniformid") || s.uniformid || "").toString().trim().toLowerCase();
-
-          if (reg) existingRegs.add(reg);
-          if (aadhar) existingAadhars.add(aadhar);
-          if (rfidVal) existingRfids.add(rfidVal);
-          if (uniformVal) existingUniforms.add(uniformVal);
-        });
-
-        // Set up sets for in-batch duplicates check
-        const batchRegs = new Set<string>();
-        const batchAadhars = new Set<string>();
-        const batchRfids = new Set<string>();
-        const batchUniforms = new Set<string>();
-
-        let totalValidationErrorsFound = 0;
-        const validatedResults = initialResults.map((result: any, idx: number) => {
-          const s = processedStudents[idx];
-          if (!s) return { ...result, status: 'error', error: 'Invalid record format' };
-
-          const reg = (s.registrationNumber || s.GRNO || "").toString().trim().toLowerCase();
-          const aadhar = (s.aadharcard || "").toString().trim().toLowerCase();
-          const rfid = (s.RFID || "").toString().trim().toLowerCase();
-          const uniform = (s.uniformid || "").toString().trim().toLowerCase();
-
-          let rowError = "";
-
-          // a) RegistrationNumber/GRNO
-          if (reg) {
-            if (batchRegs.has(reg)) {
-              rowError = `Duplicate Registration Number/GRNO '${s.registrationNumber}' in uploaded file.`;
-            } else if (existingRegs.has(reg)) {
-              rowError = `Registration Number/GRNO '${s.registrationNumber}' already exists in database.`;
-            } else {
-              batchRegs.add(reg);
-            }
-          }
-
-          // b) AadharCard
-          if (!rowError && aadhar) {
-            if (batchAadhars.has(aadhar)) {
-              rowError = `Duplicate Aadhar Card '${s.aadharcard}' in uploaded file.`;
-            } else if (existingAadhars.has(aadhar)) {
-              rowError = `Aadhar Card '${s.aadharcard}' already exists in database.`;
-            } else {
-              batchAadhars.add(aadhar);
-            }
-          }
-
-          // c) RFID
-          if (!rowError && rfid) {
-            if (batchRfids.has(rfid)) {
-              rowError = `Duplicate RFID/CardID '${s.RFID}' in uploaded file.`;
-            } else if (existingRfids.has(rfid)) {
-              rowError = `RFID/CardID '${s.RFID}' already exists in database.`;
-            } else {
-              batchRfids.add(rfid);
-            }
-          }
-
-          // d) UniformID
-          if (!rowError && uniform) {
-            if (batchUniforms.has(uniform)) {
-              rowError = `Duplicate UniformID '${s.uniformid}' in uploaded file.`;
-            } else if (existingUniforms.has(uniform)) {
-              rowError = `UniformID '${s.uniformid}' already exists in database.`;
-            } else {
-              batchUniforms.add(uniform);
-            }
-          }
-
-          if (rowError) {
-            totalValidationErrorsFound++;
-            return {
-              ...result,
-              status: 'error',
-              error: rowError
-            };
-          }
-          return { ...result, status: 'pending' };
-        });
-
-        if (totalValidationErrorsFound > 0) {
-          setUploadResults(validatedResults);
-          setIsProcessing(false);
-          toast.error(`Validation failed: ${totalValidationErrorsFound} unique field conflict(s) detected. Please correct the fields in your datasheet and try again.`);
-          if (bulkFileInputRef.current) bulkFileInputRef.current.value = "";
-          return;
-        }
 
         // Dynamic upload process: Sequential or Chunked to update UI
         let successCount = 0;
@@ -1158,12 +896,12 @@ export default function Students({ user }: { user: UserType }) {
   };
 
   const handleAddStudent = async () => {
-    const newErrors: Record<string, boolean> = {};
+    const newErrors: Record<string, string> = {};
     let firstErrorField = "";
 
-    const checkField = (field: string, condition: boolean) => {
+    const checkField = (field: string, condition: boolean, message: string) => {
       if (condition) {
-        newErrors[field] = true;
+        newErrors[field] = message;
         if (!firstErrorField) firstErrorField = field;
       }
     };
@@ -1355,7 +1093,7 @@ export default function Students({ user }: { user: UserType }) {
           onChange={handleFileChange}
         />
         <div className="flex items-center gap-5">
-          <div className="bg-blue-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:rotate-3">
+          <div className="bg-[#5a67f2] p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:rotate-3">
             <GraduationCap size={28} />
           </div>
           <div>
@@ -1409,7 +1147,7 @@ export default function Students({ user }: { user: UserType }) {
                       </div>
                       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                         <Button 
-                          className="flex-1 bg-slate-900 hover:bg-black text-white font-black rounded-2xl h-12 shadow-xl shadow-slate-200 active:scale-[0.98] transition-all"
+                          className="flex-1 bg-slate-900 hover:bg-black text-white font-black rounded-xl h-12 shadow-xl shadow-slate-200 active:scale-[0.98] transition-all"
                           onClick={() => bulkFileInputRef.current?.click()}
                           disabled={isProcessing}
                         >
@@ -1417,7 +1155,7 @@ export default function Students({ user }: { user: UserType }) {
                         </Button>
                         <Button
                           variant="outline"
-                          className="flex-1 border-slate-200 hover:bg-slate-50 font-black rounded-2xl h-12 transition-all gap-2 text-slate-600"
+                          className="flex-1 border-slate-200 hover:bg-slate-50 font-black rounded-xl h-12 transition-all gap-2 text-slate-600"
                           onClick={downloadSampleExcel}
                         >
                           <Download size={18} /> Sample Sheet
@@ -1445,7 +1183,7 @@ export default function Students({ user }: { user: UserType }) {
                         </div>
                       </div>
 
-                      <div className="border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+                      <div className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
                         <div className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 bg-slate-50/50">
                           <Table>
                             <TableHeader className="bg-white sticky top-0 z-10 shadow-sm">
@@ -1471,7 +1209,7 @@ export default function Students({ user }: { user: UserType }) {
                                     {result.status === 'pending' && <Badge variant="outline" className="text-[9px] font-black tracking-tight border-slate-300 text-slate-400 bg-transparent">QUEUED</Badge>}
                                     {result.status === 'processing' && (
                                       <div className="flex items-center justify-end gap-2">
-                                         <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse"></div>
+                                         <div className="w-1.5 h-1.5 bg-[#5a67f2] rounded-full animate-pulse"></div>
                                          <span className="text-[9px] font-black text-blue-600 tracking-tight">SYNCING...</span>
                                       </div>
                                     )}
@@ -1497,7 +1235,7 @@ export default function Students({ user }: { user: UserType }) {
                     </div>
                   )}
 
-                  <div className="bg-amber-50/50 border border-amber-100 p-5 rounded-2xl flex gap-4">
+                  <div className="bg-amber-50/50 border border-amber-100 p-5 rounded-xl flex gap-4">
                      <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center shrink-0">
                         <Filter className="text-amber-500" size={18} />
                      </div>
@@ -1537,7 +1275,7 @@ export default function Students({ user }: { user: UserType }) {
             <SimpleTooltip content="Add a new student manually" side="bottom">
               <Button 
                 size="sm"
-                className="gap-2 h-9 bg-blue-600 hover:bg-blue-700 text-white border-none font-bold shadow-lg shadow-blue-600/20"
+                className="gap-2 h-9 bg-[#5a67f2] hover:bg-[#5a67f2] text-white border-none font-bold shadow-lg shadow-blue-600/20"
                 onClick={openAddDialog}
                 aria-label="Register new student"
               >
@@ -1557,28 +1295,42 @@ export default function Students({ user }: { user: UserType }) {
                 title="Remove Student Record?"
                 description={`This will permanently delete ${deleteInfo?.name}'s profile, enrollment details, and academic history. This action cannot be reversed.`}
               />
-              <DialogContent className="sm:max-w-[900px] w-[95vw] max-h-[90vh] flex flex-col p-0 border-none shadow-3xl rounded-[2rem] overflow-hidden">
-                <div className="bg-slate-900 px-8 py-5 text-white relative shrink-0">
+              <DialogContent className="sm:max-w-[1000px] w-[95vw] max-h-[98vh] flex flex-col p-0 border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] rounded-[2.5rem] overflow-hidden bg-white group/modal">
+                {/* Premium Dark Header - Matches Reference Exactly */}
+                <div className="bg-[#111827] px-6 sm:px-10 py-6 sm:py-7 text-white relative shrink-0 overflow-hidden border-b border-white/5">
                   <div className="relative z-10 flex items-center justify-between">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-3">
-                        <div className="p-2 bg-blue-500 rounded-xl shadow-xl shadow-blue-500/20">
-                          <UserCircle size={22} className="text-white" />
-                        </div>
-                        {isEditMode ? "Modify Student Profile" : "Register Student"}
-                      </DialogTitle>
-                      <DialogDescription className="text-slate-400 text-[12px] mt-1 font-medium max-w-2xl leading-relaxed">
-                        {isEditMode 
-                          ? "Update critical student records and academic history." 
-                          : "Create a new permanent digital record for the enrolled student."}
-                      </DialogDescription>
-                    </DialogHeader>
+                    <div className="flex items-center gap-4 sm:gap-5">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-600 rounded-2xl sm:rounded-[1.25rem] flex items-center justify-center shadow-2xl shadow-indigo-500/40 border border-white/10 transition-transform group-hover/modal:scale-105 duration-500 shrink-0">
+                        <UserCircle size={28} className="text-white fill-white/10 sm:hidden" />
+                        <UserCircle size={32} className="text-white fill-white/10 hidden sm:block" />
+                      </div>
+                      <div className="flex flex-col gap-0.5 sm:gap-1 overflow-hidden">
+                        <DialogTitle className="text-lg sm:text-2xl font-black tracking-tight leading-tight truncate">
+                          {isEditMode ? "Modify Student Profile" : "Register Student"}
+                        </DialogTitle>
+                        <DialogDescription className="text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest opacity-80 truncate">
+                          {isEditMode 
+                            ? "Institutional configuration registry" 
+                            : "New student enrollment entry"}
+                        </DialogDescription>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddDialogOpen(false)}
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all cursor-pointer border-none outline-none shrink-0"
+                    >
+                      <XCircle size={24} className="sm:size-[26px] stroke-[2.5]" />
+                    </button>
                   </div>
-                  <div className="absolute right-[-10%] top-[-10%] w-64 h-64 bg-blue-600/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+                  {/* Atmospheric Glow */}
+                  <div className="absolute right-[-5%] top-[-20%] w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] pointer-events-none animate-pulse"></div>
+                  <div className="absolute left-[-5%] bottom-[-20%] w-64 h-64 bg-blue-600/10 rounded-full blur-[80px] pointer-events-none"></div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-8 bg-[#FDFDFF] custom-scrollbar">
-                  <div className="space-y-10">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 sm:px-10 py-6 sm:py-8 bg-[#FDFDFF] custom-scrollbar">
+                  <div className="space-y-8 sm:space-y-10">
                     {/* TOP SECTION: Academic + Profile Photo */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                       {/* Academic Placement (8/12) */}
@@ -1589,111 +1341,142 @@ export default function Students({ user }: { user: UserType }) {
                           <h3 className="text-base font-black text-slate-900 tracking-tight">Academic Placement</h3>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-2">
-                            <Label htmlFor="school" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Assigned School Branch</Label>
-                            <div className="relative group">
-                              <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-600 size-5 z-20" />
-                            <Select 
-  value={newStudentFormData.schoolId}   
-  onValueChange={(v) => {
-    setNewStudentFormData({
-      ...newStudentFormData, 
-      schoolId: v
-    });
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
+                    <div className="space-y-2 md:col-span-2">
 
-    if (formErrors.schoolId) {
-      setFormErrors(prev => ({ 
-        ...prev, 
-        schoolId: "" 
-      }));
-    }
-  }}
-  disabled={user.role !== "superadmin" && !!user.schoolId}
->
-  <SelectTrigger 
-    ref={el => { inputRefs.current["schoolId"] = el; }}
-    id="school" 
-    className={cn(
-      "relative h-[66px] min-h-[66px] border-2 bg-gradient-to-b from-white to-slate-50/90 font-bold text-slate-800 rounded-2xl pl-14 pr-5 shadow-[0_4px_20px_rgba(15,23,42,0.05)] hover:shadow-[0_12px_35px_rgba(99,102,241,0.10)] transition-all duration-300 data-[state=open]:shadow-[0_18px_45px_rgba(99,102,241,0.14)]",
-      formErrors.schoolId ? "border-red-500 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 data-[state=open]:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 data-[state=open]:border-indigo-400",
-      (user.role !== "superadmin" && !!user.schoolId) && "opacity-80 bg-slate-100 cursor-not-allowed"
-    )}
-  >
+     <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                                       Assigned School Branch
+                                                        </Label>
 
-    {/* Left Icon */}
-    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 shadow-sm">
-      <School2 className="w-4 h-4 text-indigo-600" />
-    </div>
-
-    {/* Content */}
-    <div className="flex flex-col items-start justify-center leading-tight w-full truncate">
-      
-      
-
-      <div className="truncate text-[14px] font-extrabold text-slate-800">
-        <SelectValue placeholder="Select School Branch">
-          {newStudentFormData.schoolId
-            ? schools.find(
-                s =>
-                  s.id.toString() ===
-                  newStudentFormData.schoolId.toString()
-              )?.name
-            : "Select School Branch"}
-        </SelectValue>
-      </div>
-    </div>
-
-  </SelectTrigger>
-
-  <SelectContent className="min-w-[320px] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl">
-    <SelectItem
-      value=""
-      className="group rounded-2xl py-3.5 px-4 cursor-pointer focus:bg-slate-50 transition-all duration-200"
-    >
-      <span className="text-sm font-bold text-slate-500">
-        Select School Branch
-      </span>
-    </SelectItem>
+  <div className="relative group">
     
-    {schools.map(s => (
-      <SelectItem
-        key={s.id}
-        value={s.id.toString()}
-        className="group rounded-2xl py-3.5 px-3 cursor-pointer focus:bg-indigo-50 focus:text-indigo-700 transition-all duration-200"
-      >
-        <div className="flex items-center gap-3">
+    <Select
+      value={newStudentFormData.schoolId}
+      onValueChange={(v) => {
+        setNewStudentFormData({
+          ...newStudentFormData,
+          schoolId: v
+        });
 
-          {/* Item Icon */}
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
-            <Building2 className="w-4 h-4 text-indigo-600" />
+        if (formErrors.schoolId) {
+          setFormErrors((prev) => ({
+            ...prev,
+            schoolId: ""
+          }));
+        }
+      }}
+      disabled={user.role !== "superadmin" && !!user.schoolId}
+    >
+     <SelectTrigger
+  ref={(el) => {
+    inputRefs.current["schoolId"] = el;
+  }}
+  id="school"
+  className={cn(
+    "relative h-[72px] min-h-[72px] border-2 overflow-hidden",
+    "bg-gradient-to-b from-white to-slate-50/90",
+    "rounded-[1.8rem] pl-[70px] pr-12",
+    "shadow-[0_4px_20px_rgba(15,23,42,0.05)]",
+    "hover:shadow-[0_12px_35px_rgba(99,102,241,0.10)]",
+    "transition-all duration-300",
+    "data-[state=open]:shadow-[0_18px_45px_rgba(99,102,241,0.14)]",
+    formErrors.schoolId
+      ? "border-red-500 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 data-[state=open]:border-red-500"
+      : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 data-[state=open]:border-indigo-400",
+    (user.role !== "superadmin" && !!user.schoolId) &&
+      "opacity-80 bg-slate-100 cursor-not-allowed"
+  )}
+>
+  {/* Left Icon */}
+  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 shadow-sm border border-indigo-200/50 shrink-0">
+    <School2 className="w-5 h-5 text-indigo-700" />
+  </div>
+
+  {/* Content */}
+  <div className="flex flex-col items-start justify-center leading-tight w-full overflow-hidden min-w-0">
+    <div className="w-full truncate whitespace-nowrap text-[14px] font-extrabold text-slate-800">
+      {newStudentFormData.schoolId
+        ? schools.find(
+            (s) =>
+              s.id.toString() ===
+              newStudentFormData.schoolId.toString()
+          )?.name
+        : "Select School Branch"}
+    </div>
+  </div>
+</SelectTrigger>
+      <SelectContent className="min-w-[450px] rounded-[1.8rem] border border-slate-200 bg-white p-2 shadow-[0_20px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl">
+
+        {/* Placeholder */}
+        <SelectItem
+          value=""
+          className="group rounded-2xl py-3.5 px-4 cursor-pointer focus:bg-slate-50 transition-all duration-200"
+        >
+          <div className="flex items-center gap-3">
+
+            <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center">
+              <School2 className="w-4 h-4 text-slate-500" />
+            </div>
+
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-bold text-slate-600">
+                Select School Branch
+              </span>
+
+              <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+                Campus Assignment
+              </span>
+            </div>
           </div>
+        </SelectItem>
 
-          {/* Text */}
-          <div className="flex flex-col leading-tight">
-            <span className="text-sm font-extrabold text-slate-800">
-              {s.name}
-            </span>
+        {/* Schools */}
+        {schools.map((s) => (
+          <SelectItem
+            key={s.id}
+            value={s.id.toString()}
+            className="group rounded-2xl py-3.5 px-3 cursor-pointer focus:bg-indigo-50 focus:text-indigo-700 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3 w-full">
 
-            <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
-              Campus Branch
-            </span>
-          </div>
+              {/* Item Icon */}
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center shadow-sm border border-indigo-200/40 group-focus:scale-105 transition-transform">
+                <Building2 className="w-5 h-5 text-indigo-700" />
+              </div>
 
-        </div>
-      </SelectItem>
-    ))}
+              {/* Text */}
+              <div className="flex flex-col leading-tight overflow-hidden">
+                <span className="text-sm font-extrabold text-slate-800 truncate">
+                  {s.name}
+                </span>
 
-  </SelectContent>
-</Select>
-                            </div>
-                            {formErrors.schoolId && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.schoolId}</p>}
-                          </div>
+                <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold truncate">
+                  Campus Branch
+                </span>
+              </div>
+
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+
+  {formErrors.schoolId && (
+    <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">
+      {formErrors.schoolId}
+    </p>
+  )}
+</div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="STD" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Standard/Grade</Label>
+
+                                  
+                                                         <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                                                                 Standard
+                                                                                  </Label>
+                            
                             <div className="relative">
-                              <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500 size-5 z-20" />
                             <Select 
   value={newStudentFormData.STD} 
   onValueChange={(v) => {
@@ -1783,7 +1566,10 @@ export default function Students({ user }: { user: UserType }) {
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="DIV" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Division/Section</Label>
+
+                              <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                                                             Division / Section
+                                                                                  </Label>
                             <div className="relative">
                            <Select 
   value={newStudentFormData.DIV} 
@@ -1874,7 +1660,10 @@ export default function Students({ user }: { user: UserType }) {
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="academicyear" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Joining Year</Label>
+
+                               <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                                                           Academic Year
+                                                                                  </Label>
                             <div className="relative">
                            <Select 
   value={newStudentFormData.academicyear} 
@@ -1963,10 +1752,12 @@ export default function Students({ user }: { user: UserType }) {
                             {formErrors.academicyear && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.academicyear}</p>}
                           </div>
 
-                          <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor="SHIFTNAME" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Assigned Shift</Label>
+                          <div className="space-y-2">
+
+                                           <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                                                        Assigned Shift
+                                                                                  </Label>
                             <div className="relative">
-                              <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500 size-5 z-20" />
                             <Select 
   value={newStudentFormData.SHIFTNAME} 
   onValueChange={(v) => 
@@ -2084,17 +1875,19 @@ export default function Students({ user }: { user: UserType }) {
                       {/* Identity Details */}
                       <div className="space-y-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                          <BadgeInfo className="size-5 text-blue-600" />
+                          <div className="w-1.5 h-6 bg-indigo-600 rounded-full"></div>
+                          <BadgeInfo className="size-5 text-indigo-600" />
                           <h3 className="text-base font-black text-slate-900 tracking-tight">Identity Details</h3>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                           {/* GR Number */}
                           <div className="space-y-2">
-                            <Label htmlFor="registrationNumber" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Registration (GR No.)</Label>
+
+                             <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                                                    Registration (GR No.)
+                                                                                  </Label>
                             <div className="relative">
-                              <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5 z-20" />
                               <Input 
                                 ref={el => { inputRefs.current["registrationNumber"] = el; }}
                                 id="registrationNumber" 
@@ -2115,7 +1908,10 @@ export default function Students({ user }: { user: UserType }) {
 
                           {/* Roll Number */}
                           <div className="space-y-2">
-                            <Label htmlFor="ROLLNO" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Roll Number</Label>
+
+                             <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                                                  Roll Number
+                                                                                  </Label>
                             <div className="relative">
                               <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5 z-20 opacity-40" />
                               <Input 
@@ -2138,7 +1934,10 @@ export default function Students({ user }: { user: UserType }) {
 
                           {/* Gender */}
                           <div className="space-y-2">
-                            <Label htmlFor="GENDER" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Gender</Label>
+
+                              <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                                               Gender
+                                                                                  </Label>
                             <div className="relative">
                              <Select 
   value={newStudentFormData.GENDER} 
@@ -2171,9 +1970,6 @@ export default function Students({ user }: { user: UserType }) {
     {/* Content */}
     <div className="flex flex-col items-start justify-center leading-tight w-full truncate">
 
-      <span className="text-[10px] uppercase tracking-[0.14em] font-black text-slate-400">
-        Gender Identity
-      </span>
 
       <div className="truncate text-[14px] font-extrabold text-slate-800">
         <SelectValue placeholder="Select Gender">
@@ -2210,9 +2006,7 @@ export default function Students({ user }: { user: UserType }) {
             Male
           </span>
 
-          <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
-            Gender Option
-          </span>
+         
         </div>
 
       </div>
@@ -2234,9 +2028,7 @@ export default function Students({ user }: { user: UserType }) {
             Female
           </span>
 
-          <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
-            Gender Option
-          </span>
+        
         </div>
 
       </div>
@@ -2258,9 +2050,7 @@ export default function Students({ user }: { user: UserType }) {
             Other
           </span>
 
-          <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
-            Gender Option
-          </span>
+        
         </div>
 
       </div>
@@ -2274,7 +2064,11 @@ export default function Students({ user }: { user: UserType }) {
 
                           {/* Aadhar ID */}
                           <div className="space-y-2">
-                            <Label htmlFor="aadharcard" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Aadhar ID</Label>
+
+                             <Label htmlFor="aadharcard" className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                                             Aadhar ID
+                                                                                  </Label>
+                            
                             <div className="relative">
                               <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5 z-20 opacity-40" />
                               <Input 
@@ -2299,7 +2093,10 @@ export default function Students({ user }: { user: UserType }) {
 
                           {/* RFID Card ID */}
                           <div className="space-y-2">
-                            <Label htmlFor="RFID" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">RFID Card ID</Label>
+
+                              <Label htmlFor="RFID"  className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                                         RFID Card ID
+                                                                                  </Label>
                             <div className="relative">
                               <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5 z-20 opacity-40" />
                               <Input 
@@ -2321,7 +2118,10 @@ export default function Students({ user }: { user: UserType }) {
 
                           {/* Uniform ID */}
                           <div className="space-y-2">
-                            <Label htmlFor="uniformid" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Uniform ID</Label>
+                           
+                             <Label htmlFor="uniformid"  className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                                      Uniform ID
+                                                                                  </Label>
                             <div className="relative">
                               <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5 z-20 opacity-40" />
                               <Input 
@@ -2343,7 +2143,10 @@ export default function Students({ user }: { user: UserType }) {
 
                           {/* School Section */}
                           <div className="space-y-2">
-                            <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">School Section</Label>
+                           
+                               <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                                    School Section
+                                                                                  </Label>
                         <Select 
   value={newStudentFormData.SchoolSectionId} 
   onValueChange={(v) =>
@@ -2431,8 +2234,13 @@ export default function Students({ user }: { user: UserType }) {
 
                           {/* School House */}
                           <div className="space-y-2">
-                            <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">School House</Label>
-                          <Select 
+
+
+
+                            <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                                  School House
+                                                                                  </Label>
+             <Select 
   value={newStudentFormData.house} 
   onValueChange={(v) => 
     setNewStudentFormData({
@@ -2447,41 +2255,69 @@ export default function Students({ user }: { user: UserType }) {
       "bg-gradient-to-b from-white to-slate-50/80",
       "font-bold rounded-2xl pl-14 pr-5",
       "text-[14px] text-slate-800",
-      "shadow-[0_4px_20_rgba(15,23,42,0.05)]",
-      "hover:shadow-[0_10px_30_rgba(16,185,129,0.10)]",
+      "shadow-[0_4px_20px_rgba(15,23,42,0.05)]",
+      "hover:shadow-[0_10px_30px_rgba(16,185,129,0.10)]",
       "transition-all duration-300",
       "data-[state=open]:shadow-[0_12px_35px_rgba(16,185,129,0.14)]",
-      formErrors.house ? "border-red-500 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 data-[state=open]:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 data-[state=open]:border-indigo-400"
+      formErrors.house
+        ? "border-red-500 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 data-[state=open]:border-red-500"
+        : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 data-[state=open]:border-indigo-400"
     )}
   >
     <div className="flex items-center gap-3 w-full">
       
       {/* Left Icon */}
-      <div className="absolute left-3 flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-100 to-green-100 shadow-sm border border-emerald-200/50">
+      <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-100 to-green-100 shadow-sm border border-emerald-200/50">
         <House className="w-4 h-4 text-emerald-700" />
       </div>
 
       {/* Value */}
-      <div className="flex flex-col items-start text-left leading-tight truncate">
-      
+      <div className="flex flex-col items-start justify-center text-left leading-tight truncate flex-1">
+        
+       
 
-        <SelectValue placeholder="Select House" />
+        <div className="truncate text-[14px] font-extrabold text-slate-800">
+          <SelectValue placeholder="Select House">
+            {newStudentFormData.house
+              ? houses.find(
+                  h => h.id.toString() === newStudentFormData.house
+                )?.name
+              : "Select House"}
+          </SelectValue>
+        </div>
       </div>
+
+    
     </div>
   </SelectTrigger>
 
   <SelectContent 
     className="min-w-[300px] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl"
   >
+    
+    {/* Placeholder */}
     <SelectItem 
       value="" 
       className="group rounded-xl py-3.5 px-4 cursor-pointer transition-all focus:bg-slate-50"
     >
-      <span className="text-sm font-bold text-slate-500">
-        Select House
-      </span>
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center">
+          <House className="w-4 h-4 text-slate-500" />
+        </div>
+
+        <div className="flex flex-col leading-tight">
+          <span className="text-sm font-bold text-slate-600">
+            Select House
+          </span>
+
+          <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+            Choose Student House
+          </span>
+        </div>
+      </div>
     </SelectItem>
 
+    {/* Houses */}
     {houses.map(h => (
       <SelectItem 
         key={h.id} 
@@ -2491,11 +2327,12 @@ export default function Students({ user }: { user: UserType }) {
         <div className="flex items-center gap-3 w-full">
           
           {/* House Color */}
-          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl border border-white shadow-sm overflow-hidden">
+          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl border border-white shadow-sm overflow-hidden">
             <div 
               className="absolute inset-0 rounded-xl"
               style={{ backgroundColor: h.color }}
             />
+
             <House className="relative w-4 h-4 text-white drop-shadow-sm" />
           </div>
 
@@ -2512,14 +2349,17 @@ export default function Students({ user }: { user: UserType }) {
         </div>
       </SelectItem>
     ))}
+    
   </SelectContent>
-</Select>
-                            {formErrors.house && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.house}</p>}
+</Select>         {formErrors.house && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.house}</p>}
                           </div>
 
                           {/* Admission Type */}
                           <div className="space-y-2">
-                            <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Admission Type</Label>
+
+                            <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                            Admission Type
+                                                                                  </Label>
                            <Select 
   value={newStudentFormData.admissiontype} 
   onValueChange={(v) => 
@@ -2551,12 +2391,14 @@ export default function Students({ user }: { user: UserType }) {
       </div>
 
       {/* Value */}
-      <div className="flex flex-col items-start text-left leading-tight truncate">
-       
-
-        <SelectValue placeholder="Select Type" />
+        <div className="truncate text-[14px] font-extrabold text-slate-800">
+          {newStudentFormData.admissiontype
+            ? (admissionTypes.find(
+                at => at.id.toString() === newStudentFormData.admissiontype.toString()
+              )?.name || "Select Admission Type")
+            : "Select Admission Type"}
+        </div>
       </div>
-    </div>
   </SelectTrigger>
 
   <SelectContent 
@@ -2567,7 +2409,7 @@ export default function Students({ user }: { user: UserType }) {
       className="group rounded-xl py-3.5 px-4 cursor-pointer transition-all focus:bg-slate-50"
     >
       <span className="text-sm font-bold text-slate-500">
-        Select Type
+        Select Student Admission Type
       </span>
     </SelectItem>
 
@@ -2605,17 +2447,20 @@ export default function Students({ user }: { user: UserType }) {
                       </div>
                     </div>
 
-                      {/* Regal Profile */}
+                    
                       <div className="space-y-6 pt-5 border-t border-slate-100">
                         <div className="flex items-center gap-3">
                           <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
                           <Plus className="size-5 text-emerald-500" />
-                          <h3 className="text-base font-black text-slate-900 tracking-tight">Regal Profile</h3>
+                          <h3 className="text-base font-black text-slate-900 tracking-tight">Legal Profile</h3>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                           <div className="space-y-2">
-                            <Label htmlFor="FNAME" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">First Name</Label>
+
+                              <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                           First Name
+                                                                                   </Label>
                             <Input 
                               ref={el => { inputRefs.current["FNAME"] = el; }}
                               id="FNAME" 
@@ -2633,11 +2478,17 @@ export default function Students({ user }: { user: UserType }) {
                             {formErrors.FNAME && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.FNAME}</p>}
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="MNAME" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Middle Name</Label>
+                         
+                              <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                         Middle Name
+                                                                                  </Label>
                             <Input id="MNAME" value={newStudentFormData.MNAME} onChange={(e) => setNewStudentFormData({...newStudentFormData, MNAME: e.target.value})} placeholder="Middle name" className="h-14 border-2 border-slate-200 font-bold rounded-xl px-6 text-[15px] shadow-sm" />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="LNAME" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Last Name</Label>
+
+                             <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                 Last Name
+                                                                                  </Label>
                             <Input 
                               ref={el => { inputRefs.current["LNAME"] = el; }}
                               id="LNAME" 
@@ -2655,7 +2506,10 @@ export default function Students({ user }: { user: UserType }) {
                             {formErrors.LNAME && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.LNAME}</p>}
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="DOB" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Date of Birth</Label>
+                          
+                              <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                                Date of Birth
+                                                                                  </Label>
                             <Input 
                               ref={el => { inputRefs.current["DOB"] = el; }}
                               id="DOB" 
@@ -2673,7 +2527,11 @@ export default function Students({ user }: { user: UserType }) {
                             {formErrors.DOB && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.DOB}</p>}
                           </div>
                            <div className="space-y-2">
-                            <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Religion</Label>
+                    
+                            
+                              <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                               Religion
+                                                                                  </Label>
                         <Select 
   value={newStudentFormData.RELIGION} 
   onValueChange={(v) => 
@@ -2705,12 +2563,14 @@ export default function Students({ user }: { user: UserType }) {
       </div>
 
       {/* Value */}
-      <div className="flex flex-col items-start text-left leading-tight truncate">
-       
-
-        <SelectValue placeholder="Select Religion" />
+        <div className="truncate text-[14px] font-extrabold text-slate-800">
+          {newStudentFormData.RELIGION
+            ? (religions.find(
+                r => r.id.toString() === newStudentFormData.RELIGION.toString()
+              )?.name || "Select Religion")
+            : "Select Religion"}
+        </div>
       </div>
-    </div>
   </SelectTrigger>
 
   <SelectContent 
@@ -2756,7 +2616,10 @@ export default function Students({ user }: { user: UserType }) {
 {formErrors.RELIGION && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.RELIGION}</p>}
                           </div>
                            <div className="space-y-2">
-                            <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Blood Group</Label>
+
+                               <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                              Blood Group
+                                                                                  </Label>
                           <Select 
   value={newStudentFormData.BLOODGROUP} 
   onValueChange={(v) => 
@@ -2839,7 +2702,10 @@ export default function Students({ user }: { user: UserType }) {
 {formErrors.BLOODGROUP && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.BLOODGROUP}</p>}
                           </div>
                            <div className="space-y-2">
-                            <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Caste</Label>
+
+                             <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                             Caste
+                                                                                  </Label>
                        <Select 
   value={newStudentFormData.CASTE} 
   onValueChange={(v) => 
@@ -2872,12 +2738,14 @@ export default function Students({ user }: { user: UserType }) {
       </div>
 
       {/* Value */}
-      <div className="flex flex-col items-start text-left leading-tight truncate">
-       
-
-        <SelectValue placeholder="Select Caste" />
+        <div className="truncate text-[14px] font-extrabold text-slate-800">
+          {newStudentFormData.CASTE
+            ? (castes.find(
+                c => c.id.toString() === newStudentFormData.CASTE.toString()
+              )?.name || "Select Caste")
+            : "Select Caste"}
+        </div>
       </div>
-    </div>
   </SelectTrigger>
 
   <SelectContent 
@@ -2923,7 +2791,10 @@ export default function Students({ user }: { user: UserType }) {
 {formErrors.CASTE && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.CASTE}</p>}
                           </div>
                            <div className="space-y-2">
-                            <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Category</Label>
+                      
+                            <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                             Category
+                                                                                  </Label>
                       <Select 
   value={newStudentFormData.CATEGORY} 
   onValueChange={(v) => 
@@ -2955,12 +2826,14 @@ export default function Students({ user }: { user: UserType }) {
       </div>
 
       {/* Value */}
-      <div className="flex flex-col items-start text-left leading-tight truncate">
-      
-
-        <SelectValue placeholder="Select Category" />
+        <div className="truncate text-[14px] font-extrabold text-slate-800">
+          {newStudentFormData.CATEGORY
+            ? (categories.find(
+                c => c.id.toString() === newStudentFormData.CATEGORY.toString()
+              )?.name || "Select Category")
+            : "Select Category"}
+        </div>
       </div>
-    </div>
   </SelectTrigger>
 
   <SelectContent 
@@ -3006,7 +2879,10 @@ export default function Students({ user }: { user: UserType }) {
 {formErrors.CATEGORY && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.CATEGORY}</p>}
                           </div>
                            <div className="space-y-2">
-                            <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Sub-Caste</Label>
+
+                              <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                    Sub-Caste
+                                                                                  </Label>
                      <Select 
   value={newStudentFormData.subcaste} 
   onValueChange={(v) => 
@@ -3041,17 +2917,15 @@ export default function Students({ user }: { user: UserType }) {
 
       {/* Value */}
       <div className="flex flex-col items-start text-left leading-tight truncate">
-        <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
-          Sub-Caste
-        </span>
+  
 
-        <SelectValue 
-          placeholder={
-            newStudentFormData.CASTE 
-              ? "Select Sub-Caste" 
-              : "Select Caste First"
-          } 
-        />
+        <div className="truncate text-[14px] font-extrabold text-slate-800">
+          {newStudentFormData.subcaste && newStudentFormData.CASTE
+            ? (subCastes.find(
+                sc => sc.id.toString() === newStudentFormData.subcaste.toString()
+              )?.name || "Select Sub-Caste")
+            : (newStudentFormData.CASTE ? "Select Sub-Caste" : "Select Caste First")}
+        </div>
       </div>
     </div>
   </SelectTrigger>
@@ -3115,14 +2989,17 @@ export default function Students({ user }: { user: UserType }) {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="space-y-2">
-                          <Label htmlFor="MOTHERNAME" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Mother's Name</Label>
+
+                          <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                   Mother's Name
+                                                                                  </Label>
                           <Input 
                             ref={el => { inputRefs.current["MOTHERNAME"] = el; }}
                             id="MOTHERNAME" 
                             value={newStudentFormData.MOTHERNAME} 
                             onChange={(e) => {
                               setNewStudentFormData({...newStudentFormData, MOTHERNAME: e.target.value});
-                              if (formErrors.MOTHERNAME) setFormErrors(prev => ({ ...prev, MOTHERNAME: false }));
+                              if (formErrors.MOTHERNAME) setFormErrors(prev => ({ ...prev, MOTHERNAME: "" }));
                             }} 
                             placeholder="Mother's Name" 
                             className={cn(
@@ -3130,19 +3007,21 @@ export default function Students({ user }: { user: UserType }) {
                               formErrors.MOTHERNAME ? "border-red-500 focus:ring-4 focus:ring-red-500/10 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
                             )}
                           />
+                          {formErrors.MOTHERNAME && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.MOTHERNAME}</p>}
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Father's Contact No.</Label>
-                           <Input 
+
+                           <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                 Father's Contact No.
+                                                                                  </Label>
+                          <Input 
                             ref={el => { inputRefs.current["MOBILE"] = el; }}
-                            id="MOBILE" 
-                            type="tel" 
                             value={newStudentFormData.MOBILE} 
                             maxLength={10}
                             onChange={(e) => {
                               const val = e.target.value.replace(/\D/g, "").slice(0, 10);
                               setNewStudentFormData({...newStudentFormData, MOBILE: val});
-                              if (formErrors.MOBILE) setFormErrors(prev => ({ ...prev, MOBILE: false }));
+                              if (formErrors.MOBILE) setFormErrors(prev => ({ ...prev, MOBILE: "" }));
                             }} 
                             placeholder="10-digit number" 
                             className={cn(
@@ -3152,7 +3031,10 @@ export default function Students({ user }: { user: UserType }) {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Mother's Contact No.</Label>
+
+                          <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+Mother's Contact No.
+                                                                                  </Label>
                           <Input 
                             value={newStudentFormData.contact2} 
                             maxLength={10}
@@ -3178,10 +3060,10 @@ export default function Students({ user }: { user: UserType }) {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="grid grid-cols-2 gap-4">
                           {[
-                            { id: 'sms', label: 'SMS Alert', sub: 'Notifications', color: 'indigo' },
-                            { id: 'isStateBoard', label: 'State Board', sub: 'Academics', color: 'indigo' },
-                            { id: 'digitalUniform', label: 'Digital Uniform', sub: 'Smart Wear', color: 'indigo' },
-                            { id: 'digitalNotebook', label: 'Digital Notebook', sub: 'e-Learning', color: 'indigo' }
+                            { id: 'sms', label: 'SMS Alert', color: 'indigo' },
+                           
+                            { id: 'digitalUniform', label: 'Digital Uniform', color: 'indigo' },
+                            { id: 'digitalNotebook', label: 'Digital Notebook', color: 'indigo' }
                           ].map(pref => (
                             <label key={pref.id} className="flex items-center gap-3 cursor-pointer p-4 bg-slate-50/50 rounded-2xl border-2 border-slate-200/60 hover:bg-white hover:border-indigo-400 transition-all duration-300 select-none">
                               <div className={cn(
@@ -3205,14 +3087,16 @@ export default function Students({ user }: { user: UserType }) {
                         </div>
 
                         <div className="space-y-2">
-                          <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Residential Address</Label>
+
+                           <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+Residential Address
+                                                                                  </Label>
                           <Input 
                             ref={el => { inputRefs.current["ADDRESS"] = el; }}
-                            id="ADDRESS" 
                             value={newStudentFormData.ADDRESS} 
                             onChange={(e) => {
-                                setNewStudentFormData({...newStudentFormData, ADDRESS: e.target.value});
-                                if (formErrors.ADDRESS) setFormErrors(prev => ({ ...prev, ADDRESS: false }));
+                              setNewStudentFormData({...newStudentFormData, ADDRESS: e.target.value});
+                              if (formErrors.ADDRESS) setFormErrors(prev => ({ ...prev, ADDRESS: "" }));
                             }} 
                             placeholder="Complete residential address" 
                             className={cn(
@@ -3220,6 +3104,7 @@ export default function Students({ user }: { user: UserType }) {
                               formErrors.ADDRESS && "border-red-500"
                             )}
                           />
+                          {formErrors.ADDRESS && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.ADDRESS}</p>}
                         </div>
                       </div>
                     </div>
@@ -3234,7 +3119,10 @@ export default function Students({ user }: { user: UserType }) {
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="space-y-2">
-                          <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Email Address</Label>
+
+                           <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+Email Address
+                                                                                  </Label>
                           <Input 
                             ref={el => { inputRefs.current["Email"] = el; }}
                             value={newStudentFormData.Email} 
@@ -3250,7 +3138,10 @@ export default function Students({ user }: { user: UserType }) {
                           />
                         </div>
                         <div className="space-y-2">
-                           <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Admission Date</Label>
+
+                           <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                           Admission Date
+                                                                                  </Label>
                           <Input 
                             ref={el => { inputRefs.current["AdmissionDate"] = el; }}
                             type="date"
@@ -3264,10 +3155,13 @@ export default function Students({ user }: { user: UserType }) {
                               formErrors.AdmissionDate ? "border-red-500 focus:ring-4 focus:ring-red-500/10 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
                             )}
                           />
-                          {formErrors.AdmissionDate && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.AdmissionDate}</p>}
                         </div>
                          <div className="space-y-2">
-                          <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">State Name</Label>
+
+                          
+                           <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                          State Name
+                                                                                  </Label>
                    <Select 
   value={newStudentFormData.StateId} 
   onValueChange={(v) => 
@@ -3296,17 +3190,14 @@ export default function Students({ user }: { user: UserType }) {
       </div>
 
       {/* Value */}
-      <div className="flex flex-col items-start text-left leading-tight truncate flex-1">
-     
-
-        <SelectValue placeholder="Select State" />
+        <div className="truncate text-[14px] font-extrabold text-slate-800">
+          {newStudentFormData.StateId
+            ? (states.find(
+                st => st.id.toString() === newStudentFormData.StateId.toString()
+              )?.name || "Select State")
+            : "Select State"}
+        </div>
       </div>
-
-      {/* Right Arrow */}
-      <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100">
-        <ChevronDown className="w-4 h-4 text-slate-500" />
-      </div>
-    </div>
   </SelectTrigger>
 
   <SelectContent 
@@ -3345,10 +3236,12 @@ export default function Students({ user }: { user: UserType }) {
     ))}
   </SelectContent>
 </Select>
-{formErrors.StateId && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.StateId}</p>}
                         </div>
                          <div className="space-y-2">
-                           <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">City Name</Label>
+                        
+                           <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+                         City Name
+                                                                                  </Label>
                        <Select 
   value={newStudentFormData.CityId} 
   onValueChange={(v) => 
@@ -3378,23 +3271,14 @@ export default function Students({ user }: { user: UserType }) {
       </div>
 
       {/* Value */}
-      <div className="flex flex-col items-start text-left leading-tight truncate flex-1">
-       
-
-        <SelectValue 
-          placeholder={
-            newStudentFormData.StateId 
-              ? "Select City" 
-              : "Select State First"
-          } 
-        />
+        <div className="truncate text-[14px] font-extrabold text-slate-800">
+          {newStudentFormData.CityId && newStudentFormData.StateId
+            ? (cities.find(
+                c => c.id.toString() === newStudentFormData.CityId.toString()
+              )?.name || "Select City")
+            : (newStudentFormData.StateId ? "Select City" : "Select State First")}
+        </div>
       </div>
-
-      {/* Right Arrow */}
-      <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100">
-        <ChevronDown className="w-4 h-4 text-slate-500" />
-      </div>
-    </div>
   </SelectTrigger>
 
   <SelectContent 
@@ -3438,23 +3322,39 @@ export default function Students({ user }: { user: UserType }) {
         ))}
   </SelectContent>
 </Select>
-{formErrors.CityId && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.CityId}</p>}
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <DialogFooter className="bg-slate-50 px-10 py-5 shrink-0 border-t border-slate-100 flex flex-row items-center justify-end gap-3">
-                  <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="h-9 px-5 font-bold text-slate-500 hover:text-slate-900 rounded-xl text-xs uppercase tracking-wider">
-                    Cancel
+                {/* PREMIUM FOOTER - Matches Reference Exactly */}
+                <DialogFooter className="bg-white px-6 sm:px-10 py-5 sm:py-7 shrink-0 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsAddDialogOpen(false)} 
+                    className="w-full sm:w-auto h-14 px-10 border-slate-200 text-slate-500 hover:bg-slate-50 font-black rounded-xl transition-all active:scale-[0.98] text-[13px] uppercase tracking-[0.15em] flex items-center justify-center gap-2 order-2 sm:order-1"
+                  >
+                    <XCircle size={20} className="text-slate-400" />
+                    CANCEL
                   </Button>
+                
                   <Button 
                     onClick={handleAddStudent} 
                     disabled={isProcessing} 
-                    className="h-10 px-8 bg-blue-600 hover:bg-blue-700 font-black shadow-lg shadow-blue-600/20 rounded-xl transition-all active:scale-[0.98] text-xs uppercase tracking-wider"
+                    className="w-full sm:w-auto h-14 px-12 bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-2xl shadow-indigo-600/30 rounded-xl transition-all active:scale-[0.98] text-[13px] uppercase tracking-[0.15em] flex items-center justify-center gap-2 order-1 sm:order-2"
                   >
-                    {isProcessing ? "Processing..." : isEditMode ? "Update Record" : "Enroll Student"}
+                    {isProcessing ? (
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 border-3 border-white/30 border-t-white animate-spin rounded-full"></div>
+                        <span>Processing...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Plus size={20} className="stroke-[3]" />
+                        <span>{isEditMode ? "UPDATE MASTER" : "CREATE MASTER"}</span>
+                      </div>
+                    )}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -3471,44 +3371,44 @@ export default function Students({ user }: { user: UserType }) {
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
                 <Input 
                   placeholder="Filter by name, roll, or GR..." 
-                  className="pl-11 h-11 bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm font-medium rounded-2xl" 
+                  className="pl-11 h-11 bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm font-medium rounded-xl" 
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
               <div className="flex flex-wrap gap-3">
                 <Select value={standardFilter} onValueChange={setStandardFilter}>
-                  <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-2xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
+                  <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
                     {/* Explicit mapping to show "Grade X" or "All Grades" in trigger */}
                     <SelectValue placeholder="Standard">
-                      {standardFilter === "all" ? "All Standards" : (standardsMaster.find(std => std.id.toString() === standardFilter)?.name ? `Standard ${standardsMaster.find(std => std.id.toString() === standardFilter)?.name}` : undefined)}
+                      {standardFilter === "all" ? "All Grades" : (standardFilter ? `Grade ${standardFilter}` : undefined)}
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
-                    <SelectItem value="all" className="rounded-xl font-bold py-2.5">All Standards</SelectItem>
+                  <SelectContent className="rounded-xl border-slate-100 shadow-2xl p-2">
+                    <SelectItem value="all" className="rounded-xl font-bold py-2.5">All Grades</SelectItem>
                     {Array.isArray(standardsMaster) && standardsMaster.map(std => (
-                      <SelectItem key={std.id} value={std.id.toString()} className="rounded-xl font-bold py-2.5">Standard {std.name}</SelectItem>
+                      <SelectItem key={std.id} value={std.name} className="rounded-xl font-bold py-2.5">Grade {std.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
 
                 <Select value={sectionFilter} onValueChange={setSectionFilter}>
-                  <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-2xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
+                  <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
                     {/* Explicit mapping to show "Section X" or "All Sections" in trigger */}
                     <SelectValue placeholder="Section">
-                      {sectionFilter === "all" ? "All Divisions" : (sectionsMaster.find(sec => sec.id.toString() === sectionFilter)?.name ? `Division ${sectionsMaster.find(sec => sec.id.toString() === sectionFilter)?.name}` : undefined)}
+                      {sectionFilter === "all" ? "All Sections" : (sectionFilter ? `Section ${sectionFilter}` : undefined)}
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
-                    <SelectItem value="all" className="rounded-xl font-bold py-2.5">All Divisions</SelectItem>
+                  <SelectContent className="rounded-xl border-slate-100 shadow-2xl p-2">
+                    <SelectItem value="all" className="rounded-xl font-bold py-2.5">All Sections</SelectItem>
                     {Array.isArray(sectionsMaster) && sectionsMaster.map(sec => (
-                      <SelectItem key={sec.id} value={sec.id.toString()} className="rounded-xl font-bold py-2.5">Division {sec.name}</SelectItem>
+                      <SelectItem key={sec.id} value={sec.name} className="rounded-xl font-bold py-2.5">Section {sec.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <div className="flex items-center gap-4 bg-slate-50/80 px-5 py-2.5 rounded-2xl border border-slate-100">
+            <div className="flex items-center gap-4 bg-slate-50/80 px-5 py-2.5 rounded-xl border border-slate-100">
               <div className="flex -space-x-2">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="w-7 h-7 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[10px] font-black text-slate-500">
@@ -3528,7 +3428,7 @@ export default function Students({ user }: { user: UserType }) {
             <TableHeader>
               <TableRow className="bg-slate-50/30 h-16 border-b border-slate-50">
                 <TableHead 
-                  className="w-[140px] pl-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  className="w-[140px] pl-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-#5a67f2 transition-colors"
                   onClick={() => handleSort("grno")}
                 >
                   <div className="flex items-center gap-1">
@@ -3537,7 +3437,7 @@ export default function Students({ user }: { user: UserType }) {
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="w-[80px] hidden md:table-cell text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  className="w-[80px] hidden md:table-cell text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-#5a67f2 transition-colors"
                   onClick={() => handleSort("roll")}
                 >
                   <div className="flex items-center gap-1">
@@ -3669,7 +3569,7 @@ export default function Students({ user }: { user: UserType }) {
                             </div>
                           }
                         />
-                        <DropdownMenuContent align="end" className="w-56 rounded-2xl border-slate-100 shadow-2xl p-2">
+                        <DropdownMenuContent align="end" className="w-56 rounded-xl border-slate-100 shadow-2xl p-2">
                           <DropdownMenuGroup>
                             <DropdownMenuItem className="gap-3 py-3 px-4 rounded-xl font-bold text-slate-700 cursor-pointer focus:bg-blue-50 focus:text-blue-700" onClick={() => triggerPhotoUpload(student.id)}>
                               <Camera size={16} /> Update Identity Image
@@ -3782,4 +3682,3 @@ export default function Students({ user }: { user: UserType }) {
 }
 
 // No need for local cn function anymore as we use the one from @/lib/utils
-

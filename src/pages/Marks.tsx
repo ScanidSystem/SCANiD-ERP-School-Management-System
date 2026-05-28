@@ -10,7 +10,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Printer, Download, Eye, FileText, ChevronRight, BarChart3, Settings2, Edit3, Loader2, Search, ArrowUpDown } from "lucide-react";
+import { Printer, Download, Eye, FileText, ChevronRight, BarChart3, Settings2, Edit3, Loader2, Search, ArrowUpDown, X } from "lucide-react";
 import { 
   Dialog, 
   DialogContent, 
@@ -123,7 +123,7 @@ export default function Marks({ user }: { user: UserType }) {
     <div className="animate-in slide-in-from-bottom-2 duration-700 min-w-0 space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-          <div className="bg-indigo-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-indigo-200 transition-transform hover:rotate-3">
+          <div className="bg-[#5a67f2] p-4 rounded-[1.25rem] text-white shadow-2xl shadow-[#5a67f2]/20 transition-transform hover:rotate-3">
             <BarChart3 size={28} />
           </div>
           <div>

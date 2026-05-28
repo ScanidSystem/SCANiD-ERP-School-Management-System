@@ -148,7 +148,7 @@ export default function App() {
             </main>
           </div>
         </div>
-        <Toaster />
+        <Toaster position="top-center" richColors expand={true} />
       </TooltipProvider>
     </BrowserRouter>
   );

@@ -10,8 +10,8 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 async function startServer() {
   const app = express();
   const httpServer = http.createServer(app);
-  // Enforce port 3000 for standard environment routing
-  const PORT = 3000;
+  // Enforce port 5000 for standard environment routing
+  const PORT = Number(process.env.PORT) || 5000;
 
   app.use(cors());
 
@@ -421,6 +421,38 @@ async function startServer() {
     const newItem = { id: schools.length + 1, ...req.body };
     schools.push(newItem);
     res.status(201).json({ data: newItem });
+  });
+
+  app.get("/api/schools/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    const item = schools.find(s => s.id === id);
+    if (item) {
+      res.json({ data: item });
+    } else {
+      res.status(404).json({ error: "School not found" });
+    }
+  });
+
+  app.put("/api/schools/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    const index = schools.findIndex(s => s.id === id);
+    if (index !== -1) {
+      schools[index] = { ...schools[index], ...req.body };
+      res.json({ data: schools[index] });
+    } else {
+      res.status(404).json({ error: "School not found" });
+    }
+  });
+
+  app.delete("/api/schools/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    const index = schools.findIndex(s => s.id === id);
+    if (index !== -1) {
+      schools.splice(index, 1);
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ error: "School not found" });
+    }
   });
 
   // Students
