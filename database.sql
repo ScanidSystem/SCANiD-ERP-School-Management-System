@@ -934,47 +934,47 @@ GO
 IF OBJECT_ID('dbo.sp_ManageStudent', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_ManageStudent;
 GO
 CREATE PROCEDURE dbo.sp_ManageStudent
-    @Action NVARCHAR(10), -- 'INSERT', 'UPDATE', 'DELETE', 'PHOTO'
-@Id INT = NULL,
-@RegistrationNumber NVARCHAR(100) = NULL,
-@Name NVARCHAR(100) = NULL,
-@FirstName NVARCHAR(100) = NULL,
-@MiddleName NVARCHAR(100) = NULL,
-@LastName NVARCHAR(100) = NULL,
-@SchoolId INT = NULL,
-@StandardId INT = NULL,
-@SectionId INT = NULL,
-@AcademicYearId INT = NULL,
-@RollNumber INT = NULL,
-@GrNo NVARCHAR(100) = NULL,
-@Gender NVARCHAR(50) = NULL,
-@DateOfBirth NVARCHAR(50) = NULL,
-@CategoryId INT = NULL,
-@ReligionId INT = NULL,
-@CasteId INT = NULL,
-@SubCasteId INT = NULL,
-@Status NVARCHAR(50) = NULL,
-@FatherContactNo NVARCHAR(200) = NULL,
-@Address NVARCHAR(500) = NULL,
-@MotherName NVARCHAR(100) = NULL,
-@AadharCard NVARCHAR(100) = NULL,
-@Rfid NVARCHAR(100) = NULL,
-@ShiftId INT = NULL,
-@BloodGroupId INT = NULL,
-@HouseId INT = NULL,
-@AdmissionTypeId INT = NULL,
-@Sms BIT = 0,
-@UniformId NVARCHAR(500) = NULL,
-@MotherContactNo NVARCHAR(200) = NULL,
-@ProfilePhotoPath NVARCHAR(255) = NULL,
-@SchoolSectionId INT = NULL,
-@AdmissionDate NVARCHAR(200) = NULL,
-@Email NVARCHAR(255) = NULL,
-@CityId INT = NULL,
-@StateId INT = NULL,
-@IsStateBoard BIT = 0,
-@DigitalUniform BIT = 0,
-@DigitalNotebook BIT = 0
+       @Action NVARCHAR(10), -- 'INSERT', 'UPDATE', 'DELETE', 'PHOTO'
+    @Id INT = NULL,
+    @RegistrationNumber NVARCHAR(100) = NULL,
+    @Name NVARCHAR(100) = NULL,
+    @FirstName NVARCHAR(100) = NULL,
+    @MiddleName NVARCHAR(100) = NULL,
+    @LastName NVARCHAR(100) = NULL,
+    @SchoolId INT = NULL,
+    @StandardId INT = NULL,
+    @SectionId INT = NULL,
+    @AcademicYearId INT = NULL,
+    @RollNumber INT = NULL,
+    @GrNo NVARCHAR(100) = NULL,
+    @Gender NVARCHAR(50) = NULL,
+    @DateOfBirth NVARCHAR(50) = NULL,
+    @CategoryId INT = NULL,
+    @ReligionId INT = NULL,
+    @CasteId INT = NULL,
+    @SubCasteId INT = NULL,
+    @Status NVARCHAR(50) = NULL,
+    @FatherContactNo NVARCHAR(200) = NULL,
+    @Address NVARCHAR(500) = NULL,
+    @MotherName NVARCHAR(100) = NULL,
+    @AadharCard NVARCHAR(100) = NULL,
+    @Rfid NVARCHAR(100) = NULL,
+    @ShiftId INT = NULL,
+    @BloodGroupId INT = NULL,
+    @HouseId INT = NULL,
+    @AdmissionTypeId INT = NULL,
+    @Sms BIT = 0,
+    @UniformId NVARCHAR(500) = NULL,
+    @MotherContactNo NVARCHAR(200) = NULL,
+    @ProfilePhotoPath NVARCHAR(255) = NULL,
+    @SchoolSectionId INT = NULL,
+    @AdmissionDate NVARCHAR(200) = NULL,
+    @Email NVARCHAR(255) = NULL,
+    @CityId INT = NULL,
+    @StateId INT = NULL,
+    @IsStateBoard BIT = 0,
+    @DigitalUniform BIT = 0,
+    @DigitalNotebook BIT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1052,7 +1052,7 @@ BEGIN
         BEGIN
         SET NOCOUNT OFF;  -- Temporarily allow row count to be returned
             UPDATE [dbo].[Students] SET IsDeleted = 1, IsActive = 0, ModifiedOn = GETUTCDATE() WHERE Id = @Id;
-         SET NOCOUNT ON;   -- Restore NOCOUNT
+        SET NOCOUNT ON;   -- Restore NOCOUNT
         END
         ELSE IF @Action = 'PHOTO'
         BEGIN

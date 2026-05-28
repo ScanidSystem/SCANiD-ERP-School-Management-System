@@ -9,6 +9,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Data;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace ScanID.Api.Services
 {
@@ -418,62 +420,138 @@ namespace ScanID.Api.Services
                 index++;
             }
 
-            // Perform transaction scoped bulk insert loops
+            // Perform transaction scoped high-performance SqlBulkCopy
             return await ExecuteWithRetryAsync<object>(async () =>
             {
                 using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
+                    var connection = (SqlConnection)_context.Database.GetDbConnection();
+                    if (connection.State != System.Data.ConnectionState.Open)
+                    {
+                        await connection.OpenAsync();
+                    }
+
+                    var dbTransaction = (SqlTransaction)transaction.GetDbTransaction();
+
+                    // Create a schema-aligned DataTable to stream student records via TDS bulk protocols
+                    using var table = new System.Data.DataTable();
+                    table.Columns.Add("RegistrationNumber", typeof(string));
+                    table.Columns.Add("Name", typeof(string));
+                    table.Columns.Add("SchoolId", typeof(int));
+                    table.Columns.Add("Status", typeof(string));
+                    table.Columns.Add("RollNumber", typeof(int));
+                    table.Columns.Add("FirstName", typeof(string));
+                    table.Columns.Add("MiddleName", typeof(string));
+                    table.Columns.Add("LastName", typeof(string));
+                    table.Columns.Add("GrNo", typeof(string));
+                    table.Columns.Add("Gender", typeof(string));
+                    table.Columns.Add("DateOfBirth", typeof(string));
+                    table.Columns.Add("Address", typeof(string));
+                    table.Columns.Add("MotherName", typeof(string));
+                    table.Columns.Add("FatherContactNo", typeof(string));
+                    table.Columns.Add("MotherContactNo", typeof(string));
+                    table.Columns.Add("AadharCard", typeof(string));
+                    table.Columns.Add("UniformId", typeof(string));
+                    table.Columns.Add("Rfid", typeof(string));
+                    table.Columns.Add("SchoolSectionId", typeof(int));
+                    table.Columns.Add("AdmissionDate", typeof(string));
+                    table.Columns.Add("Email", typeof(string));
+                    table.Columns.Add("StandardId", typeof(int));
+                    table.Columns.Add("SectionId", typeof(int));
+                    table.Columns.Add("AcademicYearId", typeof(int));
+                    table.Columns.Add("CasteId", typeof(int));
+                    table.Columns.Add("SubCasteId", typeof(int));
+                    table.Columns.Add("ReligionId", typeof(int));
+                    table.Columns.Add("BloodGroupId", typeof(int));
+                    table.Columns.Add("HouseId", typeof(int));
+                    table.Columns.Add("AdmissionTypeId", typeof(int));
+                    table.Columns.Add("CityId", typeof(int));
+                    table.Columns.Add("StateId", typeof(int));
+                    table.Columns.Add("ShiftId", typeof(int));
+                    table.Columns.Add("CategoryId", typeof(int));
+                    table.Columns.Add("Sms", typeof(bool));
+                    table.Columns.Add("IsStateBoard", typeof(bool));
+                    table.Columns.Add("ProfilePhotoPath", typeof(string));
+                    table.Columns.Add("DigitalUniform", typeof(bool));
+                    table.Columns.Add("DigitalNotebook", typeof(bool));
+                    table.Columns.Add("IsActive", typeof(bool));
+                    table.Columns.Add("IsDeleted", typeof(bool));
+                    table.Columns.Add("CreatedBy", typeof(string));
+                    table.Columns.Add("CreatedOn", typeof(DateTime));
+                    table.Columns.Add("ModifiedBy", typeof(string));
+                    table.Columns.Add("ModifiedOn", typeof(DateTime));
+
                     foreach (var s in students)
                     {
-                        s.RegistrationNumber = s.RegistrationNumber ?? "REG-" + UPPER_RAND_STRING();
-                        // Execute the sp_ManageStudent stored procedure safely using high-performance ADO.NET DbMapper 
-                        // to retrieve the newly generated identity, completely avoiding EF Core query wrapping issues.
-                        s.Id = await DbMapper.ExecuteScalarStoredProcedureAsync(
-                            _context,
-                            "dbo.sp_ManageStudent",
-                            ("Action", "INSERT"),
-                            ("Id", null),
-                            ("RegistrationNumber", s.RegistrationNumber),
-                            ("Name", s.Name),
-                            ("FirstName", s.FirstName),
-                            ("MiddleName", s.MiddleName),
-                            ("LastName", s.LastName),
-                            ("SchoolId", s.SchoolId),
-                            ("StandardId", s.StandardId),
-                            ("SectionId", s.SectionId),
-                            ("AcademicYearId", s.AcademicYearId),
-                            ("RollNumber", s.RollNumber),
-                            ("GrNo", s.GrNo),
-                            ("Gender", s.Gender),
-                            ("DateOfBirth", s.DateOfBirth),
-                            ("CategoryId", s.CategoryId),
-                            ("ReligionId", s.ReligionId),
-                            ("CasteId", s.CasteId),
-                            ("SubCasteId", s.SubCasteId),
-                            ("Status", s.Status),
-                            ("FatherContactNo", s.FatherContactNo),
-                            ("Address", s.Address),
-                            ("MotherName", s.MotherName),
-                            ("AadharCard", s.AadharCard),
-                            ("Rfid", s.Rfid),
-                            ("ShiftId", s.ShiftId),
-                            ("BloodGroupId", s.BloodGroupId),
-                            ("HouseId", s.HouseId),
-                            ("AdmissionTypeId", s.AdmissionTypeId),
-                            ("Sms", s.Sms),
-                            ("UniformId", s.UniformId),
-                            ("MotherContactNo", s.MotherContactNo),
-                            ("ProfilePhotoPath", s.ProfilePhotoPath),
-                            ("SchoolSectionId", s.SchoolSectionId),
-                            ("AdmissionDate", s.AdmissionDate),
-                            ("Email", s.Email),
-                            ("CityId", s.CityId),
-                            ("StateId", s.StateId),
-                            ("IsStateBoard", s.IsStateBoard),
-                            ("DigitalUniform", s.DigitalUniform),
-                            ("DigitalNotebook", s.DigitalNotebook)
+                        var registrationNumber = s.RegistrationNumber;
+                        if (string.IsNullOrEmpty(registrationNumber))
+                        {
+                            registrationNumber = "REG-" + UPPER_RAND_STRING();
+                            s.RegistrationNumber = registrationNumber;
+                        }
+
+                        table.Rows.Add(
+                            registrationNumber,
+                            s.Name ?? string.Empty,
+                            s.SchoolId,
+                            s.Status ?? "Active",
+                            s.RollNumber,
+                            (object)s.FirstName ?? DBNull.Value,
+                            (object)s.MiddleName ?? DBNull.Value,
+                            (object)s.LastName ?? DBNull.Value,
+                            (object)s.GrNo ?? DBNull.Value,
+                            (object)s.Gender ?? DBNull.Value,
+                            (object)s.DateOfBirth ?? DBNull.Value,
+                            (object)s.Address ?? DBNull.Value,
+                            (object)s.MotherName ?? DBNull.Value,
+                            (object)s.FatherContactNo ?? DBNull.Value,
+                            (object)s.MotherContactNo ?? DBNull.Value,
+                            (object)s.AadharCard ?? DBNull.Value,
+                            (object)s.UniformId ?? DBNull.Value,
+                            (object)s.Rfid ?? DBNull.Value,
+                            (object)s.SchoolSectionId ?? DBNull.Value,
+                            (object)s.AdmissionDate ?? DBNull.Value,
+                            (object)s.Email ?? DBNull.Value,
+                            (object)s.StandardId ?? DBNull.Value,
+                            (object)s.SectionId ?? DBNull.Value,
+                            (object)s.AcademicYearId ?? DBNull.Value,
+                            (object)s.CasteId ?? DBNull.Value,
+                            (object)s.SubCasteId ?? DBNull.Value,
+                            (object)s.ReligionId ?? DBNull.Value,
+                            (object)s.BloodGroupId ?? DBNull.Value,
+                            (object)s.HouseId ?? DBNull.Value,
+                            (object)s.AdmissionTypeId ?? DBNull.Value,
+                            (object)s.CityId ?? DBNull.Value,
+                            (object)s.StateId ?? DBNull.Value,
+                            (object)s.ShiftId ?? DBNull.Value,
+                            (object)s.CategoryId ?? DBNull.Value,
+                            s.Sms,
+                            s.IsStateBoard,
+                            (object)s.ProfilePhotoPath ?? DBNull.Value,
+                            s.DigitalUniform,
+                            s.DigitalNotebook,
+                            s.IsActive,
+                            s.IsDeleted,
+                            (object)s.CreatedBy ?? "SYSTEM",
+                            s.CreatedOn == default ? DateTime.UtcNow : s.CreatedOn,
+                            (object)s.ModifiedBy ?? "SYSTEM",
+                            s.ModifiedOn == default ? DateTime.UtcNow : s.ModifiedOn
                         );
+                    }
+
+                    using (var bulkCopy = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, dbTransaction))
+                    {
+                        bulkCopy.DestinationTableName = "[dbo].[Students]";
+                        bulkCopy.BulkCopyTimeout = 600; // 10 minutes timeout
+                        bulkCopy.BatchSize = 10000; // Process in blocks of 10k
+
+                        foreach (System.Data.DataColumn col in table.Columns)
+                        {
+                            bulkCopy.ColumnMappings.Add(col.ColumnName, col.ColumnName);
+                        }
+
+                        await bulkCopy.WriteToServerAsync(table);
                     }
 
                     await transaction.CommitAsync();
@@ -482,7 +560,7 @@ namespace ScanID.Api.Services
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
-                    FileLogger.LogError(new Exception("Bulk student insert transaction failed. Rolling back all inserts.", ex));
+                    FileLogger.LogError(new Exception("Bulk student insert transaction failed via SqlBulkCopy. Rolling back all inserts.", ex));
                     throw;
                 }
             });
