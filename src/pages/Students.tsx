@@ -221,7 +221,7 @@ export default function Students({ user }: { user: UserType }) {
 
         return {
           id: s.id?.toString() || "",
-          grno: getVal("GrNo") || getVal("GRNO") || s.registrationNumber || s.grno || getVal("registrationNumber") || "",
+          grno: getVal("GrNo") || getVal("GRNO") || s.grno || "",
           schoolId: (s.schoolId || s.SchoolId)?.toString() || "",
           firstName: getVal("FirstName") || getVal("FNAME") || s.firstName || (s.name || s.fullName)?.split(" ")[0] || "",
           lastName: getVal("LastName") || getVal("LNAME") || s.lastName || (s.name || s.fullName)?.split(" ").slice(-1)[0] || "",
@@ -378,7 +378,7 @@ export default function Students({ user }: { user: UserType }) {
   const inputRefs = useRef<Record<string, any>>({});
 
   const initialFormState = {
-    registrationNumber: "",
+    grno: "",
     schoolId: "",
     firstName: "",
     middleName: "",
@@ -438,7 +438,7 @@ export default function Students({ user }: { user: UserType }) {
     setSelectedPhotoFile(null);
     setLocalPhotoPreview(null);
     setNewStudentFormData({
-      registrationNumber: student.grno || "",
+      grno: student.grno || "",
       schoolId: (student.schoolId || user.schoolId || "").toString(),
       firstName: student.firstName || "",
       middleName: student.middleName || "",
@@ -820,13 +820,13 @@ export default function Students({ user }: { user: UserType }) {
             )?.id : undefined);
 
             // Map standard fields for DB persistence
-            const regNum = getFieldCleanVal(["RegistrationNumber", "GRNO", "registration_number", "student_id"]);
+            const grno = getFieldCleanVal(["GRNO", "GrNo"]);
             const fName = getFieldCleanVal(["FirstName", "FNAME", "first_name"]);
             const mName = getFieldCleanVal(["MiddleName", "MNAME", "middle_name"]);
             const lName = getFieldCleanVal(["LastName", "LNAME", "last_name"]);
 
             return {
-              GrNo: regNum,
+              GrNo: grno,
               name: `${fName} ${mName} ${lName}`.trim() || item.Name || `Student ${index + 1}`,
               schoolId: parseInt(schMasterId || item.SchoolId || user.schoolId || "1"),
               rollNumber: parseInt(getFieldCleanVal(["RollNumber", "ROLLNO", "roll_number"]) || "0"),
@@ -907,7 +907,7 @@ export default function Students({ user }: { user: UserType }) {
             const match = keys.find(k => k.toLowerCase() === prop.toLowerCase());
             return match ? s[match] : fallback;
           };
-          const grno = (getVal("GRNO") || s.registrationNumber || s.grno || "").toString().trim().toLowerCase();
+          const grno = (getVal("GRNO") || s.grno || "").toString().trim().toLowerCase();
           const aadhar = (getVal("aadharcard") || s.aadharCard || "").toString().trim().toLowerCase();
           const rfidVal = (getVal("RFID") || s.rfid || s.CARDID || s.cardId || "").toString().trim().toLowerCase();
           const uniformVal = (getVal("uniformid") || s.uniformid || "").toString().trim().toLowerCase();
@@ -945,7 +945,7 @@ export default function Students({ user }: { user: UserType }) {
 
           let rowError = "";
 
-          // a) RegistrationNumber/GRNO
+          // a) grno/GRNO
           if (grno) {
             if (batchRegs.has(grno)) {
               rowError = `Duplicate Registration Number/GRNO '${s.GrNo}' in uploaded file.`;
@@ -1109,10 +1109,21 @@ export default function Students({ user }: { user: UserType }) {
     checkField("division", !newStudentFormData.division);
     checkField("academicYearId", !newStudentFormData.academicYearId);
     checkField("shiftName", !newStudentFormData.shiftName);
-    checkField("registrationNumber", !newStudentFormData.registrationNumber?.trim());
+    checkField("grno", !newStudentFormData.grno?.trim());
     checkField("rollNumber", !newStudentFormData.rollNumber?.trim());
     checkField("gender", !newStudentFormData.gender);
-    checkField("rfid", !newStudentFormData.rfid);
+
+    // RFID is mandatory on creation (!isEditMode) or must match 10/24 length if entered
+    const rfidTrimmed = newStudentFormData.rfid?.trim() || "";
+    const isRfidRequired = !isEditMode && rfidTrimmed === "";
+    const isRfidInvalidLength = rfidTrimmed !== "" && (rfidTrimmed.length !== 10 && rfidTrimmed.length !== 24);
+    checkField("rfid", isRfidRequired || isRfidInvalidLength);
+
+    // Uniform ID is mandatory on creation (!isEditMode) as well
+    const uniformTrimmed = newStudentFormData.uniformId?.trim() || "";
+    const isUniformRequired = !isEditMode && uniformTrimmed === "";
+    checkField("uniformId", isUniformRequired);
+
     checkField("schoolSectionId", !newStudentFormData.schoolSectionId);
     checkField("fatherContactNo", !newStudentFormData.fatherContactNo?.trim() || !/^\d{10}$/.test(newStudentFormData.fatherContactNo.replace(/\D/g, "")));
 
@@ -1137,56 +1148,27 @@ export default function Students({ user }: { user: UserType }) {
       }
     }
 
-    // No-numeric checks for name fields
-    const hasNumeric = (str: string) => /\d/.test(str);
-
-    checkField("firstName", !newStudentFormData.firstName?.trim() || hasNumeric(newStudentFormData.firstName));
-    checkField("middleName", !newStudentFormData.middleName?.trim() || hasNumeric(newStudentFormData.middleName));
-    checkField("lastName", !newStudentFormData.lastName?.trim() || hasNumeric(newStudentFormData.lastName));
-
-    if (newStudentFormData.firstName && hasNumeric(newStudentFormData.firstName)) {
-      toast.error("First Name must not contain numeric characters.");
-      return;
-    }
-    if (newStudentFormData.middleName && hasNumeric(newStudentFormData.middleName)) {
-      toast.error("Middle Name must not contain numeric characters.");
-      return;
-    }
-    if (newStudentFormData.lastName && hasNumeric(newStudentFormData.lastName)) {
-      toast.error("Last Name must not contain numeric characters.");
-      return;
-    }
-
-    if (newStudentFormData.motherName && newStudentFormData.motherName.trim() !== "") {
-      const isInvalidMotherName = hasNumeric(newStudentFormData.motherName);
-      checkField("motherName", isInvalidMotherName);
-      if (isInvalidMotherName) {
-        toast.error("Mother's Name must not contain numeric characters.");
-        return;
-      }
-    }
-
-    // RFID rule: Mandatory on ADD screen, disabled on EDIT screen. Length must be 10 or 24 alphanumeric.
-    if (!isEditMode) {
-      const rfidTrimmed = newStudentFormData.rfid?.trim() || "";
-      if (rfidTrimmed === "") {
-        checkField("rfid", true);
-        toast.error("RFID is mandatory on creation.");
-        return;
-      } else {
-        const rfidLen = rfidTrimmed.length;
-        if (rfidLen !== 10 && rfidLen !== 24) {
-          checkField("rfid", true);
-          toast.error("RFID must be either 10 or 24 alphanumeric characters.");
-          return;
-        }
-      }
-    }
+    // Standard empty/presence checks for legal names
+    checkField("firstName", !newStudentFormData.firstName?.trim());
+    checkField("middleName", !newStudentFormData.middleName?.trim());
+    checkField("lastName", !newStudentFormData.lastName?.trim());
 
     setFormErrors(newErrors);
 
+    // Handle user-friendly sequentially focused toaster alerts
     if (firstErrorField) {
-      toast.error("Please fill all required fields correctly.");
+      if (firstErrorField === "rfid" && isRfidInvalidLength) {
+        toast.error("RFID must be either 10 or 24 alphanumeric characters.");
+      } else if (firstErrorField === "rfid" && isRfidRequired) {
+        toast.error("RFID is mandatory on creation.");
+      } else if (firstErrorField === "uniformId" && isUniformRequired) {
+        toast.error("Uniform ID is mandatory on creation.");
+      } else if (firstErrorField === "fatherContactNo") {
+        toast.error("Please enter a valid 10-digit Father's Contact Number.");
+      } else {
+        toast.error("Please fill all required fields correctly.");
+      }
+
       const element = inputRefs.current[firstErrorField];
       if (element) {
         element.focus();
@@ -1202,7 +1184,6 @@ export default function Students({ user }: { user: UserType }) {
       const payload = {
         schoolId: parseSafeInt(newStudentFormData.schoolId) || 1,
         rollNumber: parseSafeInt(newStudentFormData.rollNumber) || 0,
-        registrationNumber: newStudentFormData.registrationNumber || `REG/${new Date().getFullYear()}/${Math.floor(Math.random() * 900) + 100}`,
         name: `${newStudentFormData.firstName} ${newStudentFormData.middleName} ${newStudentFormData.lastName}`.trim(),
         status: newStudentFormData.status || "Active",
 
@@ -1210,7 +1191,7 @@ export default function Students({ user }: { user: UserType }) {
         FirstName: newStudentFormData.firstName,
         MiddleName: newStudentFormData.middleName,
         LastName: newStudentFormData.lastName,
-        GrNo: newStudentFormData.registrationNumber,
+        GrNo: newStudentFormData.grno,
         Gender: newStudentFormData.gender,
         DateOfBirth: newStudentFormData.dateOfBirth || null,
         FatherContactNo: newStudentFormData.fatherContactNo,
@@ -1784,19 +1765,19 @@ export default function Students({ user }: { user: UserType }) {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <Label htmlFor="registrationNumber" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.registrationNumber ? "text-red-500" : "text-slate-500")}>Registration (GRNO) {formErrors.registrationNumber && "*"}</Label>
+                            <Label htmlFor="grno" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.grno ? "text-red-500" : "text-slate-500")}>Registration (GRNO) {formErrors.grno && "*"}</Label>
                             <Input
-                              ref={el => { inputRefs.current["registrationNumber"] = el; }}
-                              id="registrationNumber"
-                              value={newStudentFormData.registrationNumber}
+                              ref={el => { inputRefs.current["grno"] = el; }}
+                              id="grno"
+                              value={newStudentFormData.grno}
                               onChange={(e) => {
-                                setNewStudentFormData({ ...newStudentFormData, registrationNumber: e.target.value });
-                                if (formErrors.registrationNumber) setFormErrors(prev => ({ ...prev, registrationNumber: false }));
+                                setNewStudentFormData({ ...newStudentFormData, grno: e.target.value });
+                                if (formErrors.grno) setFormErrors(prev => ({ ...prev, grno: false }));
                               }}
                               placeholder="e.g. REG-001"
                               className={cn(
                                 "h-10 border-slate-200 bg-slate-50/30 font-mono font-black text-blue-600 rounded-xl px-4 text-sm",
-                                formErrors.registrationNumber && "border-red-500 ring-2 ring-red-500/10"
+                                formErrors.grno && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             />
                           </div>
@@ -1891,13 +1872,22 @@ export default function Students({ user }: { user: UserType }) {
                           </div>
 
                           <div className="space-y-1.5">
-                            <Label htmlFor="uniformId" className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-500">Uniform ID</Label>
+                            <Label htmlFor="uniformId" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.uniformId ? "text-red-500" : "text-slate-500")}>
+                              Uniform ID {!isEditMode && <span className="text-red-500">*</span>}
+                            </Label>
                             <Input
+                              ref={el => { inputRefs.current["uniformId"] = el; }}
                               id="uniformId"
                               value={newStudentFormData.uniformId || ""}
-                              onChange={(e) => setNewStudentFormData({ ...newStudentFormData, uniformId: e.target.value })}
-                              placeholder="e.g. UNIF-001"
-                              className="h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm"
+                              onChange={(e) => {
+                                setNewStudentFormData({ ...newStudentFormData, uniformId: e.target.value });
+                                if (formErrors.uniformId) setFormErrors(prev => ({ ...prev, uniformId: false }));
+                              }}
+                              placeholder={isEditMode ? "Uniform ID" : "e.g. UNIF-001"}
+                              className={cn(
+                                "h-10 border-slate-200 bg-slate-50/30 font-bold rounded-xl px-4 text-sm",
+                                formErrors.uniformId && "border-red-500 ring-2 ring-red-500/10"
+                              )}
                             />
                           </div>
 
@@ -1994,7 +1984,8 @@ export default function Students({ user }: { user: UserType }) {
                               id="firstName"
                               value={newStudentFormData.firstName}
                               onChange={(e) => {
-                                setNewStudentFormData({ ...newStudentFormData, firstName: e.target.value });
+                                const filtered = e.target.value.replace(/[0-9]/g, "");
+                                setNewStudentFormData({ ...newStudentFormData, firstName: filtered });
                                 if (formErrors.firstName) setFormErrors(prev => ({ ...prev, firstName: false }));
                               }}
                               placeholder="First name"
@@ -2011,7 +2002,8 @@ export default function Students({ user }: { user: UserType }) {
                               id="middleName"
                               value={newStudentFormData.middleName}
                               onChange={(e) => {
-                                setNewStudentFormData({ ...newStudentFormData, middleName: e.target.value });
+                                const filtered = e.target.value.replace(/[0-9]/g, "");
+                                setNewStudentFormData({ ...newStudentFormData, middleName: filtered });
                                 if (formErrors.middleName) setFormErrors(prev => ({ ...prev, middleName: false }));
                               }}
                               placeholder="Middle name"
@@ -2028,7 +2020,8 @@ export default function Students({ user }: { user: UserType }) {
                               id="lastName"
                               value={newStudentFormData.lastName}
                               onChange={(e) => {
-                                setNewStudentFormData({ ...newStudentFormData, lastName: e.target.value });
+                                const filtered = e.target.value.replace(/[0-9]/g, "");
+                                setNewStudentFormData({ ...newStudentFormData, lastName: filtered });
                                 if (formErrors.lastName) setFormErrors(prev => ({ ...prev, lastName: false }));
                               }}
                               placeholder="Last name"
@@ -2174,7 +2167,8 @@ export default function Students({ user }: { user: UserType }) {
                             id="motherName"
                             value={newStudentFormData.motherName}
                             onChange={(e) => {
-                              setNewStudentFormData({ ...newStudentFormData, motherName: e.target.value });
+                              const filtered = e.target.value.replace(/[0-9]/g, "");
+                              setNewStudentFormData({ ...newStudentFormData, motherName: filtered });
                               if (formErrors.motherName) setFormErrors(prev => ({ ...prev, motherName: false }));
                             }}
                             placeholder="e.g. Mary Wilson (Optional)"

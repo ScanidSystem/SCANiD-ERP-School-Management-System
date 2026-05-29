@@ -506,7 +506,7 @@ namespace ScanID.Api.Services
                     table.Columns.Add("LastName", typeof(string));
                     table.Columns.Add("GrNo", typeof(string));
                     table.Columns.Add("Gender", typeof(string));
-                    table.Columns.Add("DateOfBirth", typeof(string));
+                    table.Columns.Add("DateOfBirth", typeof(DateTime));
                     table.Columns.Add("Address", typeof(string));
                     table.Columns.Add("MotherName", typeof(string));
                     table.Columns.Add("FatherContactNo", typeof(string));
@@ -515,7 +515,7 @@ namespace ScanID.Api.Services
                     table.Columns.Add("UniformId", typeof(string));
                     table.Columns.Add("Rfid", typeof(string));
                     table.Columns.Add("SchoolSectionId", typeof(int));
-                    table.Columns.Add("AdmissionDate", typeof(string));
+                    table.Columns.Add("AdmissionDate", typeof(DateTime));
                     table.Columns.Add("Email", typeof(string));
                     table.Columns.Add("StandardId", typeof(int));
                     table.Columns.Add("SectionId", typeof(int));

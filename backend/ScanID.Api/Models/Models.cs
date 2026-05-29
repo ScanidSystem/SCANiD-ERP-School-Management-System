@@ -161,7 +161,7 @@ namespace ScanID.Api.Models
         public string? GrNo { get; set; }
         
         public string? Gender { get; set; }
-        public string? DateOfBirth { get; set; }
+        public DateTime? DateOfBirth { get; set; }
         public string? Address { get; set; }
         public string? MotherName { get; set; }
         public string? FatherContactNo { get; set; }
@@ -172,7 +172,7 @@ namespace ScanID.Api.Models
         public string? MotherContactNo { get; set; }
         public string? Rfid { get; set; }
         public int? SchoolSectionId { get; set; }
-        public string? AdmissionDate { get; set; }
+        public DateTime? AdmissionDate { get; set; }
         public string? Email { get; set; }
         public bool IsStateBoard { get; set; }
         public bool DigitalUniform { get; set; }
