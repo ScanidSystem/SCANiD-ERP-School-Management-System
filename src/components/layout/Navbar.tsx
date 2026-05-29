@@ -76,14 +76,16 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
         });
       }
 
-      // Auto-initialize academic year if not set
-      if (!user.academicYearId && yearData.length > 0) {
-        const currentYear = yearData.find((y: any) => y.isCurrent) || yearData[0];
-        onUserUpdate({
-          ...user,
-          academicYearId: currentYear.id.toString(),
-          academicYearName: currentYear.name
-        });
+      // Auto-initialize academic year if not set or invalid (always default to current academic year as per user requirements)
+      if (yearData.length > 0) {
+        const currentYear = yearData.find((y: any) => y.isCurrent || y.isCurrentYear) || yearData[0];
+        if (!user.academicYearId || !yearData.some((y: any) => y.id?.toString() === user.academicYearId?.toString())) {
+          onUserUpdate({
+            ...user,
+            academicYearId: currentYear.id.toString(),
+            academicYearName: currentYear.name
+          });
+        }
       }
     } catch (error) {
       console.error("Navbar lookups error:", error);

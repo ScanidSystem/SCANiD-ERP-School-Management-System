@@ -419,12 +419,18 @@ export default function Students({ user }: { user: UserType }) {
   };
 
   const [newStudentFormData, setNewStudentFormData] = useState(initialFormState);
+  const [valMessage, setValMessage] = useState<Record<string, string>>({});
 
   const openAddDialog = () => {
     setIsEditMode(false);
     setCurrentStudentId(null);
-    setNewStudentFormData(initialFormState);
+    setNewStudentFormData({
+      ...initialFormState,
+      schoolId: user.schoolId?.toString() || "",
+      academicYearId: user.academicYearId?.toString() || ""
+    });
     setFormErrors({});
+    setValMessage({});
     setSelectedPhotoFile(null);
     setLocalPhotoPreview(null);
     setIsAddDialogOpen(true);
@@ -435,6 +441,7 @@ export default function Students({ user }: { user: UserType }) {
     setIsEditMode(true);
     setCurrentStudentId(student.id);
     setFormErrors({});
+    setValMessage({});
     setSelectedPhotoFile(null);
     setLocalPhotoPreview(null);
     setNewStudentFormData({
@@ -685,8 +692,36 @@ export default function Students({ user }: { user: UserType }) {
     }
   };
 
-  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".xls")) {
+        toast.error("Invalid file format. Please drop an Excel sheet (.xlsx or .xls).");
+        return;
+      }
+      handleBulkUpload(file);
+    }
+  };
+
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement> | File) => {
+    const file = e instanceof File ? e : e.target.files?.[0];
     if (!file) return;
 
     setIsProcessing(true);
@@ -1113,10 +1148,10 @@ export default function Students({ user }: { user: UserType }) {
     checkField("rollNumber", !newStudentFormData.rollNumber?.trim());
     checkField("gender", !newStudentFormData.gender);
 
-    // RFID is mandatory on creation (!isEditMode) or must match 10/24 length if entered
+    // RFID is mandatory on creation (!isEditMode) or must match 10/24 length if entered. Skip entirely on Edit since it is disabled.
     const rfidTrimmed = newStudentFormData.rfid?.trim() || "";
     const isRfidRequired = !isEditMode && rfidTrimmed === "";
-    const isRfidInvalidLength = rfidTrimmed !== "" && (rfidTrimmed.length !== 10 && rfidTrimmed.length !== 24);
+    const isRfidInvalidLength = !isEditMode && rfidTrimmed !== "" && (rfidTrimmed.length !== 10 && rfidTrimmed.length !== 24);
     checkField("rfid", isRfidRequired || isRfidInvalidLength);
 
     // Uniform ID is mandatory on creation (!isEditMode) as well
@@ -1258,9 +1293,54 @@ export default function Students({ user }: { user: UserType }) {
       setSelectedPhotoFile(null);
       setLocalPhotoPreview(null);
       fetchStudents();
-    } catch (error) {
-      toast.error(isEditMode ? "Failed to update record" : "Failed to register student");
-      console.error(error);
+    } catch (error: any) {
+      console.error("Student persistence error:", error);
+      const serverMessage = error.response?.data?.message || error.message || "";
+      if (serverMessage && (serverMessage.toLowerCase().includes("already exists") || serverMessage.toLowerCase().includes("validation failed"))) {
+        // Strip prefix to make the message human-friendly
+        let cleanErr = serverMessage;
+        if (cleanErr.startsWith("Student validation failed: ")) {
+          cleanErr = cleanErr.replace("Student validation failed: ", "");
+        }
+        
+        const errorsToSet: Record<string, boolean> = {};
+        const messagesToSet: Record<string, string> = {};
+        let focusedField = "";
+
+        if (cleanErr.toLowerCase().includes("grno")) {
+          errorsToSet["grno"] = true;
+          messagesToSet["grno"] = cleanErr;
+          focusedField = "grno";
+        } else if (cleanErr.toLowerCase().includes("roll no") || cleanErr.toLowerCase().includes("rollnumber")) {
+          errorsToSet["rollNumber"] = true;
+          messagesToSet["rollNumber"] = cleanErr;
+          focusedField = "rollNumber";
+        } else {
+          toast.error(cleanErr);
+        }
+
+        if (focusedField) {
+          setFormErrors(prev => ({ ...prev, ...errorsToSet }));
+          setValMessage(prev => ({ ...prev, ...messagesToSet }));
+          toast.error(cleanErr);
+          
+          setTimeout(() => {
+            const element = inputRefs.current[focusedField];
+            if (element) {
+              element.focus();
+              try {
+                if (element.scrollIntoView) {
+                  element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+              } catch (e) {
+                console.warn("Smooth scroll not fully supported", e);
+              }
+            }
+          }, 100);
+          return; // Remain on form so user can fix and re-submit
+        }
+      }
+      toast.error(error.response?.data?.message || (isEditMode ? "Failed to update record" : "Failed to register student"));
     } finally {
       setIsProcessing(false);
     }
@@ -1348,7 +1428,17 @@ export default function Students({ user }: { user: UserType }) {
 
                 <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-white">
                   {uploadResults.length === 0 ? (
-                    <div className="p-10 border-4 border-dashed border-slate-100 rounded-[2rem] flex flex-col items-center justify-center gap-6 bg-slate-50/30 transition-all hover:bg-slate-50 hover:border-blue-100 group">
+                    <div
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      className={cn(
+                        "p-10 border-4 border-dashed rounded-[2rem] flex flex-col items-center justify-center gap-6 transition-all group",
+                        isDragging 
+                          ? "border-blue-500 bg-blue-50/20 scale-[1.01]"
+                          : "border-slate-100 bg-slate-50/30 hover:bg-slate-55 hover:border-blue-100"
+                      )}
+                    >
                       <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
                         <FileText className="text-blue-500" size={32} />
                       </div>
@@ -1360,7 +1450,7 @@ export default function Students({ user }: { user: UserType }) {
                       </div>
                       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                         <Button
-                          className="flex-1 bg-slate-900 hover:bg-black text-white font-black rounded-2xl h-12 shadow-xl shadow-slate-200 active:scale-[0.98] transition-all"
+                          className="flex-1 bg-slate-900 hover:bg-black text-white font-black rounded-2xl h-12 shadow-xl shadow-slate-200 active:scale-[0.98] transition-all cursor-pointer"
                           onClick={() => bulkFileInputRef.current?.click()}
                           disabled={isProcessing}
                         >
@@ -1368,7 +1458,7 @@ export default function Students({ user }: { user: UserType }) {
                         </Button>
                         <Button
                           variant="outline"
-                          className="flex-1 border-slate-200 hover:bg-slate-50 font-black rounded-2xl h-12 transition-all gap-2 text-slate-600"
+                          className="flex-1 border-slate-200 hover:bg-slate-50 font-black rounded-2xl h-12 transition-all gap-2 text-slate-600 cursor-pointer"
                           onClick={downloadSampleExcel}
                         >
                           <Download size={18} /> Sample Sheet
@@ -1410,11 +1500,13 @@ export default function Students({ user }: { user: UserType }) {
                               {uploadResults.map((result) => (
                                 <TableRow key={result.id} className="group border-slate-100 bg-white/50 hover:bg-slate-50 transition-colors">
                                   <TableCell className="pl-6 font-mono text-[10px] text-slate-400">{(result.id + 1).toString().padStart(3, '0')}</TableCell>
-                                  <TableCell className="py-3">
-                                    <div className="flex flex-col">
-                                      <span className="text-xs font-bold text-slate-900 truncate max-w-[200px]">{result.name}</span>
+                                  <TableCell className="py-3 max-w-[340px]">
+                                    <div className="flex flex-col space-y-1">
+                                      <span className="text-xs font-bold text-slate-900">{result.name}</span>
                                       {result.error && (
-                                        <span className="text-[9px] text-rose-500 font-bold uppercase tracking-tight truncate max-w-[200px]">{result.error}</span>
+                                        <span className="text-[10px] text-rose-600 font-bold leading-normal break-words whitespace-normal block bg-rose-50/60 p-2 rounded-xl border border-rose-100/60 mt-1">
+                                          {result.error}
+                                        </span>
                                       )}
                                     </div>
                                   </TableCell>
@@ -1773,6 +1865,7 @@ export default function Students({ user }: { user: UserType }) {
                               onChange={(e) => {
                                 setNewStudentFormData({ ...newStudentFormData, grno: e.target.value });
                                 if (formErrors.grno) setFormErrors(prev => ({ ...prev, grno: false }));
+                                if (valMessage.grno) setValMessage(prev => ({ ...prev, grno: "" }));
                               }}
                               placeholder="e.g. REG-001"
                               className={cn(
@@ -1780,6 +1873,11 @@ export default function Students({ user }: { user: UserType }) {
                                 formErrors.grno && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             />
+                            {formErrors.grno && valMessage.grno && (
+                              <span className="text-[10px] text-red-500 font-bold block mt-1 ml-1 animate-in fade-in slide-in-from-top-1">
+                                {valMessage.grno}
+                              </span>
+                            )}
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor="rollNumber" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.rollNumber ? "text-red-500" : "text-slate-500")}>Roll Number {formErrors.rollNumber && "*"}</Label>
@@ -1790,6 +1888,7 @@ export default function Students({ user }: { user: UserType }) {
                               onChange={(e) => {
                                 setNewStudentFormData({ ...newStudentFormData, rollNumber: e.target.value });
                                 if (formErrors.rollNumber) setFormErrors(prev => ({ ...prev, rollNumber: false }));
+                                if (valMessage.rollNumber) setValMessage(prev => ({ ...prev, rollNumber: "" }));
                               }}
                               placeholder="e.g. 24"
                               className={cn(
@@ -1797,6 +1896,11 @@ export default function Students({ user }: { user: UserType }) {
                                 formErrors.rollNumber && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             />
+                            {formErrors.rollNumber && valMessage.rollNumber && (
+                              <span className="text-[10px] text-red-500 font-bold block mt-1 ml-1 animate-in fade-in slide-in-from-top-1">
+                                {valMessage.rollNumber}
+                              </span>
+                            )}
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor="gender" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.gender ? "text-red-500" : "text-slate-500")}>Gender {formErrors.gender && "*"}</Label>

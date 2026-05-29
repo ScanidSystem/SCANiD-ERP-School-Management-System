@@ -115,8 +115,15 @@ namespace ScanID.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Student>> PostStudent(Student student)
         {
-            var createdStudent = await _studentService.CreateStudentAsync(student);
-            return CreatedAtAction("GetStudent", new { id = createdStudent.Id }, createdStudent);
+            try
+            {
+                var createdStudent = await _studentService.CreateStudentAsync(student);
+                return CreatedAtAction("GetStudent", new { id = createdStudent.Id }, createdStudent);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         /// <summary>
@@ -224,6 +231,10 @@ namespace ScanID.Api.Controllers
                     if (!await StudentExistsAsync(id)) return NotFound();
                     return StatusCode(500, "Failed to persist student record updates.");
                 }
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (DbUpdateConcurrencyException)
             {
