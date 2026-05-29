@@ -91,7 +91,8 @@ namespace ScanID.Api.Services
                     ("Role", user.Role),
                     ("RoleId", user.RoleId),
                     ("SchoolId", user.SchoolId),
-                    ("CreatedBy", null)
+                    ("CreatedBy", user.CreatedBy),
+                    ("ModifiedBy", user.CreatedBy)
                 );
 
                 return user;
@@ -105,7 +106,7 @@ namespace ScanID.Api.Services
                 // Execute stored procedure. Note: Since sp_ManageUser starts with SET NOCOUNT ON, 
                 // it suppresses row counts and returns -1. Thus, we check 'rowsAffected >= 0 || rowsAffected == -1'.
                 var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
-                    $"EXEC dbo.sp_ManageUser 'UPDATE', {user.Id}, {user.Username}, {user.PasswordHash}, {user.Name}, {user.Email}, {user.Role}, {user.RoleId}, {user.SchoolId}"
+                    $"EXEC dbo.sp_ManageUser 'UPDATE', {user.Id}, {user.Username}, {user.PasswordHash}, {user.Name}, {user.Email}, {user.Role}, {user.RoleId}, {user.SchoolId}, NULL, {user.ModifiedBy}"
                 );
                 return rowsAffected >= 0 || rowsAffected == -1;
             });

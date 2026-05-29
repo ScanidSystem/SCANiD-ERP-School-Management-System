@@ -138,7 +138,7 @@ export default function App() {
                     <Route path="/configuration/designations" element={<Configuration user={user} defaultTab="designations" />} />
                     <Route path="/configuration/occupations" element={<Configuration user={user} defaultTab="occupations" />} />
                     <Route path="/configuration/navigation" element={<Configuration user={user} defaultTab="navigation" />} />
-                    <Route path="/configuration/users" element={<UsersPage />} />
+                    <Route path="/configuration/users" element={<UsersPage user={user} />} />
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/system-logs" element={<SystemLogs user={user} />} />
                   </>

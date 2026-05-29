@@ -287,7 +287,9 @@ namespace ScanID.Api.Services
                     ("IsStateBoard", student.IsStateBoard),
                     ("DigitalUniform", student.DigitalUniform),
                     ("DigitalNotebook", student.DigitalNotebook),
-                    ("OptedForBus", student.OptedForBus)
+                    ("OptedForBus", student.OptedForBus),
+                    ("CreatedBy", student.CreatedBy),
+                    ("ModifiedBy", student.CreatedBy)
                 );
 
                 return student;
@@ -370,7 +372,8 @@ namespace ScanID.Api.Services
                     ("IsStateBoard", student.IsStateBoard),
                     ("DigitalUniform", student.DigitalUniform),
                     ("DigitalNotebook", student.DigitalNotebook),
-                    ("OptedForBus", student.OptedForBus)
+                    ("OptedForBus", student.OptedForBus),
+                    ("ModifiedBy", student.ModifiedBy)
                 );
                 return true;
             });

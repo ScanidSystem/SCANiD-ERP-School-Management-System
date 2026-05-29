@@ -67,7 +67,7 @@ import { toast } from "sonner";
 import { cn, parseSafeInt } from "@/lib/utils";
 import { SimpleTooltip } from "@/components/shared/SimpleTooltip";
 
-export default function Users() {
+export default function Users({ user }: { user: any }) {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<RoleDescriptor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -275,7 +275,10 @@ export default function Users() {
         isActive: formData.isActive,
         passwordHash: formData.password || undefined,
         PasswordHash: formData.password || undefined, // Support both casings
-        schoolId: formData.schoolId ? parseInt(formData.schoolId) : null
+        schoolId: formData.schoolId ? parseInt(formData.schoolId) : null,
+        // Audit fields: Ensure CreatedBy and ModifiedBy are captured for backend audit logging
+        CreatedBy: editingUser ? undefined : (user.name || user.email),
+        ModifiedBy: user.name || user.email
       };
 
       if (editingUser) {

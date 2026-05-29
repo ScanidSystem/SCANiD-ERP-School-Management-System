@@ -239,7 +239,7 @@ export default function Students({ user }: { user: UserType }) {
           joiningAcademicYearId: getSafeId(getVal("academicYearId") || getVal("academicyear") || s.joiningAcademicYearId),
           roll: getVal("ROLLNO") || s.rollNumber?.toString() || s.roll?.toString() || "0",
           address: getVal("Address") || getVal("ADDRESS") || s.address || "N/A",
-          birthDate: getVal("DateOfBirth") || getVal("DOB") || (s.dateOfBirth ? s.dateOfBirth.split('T')[0] : ""),
+          birthDate: String(getVal("DateOfBirth") || getVal("DOB") || s.dateOfBirth || s.DateOfBirth || "").split("T")[0].split(" ")[0] || "",
           gender: getVal("Gender") || getVal("GENDER") || s.gender || "male",
           contactNumber: getVal("FatherContactNo") || getVal("MOBILE") || s.contactNumber || s.mobile || "",
           fatherContactNo: getVal("FatherContactNo") || getVal("MOBILE") || s.fatherContactNo || s.contactNumber || s.mobile || "",
@@ -255,7 +255,7 @@ export default function Students({ user }: { user: UserType }) {
           schoolSection: getVal("SchoolSectionId") ? schoolSections.find((sec: any) => sec.id?.toString() === getSafeId(getVal("SchoolSectionId")))?.name : (getVal("schoolSection") || s.schoolSection || ""),
           academicYearId: getSafeId(getVal("academicYearId") || getVal("academicyear") || s.joiningAcademicYearId || s.academicYearId),
           categoryId: getSafeId(getVal("categoryId") || getVal("CATEGORY") || s.categoryId),
-          admissionDate: getVal("AdmissionDate") || (s.admissionDate ? s.admissionDate.split('T')[0] : "") || "",
+          admissionDate: String(getVal("AdmissionDate") || s.admissionDate || s.AdmissionDate || "").split("T")[0].split(" ")[0] || "",
           email: getVal("Email") || getVal("EMAIL") || s.email || "",
           cityId: getVal("CityId") || s.cityId?.toString() || "",
           stateId: getVal("StateId") || s.stateId?.toString() || "",
@@ -1848,7 +1848,7 @@ export default function Students({ user }: { user: UserType }) {
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor="rfid" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.rfid ? "text-red-500" : "text-slate-500")}>
-                              RFID {!isEditMode ? <span className="text-red-500">*</span> : " (Disabled on Edit)"}
+                              RFID {!isEditMode ? <span className="text-red-500"></span> : " (Disabled on Edit)"}
                             </Label>
                             <Input
                               ref={el => { inputRefs.current["rfid"] = el; }}
@@ -1873,7 +1873,7 @@ export default function Students({ user }: { user: UserType }) {
 
                           <div className="space-y-1.5">
                             <Label htmlFor="uniformId" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.uniformId ? "text-red-500" : "text-slate-500")}>
-                              Uniform ID {!isEditMode && <span className="text-red-500">*</span>}
+                              Uniform ID {!isEditMode && <span className="text-red-500"></span>}
                             </Label>
                             <Input
                               ref={el => { inputRefs.current["uniformId"] = el; }}

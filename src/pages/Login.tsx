@@ -54,8 +54,15 @@ export default function Login({ onLogin }: LoginProps) {
       setSchools(schoolData);
       setAcademicYears(yearData);
       
-      // We don't default to current year anymore as per user request "show Select by default"
-      setSelectedYear("");
+      // Find the current academic year (isCurrent === true) by default as per user request
+      const currentYear = yearData.find((y: any) => y.isCurrent || y.isCurrentYear);
+      if (currentYear) {
+        setSelectedYear(currentYear.id.toString());
+      } else if (yearData.length > 0) {
+        setSelectedYear(yearData[0].id.toString());
+      } else {
+        setSelectedYear("");
+      }
       setSelectedSchool("");
     } catch (error) {
       console.error("Fetch lookups error:", error);

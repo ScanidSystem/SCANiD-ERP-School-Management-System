@@ -249,6 +249,35 @@ This document records the exact changes, the root causes identified, and the fix
 - `/src/pages/Students.tsx`: Unified sequential validation rules and added interactive character filtering to name text inputs.
 - `/CHANGES_DOCUMENTATION.md`: Documented newest features, UX enhancements, and structural database upgrades.
 
+---
+
+## 26. Issue: Default Academic Year, Audit Trail Fields (CreatedBy/ModifiedBy), and Student Date Populating on Edit
+- **Root Cause 1 (Academic Year Default Selection)**: The login page originally left the Academic Year select field empty by default, prompting users to manually select it.
+- **Root Cause 2 (Audit Fields Not Populated)**: While tables and some database stored procedures had `CreatedBy` and `ModifiedBy` columns, the C# back-end repositories (`StudentService`, `TeacherService`, `SchoolService`, `UserService`) were not consistently submitting the active user's identity under transaction contexts, and the front-end user payload in `Users.tsx` omitted audit trail attributes.
+- **Root Cause 3 (Student dates not populating on Edit)**: With `DateOfBirth` and `AdmissionDate` normalized to SQL `DATETIME`, the JSON payload returned these values as ISO date-time strings (e.g. `"2012-05-10T00:00:00"`). HTML's `<input type="date">` exclusively accepts strict `"YYYY-MM-DD"` formats; the presence of the time segment (`T00:00:00`) prevented them from populating.
+- **Remediation**:
+  1. **Academic Year Defaulting**: Modified `/src/pages/Login.tsx` to automatically find and select the current academic year in the dropdown (`isCurrent === true`) by default.
+  2. **End-to-End Audit Trail Mappings**:
+     - **React Client**: Added `CreatedBy` and `ModifiedBy` tracking attributes to the form submission payload in `/src/pages/Users.tsx`, and verified correct propagation of user props across routing layers.
+     - **C# Repository Layer**: Added `@CreatedBy` and `@ModifiedBy` parameter mapping variables to stored procedure and raw SQL executions inside `StudentService.cs`, `TeacherService.cs`, `SchoolService.cs`, and `UserService.cs` to submit the active operator's metadata.
+     - **SQL Master Migration**: Generated `/update_audit_trail_fields.sql` to recreate the database stored procedures `sp_ManageStudent`, `sp_ManageTeacher`, `sp_ManageSchool`, `sp_ManageUser`, and `sp_ManageMasterData` to bind `@CreatedBy` and `@ModifiedBy` inputs to physical write transactions smoothly.
+  3. **Strict Date Clearing for Input Binding**: Refactored the student mapper in `/src/pages/Students.tsx` to discard time segments (`T...` or space splits) from database datetime strings, mapping precise `"YYYY-MM-DD"` values to `birthDate` and `admissionDate`. This resolved the blank date fields issue on edit.
+  4. **Rigorous Quality Checks**: Ensured that the entire application continues to compile and lint successfully with zero errors.
+
+---
+
+## 27. Modified Files Summary (Academic Year, Auditing, and Forms Optimization)
+
+- `/src/pages/Login.tsx`: Configured autocomplete rules to default-select active academic years.
+- `/src/pages/Users.tsx`: Added state prop mapping and included audit tracking parameters in the registration payload.
+- `/src/App.tsx`: Ensured correct propagation of user session states on users page routing.
+- `/src/pages/Students.tsx`: Cleaned timezone indicators and time segments from mapped student birthdates and admission dates.
+- `/backend/ScanID.Api/Services/StudentService.cs`: Included audit parameters in ADO student transactions.
+- `/backend/ScanID.Api/Services/TeacherService.cs`: Unified SQL string interpolation with audit logging on faculty updates.
+- `/backend/ScanID.Api/Services/SchoolService.cs`: Corrected database mapper calls on institution insertion.
+- `/backend/ScanID.Api/Services/UserService.cs`: Standardized SQL parameter bindings on user modifications.
+- `/update_audit_trail_fields.sql`: Repeatable migration script handling the full suite of audit parameter changes.
+
 
 
 

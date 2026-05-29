@@ -121,7 +121,9 @@ namespace ScanID.Api.Services
                         ("Experience", teacher.Experience),
                         ("Subject", teacher.Subject),
                         ("StandardId", teacher.StandardId),
-                        ("SectionId", teacher.SectionId)
+                        ("SectionId", teacher.SectionId),
+                        ("CreatedBy", teacher.CreatedBy),
+                        ("ModifiedBy", teacher.CreatedBy)
                     );
 
                     await transaction.CommitAsync();
@@ -144,7 +146,7 @@ namespace ScanID.Api.Services
                 try
                 {
                     var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync(
-                        $"EXEC dbo.sp_ManageTeacher 'UPDATE', {teacher.Id}, {teacher.UserId}, {teacher.ContactNumber}, {teacher.Department}, {teacher.Qualification}, {teacher.Status}, {teacher.SchoolId}, {teacher.ProfilePhotoPath}, {teacher.EmployeeId}, {teacher.Experience}, {teacher.Subject}, {teacher.StandardId}, {teacher.SectionId}"
+                        $"EXEC dbo.sp_ManageTeacher 'UPDATE', {teacher.Id}, {teacher.UserId}, {teacher.ContactNumber}, {teacher.Department}, {teacher.Qualification}, {teacher.Status}, {teacher.SchoolId}, {teacher.ProfilePhotoPath}, {teacher.EmployeeId}, {teacher.Experience}, {teacher.Subject}, {teacher.StandardId}, {teacher.SectionId}, NULL, {teacher.ModifiedBy}"
                     );
 
                     // Also update the linked user account details if they were modified
