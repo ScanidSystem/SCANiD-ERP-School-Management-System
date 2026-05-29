@@ -1315,6 +1315,10 @@ export default function Students({ user }: { user: UserType }) {
           errorsToSet["rollNumber"] = true;
           messagesToSet["rollNumber"] = cleanErr;
           focusedField = "rollNumber";
+        } else if (cleanErr.toLowerCase().includes("rfid") || cleanErr.toLowerCase().includes("cardid") || cleanErr.toLowerCase().includes("card_id")) {
+          errorsToSet["rfid"] = true;
+          messagesToSet["rfid"] = cleanErr;
+          focusedField = "rfid";
         } else {
           toast.error(cleanErr);
         }
@@ -1964,6 +1968,7 @@ export default function Students({ user }: { user: UserType }) {
                                 if (val.length <= 24) {
                                   setNewStudentFormData({ ...newStudentFormData, rfid: val });
                                   if (formErrors.rfid) setFormErrors(prev => ({ ...prev, rfid: false }));
+                                  if (valMessage.rfid) setValMessage(prev => ({ ...prev, rfid: "" }));
                                 }
                               }}
                               placeholder={isEditMode ? "RFID cannot be edited" : "e.g. 10 or 24 alphanumeric digits"}
@@ -1973,6 +1978,11 @@ export default function Students({ user }: { user: UserType }) {
                                 formErrors.rfid && "border-red-500 ring-2 ring-red-500/10"
                               )}
                             />
+                            {formErrors.rfid && valMessage.rfid && (
+                              <span className="text-[10px] text-red-500 font-bold block mt-1 ml-1 animate-in fade-in slide-in-from-top-1">
+                                {valMessage.rfid}
+                              </span>
+                            )}
                           </div>
 
                           <div className="space-y-1.5">

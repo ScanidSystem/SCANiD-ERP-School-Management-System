@@ -8,8 +8,10 @@ using ScanID.Api.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Data;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace ScanID.Api.Services
@@ -76,6 +78,27 @@ namespace ScanID.Api.Services
         }
 
         /// <summary>
+        private static readonly Dictionary<Type, PropertyInfo[]> StudentPropCache = new();
+
+        private static PropertyInfo[] GetStudentProperties(Type type)
+        {
+            if (!StudentPropCache.TryGetValue(type, out var props))
+            {
+                props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                            .Where(p => p.CanWrite && (p.PropertyType.IsPrimitive || 
+                                                      p.PropertyType == typeof(string) || 
+                                                      p.PropertyType == typeof(decimal) || 
+                                                      p.PropertyType == typeof(DateTime) || 
+                                                      p.PropertyType == typeof(Guid) || 
+                                                      p.PropertyType.IsEnum ||
+                                                      Nullable.GetUnderlyingType(p.PropertyType) != null))
+                            .ToArray();
+                StudentPropCache[type] = props;
+            }
+            return props;
+        }
+
+        /// <summary>
         /// Retrieves non-deleted students from SQL Server using server-side pagination, paging, sorting, and caching.
         /// Fully optimized for sets of 50 to 90 lakhs+ records.
         /// </summary>
@@ -91,108 +114,100 @@ namespace ScanID.Api.Services
             int? sectionId,
             int? lastId)
         {
-            // Use AsNoTracking for optimal query compilation and performance on large SQL tables
-            var query = _context.Students
-                .AsNoTracking()
-                .Include(s => s.Standard)
-                .Include(s => s.Section)
-                .Include(s => s.AcademicYear)
-                .Include(s => s.City)
-                .Include(s => s.State)
-                .Where(s => !s.IsDeleted);
-
-            // Filter by schoolId
-            if (schoolId.HasValue)
+            return await ExecuteWithRetryAsync(async () =>
             {
-                query = query.Where(s => s.SchoolId == schoolId.Value);
-            }
+                var list = new List<Student>();
+                int totalCount = 0;
 
-            // Filter by academicYearId
-            if (academicYearId.HasValue)
-            {
-                query = query.Where(s => s.AcademicYearId == academicYearId.Value);
-            }
-
-            // Filter by standardId
-            if (standardId.HasValue)
-            {
-                query = query.Where(s => s.StandardId == standardId.Value);
-            }
-
-            // Filter by sectionId
-            if (sectionId.HasValue)
-            {
-                query = query.Where(s => s.SectionId == sectionId.Value);
-            }
-
-            // Server-side search matching name, GRNO, or roll number
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                var searchLower = search.Trim().ToLower();
-                query = query.Where(s => 
-                    s.Name.ToLower().Contains(searchLower) ||
-                    (s.GrNo != null && s.GrNo.ToLower().Contains(searchLower)) ||
-                    s.RollNumber.ToString().Contains(searchLower)
-                );
-            }
-
-            // Calculate total matching records count in a single count execution call
-            int totalCount = await query.CountAsync();
-
-            // Keyset Pagination support: Extremely high performance for massive lists scrolling
-            if (lastId.HasValue && lastId.Value > 0)
-            {
-                query = query.Where(s => s.Id > lastId.Value);
-            }
-
-            // Apply dynamic query sorting
-            bool isDesc = !string.IsNullOrWhiteSpace(sortOrder) && sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase);
-            if (!string.IsNullOrWhiteSpace(sortBy))
-            {
-                switch (sortBy.ToLower())
+                var connection = _context.Database.GetDbConnection();
+                if (connection.State == ConnectionState.Closed)
                 {
-                    case "name":
-                        query = isDesc ? query.OrderByDescending(s => s.Name).ThenBy(s => s.Id) : query.OrderBy(s => s.Name).ThenBy(s => s.Id);
-                        break;
-                    case "grno":
-                    case "registrationnumber":
-                        query = isDesc ? query.OrderByDescending(s => s.GrNo).ThenBy(s => s.Id) : query.OrderBy(s => s.GrNo).ThenBy(s => s.Id);
-                        break;
-                    case "roll":
-                    case "rollnumber":
-                        query = isDesc ? query.OrderByDescending(s => s.RollNumber).ThenBy(s => s.Id) : query.OrderBy(s => s.RollNumber).ThenBy(s => s.Id);
-                        break;
-                    case "standard":
-                        query = isDesc ? query.OrderByDescending(s => s.Standard != null ? s.Standard.Name : string.Empty).ThenBy(s => s.Id) : query.OrderBy(s => s.Standard != null ? s.Standard.Name : string.Empty).ThenBy(s => s.Id);
-                        break;
-                    case "section":
-                        query = isDesc ? query.OrderByDescending(s => s.Section != null ? s.Section.Name : string.Empty).ThenBy(s => s.Id) : query.OrderBy(s => s.Section != null ? s.Section.Name : string.Empty).ThenBy(s => s.Id);
-                        break;
-                    default:
-                        query = isDesc ? query.OrderByDescending(s => s.Id) : query.OrderBy(s => s.Id);
-                        break;
+                    await _context.Database.OpenConnectionAsync();
                 }
-            }
-            else
-            {
-                query = isDesc ? query.OrderByDescending(s => s.Id) : query.OrderBy(s => s.Id);
-            }
 
-            // Retrieve paginated records slice
-            List<Student> data;
-            if (lastId.HasValue && lastId.Value > 0)
-            {
-                // Keyset paging just takes pageSize
-                data = await query.Take(pageSize).ToListAsync();
-            }
-            else
-            {
-                // Standard offset fallback for small pages
-                int skipCount = Math.Max(0, (page - 1) * pageSize);
-                data = await query.Skip(skipCount).Take(pageSize).ToListAsync();
-            }
+                using var command = connection.CreateCommand();
+                command.CommandText = "dbo.sp_GetStudentsPaged";
+                command.CommandType = CommandType.StoredProcedure;
 
-            return (data, totalCount);
+                // Add parameters
+                void AddParam(string name, object? val)
+                {
+                    var param = command.CreateParameter();
+                    param.ParameterName = name.StartsWith("@") ? name : "@" + name;
+                    param.Value = val ?? DBNull.Value;
+                    command.Parameters.Add(param);
+                }
+
+                AddParam("SchoolId", schoolId);
+                AddParam("AcademicYearId", academicYearId);
+                AddParam("Page", page);
+                AddParam("PageSize", pageSize);
+                AddParam("SortBy", sortBy);
+                AddParam("SortOrder", sortOrder);
+                AddParam("Search", search);
+                AddParam("StandardId", standardId);
+                AddParam("SectionId", sectionId);
+                AddParam("LastId", lastId);
+
+                using var reader = await command.ExecuteReaderAsync();
+                var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    columns.Add(reader.GetName(i));
+                }
+
+                var entityType = typeof(Student);
+                var props = GetStudentProperties(entityType);
+
+                while (await reader.ReadAsync())
+                {
+                    var item = new Student();
+                    foreach (var prop in props)
+                    {
+                        if (columns.Contains(prop.Name))
+                        {
+                            var val = reader[prop.Name];
+                            if (val != DBNull.Value)
+                            {
+                                var underlyingType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+                                prop.SetValue(item, Convert.ChangeType(val, underlyingType));
+                            }
+                        }
+                    }
+
+                    // Map navigational entities from joins using the reader
+                    if (columns.Contains("StandardName") && reader["StandardName"] != DBNull.Value)
+                    {
+                        item.Standard = new Standard { Name = reader["StandardName"].ToString() ?? string.Empty };
+                    }
+                    if (columns.Contains("SectionName") && reader["SectionName"] != DBNull.Value)
+                    {
+                        item.Section = new Section { Name = reader["SectionName"].ToString() ?? string.Empty };
+                    }
+                    if (columns.Contains("AcademicYearName") && reader["AcademicYearName"] != DBNull.Value)
+                    {
+                        item.AcademicYear = new AcademicYear { Name = reader["AcademicYearName"].ToString() ?? string.Empty };
+                    }
+                    if (columns.Contains("CityName") && reader["CityName"] != DBNull.Value)
+                    {
+                        item.City = new City { Name = reader["CityName"].ToString() ?? string.Empty };
+                    }
+                    if (columns.Contains("StateName") && reader["StateName"] != DBNull.Value)
+                    {
+                        item.State = new State { Name = reader["StateName"].ToString() ?? string.Empty };
+                    }
+
+                    // Get total count from TotalCount column
+                    if (columns.Contains("TotalCount") && reader["TotalCount"] != DBNull.Value)
+                    {
+                        totalCount = Convert.ToInt32(reader["TotalCount"]);
+                    }
+
+                    list.Add(item);
+                }
+
+                return ((IEnumerable<Student>)list, totalCount);
+            });
         }
 
         /// <summary>
@@ -224,6 +239,16 @@ namespace ScanID.Api.Services
                     if (grNoExists)
                     {
                         throw new InvalidOperationException($"Student validation failed: GrNo '{student.GrNo}' already exists.");
+                    }
+                }
+
+                // Validate RFID uniqueness if entered
+                if (!string.IsNullOrEmpty(student.Rfid))
+                {
+                    bool rfidExists = await _context.Students.AnyAsync(s => s.Rfid == student.Rfid && !s.IsDeleted);
+                    if (rfidExists)
+                    {
+                        throw new InvalidOperationException($"Student validation failed: RFID '{student.Rfid}' already exists.");
                     }
                 }
 
@@ -310,6 +335,16 @@ namespace ScanID.Api.Services
                     if (grNoExists)
                     {
                         throw new InvalidOperationException($"Student validation failed: GrNo '{student.GrNo}' already exists.");
+                    }
+                }
+
+                // Validate RFID uniqueness if entered
+                if (!string.IsNullOrEmpty(student.Rfid))
+                {
+                    bool rfidExists = await _context.Students.AnyAsync(s => s.Rfid == student.Rfid && s.Id != student.Id && !s.IsDeleted);
+                    if (rfidExists)
+                    {
+                        throw new InvalidOperationException($"Student validation failed: RFID '{student.Rfid}' already exists.");
                     }
                 }
 
