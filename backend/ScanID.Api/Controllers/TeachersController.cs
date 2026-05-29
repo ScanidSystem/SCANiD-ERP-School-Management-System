@@ -30,6 +30,72 @@ namespace ScanID.Api.Controllers
         }
 
         /// <summary>
+        /// Projects teacher entities to API DTOs and prevents nested PasswordHash fields from being serialized.
+        /// </summary>
+        private static TeacherDto ToDto(Teacher teacher) => new()
+        {
+            Id = teacher.Id,
+            UserId = teacher.UserId,
+            SchoolId = teacher.SchoolId,
+            EmployeeId = teacher.EmployeeId,
+            Department = teacher.Department,
+            Qualification = teacher.Qualification,
+            ContactNumber = teacher.ContactNumber,
+            Status = teacher.Status,
+            ProfilePhotoPath = teacher.ProfilePhotoPath,
+            Experience = teacher.Experience,
+            Subject = teacher.Subject,
+            StandardId = teacher.StandardId,
+            SectionId = teacher.SectionId,
+            User = teacher.User == null ? null : new UserDto
+            {
+                Id = teacher.User.Id,
+                Username = teacher.User.Username,
+                Name = teacher.User.Name,
+                Email = teacher.User.Email,
+                Role = teacher.User.Role,
+                RoleId = teacher.User.RoleId,
+                SchoolId = teacher.User.SchoolId,
+                IsActive = teacher.User.IsActive,
+                CreatedOn = teacher.User.CreatedOn,
+                ModifiedOn = teacher.User.ModifiedOn
+            }
+        };
+
+        /// <summary>
+        /// Converts a write DTO into the existing domain entity expected by the service layer.
+        /// The controller owns this mapping to avoid binding full EF entities from the request body.
+        /// </summary>
+        private static Teacher ToEntity(TeacherWriteDto dto, int id = 0) => new()
+        {
+            Id = id,
+            UserId = dto.UserId,
+            SchoolId = dto.SchoolId,
+            EmployeeId = dto.EmployeeId,
+            Department = dto.Department,
+            Qualification = dto.Qualification,
+            ContactNumber = dto.ContactNumber,
+            Status = dto.Status,
+            ProfilePhotoPath = dto.ProfilePhotoPath,
+            Experience = dto.Experience,
+            Subject = dto.Subject,
+            StandardId = dto.StandardId,
+            SectionId = dto.SectionId,
+            CreatedBy = dto.CreatedBy,
+            ModifiedBy = dto.ModifiedBy,
+            User = dto.User == null ? null : new User
+            {
+                Username = dto.User.Username,
+                PasswordHash = dto.User.PasswordHash ?? string.Empty,
+                Name = dto.User.Name,
+                Email = dto.User.Email,
+                Role = dto.User.Role,
+                RoleId = dto.User.RoleId,
+                SchoolId = dto.User.SchoolId
+            }
+        };
+
+        /// <summary>
         /// Retrieves a paged list of teachers, optionally sorted and filtered via stored procedures.
         /// </summary>
         [HttpGet]
@@ -61,7 +127,7 @@ namespace ScanID.Api.Controllers
 
             return Ok(new
             {
-                data = paginatedTeachers,
+                data = paginatedTeachers.Select(ToDto),
                 pagination = new
                 {
                     totalCount,
@@ -78,10 +144,11 @@ namespace ScanID.Api.Controllers
         /// <param name="teacher">The teacher registration data.</param>
         /// <returns>The created teacher record.</returns>
         [HttpPost]
-        public async Task<ActionResult<Teacher>> PostTeacher(Teacher teacher)
+        public async Task<ActionResult<TeacherDto>> PostTeacher(TeacherWriteDto request)
         {
+            var teacher = ToEntity(request);
             var createdTeacher = await _teacherService.CreateTeacherAsync(teacher);
-            return Ok(createdTeacher);
+            return Ok(ToDto(createdTeacher));
         }
 
         /// <summary>
@@ -91,12 +158,16 @@ namespace ScanID.Api.Controllers
         /// <param name="teacher">The updated teacher data.</param>
         /// <returns>No content on success.</returns>
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTeacher(int id, Teacher teacher)
+        public async Task<IActionResult> PutTeacher(int id, TeacherWriteDto request)
         {
-            if (id != teacher.Id) return BadRequest();
-
             var existingTeacher = await _teacherService.GetTeacherByIdAsync(id);
             if (existingTeacher == null) return NotFound();
+
+            var teacher = ToEntity(request, id);
+            if (teacher.UserId <= 0)
+            {
+                teacher.UserId = existingTeacher.UserId;
+            }
 
             var success = await _teacherService.UpdateTeacherAsync(teacher);
             if (!success) return StatusCode(500, "Failed to persist teacher record updates.");

@@ -123,10 +123,10 @@ namespace ScanID.Api.Services
                         ContactNumber = reader["ContactNumber"] != DBNull.Value ? reader["ContactNumber"].ToString() : null,
                         Department = reader["Department"] != DBNull.Value ? reader["Department"].ToString() : null,
                         Qualification = reader["Qualification"] != DBNull.Value ? reader["Qualification"].ToString() : null,
-                        Status = reader["Status"] != DBNull.Value ? reader["Status"].ToString() : "Active",
+                        Status = reader["Status"] != DBNull.Value ? Convert.ToString(reader["Status"]) ?? "Active" : "Active",
                         SchoolId = reader["SchoolId"] != DBNull.Value ? Convert.ToInt32(reader["SchoolId"]) : 0,
                         ProfilePhotoPath = reader["ProfilePhotoPath"] != DBNull.Value ? reader["ProfilePhotoPath"].ToString() : null,
-                        EmployeeId = reader["EmployeeId"] != DBNull.Value ? reader["EmployeeId"].ToString() : null,
+                        EmployeeId = reader["EmployeeId"] != DBNull.Value ? Convert.ToString(reader["EmployeeId"]) ?? string.Empty : string.Empty,
                         Experience = reader["Experience"] != DBNull.Value ? reader["Experience"].ToString() : null,
                         Subject = reader["Subject"] != DBNull.Value ? reader["Subject"].ToString() : null,
                         StandardId = reader["StandardId"] != DBNull.Value ? Convert.ToInt32(reader["StandardId"]) : null,
@@ -143,8 +143,8 @@ namespace ScanID.Api.Services
                         item.User = new User
                         {
                             Id = item.UserId,
-                            Name = reader["UserName"] != DBNull.Value ? reader["UserName"].ToString() : "",
-                            Email = reader["UserEmail"] != DBNull.Value ? reader["UserEmail"].ToString() : "",
+                            Name = reader["UserName"] != DBNull.Value ? Convert.ToString(reader["UserName"]) ?? string.Empty : string.Empty,
+                            Email = reader["UserEmail"] != DBNull.Value ? Convert.ToString(reader["UserEmail"]) ?? string.Empty : string.Empty,
                             Role = ""
                         };
                     }

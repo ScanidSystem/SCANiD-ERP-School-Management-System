@@ -1,0 +1,269 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace ScanID.Api.Models
+{
+    /// <summary>
+    /// Safe user payload returned to clients. Sensitive fields such as PasswordHash are intentionally excluded.
+    /// </summary>
+    public class UserDto
+    {
+        public int Id { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string? Name { get; set; }
+        public string? Email { get; set; }
+        public string? Role { get; set; }
+        public int? RoleId { get; set; }
+        public int? SchoolId { get; set; }
+        public bool IsActive { get; set; }
+        public DateTime CreatedOn { get; set; }
+        public DateTime ModifiedOn { get; set; }
+    }
+
+    /// <summary>
+    /// User creation contract. PasswordHash is accepted only to preserve the existing UI/API flow;
+    /// it should be replaced by a proper Password field plus server-side hashing.
+    /// </summary>
+    public class UserCreateDto
+    {
+        [Required]
+        public string Username { get; set; } = string.Empty;
+        public string? PasswordHash { get; set; }
+        public string? Name { get; set; }
+        public string? Email { get; set; }
+        public string? Role { get; set; }
+        public int? RoleId { get; set; }
+        public int? SchoolId { get; set; }
+        public string? CreatedBy { get; set; }
+    }
+
+    /// <summary>
+    /// User update contract. Only editable fields are accepted, preventing accidental entity overposting.
+    /// </summary>
+    public class UserUpdateDto : UserCreateDto
+    {
+        public string? ModifiedBy { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+
+    /// <summary>
+    /// Safe teacher payload returned to clients. Nested user data is reduced to display fields only.
+    /// </summary>
+    public class TeacherDto
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public int SchoolId { get; set; }
+        public string EmployeeId { get; set; } = string.Empty;
+        public string? Department { get; set; }
+        public string? Qualification { get; set; }
+        public string? ContactNumber { get; set; }
+        public string Status { get; set; } = "Active";
+        public string? ProfilePhotoPath { get; set; }
+        public string? Experience { get; set; }
+        public string? Subject { get; set; }
+        public int? StandardId { get; set; }
+        public int? SectionId { get; set; }
+        public UserDto? User { get; set; }
+    }
+
+    /// <summary>
+    /// Teacher write contract. It accepts only fields editable from the teacher form.
+    /// </summary>
+    public class TeacherWriteDto
+    {
+        public int UserId { get; set; }
+        public int SchoolId { get; set; }
+        public string EmployeeId { get; set; } = string.Empty;
+        public string? Department { get; set; }
+        public string? Qualification { get; set; }
+        public string? ContactNumber { get; set; }
+        public string Status { get; set; } = "Active";
+        public string? ProfilePhotoPath { get; set; }
+        public string? Experience { get; set; }
+        public string? Subject { get; set; }
+        public int? StandardId { get; set; }
+        public int? SectionId { get; set; }
+        public UserCreateDto? User { get; set; }
+        public string? CreatedBy { get; set; }
+        public string? ModifiedBy { get; set; }
+    }
+
+    /// <summary>
+    /// Student response DTO for directory/API consumers. It preserves the existing camelCase contract
+    /// while avoiding direct EF navigation serialization.
+    /// </summary>
+    public class StudentDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public int SchoolId { get; set; }
+        public string Status { get; set; } = "Active";
+        public int RollNumber { get; set; }
+        public string? FirstName { get; set; }
+        public string? MiddleName { get; set; }
+        public string? LastName { get; set; }
+        public string? GrNo { get; set; }
+        public string? Gender { get; set; }
+        public DateTime? DateOfBirth { get; set; }
+        public string? Address { get; set; }
+        public string? MotherName { get; set; }
+        public string? FatherContactNo { get; set; }
+        public string? MotherContactNo { get; set; }
+        public string? AadharCard { get; set; }
+        public string? ProfilePhotoPath { get; set; }
+        public int? StandardId { get; set; }
+        public int? SectionId { get; set; }
+        public int? AcademicYearId { get; set; }
+        public int? CategoryId { get; set; }
+        public int? CasteId { get; set; }
+        public int? SubCasteId { get; set; }
+        public int? ReligionId { get; set; }
+        public int? BloodGroupId { get; set; }
+        public int? HouseId { get; set; }
+        public int? AdmissionTypeId { get; set; }
+        public int? CityId { get; set; }
+        public int? StateId { get; set; }
+        public int? ShiftId { get; set; }
+        public int? SchoolSectionId { get; set; }
+        public string? Email { get; set; }
+        public DateTime? AdmissionDate { get; set; }
+        public string? UniformId { get; set; }
+        public string? Rfid { get; set; }
+        public bool Sms { get; set; }
+        public bool IsStateBoard { get; set; }
+        public bool DigitalUniform { get; set; }
+        public bool DigitalNotebook { get; set; }
+        public bool OptedForBus { get; set; }
+        public string? Standard { get; set; }
+        public string? Section { get; set; }
+        public string? AcademicYear { get; set; }
+        public string? ShiftName { get; set; }
+        public string? CreatedBy { get; set; }
+        public DateTime CreatedOn { get; set; }
+        public string? ModifiedBy { get; set; }
+        public DateTime ModifiedOn { get; set; }
+    }
+
+    /// <summary>
+    /// Student write DTO used for create/update/bulk operations. This prevents clients from posting
+    /// arbitrary EF navigation graphs while keeping all existing form fields available.
+    /// </summary>
+    public class StudentWriteDto
+    {
+        public string Name { get; set; } = string.Empty;
+        public int SchoolId { get; set; }
+        public string Status { get; set; } = "Active";
+        public int RollNumber { get; set; }
+        public string? FirstName { get; set; }
+        public string? MiddleName { get; set; }
+        public string? LastName { get; set; }
+        public string? GrNo { get; set; }
+        public string? Gender { get; set; }
+        public DateTime? DateOfBirth { get; set; }
+        public string? Address { get; set; }
+        public string? MotherName { get; set; }
+        public string? FatherContactNo { get; set; }
+        public string? MotherContactNo { get; set; }
+        public string? AadharCard { get; set; }
+        public string? ProfilePhotoPath { get; set; }
+        public int? StandardId { get; set; }
+        public int? SectionId { get; set; }
+        public int? AcademicYearId { get; set; }
+        public int? CategoryId { get; set; }
+        public int? CasteId { get; set; }
+        public int? SubCasteId { get; set; }
+        public int? ReligionId { get; set; }
+        public int? BloodGroupId { get; set; }
+        public int? HouseId { get; set; }
+        public int? AdmissionTypeId { get; set; }
+        public int? CityId { get; set; }
+        public int? StateId { get; set; }
+        public int? ShiftId { get; set; }
+        public int? SchoolSectionId { get; set; }
+        public string? Email { get; set; }
+        public DateTime? AdmissionDate { get; set; }
+        public string? UniformId { get; set; }
+        public string? Rfid { get; set; }
+        public bool Sms { get; set; }
+        public bool IsStateBoard { get; set; }
+        public bool DigitalUniform { get; set; }
+        public bool DigitalNotebook { get; set; }
+        public bool OptedForBus { get; set; }
+        public string? CreatedBy { get; set; }
+        public string? ModifiedBy { get; set; }
+    }
+
+    /// <summary>
+    /// School response DTO. Kept broad because the school configuration screen edits many operational settings.
+    /// </summary>
+    public class SchoolDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Code { get; set; }
+        public string? Address { get; set; }
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public int TotalStudents { get; set; }
+        public string Status { get; set; } = "Active";
+        public string? ProfilePhotoPath { get; set; }
+        public string? ShortName { get; set; }
+        public int? CityId { get; set; }
+        public int? StateId { get; set; }
+        public string? Pincode { get; set; }
+        public int? SMSLimit { get; set; }
+        public int? TotalSMSSent { get; set; }
+        public int? SMSBalance { get; set; }
+        public bool? EnableSMS { get; set; }
+        public bool? EnablePresenteeSMS { get; set; }
+        public bool? AutomaticBirthdaySMS { get; set; }
+        public bool? EnableWhatsapp { get; set; }
+        public string? WebsiteUrl { get; set; }
+        public string? SMSSenderID { get; set; }
+        public string? BusNumbers { get; set; }
+        public string? SCANiDContact { get; set; }
+        public string? SCANiDEmail { get; set; }
+        public string? InChargeContact { get; set; }
+        public string? CityName { get; set; }
+        public string? StateName { get; set; }
+        public bool IsActive { get; set; }
+        public bool IsDeleted { get; set; }
+        public string? CreatedBy { get; set; }
+        public DateTime CreatedOn { get; set; }
+        public string? ModifiedBy { get; set; }
+        public DateTime ModifiedOn { get; set; }
+    }
+
+    /// <summary>
+    /// School write DTO with editable configuration fields only.
+    /// </summary>
+    public class SchoolWriteDto
+    {
+        public string Name { get; set; } = string.Empty;
+        public string? Code { get; set; }
+        public string? Address { get; set; }
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public string Status { get; set; } = "Active";
+        public string? ProfilePhotoPath { get; set; }
+        public string? ShortName { get; set; }
+        public int? CityId { get; set; }
+        public int? StateId { get; set; }
+        public string? Pincode { get; set; }
+        public int? SMSLimit { get; set; }
+        public int? TotalSMSSent { get; set; }
+        public int? SMSBalance { get; set; }
+        public bool? EnableSMS { get; set; }
+        public bool? EnablePresenteeSMS { get; set; }
+        public bool? AutomaticBirthdaySMS { get; set; }
+        public bool? EnableWhatsapp { get; set; }
+        public string? WebsiteUrl { get; set; }
+        public string? SMSSenderID { get; set; }
+        public string? BusNumbers { get; set; }
+        public string? SCANiDContact { get; set; }
+        public string? SCANiDEmail { get; set; }
+        public string? InChargeContact { get; set; }
+        public string? CreatedBy { get; set; }
+        public string? ModifiedBy { get; set; }
+    }
+}

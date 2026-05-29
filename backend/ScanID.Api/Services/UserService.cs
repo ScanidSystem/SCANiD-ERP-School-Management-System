@@ -104,11 +104,11 @@ namespace ScanID.Api.Services
                     var item = new User
                     {
                         Id = reader["Id"] != DBNull.Value ? Convert.ToInt32(reader["Id"]) : 0,
-                        Username = reader["Username"] != DBNull.Value ? reader["Username"].ToString() : "",
-                        PasswordHash = reader["PasswordHash"] != DBNull.Value ? reader["PasswordHash"].ToString() : "",
-                        Name = reader["Name"] != DBNull.Value ? reader["Name"].ToString() : "",
-                        Email = reader["Email"] != DBNull.Value ? reader["Email"].ToString() : "",
-                        Role = reader["Role"] != DBNull.Value ? reader["Role"].ToString() : "",
+                        Username = reader["Username"] != DBNull.Value ? Convert.ToString(reader["Username"]) ?? string.Empty : string.Empty,
+                        PasswordHash = reader["PasswordHash"] != DBNull.Value ? Convert.ToString(reader["PasswordHash"]) ?? string.Empty : string.Empty,
+                        Name = reader["Name"] != DBNull.Value ? Convert.ToString(reader["Name"]) ?? string.Empty : string.Empty,
+                        Email = reader["Email"] != DBNull.Value ? Convert.ToString(reader["Email"]) ?? string.Empty : string.Empty,
+                        Role = reader["Role"] != DBNull.Value ? Convert.ToString(reader["Role"]) ?? string.Empty : string.Empty,
                         RoleId = reader["RoleId"] != DBNull.Value ? Convert.ToInt32(reader["RoleId"]) : null,
                         SchoolId = reader["SchoolId"] != DBNull.Value ? Convert.ToInt32(reader["SchoolId"]) : null,
                         IsActive = reader["IsActive"] != DBNull.Value && Convert.ToBoolean(reader["IsActive"]),

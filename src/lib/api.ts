@@ -288,13 +288,31 @@ export interface PaginatedParams {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   search?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
+
+type ApiObject = Record<string, unknown>;
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+  role?: string;
+  schoolId?: number;
+}
+
+export interface StudentWriteRequest extends ApiObject {}
+export interface SchoolWriteRequest extends ApiObject {}
+export interface TeacherWriteRequest extends ApiObject {}
+export interface MasterWriteRequest extends ApiObject {}
+export interface NavigationWriteRequest extends ApiObject {}
+export interface MessageWriteRequest extends ApiObject {}
+export interface UserWriteRequest extends ApiObject {}
+export type AttendanceWriteRequest = ApiObject | ApiObject[];
 
 // Generic CRUD operations
 export const apiService = {
   // Auth
-  login: (credentials: any) => api.post("/auth/login", credentials),
+  login: (credentials: LoginRequest) => api.post("/auth/login", credentials),
   forgotPassword: (username: string) =>
     api.post("/auth/forgot-password", { username }),
 
@@ -302,9 +320,9 @@ export const apiService = {
   getStudents: (schoolId?: number, academicYearId?: number, params?: PaginatedParams) =>
     api.get("/students", { params: { schoolId, academicYearId, ...params } }),
   getStudentById: (id: number) => api.get(`/students/${id}`),
-  createStudent: (data: any) => api.post("/students", data),
-  bulkCreateStudents: (data: any[]) => api.post("/students/bulk", data),
-  updateStudent: (id: number, data: any) => api.put(`/students/${id}`, data),
+  createStudent: (data: StudentWriteRequest) => api.post("/students", data),
+  bulkCreateStudents: (data: StudentWriteRequest[]) => api.post("/students/bulk", data),
+  updateStudent: (id: number, data: StudentWriteRequest) => api.put(`/students/${id}`, data),
   deleteStudent: (id: number) => api.delete(`/students/${id}`),
   exportStudents: (schoolId?: number) => api.get("/students/export", { params: { schoolId }, responseType: 'blob' }),
   getStudentSampleTemplate: () => api.get("/students/sample-template", { responseType: 'blob' }),
@@ -325,8 +343,8 @@ export const apiService = {
   // Schools
   getSchools: (params?: PaginatedParams) => api.get("/schools", { params }),
   getSchoolById: (id: number) => api.get(`/schools/${id}`),
-  createSchool: (data: any) => api.post("/schools", data),
-  updateSchool: (id: number, data: any) => api.put(`/schools/${id}`, data),
+  createSchool: (data: SchoolWriteRequest) => api.post("/schools", data),
+  updateSchool: (id: number, data: SchoolWriteRequest) => api.put(`/schools/${id}`, data),
   deleteSchool: (id: number) => api.delete(`/schools/${id}`),
   uploadSchoolPhoto: (id: number, file: File) => {
     const formData = new FormData();
@@ -341,8 +359,8 @@ export const apiService = {
   // Teachers
   getTeachers: (schoolId?: number, academicYearId?: number, params?: PaginatedParams) =>
     api.get("/teachers", { params: { schoolId, academicYearId, ...params } }),
-  createTeacher: (data: any) => api.post("/teachers", data),
-  updateTeacher: (id: number, data: any) => api.put(`/teachers/${id}`, data),
+  createTeacher: (data: TeacherWriteRequest) => api.post("/teachers", data),
+  updateTeacher: (id: number, data: TeacherWriteRequest) => api.put(`/teachers/${id}`, data),
   deleteTeacher: (id: number) => api.delete(`/teachers/${id}`),
   uploadTeacherPhoto: (id: number, file: File) => {
     const formData = new FormData();
@@ -360,7 +378,7 @@ export const apiService = {
   // Attendance
   getAttendance: (date: string, schoolId?: number, academicYearId?: number, params?: PaginatedParams) =>
     api.get("/attendance", { params: { date, schoolId, academicYearId, ...params } }),
-  markAttendance: (data: any) => {
+  markAttendance: (data: AttendanceWriteRequest) => {
     if (Array.isArray(data)) {
       return api.post("/attendance/bulk", data);
     }
@@ -380,115 +398,115 @@ export const apiService = {
 
   // Master Data (Configuration)
   getStandards: (params?: PaginatedParams) => api.get("/masters/standards", { params }),
-  createStandard: (data: any) => api.post("/masters/standards", data),
-  updateStandard: (id: number, data: any) => api.put(`/masters/standards/${id}`, data),
+  createStandard: (data: MasterWriteRequest) => api.post("/masters/standards", data),
+  updateStandard: (id: number, data: MasterWriteRequest) => api.put(`/masters/standards/${id}`, data),
   deleteStandard: (id: number) => api.delete(`/masters/standards/${id}`),
 
   getSections: (params?: PaginatedParams) => api.get("/masters/sections", { params }),
-  createSection: (data: any) => api.post("/masters/sections", data),
-  updateSection: (id: number, data: any) => api.put(`/masters/sections/${id}`, data),
+  createSection: (data: MasterWriteRequest) => api.post("/masters/sections", data),
+  updateSection: (id: number, data: MasterWriteRequest) => api.put(`/masters/sections/${id}`, data),
   deleteSection: (id: number) => api.delete(`/masters/sections/${id}`),
 
   getAcademicYears: (params?: PaginatedParams) => api.get("/masters/academic-years", { params }),
-  createAcademicYear: (data: any) => api.post("/masters/academic-years", data),
-  updateAcademicYear: (id: number, data: any) => api.put(`/masters/academic-years/${id}`, data),
+  createAcademicYear: (data: MasterWriteRequest) => api.post("/masters/academic-years", data),
+  updateAcademicYear: (id: number, data: MasterWriteRequest) => api.put(`/masters/academic-years/${id}`, data),
   deleteAcademicYear: (id: number) => api.delete(`/masters/academic-years/${id}`),
 
   getCastes: (params?: PaginatedParams) => api.get("/masters/castes", { params }),
-  createCaste: (data: any) => api.post("/masters/castes", data),
-  updateCaste: (id: number, data: any) => api.put(`/masters/castes/${id}`, data),
+  createCaste: (data: MasterWriteRequest) => api.post("/masters/castes", data),
+  updateCaste: (id: number, data: MasterWriteRequest) => api.put(`/masters/castes/${id}`, data),
   deleteCaste: (id: number) => api.delete(`/masters/castes/${id}`),
 
   getSubCastes: (params?: PaginatedParams) => api.get("/masters/sub-castes", { params }),
-  createSubCaste: (data: any) => api.post("/masters/sub-castes", data),
-  updateSubCaste: (id: number, data: any) => api.put(`/masters/sub-castes/${id}`, data),
+  createSubCaste: (data: MasterWriteRequest) => api.post("/masters/sub-castes", data),
+  updateSubCaste: (id: number, data: MasterWriteRequest) => api.put(`/masters/sub-castes/${id}`, data),
   deleteSubCaste: (id: number) => api.delete(`/masters/sub-castes/${id}`),
 
   getReligions: (params?: PaginatedParams) => api.get("/masters/religions", { params }),
-  createReligion: (data: any) => api.post("/masters/religions", data),
-  updateReligion: (id: number, data: any) => api.put(`/masters/religions/${id}`, data),
+  createReligion: (data: MasterWriteRequest) => api.post("/masters/religions", data),
+  updateReligion: (id: number, data: MasterWriteRequest) => api.put(`/masters/religions/${id}`, data),
   deleteReligion: (id: number) => api.delete(`/masters/religions/${id}`),
 
   getSchoolSections: (params?: PaginatedParams) => api.get("/masters/school-sections", { params }),
-  createSchoolSection: (data: any) => api.post("/masters/school-sections", data),
-  updateSchoolSection: (id: number, data: any) => api.put(`/masters/school-sections/${id}`, data),
+  createSchoolSection: (data: MasterWriteRequest) => api.post("/masters/school-sections", data),
+  updateSchoolSection: (id: number, data: MasterWriteRequest) => api.put(`/masters/school-sections/${id}`, data),
   deleteSchoolSection: (id: number) => api.delete(`/masters/school-sections/${id}`),
 
   getStates: (params?: PaginatedParams) => api.get("/masters/states", { params }),
-  createState: (data: any) => api.post("/masters/states", data),
-  updateState: (id: number, data: any) => api.put(`/masters/states/${id}`, data),
+  createState: (data: MasterWriteRequest) => api.post("/masters/states", data),
+  updateState: (id: number, data: MasterWriteRequest) => api.put(`/masters/states/${id}`, data),
   deleteState: (id: number) => api.delete(`/masters/states/${id}`),
 
   getCities: (params?: PaginatedParams) => api.get("/masters/cities", { params }),
-  createCity: (data: any) => api.post("/masters/cities", data),
-  updateCity: (id: number, data: any) => api.put(`/masters/cities/${id}`, data),
+  createCity: (data: MasterWriteRequest) => api.post("/masters/cities", data),
+  updateCity: (id: number, data: MasterWriteRequest) => api.put(`/masters/cities/${id}`, data),
   deleteCity: (id: number) => api.delete(`/masters/cities/${id}`),
 
   getBloodGroups: (params?: PaginatedParams) => api.get("/masters/blood-groups", { params }),
-  createBloodGroup: (data: any) => api.post("/masters/blood-groups", data),
-  updateBloodGroup: (id: number, data: any) => api.put(`/masters/blood-groups/${id}`, data),
+  createBloodGroup: (data: MasterWriteRequest) => api.post("/masters/blood-groups", data),
+  updateBloodGroup: (id: number, data: MasterWriteRequest) => api.put(`/masters/blood-groups/${id}`, data),
   deleteBloodGroup: (id: number) => api.delete(`/masters/blood-groups/${id}`),
 
   getHouses: (params?: PaginatedParams) => api.get("/masters/houses", { params }),
-  createHouse: (data: any) => api.post("/masters/houses", data),
-  updateHouse: (id: number, data: any) => api.put(`/masters/houses/${id}`, data),
+  createHouse: (data: MasterWriteRequest) => api.post("/masters/houses", data),
+  updateHouse: (id: number, data: MasterWriteRequest) => api.put(`/masters/houses/${id}`, data),
   deleteHouse: (id: number) => api.delete(`/masters/houses/${id}`),
 
   getAdmissionTypes: (params?: PaginatedParams) => api.get("/masters/admission-types", { params }),
-  createAdmissionType: (data: any) => api.post("/masters/admission-types", data),
-  updateAdmissionType: (id: number, data: any) => api.put(`/masters/admission-types/${id}`, data),
+  createAdmissionType: (data: MasterWriteRequest) => api.post("/masters/admission-types", data),
+  updateAdmissionType: (id: number, data: MasterWriteRequest) => api.put(`/masters/admission-types/${id}`, data),
   deleteAdmissionType: (id: number) => api.delete(`/masters/admission-types/${id}`),
 
   getCategories: (params?: PaginatedParams) => api.get("/masters/categories", { params }),
-  createCategory: (data: any) => api.post("/masters/categories", data),
-  updateCategory: (id: number, data: any) => api.put(`/masters/categories/${id}`, data),
+  createCategory: (data: MasterWriteRequest) => api.post("/masters/categories", data),
+  updateCategory: (id: number, data: MasterWriteRequest) => api.put(`/masters/categories/${id}`, data),
   deleteCategory: (id: number) => api.delete(`/masters/categories/${id}`),
 
   getSessions: (params?: PaginatedParams) => api.get("/masters/sessions", { params }),
-  createSession: (data: any) => api.post("/masters/sessions", data),
-  updateSession: (id: number, data: any) => api.put(`/masters/sessions/${id}`, data),
+  createSession: (data: MasterWriteRequest) => api.post("/masters/sessions", data),
+  updateSession: (id: number, data: MasterWriteRequest) => api.put(`/masters/sessions/${id}`, data),
   deleteSession: (id: number) => api.delete(`/masters/sessions/${id}`),
 
   getBatches: (params?: PaginatedParams) => api.get("/masters/batches", { params }),
-  createBatch: (data: any) => api.post("/masters/batches", data),
-  updateBatch: (id: number, data: any) => api.put(`/masters/batches/${id}`, data),
+  createBatch: (data: MasterWriteRequest) => api.post("/masters/batches", data),
+  updateBatch: (id: number, data: MasterWriteRequest) => api.put(`/masters/batches/${id}`, data),
   deleteBatch: (id: number) => api.delete(`/masters/batches/${id}`),
 
   getShifts: (params?: PaginatedParams) => api.get("/masters/shifts", { params }),
-  createShift: (data: any) => api.post("/masters/shifts", data),
-  updateShift: (id: number, data: any) => api.put(`/masters/shifts/${id}`, data),
+  createShift: (data: MasterWriteRequest) => api.post("/masters/shifts", data),
+  updateShift: (id: number, data: MasterWriteRequest) => api.put(`/masters/shifts/${id}`, data),
   deleteShift: (id: number) => api.delete(`/masters/shifts/${id}`),
 
   getSubjects: (params?: PaginatedParams) => api.get("/masters/subjects", { params }),
-  createSubject: (data: any) => api.post("/masters/subjects", data),
-  updateSubject: (id: number, data: any) => api.put(`/masters/subjects/${id}`, data),
+  createSubject: (data: MasterWriteRequest) => api.post("/masters/subjects", data),
+  updateSubject: (id: number, data: MasterWriteRequest) => api.put(`/masters/subjects/${id}`, data),
   deleteSubject: (id: number) => api.delete(`/masters/subjects/${id}`),
 
   getExamTypes: (params?: PaginatedParams) => api.get("/masters/exam-types", { params }),
-  createExamType: (data: any) => api.post("/masters/exam-types", data),
-  updateExamType: (id: number, data: any) => api.put(`/masters/exam-types/${id}`, data),
+  createExamType: (data: MasterWriteRequest) => api.post("/masters/exam-types", data),
+  updateExamType: (id: number, data: MasterWriteRequest) => api.put(`/masters/exam-types/${id}`, data),
   deleteExamType: (id: number) => api.delete(`/masters/exam-types/${id}`),
 
   getDesignations: (params?: PaginatedParams) => api.get("/masters/designations", { params }),
-  createDesignation: (data: any) => api.post("/masters/designations", data),
-  updateDesignation: (id: number, data: any) => api.put(`/masters/designations/${id}`, data),
+  createDesignation: (data: MasterWriteRequest) => api.post("/masters/designations", data),
+  updateDesignation: (id: number, data: MasterWriteRequest) => api.put(`/masters/designations/${id}`, data),
   deleteDesignation: (id: number) => api.delete(`/masters/designations/${id}`),
 
   getOccupations: (params?: PaginatedParams) => api.get("/masters/occupations", { params }),
-  createOccupation: (data: any) => api.post("/masters/occupations", data),
-  updateOccupation: (id: number, data: any) => api.put(`/masters/occupations/${id}`, data),
+  createOccupation: (data: MasterWriteRequest) => api.post("/masters/occupations", data),
+  updateOccupation: (id: number, data: MasterWriteRequest) => api.put(`/masters/occupations/${id}`, data),
   deleteOccupation: (id: number) => api.delete(`/masters/occupations/${id}`),
 
   // Roles
   getRoles: (params?: PaginatedParams) => api.get("/masters/roles", { params }),
-  createRole: (data: any) => api.post("/masters/roles", data),
-  updateRole: (id: number, data: any) => api.put(`/masters/roles/${id}`, data),
+  createRole: (data: MasterWriteRequest) => api.post("/masters/roles", data),
+  updateRole: (id: number, data: MasterWriteRequest) => api.put(`/masters/roles/${id}`, data),
   deleteRole: (id: number) => api.delete(`/masters/roles/${id}`),
 
   // Navigation (Sidebar)
   getNavigations: (roleId?: number, params?: PaginatedParams) => api.get("/navigation", { params: { roleId, ...params } }),
-  createNavigation: (data: any) => api.post("/navigation", data),
-  updateNavigation: (id: number, data: any) => api.put(`/navigation/${id}`, data),
+  createNavigation: (data: NavigationWriteRequest) => api.post("/navigation", data),
+  updateNavigation: (id: number, data: NavigationWriteRequest) => api.put(`/navigation/${id}`, data),
   deleteNavigation: (id: number) => api.delete(`/navigation/${id}`),
 
   // Notifications
@@ -499,16 +517,17 @@ export const apiService = {
   // Communications
   getMessages: (params?: { userId?: number; type?: string } & PaginatedParams) => api.get("/messages", { params }),
   getMessageById: (id: number) => api.get(`/messages/${id}`),
-  sendMessage: (data: any) => api.post("/messages", data),
+  sendMessage: (data: MessageWriteRequest) => api.post("/messages", data),
   deleteMessage: (id: number) => api.delete(`/messages/${id}`),
   markMessageRead: (id: number) => api.put(`/messages/${id}/read`),
 
   // Users (for Role Assignment & Management)
   getUsers: (params?: PaginatedParams) => api.get("/users", { params }),
-  createUser: (data: any) => api.post("/users", data),
-  updateUser: (id: number, data: any) => api.put(`/users/${id}`, data),
+  createUser: (data: UserWriteRequest) => api.post("/users", data),
+  updateUser: (id: number, data: UserWriteRequest) => api.put(`/users/${id}`, data),
   deleteUser: (id: number) => api.delete(`/users/${id}`),
   updateUserRole: (userId: number, role: string) => api.put(`/users/${userId}/role`, { role }),
 };
 
 export default api;
+

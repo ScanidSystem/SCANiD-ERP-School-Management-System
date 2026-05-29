@@ -32,6 +32,110 @@ namespace ScanID.Api.Controllers
         }
 
         /// <summary>
+        /// Projects student entities to DTOs so API responses do not serialize full EF navigation graphs.
+        /// </summary>
+        private static StudentDto ToDto(Student student) => new()
+        {
+            Id = student.Id,
+            Name = student.Name,
+            SchoolId = student.SchoolId,
+            Status = student.Status,
+            RollNumber = student.RollNumber,
+            FirstName = student.FirstName,
+            MiddleName = student.MiddleName,
+            LastName = student.LastName,
+            GrNo = student.GrNo,
+            Gender = student.Gender,
+            DateOfBirth = student.DateOfBirth,
+            Address = student.Address,
+            MotherName = student.MotherName,
+            FatherContactNo = student.FatherContactNo,
+            MotherContactNo = student.MotherContactNo,
+            AadharCard = student.AadharCard,
+            ProfilePhotoPath = student.ProfilePhotoPath,
+            StandardId = student.StandardId,
+            SectionId = student.SectionId,
+            AcademicYearId = student.AcademicYearId,
+            CategoryId = student.CategoryId,
+            CasteId = student.CasteId,
+            SubCasteId = student.SubCasteId,
+            ReligionId = student.ReligionId,
+            BloodGroupId = student.BloodGroupId,
+            HouseId = student.HouseId,
+            AdmissionTypeId = student.AdmissionTypeId,
+            CityId = student.CityId,
+            StateId = student.StateId,
+            ShiftId = student.ShiftId,
+            SchoolSectionId = student.SchoolSectionId,
+            Email = student.Email,
+            AdmissionDate = student.AdmissionDate,
+            UniformId = student.UniformId,
+            Rfid = student.Rfid,
+            Sms = student.Sms,
+            IsStateBoard = student.IsStateBoard,
+            DigitalUniform = student.DigitalUniform,
+            DigitalNotebook = student.DigitalNotebook,
+            OptedForBus = student.OptedForBus,
+            Standard = student.Standard?.Name,
+            Section = student.Section?.Name,
+            AcademicYear = student.AcademicYear?.Name,
+            ShiftName = student.Shift?.Name,
+            CreatedBy = student.CreatedBy,
+            CreatedOn = student.CreatedOn,
+            ModifiedBy = student.ModifiedBy,
+            ModifiedOn = student.ModifiedOn
+        };
+
+        /// <summary>
+        /// Maps allowed write fields from the request DTO into the domain entity consumed by existing services.
+        /// </summary>
+        private static Student ToEntity(StudentWriteDto dto, int id = 0) => new()
+        {
+            Id = id,
+            Name = dto.Name,
+            SchoolId = dto.SchoolId,
+            Status = dto.Status,
+            RollNumber = dto.RollNumber,
+            FirstName = dto.FirstName,
+            MiddleName = dto.MiddleName,
+            LastName = dto.LastName,
+            GrNo = dto.GrNo,
+            Gender = dto.Gender,
+            DateOfBirth = dto.DateOfBirth,
+            Address = dto.Address,
+            MotherName = dto.MotherName,
+            FatherContactNo = dto.FatherContactNo,
+            MotherContactNo = dto.MotherContactNo,
+            AadharCard = dto.AadharCard,
+            ProfilePhotoPath = dto.ProfilePhotoPath,
+            StandardId = dto.StandardId,
+            SectionId = dto.SectionId,
+            AcademicYearId = dto.AcademicYearId,
+            CategoryId = dto.CategoryId,
+            CasteId = dto.CasteId,
+            SubCasteId = dto.SubCasteId,
+            ReligionId = dto.ReligionId,
+            BloodGroupId = dto.BloodGroupId,
+            HouseId = dto.HouseId,
+            AdmissionTypeId = dto.AdmissionTypeId,
+            CityId = dto.CityId,
+            StateId = dto.StateId,
+            ShiftId = dto.ShiftId,
+            SchoolSectionId = dto.SchoolSectionId,
+            Email = dto.Email,
+            AdmissionDate = dto.AdmissionDate,
+            UniformId = dto.UniformId,
+            Rfid = dto.Rfid,
+            Sms = dto.Sms,
+            IsStateBoard = dto.IsStateBoard,
+            DigitalUniform = dto.DigitalUniform,
+            DigitalNotebook = dto.DigitalNotebook,
+            OptedForBus = dto.OptedForBus,
+            CreatedBy = dto.CreatedBy,
+            ModifiedBy = dto.ModifiedBy
+        };
+
+        /// <summary>
         /// Retrieves students for a specific school and optionally an academic year. Supports pagination, sorting, searching, and custom filters.
         /// </summary>
         /// <param name="schoolId">Optional school ID filter.</param>
@@ -77,7 +181,7 @@ namespace ScanID.Api.Controllers
             // Return enveloped paginated model perfectly parsed by React UI
             return Ok(new
             {
-                data = dataList,
+                data = dataList.Select(ToDto),
                 pagination = new
                 {
                     totalCount,
@@ -95,7 +199,7 @@ namespace ScanID.Api.Controllers
         /// <param name="id">The student ID.</param>
         /// <returns>The requested student record.</returns>
         [HttpGet("{id}")]
-        public async Task<ActionResult<Student>> GetStudent(int id)
+        public async Task<ActionResult<StudentDto>> GetStudent(int id)
         {
             var student = await _studentService.GetStudentByIdAsync(id);
 
@@ -104,7 +208,7 @@ namespace ScanID.Api.Controllers
                 return NotFound();
             }
 
-            return Ok(student);
+            return Ok(ToDto(student));
         }
 
         /// <summary>
@@ -113,12 +217,13 @@ namespace ScanID.Api.Controllers
         /// <param name="student">The student data.</param>
         /// <returns>The created student record.</returns>
         [HttpPost]
-        public async Task<ActionResult<Student>> PostStudent(Student student)
+        public async Task<ActionResult<StudentDto>> PostStudent(StudentWriteDto request)
         {
             try
             {
+                var student = ToEntity(request);
                 var createdStudent = await _studentService.CreateStudentAsync(student);
-                return CreatedAtAction("GetStudent", new { id = createdStudent.Id }, createdStudent);
+                return CreatedAtAction("GetStudent", new { id = createdStudent.Id }, ToDto(createdStudent));
             }
             catch (InvalidOperationException ex)
             {
@@ -219,12 +324,11 @@ namespace ScanID.Api.Controllers
         /// <param name="student">The updated student data.</param>
         /// <returns>No content on success.</returns>
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutStudent(int id, Student student)
+        public async Task<IActionResult> PutStudent(int id, StudentWriteDto request)
         {
-            if (id != student.Id) return BadRequest();
-
             try
             {
+                var student = ToEntity(request, id);
                 var success = await _studentService.UpdateStudentAsync(student);
                 if (!success)
                 {
@@ -252,12 +356,13 @@ namespace ScanID.Api.Controllers
         /// <param name="students">List of students.</param>
         /// <returns>Count of registered students.</returns>
         [HttpPost("bulk")]
-        public async Task<ActionResult<object>> PostBulkStudents(IEnumerable<Student> students)
+        public async Task<ActionResult<object>> PostBulkStudents(IEnumerable<StudentWriteDto> requests)
         {
-            if (students == null || !students.Any()) return BadRequest("No student data provided.");
+            if (requests == null || !requests.Any()) return BadRequest("No student data provided.");
 
             try
             {
+                var students = requests.Select(request => ToEntity(request)).ToList();
                 var response = await _studentService.CreateBulkStudentsAsync(students);
                 return Ok(response);
             }

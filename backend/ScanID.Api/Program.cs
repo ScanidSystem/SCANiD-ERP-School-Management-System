@@ -7,6 +7,16 @@ using ScanID.Api.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// CORS origins are environment specific. Read them from configuration first,
+// then allow deployment slots to override with SCANID_CORS_ORIGINS=origin1,origin2.
+var configuredCorsOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? Array.Empty<string>();
+var corsOriginsOverride = Environment.GetEnvironmentVariable("SCANID_CORS_ORIGINS");
+var allowedCorsOrigins = !string.IsNullOrWhiteSpace(corsOriginsOverride)
+    ? corsOriginsOverride.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    : configuredCorsOrigins;
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddMemoryCache();
@@ -43,13 +53,13 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IFeeService, FeeService>();
 builder.Services.AddScoped<IMarkService, MarkService>();
 
-// Configure CORS for React Frontend
+// Configure CORS for React Frontend from appsettings/env instead of hard-coded origins.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "http://localhost:5000", "http://localhost:5173", "http://localhost:4173")
+            policy.WithOrigins(allowedCorsOrigins)
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -104,7 +114,8 @@ app.Use(async (context, next) =>
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "ScanID API v1");
+    //c.SwaggerEndpoint("/swagger/v1/swagger.json", "ScanID API v1");
+    c.SwaggerEndpoint("/scanid_erp_api/swagger/v1/swagger.json", "ScanID API v1");
     c.RoutePrefix = "swagger"; // Keep it at /swagger
 });
 
@@ -116,7 +127,7 @@ if (app.Environment.IsDevelopment())
 }
 else 
 {
-    app.UseHttpsRedirection();
+    //app.UseHttpsRedirection();
 }
 app.UseStaticFiles(); // Enable serving of static files from wwwroot
 app.UseCors("AllowReactApp");

@@ -26,7 +26,7 @@ namespace ScanID.Api.Controllers
         /// <param name="request">Login credentials.</param>
         /// <returns>User profile data on success.</returns>
         [HttpPost("login")]
-        public async Task<ActionResult<User>> Login([FromBody] LoginRequest request)
+        public async Task<ActionResult<UserDto>> Login([FromBody] LoginRequest request)
         {
             var user = await _authService.LogInAsync(request.Username, request.Password);
 

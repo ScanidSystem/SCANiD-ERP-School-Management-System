@@ -30,14 +30,89 @@ namespace ScanID.Api.Controllers
         }
 
         /// <summary>
+        /// Maps the domain school entity to the stable API response contract used by the UI.
+        /// </summary>
+        private static SchoolDto ToDto(School school) => new()
+        {
+            Id = school.Id,
+            Name = school.Name,
+            Code = school.Code,
+            Address = school.Address,
+            Email = school.Email,
+            Phone = school.Phone,
+            TotalStudents = school.TotalStudents,
+            Status = school.Status,
+            ProfilePhotoPath = school.ProfilePhotoPath,
+            ShortName = school.ShortName,
+            CityId = school.CityId,
+            StateId = school.StateId,
+            Pincode = school.Pincode,
+            SMSLimit = school.SMSLimit,
+            TotalSMSSent = school.TotalSMSSent,
+            SMSBalance = school.SMSBalance,
+            EnableSMS = school.EnableSMS,
+            EnablePresenteeSMS = school.EnablePresenteeSMS,
+            AutomaticBirthdaySMS = school.AutomaticBirthdaySMS,
+            EnableWhatsapp = school.EnableWhatsapp,
+            WebsiteUrl = school.WebsiteUrl,
+            SMSSenderID = school.SMSSenderID,
+            BusNumbers = school.BusNumbers,
+            SCANiDContact = school.SCANiDContact,
+            SCANiDEmail = school.SCANiDEmail,
+            InChargeContact = school.InChargeContact,
+            CityName = school.CityName,
+            StateName = school.StateName,
+            IsActive = school.IsActive,
+            IsDeleted = school.IsDeleted,
+            CreatedBy = school.CreatedBy,
+            CreatedOn = school.CreatedOn,
+            ModifiedBy = school.ModifiedBy,
+            ModifiedOn = school.ModifiedOn
+        };
+
+        /// <summary>
+        /// Converts the write DTO into the existing school entity expected by service/stored-procedure logic.
+        /// </summary>
+        private static School ToEntity(SchoolWriteDto dto, int id = 0) => new()
+        {
+            Id = id,
+            Name = dto.Name,
+            Code = dto.Code,
+            Address = dto.Address,
+            Email = dto.Email,
+            Phone = dto.Phone,
+            Status = dto.Status,
+            ProfilePhotoPath = dto.ProfilePhotoPath,
+            ShortName = dto.ShortName,
+            CityId = dto.CityId,
+            StateId = dto.StateId,
+            Pincode = dto.Pincode,
+            SMSLimit = dto.SMSLimit,
+            TotalSMSSent = dto.TotalSMSSent,
+            SMSBalance = dto.SMSBalance,
+            EnableSMS = dto.EnableSMS,
+            EnablePresenteeSMS = dto.EnablePresenteeSMS,
+            AutomaticBirthdaySMS = dto.AutomaticBirthdaySMS,
+            EnableWhatsapp = dto.EnableWhatsapp,
+            WebsiteUrl = dto.WebsiteUrl,
+            SMSSenderID = dto.SMSSenderID,
+            BusNumbers = dto.BusNumbers,
+            SCANiDContact = dto.SCANiDContact,
+            SCANiDEmail = dto.SCANiDEmail,
+            InChargeContact = dto.InChargeContact,
+            CreatedBy = dto.CreatedBy,
+            ModifiedBy = dto.ModifiedBy
+        };
+
+        /// <summary>
         /// Retrieves all active schools.
         /// </summary>
         /// <returns>A list of schools.</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<School>>> GetSchools()
+        public async Task<ActionResult<IEnumerable<SchoolDto>>> GetSchools()
         {
             var schools = await _schoolService.GetSchoolsAsync();
-            return Ok(schools);
+            return Ok(schools.Select(ToDto));
         }
 
         /// <summary>
@@ -46,11 +121,11 @@ namespace ScanID.Api.Controllers
         /// <param name="id">The school ID.</param>
         /// <returns>The requested school record.</returns>
         [HttpGet("{id}")]
-        public async Task<ActionResult<School>> GetSchool(int id)
+        public async Task<ActionResult<SchoolDto>> GetSchool(int id)
         {
             var school = await _schoolService.GetSchoolByIdAsync(id);
             if (school == null) return NotFound();
-            return Ok(school);
+            return Ok(ToDto(school));
         }
 
         /// <summary>
@@ -59,10 +134,11 @@ namespace ScanID.Api.Controllers
         /// <param name="school">The school object.</param>
         /// <returns>The created school record.</returns>
         [HttpPost]
-        public async Task<ActionResult<School>> PostSchool(School school)
+        public async Task<ActionResult<SchoolDto>> PostSchool(SchoolWriteDto request)
         {
+            var school = ToEntity(request);
             var createdSchool = await _schoolService.CreateSchoolAsync(school);
-            return CreatedAtAction("GetSchool", new { id = createdSchool.Id }, createdSchool);
+            return CreatedAtAction("GetSchool", new { id = createdSchool.Id }, ToDto(createdSchool));
         }
 
         /// <summary>
@@ -72,13 +148,12 @@ namespace ScanID.Api.Controllers
         /// <param name="school">The updated school object.</param>
         /// <returns>No content on success.</returns>
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutSchool(int id, School school)
+        public async Task<IActionResult> PutSchool(int id, SchoolWriteDto request)
         {
-            if (id != school.Id) return BadRequest();
-
             var existingSchool = await _schoolService.GetSchoolByIdAsync(id);
             if (existingSchool == null) return NotFound();
 
+            var school = ToEntity(request, id);
             var success = await _schoolService.UpdateSchoolAsync(school);
             if (!success) return StatusCode(500, "Failed to persist school record updates.");
 

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ScanID.Api.Interfaces;
 using ScanID.Api.Models;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ScanID.Api.Controllers
@@ -16,6 +15,41 @@ namespace ScanID.Api.Controllers
         {
             _userService = userService;
         }
+
+        /// <summary>
+        /// Converts the domain entity to a client-safe DTO so password hashes and navigation internals never leave the API.
+        /// </summary>
+        private static UserDto ToDto(User user) => new()
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Name = user.Name,
+            Email = user.Email,
+            Role = user.Role,
+            RoleId = user.RoleId,
+            SchoolId = user.SchoolId,
+            IsActive = user.IsActive,
+            CreatedOn = user.CreatedOn,
+            ModifiedOn = user.ModifiedOn
+        };
+
+        /// <summary>
+        /// Maps validated write DTO fields into the existing domain model used by the service layer.
+        /// </summary>
+        private static User ToEntity(UserCreateDto dto, int id = 0) => new()
+        {
+            Id = id,
+            Username = dto.Username,
+            PasswordHash = dto.PasswordHash ?? string.Empty,
+            Name = dto.Name,
+            Email = dto.Email,
+            Role = dto.Role,
+            RoleId = dto.RoleId,
+            SchoolId = dto.SchoolId,
+            CreatedBy = dto.CreatedBy,
+            ModifiedBy = dto is UserUpdateDto updateDto ? updateDto.ModifiedBy : dto.CreatedBy,
+            IsActive = dto is UserUpdateDto update ? update.IsActive : true
+        };
 
         // GET: api/Users
         [HttpGet]
@@ -43,7 +77,7 @@ namespace ScanID.Api.Controllers
 
             return Ok(new
             {
-                data = paginatedUsers,
+                data = paginatedUsers.Select(ToDto),
                 pagination = new
                 {
                     totalCount,
@@ -56,7 +90,7 @@ namespace ScanID.Api.Controllers
 
         // GET: api/Users/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
+        public async Task<ActionResult<UserDto>> GetUser(int id)
         {
             var user = await _userService.GetUserByIdAsync(id);
 
@@ -65,18 +99,13 @@ namespace ScanID.Api.Controllers
                 return NotFound();
             }
 
-            return Ok(user);
+            return Ok(ToDto(user));
         }
 
         // PUT: api/Users/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, User user)
+        public async Task<IActionResult> PutUser(int id, UserUpdateDto request)
         {
-            if (id != user.Id)
-            {
-                return BadRequest();
-            }
-
             var existingUser = await _userService.GetUserByIdAsync(id);
             if (existingUser == null)
             {
@@ -84,6 +113,7 @@ namespace ScanID.Api.Controllers
             }
 
             // Fallback to preserve password hash if none supplied in client request
+            var user = ToEntity(request, id);
             if (string.IsNullOrEmpty(user.PasswordHash))
             {
                 user.PasswordHash = existingUser.PasswordHash;
@@ -100,10 +130,11 @@ namespace ScanID.Api.Controllers
 
         // POST: api/Users
         [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
+        public async Task<ActionResult<UserDto>> PostUser(UserCreateDto request)
         {
+            var user = ToEntity(request);
             var createdUser = await _userService.CreateUserAsync(user);
-            return CreatedAtAction("GetUser", new { id = createdUser.Id }, createdUser);
+            return CreatedAtAction("GetUser", new { id = createdUser.Id }, ToDto(createdUser));
         }
 
         // DELETE: api/Users/5
