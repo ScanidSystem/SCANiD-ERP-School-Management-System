@@ -657,41 +657,41 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
             <div className="border-0 overflow-x-auto custom-scrollbar">
               <Table>
                 <TableHeader className="bg-slate-50/30">
-                  <TableRow className="hover:bg-transparent border-slate-50 h-16">
-                    <TableHead className={cn("w-24 pl-8 text-[11px] font-black uppercase tracking-widest text-slate-900 text-xs sm:text-sm font-bold uppercase tracking-wide", activeTab === "role-master" || activeTab === "role-assignment" ? "text-slate-600" : "text-slate-600")}>
-                      {activeTab === "role-master" || activeTab === "role-assignment" ? "INDEX" : "Index"}
+                  <TableRow className="hover:bg-transparent border-slate-100 h-20 bg-slate-50/50">
+                    <TableHead className="w-24 pl-10 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                      Index
                     </TableHead>
-                    <TableHead className={cn("text-[11px] font-black uppercase tracking-widest text-slate-900 text-xs sm:text-sm font-bold ms-5 uppercase tracking-wide", activeTab === "role-master" || activeTab === "role-assignment" ? "text-slate-600" : "text-slate-600")}>
-                      {activeTab === "role-assignment" ? "USER PROFILE" : activeTab === "role-master" ? "ROLE NAME" : "Primary Label"}
+                    <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                      {activeTab === "role-assignment" ? "User Identity" : activeTab === "role-master" ? "Role Descriptor" : "Master Label"}
                     </TableHead>
-                    {activeTab === "role-master" && <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 text-slate-900 text-xs sm:text-sm font-bold  uppercase tracking-wide">DESCRIPTION</TableHead>}
-                    {activeTab === "role-assignment" && <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 text-slate-900 text-xs sm:text-sm font-bold uppercase tracking-wide">USERNAME</TableHead>}
-                    {activeTab === "role-assignment" && <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">SYSTEM ROLE</TableHead>}
-                    {activeTab === "academic-years" && <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Current Session</TableHead>}
-                    {activeTab === "houses" && <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Hex Code</TableHead>}
-                    {activeTab === "sub-castes" && <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Parent Category</TableHead>}
-                    {activeTab === "cities" && <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Administrative State</TableHead>}
+                    {activeTab === "role-master" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Governance Scope</TableHead>}
+                    {activeTab === "role-assignment" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Username</TableHead>}
+                    {activeTab === "role-assignment" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Access Tier</TableHead>}
+                    {activeTab === "academic-years" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Cycle Status</TableHead>}
+                    {activeTab === "houses" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Visual Code</TableHead>}
+                    {activeTab === "sub-castes" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Parent Category</TableHead>}
+                    {activeTab === "cities" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Regional State</TableHead>}
                     {activeTab === "schools" && (
                       <>
-                        <TableHead className="text-[11px] text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Location</TableHead>
-                        <TableHead className="text-[11px]  text-slate-600 text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Contact</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Physical Origin</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Registry Detail</TableHead>
                       </>
                     )}
                     {activeTab === "navigation" && (
                       <>
-                        <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 font-black uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide min-w-[140px]">PATH</TableHead>
-                        <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 font-black uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide min-w-[180px]">PARENT </TableHead>
-                        <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 font-black uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide min-w-[160px]">ROLES</TableHead>
-                        <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 font-black uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide text-center w-24">ORDER</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 min-w-[200px]">Navigation Path</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 min-w-[180px]">Menu Hierarchy</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 min-w-[160px]">Authorized Roles</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center w-24">Weight</TableHead>
                       </>
                     )}
-                    {activeTab !== "role-assignment" && activeTab !== "navigation" && activeTab !== "role-master" && <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Description</TableHead>}
-                    <TableHead className={cn("text-[11px] font-black uppercase tracking-widest text-xs sm:text-sm font-bold uppercase tracking-wide", activeTab === "role-master" || activeTab === "role-assignment" ? "text-slate-600" : "text-slate-600")}>
-                      {activeTab === "role-master" || activeTab === "role-assignment" ? "STATUS" : "Status"}
+                    {activeTab !== "role-assignment" && activeTab !== "navigation" && activeTab !== "role-master" && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Contextual Info</TableHead>}
+                    <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                      System Status
                     </TableHead>
-                    {(activeTab === "role-master" || activeTab === "role-assignment") && <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">LAST UPDATED</TableHead>}
-                    <TableHead className={cn("w-20 pr-8 text-right text-[11px] font-black uppercase tracking-widest text-xs sm:text-sm font-bold uppercase tracking-wide", activeTab === "role-master" || activeTab === "role-assignment" ? "text-slate-600" : "text-slate-600")}>
-                      {activeTab === "role-master" || activeTab === "role-assignment" ? "MANAGE" : "Manage"}
+                    {(activeTab === "role-master" || activeTab === "role-assignment") && <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Last Sync</TableHead>}
+                    <TableHead className="w-20 pr-10 text-right text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                      Actions
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -720,12 +720,12 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                     </TableRow>
                   ) : (
                     Array.isArray(filteredData) && filteredData.map((item) => (
-                      <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors border-slate-50/50 h-20 group">
-                        <TableCell className="pl-8">
+                      <TableRow key={item.id} className="hover:bg-slate-50/40 transition-all border-slate-50 h-[88px] group bg-white">
+                        <TableCell className="pl-10">
                           <div className={cn(
-                            "flex items-center justify-center w-10 h-10 rounded-full border font-mono text-[11px] font-black transition-colors shadow-sm",
-                            activeTab === "navigation" ? "bg-slate-50 text-slate-400 border-slate-100/80 group-hover:bg-white group-hover:border-blue-200 group-hover:text-blue-600" : 
-                            (activeTab === "role-master" || activeTab === "role-assignment" ? "bg-slate-50 text-slate-600 border-slate-100" : "bg-slate-50 text-slate-400 border-slate-100")
+                            "flex items-center justify-center w-11 h-11 rounded-2xl border font-mono text-[11px] font-black transition-all shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
+                            activeTab === "navigation" ? "bg-white text-blue-600 border-blue-100/50 group-hover:scale-110 group-hover:shadow-blue-200/40 group-hover:rotate-3" : 
+                            "bg-white text-slate-400 border-slate-100 group-hover:border-indigo-100 group-hover:text-indigo-600 group-hover:scale-110 group-hover:rotate-3"
                           )}>
                             {item.id.toString().padStart(2, '0')}
                           </div>
@@ -918,38 +918,41 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                           <>
                             <TableCell>
                               <div className="flex items-center">
-                                <code className="text-[11px] font-black font-mono text-blue-600 bg-blue-50/50 px-2.5 py-1.5 rounded-lg border border-blue-100/40">
+                                <code className="text-[11px] font-black font-mono text-indigo-600 bg-indigo-50/50 px-3 py-2 rounded-xl border border-indigo-100/40 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
                                   {item.path}
                                 </code>
                               </div>
                             </TableCell>
                             <TableCell>
                               {item.parentId ? (
-                                <div className="flex flex-col gap-1">
-                                  <span className="text-[13px] font-bold text-slate-700">
+                                <div className="flex flex-col gap-2">
+                                  <span className="text-[14px] font-black text-slate-800 tracking-tight leading-none">
                                     {masterData.find(m => m.id === parseSafeInt(item.parentId))?.title || "Parent Hidden"}
                                   </span>
-                                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Parent Group</span>
+                                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-0.5">Parent Category</span>
                                 </div>
                               ) : (
-                                <span className="text-slate-300 font-bold text-xs">— Top Level —</span>
+                                <div className="flex items-center gap-2 text-indigo-400 font-black text-[10px] uppercase tracking-widest bg-indigo-50/30 px-3 py-1.5 rounded-lg border border-indigo-100/20 w-fit">
+                                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                                   Root Hierarchy
+                                </div>
                               )}
                             </TableCell>
                             <TableCell>
-                              <div className="flex flex-wrap gap-1.5 max-w-[200px]">
+                              <div className="flex flex-wrap gap-2 max-w-[220px]">
                                 {Array.isArray(item.roles) && item.roles.length > 0 ? (
                                   item.roles.map((r: string) => (
-                                    <Badge key={r} variant="outline" className="bg-white text-slate-600 border-slate-200 rounded-lg text-[9px] font-black uppercase px-2 py-0.5 shadow-sm">
+                                    <Badge key={r} variant="outline" className="bg-slate-50/50 text-slate-600 border-slate-100 rounded-xl text-[9px] font-black uppercase px-3 py-1 shadow-sm transition-all hover:bg-slate-900 hover:text-white hover:border-slate-900">
                                       {r}
                                     </Badge>
                                   ))
                                 ) : (
-                                  <span className="text-[10px] text-slate-400 font-bold italic">No roles defined</span>
+                                  <span className="text-[10px] text-slate-400 font-bold italic pl-1">Global Broadcast</span>
                                 )}
                               </div>
                             </TableCell>
                             <TableCell className="text-center">
-                               <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-50 border border-slate-100 text-xs font-black text-slate-900 shadow-inner">
+                               <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-slate-900 border border-slate-800 text-[13px] font-black text-white shadow-xl shadow-slate-200 transition-all group-hover:scale-110 group-hover:rotate-6">
                                 {item.sortOrder}
                                </div>
                             </TableCell>

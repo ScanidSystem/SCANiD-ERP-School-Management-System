@@ -217,15 +217,22 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
         </Button>
         
         <div className="flex items-center gap-2 sm:gap-3">
+          {user.role === "superadmin" && (
+            <div className="flex items-center gap-2 px-2.5 sm:px-3 h-9 sm:h-10 rounded-xl bg-slate-900 text-white shadow-lg shadow-slate-200 transition-all border border-slate-800 shrink-0">
+               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+               <span className="text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap hidden sm:inline-block">Super Admin</span>
+            </div>
+          )}
+          
           {user.role === "superadmin" ? (
-            <div className="hidden md:block">
+            <div className="hidden sm:block shrink-0">
    <Select 
   value={user.schoolId?.toString() || ""} 
   onValueChange={handleSchoolChange}
 >
   <SelectTrigger
     className={cn(
-      "relative w-[210px] h-10 min-h-[40px]",
+      "relative w-[150px] md:w-[210px] h-10 min-h-[40px]",
       "rounded-xl border border-slate-200/80",
       "bg-white/50 backdrop-blur-sm",
       "pl-10 pr-3",
@@ -371,14 +378,14 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
             </div>
           )}
 
-          <div className="hidden lg:block">
+          <div className="hidden xl:block shrink-0">
    <Select 
   value={user.academicYearId?.toString() || ""} 
   onValueChange={handleYearChange}
 >
   <SelectTrigger
     className={cn(
-      "relative w-[160px] h-9 min-h-[36px]",
+      "relative w-[140px] xl:w-[160px] h-9 min-h-[36px]",
       "rounded-xl border border-blue-100",
       "bg-blue-50/20 backdrop-blur-sm",
       "pl-9 pr-3",
@@ -510,7 +517,7 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
           </div>
         </div>
 <div
-  className="relative flex-1 max-w-[400px] mx-2"
+  className="relative flex-1 max-w-[280px] lg:max-w-[400px] mx-1 sm:mx-2"
   ref={searchRef}
 >
    <form

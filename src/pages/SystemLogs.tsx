@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, RefreshCw, Trash2, Database, AlertCircle, History, Copy, Check, ChevronRight, Home, Terminal, ChevronLeft, ChevronsLeft, ChevronsRight, ChevronUp, ChevronDown, ArrowUpDown, XCircle } from "lucide-react";
+import { Loader2, RefreshCw, Trash2, Database, AlertCircle, History, Copy, Check, ChevronRight, Home, Terminal, ChevronLeft, ChevronsLeft, ChevronsRight, ChevronUp, ChevronDown, ArrowUpDown, XCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { Link, Navigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -303,24 +303,24 @@ export default function SystemLogs({ user }: SystemLogsProps) {
                 <div className="overflow-x-auto selection:bg-indigo-100">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-slate-50/50 border-y border-slate-100 h-16">
-                        <TableHead className="pl-12 w-[220px]">
-                          <div className="flex items-center gap-2 cursor-pointer text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors" onClick={() => handleErrorSort('timestamp')}>
-                            EVENT TIMESTAMP
+                      <TableRow className="bg-slate-50/50 border-y border-slate-100 h-20">
+                        <TableHead className="pl-12 w-[240px]">
+                          <div className="flex items-center gap-2 cursor-pointer text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 hover:text-indigo-600 transition-colors" onClick={() => handleErrorSort('timestamp')}>
+                            Event Timestamp
                             <ArrowUpDown size={12} className="opacity-40" />
                           </div>
                         </TableHead>
-                        <TableHead className="w-[160px]">
-                          <div className="flex items-center gap-2 cursor-pointer text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors" onClick={() => handleErrorSort('level')}>
-                            SEVERITY
+                        <TableHead className="w-[180px]">
+                          <div className="flex items-center gap-2 cursor-pointer text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 hover:text-indigo-600 transition-colors" onClick={() => handleErrorSort('level')}>
+                            Severity
                             <ArrowUpDown size={12} className="opacity-40" />
                           </div>
                         </TableHead>
-                        <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-500 min-w-[200px]">
-                          ERROR ORIGIN
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 min-w-[200px]">
+                          Error Origin
                         </TableHead>
-                        <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-500 min-w-[300px]">
-                          DETAILED MESSAGE
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 min-w-[300px]">
+                          Detailed Signal
                         </TableHead>
                         <TableHead className="pr-12 text-right w-20"></TableHead>
                       </TableRow>
@@ -342,17 +342,17 @@ export default function SystemLogs({ user }: SystemLogsProps) {
                         </TableRow>
                       ) : (
                         errorLogs.map((log: any) => (
-                          <TableRow key={log.id || log.Id} className="group hover:bg-slate-50/50 transition-all border-b border-slate-50 h-24 bg-white">
+                          <TableRow key={log.id || log.Id} className="group hover:bg-slate-50/40 transition-all border-b border-slate-50 h-[100px] bg-white">
                             <TableCell className="pl-12">
-                              <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl border border-slate-100 bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-100 transition-all">
-                                  <Clock size={16} strokeWidth={2.5} />
+                              <div className="flex items-center gap-5">
+                                <div className="w-12 h-12 rounded-2xl border border-slate-100 bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-100 group-hover:rotate-6 transition-all duration-500">
+                                  <Clock size={18} strokeWidth={2.5} />
                                 </div>
-                                <div className="flex flex-col gap-1">
-                                  <span className="text-[14px] font-bold text-slate-900 leading-none">
+                                <div className="flex flex-col gap-1.5">
+                                  <span className="text-[14px] font-black text-slate-900 leading-none tracking-tight">
                                     {new Date(log.timestamp || log.Timestamp || log.dateTime || log.DateTime).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}
                                   </span>
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                  <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 opacity-70">
                                     {new Date(log.timestamp || log.Timestamp || log.dateTime || log.DateTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                                   </span>
                                 </div>
@@ -360,31 +360,36 @@ export default function SystemLogs({ user }: SystemLogsProps) {
                             </TableCell>
                             <TableCell>
                               { (log.level || log.Level || "Error") === "Warning" ? (
-                                <Badge className="bg-amber-50 text-amber-600 border border-amber-100 rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-widest shadow-sm hover:scale-105 transition-transform">
-                                  <AlertCircle size={10} className="mr-1.5 stroke-[3]" />
-                                  Warning
-                                </Badge>
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 text-amber-600 border border-amber-100 rounded-xl w-fit shadow-sm">
+                                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                   <span className="text-[10px] font-black uppercase tracking-widest">Warning</span>
+                                </div>
                               ) : (
-                                <Badge className="bg-red-50 text-red-600 border border-red-100 rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-widest shadow-sm hover:scale-105 transition-transform">
-                                  <XCircle size={10} className="mr-1.5 stroke-[3]" />
-                                  Exception
-                                </Badge>
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 border border-red-100 rounded-xl w-fit shadow-sm">
+                                   <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                   <span className="text-[10px] font-black uppercase tracking-widest">Exception</span>
+                                </div>
                               )}
                             </TableCell>
                             <TableCell>
-                              <div className="flex flex-col gap-1.5">
-                                <span className="text-[13px] font-bold text-slate-700 tracking-tight leading-none truncate max-w-[200px]">
-                                  {log.properties?.includes('USER:') ? log.properties : (log.properties || "/API/ENDPOINT")}
+                              <div className="flex flex-col gap-2">
+                                <span className="text-[13px] font-black text-slate-800 tracking-tight leading-none truncate max-w-[200px]">
+                                  {log.properties?.includes('USER:') ? log.properties : (log.properties || "/API/INSTITUTION")}
                                 </span>
-                                <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50/50 px-2 py-0.5 rounded w-fit border border-indigo-100/30">
-                                  {log.properties?.includes('User') ? "Access Control" : "Data Core"}
+                                <span className="text-[9px] font-black text-indigo-500 uppercase tracking-[0.2em] bg-indigo-50/50 px-2 py-1 rounded-lg w-fit border border-indigo-100/30">
+                                  {log.properties?.includes('User') ? "Access Control" : "Data Master"}
                                 </span>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <p className="text-[13px] font-medium text-slate-500 max-w-[450px] truncate group-hover:text-slate-900 transition-colors leading-relaxed" title={log.message || log.Message}>
+                              <p className="text-[13px] font-bold text-slate-500 max-w-[450px] line-clamp-2 group-hover:text-slate-900 transition-colors leading-relaxed" title={log.message || log.Message}>
                                 {log.message || log.Message}
                               </p>
+                            </TableCell>
+                            <TableCell className="pr-12 text-right">
+                               <button className="p-2.5 rounded-xl bg-slate-50 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
+                                 <ChevronRight size={16} />
+                               </button>
                             </TableCell>
                           </TableRow>
                         ))
@@ -455,12 +460,12 @@ export default function SystemLogs({ user }: SystemLogsProps) {
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-slate-50/50 border-y border-slate-100 h-16">
-                        <TableHead className="pl-12 w-[220px] text-[11px] font-black uppercase tracking-widest text-slate-500">EVENT TIMESTAMP</TableHead>
-                        <TableHead className="w-[160px] text-[11px] font-black uppercase tracking-widest text-slate-500">ACTION TYPE</TableHead>
-                        <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-500 min-w-[200px]">TARGET ENTITY</TableHead>
-                        <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-500 w-[120px]">ENTITY ID</TableHead>
-                        <TableHead className="pr-12 text-right text-[11px] font-black uppercase tracking-widest text-slate-500 min-w-[300px]">TRANSACTION CONTEXT</TableHead>
+                      <TableRow className="bg-slate-50/50 border-y border-slate-100 h-20">
+                        <TableHead className="pl-12 w-[240px] text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Event Timestamp</TableHead>
+                        <TableHead className="w-[180px] text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Action Type</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 min-w-[200px]">Target Entity</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 w-[120px]">Entity ID</TableHead>
+                        <TableHead className="pr-12 text-right text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 min-w-[300px]">Transaction Context</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -477,48 +482,56 @@ export default function SystemLogs({ user }: SystemLogsProps) {
                         </TableRow>
                       ) : (
                         auditLogs.map((log: any) => (
-                          <TableRow key={log.id || log.Id} className="hover:bg-slate-50/50 transition-all border-b border-slate-50 h-24 bg-white group">
+                          <TableRow key={log.id || log.Id} className="hover:bg-slate-50/40 transition-all border-b border-slate-50 h-[100px] bg-white group">
                             <TableCell className="pl-12">
-                              <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl border border-slate-100 bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-all">
-                                  <History size={16} strokeWidth={2.5} />
+                              <div className="flex items-center gap-5">
+                                <div className="w-12 h-12 rounded-2xl border border-slate-100 bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:rotate-6 transition-all duration-500">
+                                  <History size={18} strokeWidth={2.5} />
                                 </div>
-                                <div className="flex flex-col gap-1">
-                                  <span className="text-[13px] font-bold text-slate-900 leading-none">
+                                <div className="flex flex-col gap-1.5">
+                                  <span className="text-[14px] font-black text-slate-900 leading-none tracking-tight">
                                     {new Date(log.dateTime || log.DateTime || log.Timestamp || log.timestamp).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}
                                   </span>
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                  <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 opacity-70">
                                     {new Date(log.dateTime || log.DateTime || log.Timestamp || log.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                                   </span>
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge className={cn(
-                                "font-black text-[9px] uppercase tracking-[0.15em] px-3.5 py-1.5 rounded-xl shadow-sm border-none transition-all hover:scale-105",
+                              <div className={cn(
+                                "flex items-center gap-2 px-3 py-1.5 rounded-xl border-none transition-all shadow-sm w-fit",
                                 (log.type || log.Type) === "Create" ? "bg-emerald-50 text-emerald-600" : 
                                 (log.type || log.Type) === "Delete" ? "bg-red-50 text-red-600" : 
                                 "bg-indigo-50 text-indigo-600"
                               )}>
-                                {log.type || log.Type}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-col gap-1.5">
-                                <span className="text-[14px] font-bold text-slate-800 tracking-tight leading-none uppercase">
-                                  {log.tableName || log.TableName}
+                                <div className={cn(
+                                   "w-1.5 h-1.5 rounded-full",
+                                   (log.type || log.Type) === "Create" ? "bg-emerald-500" : 
+                                   (log.type || log.Type) === "Delete" ? "bg-red-500" : 
+                                   "bg-indigo-500"
+                                )} />
+                                <span className="text-[10px] font-black uppercase tracking-widest">
+                                  {log.type || log.Type}
                                 </span>
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Database Table</span>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <code className="text-[11px] font-black font-mono text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                              <div className="flex flex-col gap-2">
+                                <span className="text-[14px] font-black text-slate-800 tracking-tight leading-none uppercase">
+                                  {log.tableName || log.TableName}
+                                </span>
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">System Entity</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <code className="text-[11px] font-black font-mono text-slate-500 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-100">
                                 #{log.primaryKey || log.PrimaryKey}
                               </code>
                             </TableCell>
                             <TableCell className="pr-12 text-right">
-                              <div className="max-w-[400px] ml-auto truncate text-[13px] font-medium text-slate-500 italic group-hover:text-indigo-600 transition-colors" title={log.newValues || log.NewValues || ""}>
-                                {(log.affectedColumns || log.AffectedColumns) ? `Modified Fields: ${log.affectedColumns || log.AffectedColumns}` : "General system state modification"}
+                              <div className="max-w-[400px] ml-auto text-[13px] font-bold text-slate-500 italic bg-slate-50/50 px-4 py-2 rounded-xl group-hover:text-indigo-600 group-hover:bg-indigo-50 transition-all border border-transparent group-hover:border-indigo-100 line-clamp-2" title={log.newValues || log.NewValues || ""}>
+                                {(log.affectedColumns || log.AffectedColumns) ? `Modified: ${log.affectedColumns || log.AffectedColumns}` : "System-level state modification"}
                               </div>
                             </TableCell>
                           </TableRow>

@@ -334,18 +334,18 @@ export default function Fees({ user }: { user: any }) {
           </CardContent>
         </Card>
 
-        <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden bg-white">
+        <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2.5rem] overflow-hidden bg-white group hover:shadow-indigo-500/10 transition-all duration-500">
           <CardHeader className="pb-2">
-            <CardTitle className="text-slate-400 text-[10px] uppercase tracking-[0.2em] font-black">Scholarships Issued</CardTitle>
+            <CardTitle className="text-slate-400 text-[10px] uppercase tracking-[0.2em] font-black group-hover:text-indigo-600 transition-colors">Scholarships Issued</CardTitle>
           </CardHeader>
           <CardContent className="pb-8">
             <div className="flex items-end justify-between">
                 <div>
-                    <h2 className="text-4xl font-semibold font-black text-slate-900 tracking-tight">₹0</h2>
+                    <h2 className="text-3xl sm:text-4xl font-semibold font-black text-slate-900 tracking-tight group-hover:scale-105 transition-transform origin-left italic">₹0</h2>
                     <p className="text-slate-400 text-xs mt-2 font-bold uppercase tracking-widest">Financial Aid</p>
                 </div>
-                <div className="p-4 bg-emerald-50 rounded-2xl shadow-sm">
-                    <CreditCard size={28} className="text-emerald-400" />
+                <div className="p-4 bg-emerald-50 rounded-2xl shadow-sm group-hover:bg-indigo-50 group-hover:rotate-6 transition-all duration-500">
+                    <CreditCard size={28} className="text-emerald-400 group-hover:text-indigo-600" />
                 </div>
             </div>
           </CardContent>
@@ -370,37 +370,55 @@ export default function Fees({ user }: { user: any }) {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50/50 h-14">
-                  <TableHead className="pl-8 text-xs font-black text-slate-500 uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Digital ID</TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Student Profile</TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Billing Term</TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Total Invoice</TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Paid to Date</TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Standing</TableHead>
-                  <TableHead className="text-right pr-8 text-xs font-black text-slate-500 uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Actions</TableHead>
+                <TableRow className="bg-slate-50/50 h-20 border-slate-100">
+                  <TableHead className="pl-10 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Digital ID</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 min-w-[200px]">Student Identity</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Billing Cycle</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Total Invoice</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Paid Amount</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Standing</TableHead>
+                  <TableHead className="text-right pr-10 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {Array.isArray(fees) && fees.map((fee) => (
-                  <TableRow key={fee.id} className="hover:bg-slate-50/80 transition-colors group border-b border-slate-50">
-                    <TableCell className="pl-8 font-mono text-xs font-black text-blue-600 italic">GR-{fee.studentId}</TableCell>
-                    <TableCell className="font-black text-slate-900 group-hover:text-blue-700 transition-colors">{fee.student?.fullName || "Student"}</TableCell>
-                    <TableCell className="text-slate-500 font-bold text-sm tracking-tight">{fee.term}</TableCell>
-                    <TableCell className="font-black text-slate-900">${fee.totalAmount}</TableCell>
-                    <TableCell className="font-black text-emerald-600">${fee.paidAmount}</TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant="secondary"
-                        className={cn(
-                          "font-black text-[10px] uppercase tracking-wider px-3",
-                          fee.status === 'Paid' ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
-                        )}
-                      >
-                        {fee.status}
-                      </Badge>
+                  <TableRow key={fee.id} className="hover:bg-slate-50/40 transition-all group border-b border-slate-50 h-[88px] bg-white">
+                    <TableCell className="pl-10">
+                       <code className="text-[11px] font-black font-mono text-indigo-600 bg-indigo-50/50 px-3 py-1.5 rounded-xl border border-indigo-100/40 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
+                         GR-{fee.studentId}
+                       </code>
                     </TableCell>
-                    <TableCell className="text-right pr-8">
-                      <Button variant="ghost" size="sm" className="text-blue-600 font-black hover:bg-blue-50">Print Receipt</Button>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[14px] font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">
+                          {fee.student?.fullName || "Verified Student"}
+                        </span>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-0.5">Identity Protocol</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-slate-500 font-black text-[12px] uppercase tracking-widest">
+                      {fee.term}
+                    </TableCell>
+                    <TableCell className="font-black text-slate-900 text-[15px]">₹{fee.totalAmount.toLocaleString()}</TableCell>
+                    <TableCell className="font-black text-emerald-600 text-[15px]">₹{fee.paidAmount.toLocaleString()}</TableCell>
+                    <TableCell>
+                      <div className={cn(
+                        "flex items-center gap-2 px-3 py-1.5 rounded-xl border-none transition-all shadow-sm w-fit",
+                        fee.status === 'Paid' ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                      )}>
+                         <div className={cn(
+                           "w-1.5 h-1.5 rounded-full animate-pulse",
+                           fee.status === 'Paid' ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"
+                         )} />
+                         <span className="text-[10px] font-black uppercase tracking-widest">
+                           {fee.status}
+                         </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right pr-10">
+                       <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all opacity-0 group-hover:opacity-100">
+                         <Download size={16} />
+                       </Button>
                     </TableCell>
                   </TableRow>
                 ))}
