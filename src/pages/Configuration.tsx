@@ -588,10 +588,10 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
             <Icon size={28} />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-semibold font-black text-slate-900 tracking-tight leading-tight">
               {activeConfig.label}
             </h1>
-            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">
+            <p className="text-slate-600 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">
               {activeConfig.description}
             </p>
           </div>
@@ -623,10 +623,10 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
         <div className="w-full">
           <div className="px-6 sm:px-8 py-8 border-b border-slate-50 bg-white/50 backdrop-blur-sm flex flex-col xl:flex-row xl:items-center justify-between gap-6">
             <div>
-              <h3 className="text-xl font-black text-slate-900 tracking-tight">
+              <h3 className="text-xl font-semibold font-black text-slate-900 tracking-tight">
                 System Master Registry
               </h3>
-              <p className="text-xs text-slate-400 font-black uppercase tracking-widest mt-1">
+              <p className="text-xs text-slate-600  font-semibold font-black uppercase tracking-widest mt-1">
                 Foundational data management for {activeConfig.label}
               </p>
             </div>
@@ -658,39 +658,39 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
               <Table>
                 <TableHeader className="bg-slate-50/30">
                   <TableRow className="hover:bg-transparent border-slate-50 h-16">
-                    <TableHead className={cn("w-24 pl-8 text-[11px] font-black uppercase tracking-widest", activeTab === "role-master" || activeTab === "role-assignment" ? "text-slate-500" : "text-slate-400")}>
+                    <TableHead className={cn("w-24 pl-8 text-[11px] font-black uppercase tracking-widest text-slate-900 text-xs sm:text-sm font-bold uppercase tracking-wide", activeTab === "role-master" || activeTab === "role-assignment" ? "text-slate-600" : "text-slate-600")}>
                       {activeTab === "role-master" || activeTab === "role-assignment" ? "INDEX" : "Index"}
                     </TableHead>
-                    <TableHead className={cn("text-[11px] font-black uppercase tracking-widest", activeTab === "role-master" || activeTab === "role-assignment" ? "text-slate-500" : "text-slate-400")}>
+                    <TableHead className={cn("text-[11px] font-black uppercase tracking-widest text-slate-900 text-xs sm:text-sm font-bold ms-5 uppercase tracking-wide", activeTab === "role-master" || activeTab === "role-assignment" ? "text-slate-600" : "text-slate-600")}>
                       {activeTab === "role-assignment" ? "USER PROFILE" : activeTab === "role-master" ? "ROLE NAME" : "Primary Label"}
                     </TableHead>
-                    {activeTab === "role-master" && <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-500">DESCRIPTION</TableHead>}
-                    {activeTab === "role-assignment" && <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-500">USERNAME</TableHead>}
-                    {activeTab === "role-assignment" && <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-500">SYSTEM ROLE</TableHead>}
+                    {activeTab === "role-master" && <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 text-slate-900 text-xs sm:text-sm font-bold  uppercase tracking-wide">DESCRIPTION</TableHead>}
+                    {activeTab === "role-assignment" && <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 text-slate-900 text-xs sm:text-sm font-bold uppercase tracking-wide">USERNAME</TableHead>}
+                    {activeTab === "role-assignment" && <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">SYSTEM ROLE</TableHead>}
                     {activeTab === "academic-years" && <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Current Session</TableHead>}
                     {activeTab === "houses" && <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Hex Code</TableHead>}
                     {activeTab === "sub-castes" && <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Parent Category</TableHead>}
                     {activeTab === "cities" && <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Administrative State</TableHead>}
                     {activeTab === "schools" && (
                       <>
-                        <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Location</TableHead>
-                        <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Contact</TableHead>
+                        <TableHead className="text-[11px] text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Location</TableHead>
+                        <TableHead className="text-[11px]  text-slate-600 text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Contact</TableHead>
                       </>
                     )}
                     {activeTab === "navigation" && (
                       <>
-                        <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Path</TableHead>
-                        <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Parent</TableHead>
-                        <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Roles</TableHead>
-                        <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Order</TableHead>
+                        <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 font-black uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide min-w-[140px]">PATH</TableHead>
+                        <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 font-black uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide min-w-[180px]">PARENT </TableHead>
+                        <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 font-black uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide min-w-[160px]">ROLES</TableHead>
+                        <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 font-black uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide text-center w-24">ORDER</TableHead>
                       </>
                     )}
-                    {activeTab !== "role-assignment" && activeTab !== "navigation" && activeTab !== "role-master" && <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Description</TableHead>}
-                    <TableHead className={cn("text-[11px] font-black uppercase tracking-widest", activeTab === "role-master" || activeTab === "role-assignment" ? "text-slate-500" : "text-slate-400")}>
+                    {activeTab !== "role-assignment" && activeTab !== "navigation" && activeTab !== "role-master" && <TableHead className="text-[11px] font-bold uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Description</TableHead>}
+                    <TableHead className={cn("text-[11px] font-black uppercase tracking-widest text-xs sm:text-sm font-bold uppercase tracking-wide", activeTab === "role-master" || activeTab === "role-assignment" ? "text-slate-600" : "text-slate-600")}>
                       {activeTab === "role-master" || activeTab === "role-assignment" ? "STATUS" : "Status"}
                     </TableHead>
-                    {(activeTab === "role-master" || activeTab === "role-assignment") && <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-500">LAST UPDATED</TableHead>}
-                    <TableHead className={cn("w-20 pr-8 text-right text-[11px] font-black uppercase tracking-widest", activeTab === "role-master" || activeTab === "role-assignment" ? "text-slate-500" : "text-slate-400")}>
+                    {(activeTab === "role-master" || activeTab === "role-assignment") && <TableHead className="text-[11px] font-black uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">LAST UPDATED</TableHead>}
+                    <TableHead className={cn("w-20 pr-8 text-right text-[11px] font-black uppercase tracking-widest text-xs sm:text-sm font-bold uppercase tracking-wide", activeTab === "role-master" || activeTab === "role-assignment" ? "text-slate-600" : "text-slate-600")}>
                       {activeTab === "role-master" || activeTab === "role-assignment" ? "MANAGE" : "Manage"}
                     </TableHead>
                   </TableRow>
@@ -722,12 +722,13 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                     Array.isArray(filteredData) && filteredData.map((item) => (
                       <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors border-slate-50/50 h-20 group">
                         <TableCell className="pl-8">
-                          <span className={cn(
-                            "font-mono text-[12px] font-bold px-3 py-1.5 rounded-lg border",
-                            activeTab === "role-master" || activeTab === "role-assignment" ? "bg-slate-50 text-slate-600 border-slate-100" : "bg-slate-50 text-slate-400 border-slate-100"
+                          <div className={cn(
+                            "flex items-center justify-center w-10 h-10 rounded-full border font-mono text-[11px] font-black transition-colors shadow-sm",
+                            activeTab === "navigation" ? "bg-slate-50 text-slate-400 border-slate-100/80 group-hover:bg-white group-hover:border-blue-200 group-hover:text-blue-600" : 
+                            (activeTab === "role-master" || activeTab === "role-assignment" ? "bg-slate-50 text-slate-600 border-slate-100" : "bg-slate-50 text-slate-400 border-slate-100")
                           )}>
                             {item.id.toString().padStart(2, '0')}
-                          </span>
+                          </div>
                         </TableCell>
                         <TableCell className="font-bold text-slate-900 text-sm tracking-tight truncate">
                           <div className="flex items-center gap-4">
@@ -796,15 +797,27 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                                     </button>
                                   </div>
                                 )}
-                                {activeTab === "navigation" && item.icon && (
-                                  <span className="mr-2 inline-flex items-center">
-                                    {(() => {
-                                      const IconComp = (LucideIcons as any)[item.icon];
-                                      return IconComp ? <IconComp size={16} className="text-blue-500" /> : null;
-                                    })()}
-                                  </span>
+                                {activeTab === "navigation" && (
+                                  <div className="flex items-center gap-3.5">
+                                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100/50 flex items-center justify-center text-blue-600 shadow-sm shrink-0">
+                                      {(() => {
+                                        const IconComp = (LucideIcons as any)[item.icon];
+                                        return IconComp ? <IconComp size={18} strokeWidth={2.5} /> : <LucideIcons.Circle size={18} strokeWidth={2.5} />;
+                                      })()}
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="text-[15px] font-bold text-slate-900 leading-none tracking-tight">
+                                        {item.name || item.title || item.fullName}
+                                      </span>
+                                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1.5 leading-none">
+                                        Navigation Label
+                                      </span>
+                                    </div>
+                                  </div>
                                 )}
-                                <span className="truncate">{item.name || item.title || item.fullName}</span>
+                                {activeTab !== "navigation" && (
+                                  <span className="truncate">{item.name || item.title || item.fullName}</span>
+                                )}
                               </>
                             )}
                           </div>
@@ -903,24 +916,43 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
 
                         {activeTab === "navigation" && (
                           <>
-                            <TableCell className="text-xs font-mono font-bold text-slate-500">{item.path}</TableCell>
-                            <TableCell className="text-xs font-bold text-slate-600">
-                              {item.parentId ? (
-                                <Badge variant="outline" className="text-[10px] font-black uppercase text-slate-400">
-                                  {masterData.find(m => m.id === parseSafeInt(item.parentId))?.title || "Parent Hidden"}
-                                </Badge>
-                              ) : <span className="text-slate-300">—</span>}
-                            </TableCell>
                             <TableCell>
-                              <div className="flex flex-wrap gap-1 max-w-[150px]">
-                                {Array.isArray(item.roles) && item.roles.map((r: string) => (
-                                  <Badge key={r} className="bg-slate-100 text-slate-500 rounded-md text-[9px] font-black uppercase px-1.5 py-0.5">
-                                    {r}
-                                  </Badge>
-                                ))}
+                              <div className="flex items-center">
+                                <code className="text-[11px] font-black font-mono text-blue-600 bg-blue-50/50 px-2.5 py-1.5 rounded-lg border border-blue-100/40">
+                                  {item.path}
+                                </code>
                               </div>
                             </TableCell>
-                            <TableCell className="text-xs font-black text-slate-400">{item.sortOrder}</TableCell>
+                            <TableCell>
+                              {item.parentId ? (
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-[13px] font-bold text-slate-700">
+                                    {masterData.find(m => m.id === parseSafeInt(item.parentId))?.title || "Parent Hidden"}
+                                  </span>
+                                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Parent Group</span>
+                                </div>
+                              ) : (
+                                <span className="text-slate-300 font-bold text-xs">— Top Level —</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1.5 max-w-[200px]">
+                                {Array.isArray(item.roles) && item.roles.length > 0 ? (
+                                  item.roles.map((r: string) => (
+                                    <Badge key={r} variant="outline" className="bg-white text-slate-600 border-slate-200 rounded-lg text-[9px] font-black uppercase px-2 py-0.5 shadow-sm">
+                                      {r}
+                                    </Badge>
+                                  ))
+                                ) : (
+                                  <span className="text-[10px] text-slate-400 font-bold italic">No roles defined</span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                               <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-50 border border-slate-100 text-xs font-black text-slate-900 shadow-inner">
+                                {item.sortOrder}
+                               </div>
+                            </TableCell>
                           </>
                         )}
 

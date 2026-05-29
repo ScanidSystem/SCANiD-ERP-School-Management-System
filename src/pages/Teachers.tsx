@@ -43,7 +43,8 @@ import {
   UserRound,
   Mars,
   Venus,
-  Droplets
+  Droplets,
+  ArrowUpRight
 } from "lucide-react";
 import { 
   Table, 
@@ -524,14 +525,14 @@ export default function Teachers({ user }: { user: any }) {
         className="hidden" 
         accept="image/*"
       />
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-7">
         <div className="flex items-center gap-5">
            <div className="bg-[#5a67f2] p-4 rounded-[1.25rem] text-white shadow-2xl shadow-[#5a67f2]/20 transition-transform hover:-rotate-3">
             <Users size={28} />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">Faculty Management</h1>
-            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Administrative control for teaching staff & assignments</p>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight truncate">Faculty Management</h1>
+            <p className="text-slate-600 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Administrative control for teaching staff & assignments</p>
           </div>
         </div>
         {isAdmin && (
@@ -1301,21 +1302,79 @@ export default function Teachers({ user }: { user: any }) {
       <Card className="dashboard-card border-none overflow-hidden">
         <CardHeader className="p-8 border-b border-slate-50 bg-white/50 backdrop-blur-sm">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="relative group flex-1 max-w-sm">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
-              <Input 
-                placeholder="Query faculty index..." 
-                className="pl-12 h-12 bg-slate-50/50 border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm font-bold rounded-2xl"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
-            </div>
+          <div className="relative group flex-1 max-w-sm">
+
+  {/* Left Icon */}
+  <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 border border-indigo-200/50 shadow-sm z-10 transition-all duration-300 group-focus-within:scale-105">
+    <Search 
+      className="text-indigo-600 group-focus-within:text-indigo-700 transition-colors stroke-[2.6]" 
+      size={17} 
+    />
+  </div>
+
+  <Input 
+    placeholder="Query faculty index..."
+    className={cn(
+      "h-[62px] w-full",
+      "pl-14 pr-5",
+      "bg-gradient-to-b from-white to-slate-50/90",
+      "border-2 border-slate-200",
+      "rounded-2xl",
+      "text-[14px] font-extrabold text-slate-800",
+      "placeholder:text-slate-400 placeholder:font-bold",
+      "shadow-[0_4px_20px_rgba(15,23,42,0.05)]",
+      "hover:shadow-[0_10px_30px_rgba(99,102,241,0.10)]",
+      "focus:bg-white",
+      "focus:border-indigo-400",
+      "focus:ring-4 focus:ring-indigo-500/10",
+      "transition-all duration-300"
+    )}
+    value={searchQuery}
+    onChange={e => setSearchQuery(e.target.value)}
+  />
+
+
+
+</div>
             <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="h-10 px-4 rounded-xl border-slate-100 text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest">
-                  <Download size={16} className="mr-2" /> Export
-                </Button>
+             <Button
+  variant="outline"
+  size="sm"
+  className={cn(
+    "relative h-[58px] px-5",
+    "rounded-2xl border-2 border-slate-200",
+    "bg-gradient-to-b from-white to-slate-50/90",
+    "text-slate-700",
+    "font-black text-[11px] uppercase tracking-[0.16em]",
+    "shadow-[0_4px_20px_rgba(15,23,42,0.05)]",
+    "hover:shadow-[0_12px_35px_rgba(99,102,241,0.10)]",
+    "hover:border-indigo-300 hover:text-indigo-700",
+    "transition-all duration-300",
+    "group overflow-hidden"
+  )}
+>
+
+  {/* Left Icon */}
+  <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 border border-indigo-200/50 shadow-sm mr-3 group-hover:scale-105 transition-transform duration-300">
+    <Download 
+      size={16} 
+      className="text-indigo-600 stroke-[2.5]" 
+    />
+  </div>
+
+  {/* Text */}
+  <span className="relative z-10 text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+    Export
+  </span>
+
+ 
+
+  {/* Hover Glow */}
+  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-indigo-50/40 via-transparent to-violet-50/40 pointer-events-none" />
+
+</Button>
                 <div className="h-6 w-px bg-slate-100 mx-2" />
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Total Records: {Array.isArray(filteredTeachers) ? filteredTeachers.length : 0}</p>
+                <p className="text-[10px] font-blacktext-slate-600 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Total Records: {Array.isArray(filteredTeachers) ? filteredTeachers.length : 0}</p>
             </div>
           </div>
         </CardHeader>
@@ -1332,31 +1391,31 @@ export default function Teachers({ user }: { user: any }) {
               <TableHeader className="bg-slate-50/30">
                 <TableRow className="h-16 border-slate-50">
                   <TableHead className="w-[140px] pl-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('employeeId')}>
-                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
+                    <div className="flex text-slate-600 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide items-center gap-2 group-hover:text-blue-600 transition-colors">
                       Index ID 
                       {sortBy === 'employeeId' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('name')}>
-                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
+                    <div className="flex items-center text-slate-600 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide gap-2 group-hover:text-blue-600 transition-colors">
                       Faculty Entity 
                       {sortBy === 'name' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('subject')}>
-                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
+                    <div className="flex items-center text-slate-600 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide gap-2 group-hover:text-blue-600 transition-colors">
                       Core Expertise 
                       {sortBy === 'subject' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('qualification')}>
-                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
+                    <div className="flex items-center text-slate-600 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide gap-2 group-hover:text-blue-600 transition-colors">
                       Credentials 
                       {sortBy === 'qualification' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
-                  <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Operational Status</TableHead>
-                  <TableHead className="text-right pr-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Manage</TableHead>
+                  <TableHead className="text-[10px] font-black text-slate-600 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Operational Status</TableHead>
+                  <TableHead className="text-right pr-8 text-[10px] font-black text-slate-600 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Manage</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1367,7 +1426,7 @@ export default function Teachers({ user }: { user: any }) {
                            <div className="p-6 bg-slate-50 rounded-full text-slate-200">
                              <Users size={48} />
                            </div>
-                           <p className="text-lg font-black text-slate-300 italic tracking-tight uppercase">No Faculty Matches Found</p>
+                           <p className="text-lg font-black text-slate-300  tracking-tight uppercase">No Faculty Matches Found</p>
                         </div>
                      </TableCell>
                   </TableRow>

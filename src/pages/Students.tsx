@@ -124,8 +124,8 @@ export default function Students({ user }: { user: UserType }) {
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [standardFilter, setStandardFilter] = useState("all");
-  const [sectionFilter, setSectionFilter] = useState("all");
+  const [standardFilter, setStandardFilter] = useState("all Grades");
+  const [sectionFilter, setSectionFilter] = useState("all Sections");
 
   // Pagination & Sorting State
   const [page, setPage] = useState(1);
@@ -1083,7 +1083,7 @@ export default function Students({ user }: { user: UserType }) {
   const filteredStudents = students; // Server now handles filtering, sorting and pagination
 
   return (
-    <div className="space-y-4 sm:space-y-6 animate-in slide-in-from-bottom-2 duration-500">
+    <div className="space-y-6 sm:space-y-8 animate-in slide-in-from-bottom-2 duration-500 bg-[#F8FAFC]/50 min-h-screen p-4 sm:p-6 lg:p-10">
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
         <input 
           type="file" 
@@ -1092,16 +1092,16 @@ export default function Students({ user }: { user: UserType }) {
           accept="image/*" 
           onChange={handleFileChange}
         />
-        <div className="flex items-center gap-5">
-          <div className="bg-[#5a67f2] p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:rotate-3">
-            <GraduationCap size={28} />
+        <div className="flex items-center gap-4 sm:gap-6">
+          <div className="bg-[#4F46E5] p-4 sm:p-5 rounded-[1.25rem] sm:rounded-[1.5rem] text-white shadow-xl shadow-indigo-100/50 transition-all hover:scale-110 active:rotate-3 shrink-0">
+            <GraduationCap size={28} className="sm:w-8 sm:h-8" strokeWidth={2.5} />
           </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">Student Management</h1>
-            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Manage and track student information across all standards.</p>
+          <div className="space-y-1 sm:space-y-3 overflow-hidden">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight truncate">Student Management</h1>
+            <p className="text-slate-600 font-medium text-xs sm:text-sm truncate sm:whitespace-normal">Manage and track student info</p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-4">
           {canManage && (
             <Dialog open={isBulkUploadOpen} onOpenChange={(open) => {
               if (!isProcessing) {
@@ -1110,13 +1110,14 @@ export default function Students({ user }: { user: UserType }) {
               }
             }}>
               <SimpleTooltip content="Import students from Excel" side="bottom">
-                <DialogTrigger
-                  render={
-                    <div className="flex items-center justify-center gap-2 h-9 px-4 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 outline-none cursor-pointer text-sm font-medium" aria-label="Bulk upload students">
-                      <Upload size={16} /> Bulk Upload
-                    </div>
-                  }
-                />
+                <DialogTrigger asChild nativeButton={true}>
+                  <Button 
+                    variant="outline"
+                    className="h-11 sm:h-12 px-4 sm:px-6 rounded-2xl border-slate-200 bg-white font-semibold text-slate-600 text-[10px] sm:text-sm font-bold uppercase tracking-wide hover:bg-slate-50 font-bold shadow-sm transition-all flex items-center gap-2"
+                  >
+                    <Upload size={18} className="stroke-[2.5]" /> <span className="hidden xs:inline">Bulk Upload</span>
+                  </Button>
+                </DialogTrigger>
               </SimpleTooltip>
               <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-none shadow-3xl rounded-[2rem]">
                 <div className="bg-slate-900 px-8 py-5 text-white shrink-0">
@@ -1127,7 +1128,7 @@ export default function Students({ user }: { user: UserType }) {
                        </div>
                        Batch Student Onboarding
                     </DialogTitle>
-                    <DialogDescription className="text-slate-400 text-xs">
+                    <DialogDescription className="text-slate-400 text-xs font-bold uppercase tracking-widest opacity-80 mt-1">
                       Synchronize your physical register with the digital campus database using our high-speed Excel importer.
                     </DialogDescription>
                   </DialogHeader>
@@ -1266,21 +1267,23 @@ export default function Students({ user }: { user: UserType }) {
           )}
 
           <SimpleTooltip content="Download student list as Excel" side="bottom">
-            <Button variant="outline" size="sm" className="gap-2 h-9" onClick={handleExport} aria-label="Export students to Excel">
-              <Download size={16} /> <span className="hidden sm:inline">Export</span>
+            <Button 
+              variant="outline" 
+              className="h-11 sm:h-12 px-4 sm:px-6 rounded-2xl border-slate-200 text-slate-600 text-[10px] sm:text-sm font-bold uppercase tracking-wide bg-white hover:bg-slate-50 font-bold shadow-sm transition-all flex items-center gap-2" 
+              onClick={handleExport} 
+            >
+              <Download size={18} className="stroke-[2.5]" /> <span className="hidden xs:inline">Export</span>
             </Button>
           </SimpleTooltip>
           
           {canManage && (
             <SimpleTooltip content="Add a new student manually" side="bottom">
               <Button 
-                size="sm"
-                className="gap-2 h-9 bg-[#5a67f2] hover:bg-[#5a67f2] text-white border-none font-bold shadow-lg shadow-blue-600/20"
+                className="h-11 sm:h-12 px-5 sm:px-8 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-xl shadow-indigo-100 transition-all active:scale-95 flex items-center gap-2"
                 onClick={openAddDialog}
-                aria-label="Register new student"
               >
-                <Plus size={16} /> <span className="hidden sm:inline">Add Student Record</span>
-                <span className="sm:hidden">Add</span>
+                <Plus size={20} className="stroke-[3]" /> <span className="hidden xs:inline">Add Student Record</span>
+                <span className="xs:hidden">Add Record</span>
               </Button>
             </SimpleTooltip>
           )}
@@ -1296,19 +1299,19 @@ export default function Students({ user }: { user: UserType }) {
                 description={`This will permanently delete ${deleteInfo?.name}'s profile, enrollment details, and academic history. This action cannot be reversed.`}
               />
               <DialogContent className="sm:max-w-[1000px] w-[95vw] max-h-[98vh] flex flex-col p-0 border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] rounded-[2.5rem] overflow-hidden bg-white group/modal">
-                {/* Premium Dark Header - Matches Reference Exactly */}
-                <div className="bg-[#111827] px-6 sm:px-10 py-6 sm:py-7 text-white relative shrink-0 overflow-hidden border-b border-white/5">
+                {/* Premium Dark Header - Responsive Refinement */}
+                <div className="bg-[#111827] px-5 sm:px-10 py-5 sm:py-7 text-white relative shrink-0 overflow-hidden border-b border-white/5">
                   <div className="relative z-10 flex items-center justify-between">
-                    <div className="flex items-center gap-4 sm:gap-5">
-                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-600 rounded-2xl sm:rounded-[1.25rem] flex items-center justify-center shadow-2xl shadow-indigo-500/40 border border-white/10 transition-transform group-hover/modal:scale-105 duration-500 shrink-0">
-                        <UserCircle size={28} className="text-white fill-white/10 sm:hidden" />
+                    <div className="flex items-center gap-3 sm:gap-5">
+                      <div className="w-10 h-10 sm:w-16 sm:h-16 bg-indigo-600 rounded-xl sm:rounded-[1.25rem] flex items-center justify-center shadow-2xl shadow-indigo-500/40 border border-white/10 transition-transform group-hover/modal:scale-105 duration-500 shrink-0">
+                        <UserCircle size={24} className="text-white fill-white/10 sm:hidden" />
                         <UserCircle size={32} className="text-white fill-white/10 hidden sm:block" />
                       </div>
                       <div className="flex flex-col gap-0.5 sm:gap-1 overflow-hidden">
-                        <DialogTitle className="text-lg sm:text-2xl font-black tracking-tight leading-tight truncate">
+                        <DialogTitle className="text-base sm:text-2xl font-black tracking-tight leading-tight truncate">
                           {isEditMode ? "Modify Student Profile" : "Register Student"}
                         </DialogTitle>
-                        <DialogDescription className="text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest opacity-80 truncate">
+                        <DialogDescription className="text-slate-400 text-[9px] sm:text-xs font-bold uppercase tracking-widest opacity-80 truncate">
                           {isEditMode 
                             ? "Institutional configuration registry" 
                             : "New student enrollment entry"}
@@ -1318,15 +1321,15 @@ export default function Students({ user }: { user: UserType }) {
                     <button
                       type="button"
                       onClick={() => setIsAddDialogOpen(false)}
-                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all cursor-pointer border-none outline-none shrink-0"
+                      className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all cursor-pointer border-none outline-none shrink-0"
                     >
-                      <XCircle size={24} className="sm:size-[26px] stroke-[2.5]" />
+                      <XCircle size={22} className="sm:size-[26px] stroke-[2.5]" />
                     </button>
                   </div>
 
                   {/* Atmospheric Glow */}
-                  <div className="absolute right-[-5%] top-[-20%] w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] pointer-events-none animate-pulse"></div>
-                  <div className="absolute left-[-5%] bottom-[-20%] w-64 h-64 bg-blue-600/10 rounded-full blur-[80px] pointer-events-none"></div>
+                  <div className="absolute right-[-5%] top-[-20%] w-64 h-64 sm:w-96 sm:h-96 bg-indigo-600/20 rounded-full blur-[80px] sm:blur-[100px] pointer-events-none animate-pulse"></div>
+                  <div className="absolute left-[-5%] bottom-[-20%] w-48 h-48 sm:w-64 sm:h-64 bg-blue-600/10 rounded-full blur-[60px] sm:blur-[80px] pointer-events-none"></div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 sm:px-10 py-6 sm:py-8 bg-[#FDFDFF] custom-scrollbar">
@@ -1375,7 +1378,7 @@ export default function Students({ user }: { user: UserType }) {
   className={cn(
     "relative h-[72px] min-h-[72px] border-2 overflow-hidden",
     "bg-gradient-to-b from-white to-slate-50/90",
-    "rounded-[1.8rem] pl-[70px] pr-12",
+    "rounded-[1.4rem] pl-[70px] pr-12",
     "shadow-[0_4px_20px_rgba(15,23,42,0.05)]",
     "hover:shadow-[0_12px_35px_rgba(99,102,241,0.10)]",
     "transition-all duration-300",
@@ -1405,7 +1408,7 @@ export default function Students({ user }: { user: UserType }) {
     </div>
   </div>
 </SelectTrigger>
-      <SelectContent className="min-w-[450px] rounded-[1.8rem] border border-slate-200 bg-white p-2 shadow-[0_20px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl">
+  <SelectContent className="min-w-[var(--radix-select-trigger-width)] max-w-[450px] rounded-[1.8rem] border border-slate-200 bg-white p-2 shadow-[0_20px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl">
 
         {/* Placeholder */}
         <SelectItem
@@ -1568,7 +1571,7 @@ export default function Students({ user }: { user: UserType }) {
                           <div className="space-y-2">
 
                               <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
-                                                                             Division / Section
+                                                                             Division
                                                                                   </Label>
                             <div className="relative">
                            <Select 
@@ -2652,9 +2655,13 @@ export default function Students({ user }: { user: UserType }) {
 
       {/* Value */}
       <div className="flex flex-col items-start text-left leading-tight truncate">
-       
-
-        <SelectValue placeholder="Select Blood Group" />
+        <div className="truncate text-[14px] font-extrabold text-slate-800">
+          {newStudentFormData.BLOODGROUP
+            ? (bloodGroups.find(
+                bg => bg.id.toString() === newStudentFormData.BLOODGROUP.toString()
+              )?.name || "Select Blood Group")
+            : "Select Blood Group"}
+        </div>
       </div>
     </div>
   </SelectTrigger>
@@ -3328,30 +3335,30 @@ Email Address
                   </div>
                 </div>
 
-                {/* PREMIUM FOOTER - Matches Reference Exactly */}
-                <DialogFooter className="bg-white px-6 sm:px-10 py-5 sm:py-7 shrink-0 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* PREMIUM FOOTER - Responsive Refinement */}
+                <DialogFooter className="bg-white px-5 sm:px-10 py-5 sm:py-6 shrink-0 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <Button 
                     variant="outline" 
                     onClick={() => setIsAddDialogOpen(false)} 
-                    className="w-full sm:w-auto h-14 px-10 border-slate-200 text-slate-500 hover:bg-slate-50 font-black rounded-xl transition-all active:scale-[0.98] text-[13px] uppercase tracking-[0.15em] flex items-center justify-center gap-2 order-2 sm:order-1"
+                    className="w-full sm:w-auto h-12 sm:h-14 px-8 sm:px-10 border-slate-200 text-slate-500 hover:bg-slate-50 font-black rounded-xl transition-all active:scale-[0.98] text-xs sm:text-[13px] uppercase tracking-[0.15em] flex items-center justify-center gap-2 order-2 sm:order-1"
                   >
-                    <XCircle size={20} className="text-slate-400" />
+                    <XCircle size={18} className="text-slate-400" />
                     CANCEL
                   </Button>
                 
                   <Button 
                     onClick={handleAddStudent} 
                     disabled={isProcessing} 
-                    className="w-full sm:w-auto h-14 px-12 bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-2xl shadow-indigo-600/30 rounded-xl transition-all active:scale-[0.98] text-[13px] uppercase tracking-[0.15em] flex items-center justify-center gap-2 order-1 sm:order-2"
+                    className="w-full sm:w-auto h-12 sm:h-14 px-10 sm:px-12 bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-xl shadow-indigo-600/20 rounded-xl transition-all active:scale-[0.98] text-xs sm:text-[13px] uppercase tracking-[0.15em] flex items-center justify-center gap-2 order-1 sm:order-2"
                   >
                     {isProcessing ? (
-                      <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 border-3 border-white/30 border-t-white animate-spin rounded-full"></div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white animate-spin rounded-full"></div>
                         <span>Processing...</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <Plus size={20} className="stroke-[3]" />
+                        <Plus size={18} className="stroke-[3]" />
                         <span>{isEditMode ? "UPDATE MASTER" : "CREATE MASTER"}</span>
                       </div>
                     )}
@@ -3363,196 +3370,384 @@ Email Address
         </div>
       </div>
 
-      <Card className="dashboard-card border-none overflow-hidden">
-        <CardHeader className="pb-6 border-b border-slate-50 bg-white/50 backdrop-blur-sm px-6 sm:px-8 pt-8">
-          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
-            <div className="flex flex-col md:flex-row gap-4 flex-1">
-              <div className="relative w-full max-w-sm group">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
-                <Input 
-                  placeholder="Filter by name, roll, or GR..." 
-                  className="pl-11 h-11 bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm font-medium rounded-xl" 
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Select value={standardFilter} onValueChange={setStandardFilter}>
-                  <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
-                    {/* Explicit mapping to show "Grade X" or "All Grades" in trigger */}
-                    <SelectValue placeholder="Standard">
-                      {standardFilter === "all" ? "All Grades" : (standardFilter ? `Grade ${standardFilter}` : undefined)}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-slate-100 shadow-2xl p-2">
-                    <SelectItem value="all" className="rounded-xl font-bold py-2.5">All Grades</SelectItem>
-                    {Array.isArray(standardsMaster) && standardsMaster.map(std => (
-                      <SelectItem key={std.id} value={std.name} className="rounded-xl font-bold py-2.5">Grade {std.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+      <Card className="dashboard-card border-none overflow-hidden shadow-xl shadow-slate-200/50 rounded-[2.5rem]">
+        <CardHeader className="pb-8 border-b border-slate-50 bg-white px-6 sm:px-10 pt-8 sm:pt-10">
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 sm:gap-8">
+            <div className="flex flex-col lg:flex-row gap-4 sm:gap-5 flex-1">
+           <div className="relative w-full lg:max-w-md group">
 
-                <Select value={sectionFilter} onValueChange={setSectionFilter}>
-                  <SelectTrigger className="w-[140px] h-11 bg-slate-50/50 border-slate-200/60 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-600 focus:ring-4 focus:ring-blue-500/5">
-                    {/* Explicit mapping to show "Section X" or "All Sections" in trigger */}
-                    <SelectValue placeholder="Section">
-                      {sectionFilter === "all" ? "All Sections" : (sectionFilter ? `Section ${sectionFilter}` : undefined)}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-slate-100 shadow-2xl p-2">
-                    <SelectItem value="all" className="rounded-xl font-bold py-2.5">All Sections</SelectItem>
-                    {Array.isArray(sectionsMaster) && sectionsMaster.map(sec => (
-                      <SelectItem key={sec.id} value={sec.name} className="rounded-xl font-bold py-2.5">Section {sec.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+  {/* Left Search Icon */}
+  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 shadow-sm border border-indigo-200/50 z-10 transition-all duration-300 group-focus-within:scale-105">
+    <Search
+      className="text-indigo-600 stroke-[2.5]"
+      size={18}
+    />
+  </div>
+
+  <Input
+    placeholder="Filter by name, roll no. or GR no..."
+    className={cn(
+      "w-full h-16 pl-16 pr-5",
+      "bg-gradient-to-b from-white to-slate-50/80",
+      "border-2 border-slate-200",
+      "rounded-2xl",
+      "text-[14px] font-bold text-slate-700",
+      "placeholder:text-slate-400 placeholder:font-semibold",
+      "shadow-[0_4px_20px_rgba(15,23,42,0.05)]",
+      "hover:shadow-[0_12px_35px_rgba(99,102,241,0.10)]",
+      "transition-all duration-300",
+      "focus:bg-white",
+      "focus:border-indigo-400",
+      "focus:ring-4 focus:ring-indigo-500/10",
+      "outline-none"
+    )}
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+  />
+
+ 
+
+</div>
+              <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto">
+              <Select value={standardFilter} onValueChange={setStandardFilter}>
+  <SelectTrigger
+    className={cn(
+      "relative w-full sm:w-[210px] h-16 min-h-[64px]",
+      "border-2 border-slate-200",
+      "bg-gradient-to-b from-white to-slate-50/80",
+      "rounded-2xl pl-14 pr-5",
+      "text-[14px] font-extrabold text-slate-800",
+      "shadow-[0_4px_20px_rgba(15,23,42,0.05)]",
+      "hover:shadow-[0_12px_35px_rgba(99,102,241,0.10)]",
+      "transition-all duration-300",
+      "focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400",
+      "data-[state=open]:border-indigo-400",
+      "data-[state=open]:shadow-[0_18px_45px_rgba(99,102,241,0.14)]"
+    )}
+  >
+
+    {/* Left Icon */}
+    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 shadow-sm border border-indigo-200/50">
+      <GraduationCap className="w-4 h-4 text-indigo-600" />
+    </div>
+
+    {/* Content */}
+    <div className="flex flex-col items-start justify-center leading-tight w-full truncate">
+      
+    
+      <div className="truncate text-[14px] font-extrabold text-slate-800">
+        <SelectValue placeholder="All Grades" />
+      </div>
+    </div>
+
+  </SelectTrigger>
+
+  <SelectContent
+    className="min-w-[var(--radix-select-trigger-width)] max-w-[280px] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl"
+  >
+
+    {/* ALL */}
+    <SelectItem
+      value="all Grades"
+      className="group rounded-2xl py-3.5 px-3 cursor-pointer focus:bg-indigo-50 focus:text-indigo-700 transition-all duration-200"
+    >
+      <div className="flex items-center gap-3">
+
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center shadow-sm">
+          <Layers3 className="w-4 h-4 text-indigo-600" />
+        </div>
+
+        <div className="flex flex-col leading-tight">
+          <span className="text-sm font-extrabold text-slate-800">
+            All Grades
+          </span>
+
+          <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+            Complete Academic List
+          </span>
+        </div>
+
+      </div>
+    </SelectItem>
+
+    {/* GRADES */}
+    {Array.isArray(standardsMaster) && standardsMaster.map(std => (
+      <SelectItem
+        key={std.id}
+        value={std.name}
+        className="group rounded-2xl py-3.5 px-3 cursor-pointer focus:bg-indigo-50 focus:text-indigo-700 transition-all duration-200"
+      >
+        <div className="flex items-center gap-3">
+
+          {/* Icon */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
+            <GraduationCap className="w-4 h-4 text-indigo-600" />
+          </div>
+
+          {/* Text */}
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-extrabold text-slate-800">
+              Grade {std.name}
+            </span>
+
+            <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+              Standard Class
+            </span>
+          </div>
+
+        </div>
+      </SelectItem>
+    ))}
+
+  </SelectContent>
+         </Select>
+               <Select value={sectionFilter} onValueChange={setSectionFilter}>
+  <SelectTrigger
+    className={cn(
+      "relative w-full sm:w-[220px] h-16 min-h-[64px]",
+      "border-2 border-slate-200",
+      "bg-gradient-to-b from-white to-slate-50/80",
+      "rounded-2xl pl-14 pr-5",
+      "text-[14px] font-extrabold text-slate-800",
+      "shadow-[0_4px_20px_rgba(15,23,42,0.05)]",
+      "hover:shadow-[0_12px_35px_rgba(99,102,241,0.10)]",
+      "transition-all duration-300",
+      "focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400",
+      "data-[state=open]:border-indigo-400",
+      "data-[state=open]:shadow-[0_18px_45px_rgba(99,102,241,0.14)]"
+    )}
+  >
+
+    {/* Left Icon */}
+    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 shadow-sm border border-indigo-200/50">
+      <LayoutGrid className="w-4 h-4 text-indigo-600" />
+    </div>
+
+    {/* Content */}
+    <div className="flex flex-col items-start justify-center leading-tight w-full truncate">
+
+     
+
+      <div className="truncate text-[14px] font-extrabold text-slate-800">
+        <SelectValue placeholder="All Sections" />
+      </div>
+    </div>
+
+  </SelectTrigger>
+
+  <SelectContent
+    className="min-w-[var(--radix-select-trigger-width)] max-w-[300px] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl"
+  >
+
+    {/* ALL */}
+    <SelectItem
+      value="all Sections"
+      className="group rounded-2xl py-3.5 px-3 cursor-pointer focus:bg-indigo-50 focus:text-indigo-700 transition-all duration-200"
+    >
+      <div className="flex items-center gap-3">
+
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center shadow-sm">
+          <Layers3 className="w-4 h-4 text-indigo-600" />
+        </div>
+
+        <div className="flex flex-col leading-tight">
+          <span className="text-sm font-extrabold text-slate-800">
+            All Sections
+          </span>
+
+          <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+            Complete Division List
+          </span>
+        </div>
+
+      </div>
+    </SelectItem>
+
+    {/* SECTION ITEMS */}
+    {Array.isArray(sectionsMaster) && sectionsMaster.map(sec => (
+      <SelectItem
+        key={sec.id}
+        value={sec.name}
+        className="group rounded-2xl py-3.5 px-3 cursor-pointer focus:bg-indigo-50 focus:text-indigo-700 transition-all duration-200"
+      >
+        <div className="flex items-center gap-3">
+
+          {/* Icon */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
+            <LayoutGrid className="w-4 h-4 text-indigo-600" />
+          </div>
+
+          {/* Text */}
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-extrabold text-slate-800">
+              Section {sec.name}
+            </span>
+
+            <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+              Division Group
+            </span>
+          </div>
+
+        </div>
+      </SelectItem>
+    ))}
+
+  </SelectContent>
+          </Select>
               </div>
             </div>
-            <div className="flex items-center gap-4 bg-slate-50/80 px-5 py-2.5 rounded-xl border border-slate-100">
-              <div className="flex -space-x-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="w-7 h-7 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[10px] font-black text-slate-500">
-                    {String.fromCharCode(64 + i)}
-                  </div>
-                ))}
-              </div>
-              <div className="text-xs text-slate-500">
-                <span className="font-black text-slate-900">{Array.isArray(filteredStudents) ? filteredStudents.length : 0}</span> Active Registry Records
+            
+             <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full xl:w-auto">
+           
+
+              <div className="flex items-center gap-4 bg-white px-5 sm:px-6 py-3 rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:border-indigo-100 transition-all group w-full sm:w-auto overflow-hidden">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)] group-hover:scale-125 transition-transform shrink-0"></div>
+                <div className="text-[11px] font-black uppercase text-slate-600 text-xs sm:text-sm font-bold pl-0.5 tracking-wide tracking-[0.12em] leading-none whitespace-nowrap">
+                  <span className="text-slate-900 mr-1">{Array.isArray(filteredStudents) ? filteredStudents.length : 0}</span> Active Registry Records
+                </div>
               </div>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto custom-scrollbar">
-            <Table>
+            <Table className="min-w-[900px]">
             <TableHeader>
-              <TableRow className="bg-slate-50/30 h-16 border-b border-slate-50">
+              <TableRow className="bg-[#F8FAFC]/50 h-16 border-b border-slate-100 hover:bg-transparent">
                 <TableHead 
-                  className="w-[140px] pl-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-#5a67f2 transition-colors"
+                  className="pl-6 sm:pl-10 pr-4 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-indigo-600 transition-colors min-w-[160px]"
                   onClick={() => handleSort("grno")}
                 >
-                  <div className="flex items-center gap-1">
-                    Registry #
-                    {sortBy === "grno" ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                  <div className="flex items-center gap-2 text-slate-600 text-[11px] sm:text-sm font-bold uppercase tracking-wide">
+                    REGISTRY 
+                    {sortBy === "grno" ? (sortOrder === "asc" ? <ChevronUp size={14} className="text-indigo-600" /> : <ChevronDown size={14} className="text-indigo-600" />) : <ArrowUpDown size={12} className="opacity-30" />}
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="w-[80px] hidden md:table-cell text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-#5a67f2 transition-colors"
+                  className="w-[90px] hidden md:table-cell px-4 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-indigo-600 transition-colors"
                   onClick={() => handleSort("roll")}
                 >
-                  <div className="flex items-center gap-1">
-                    Roll
-                    {sortBy === "roll" ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                  <div className="flex items-center text-slate-600 text-[11px] sm:text-sm font-bold uppercase tracking-wide gap-2">
+                    ROLL 
+                    {sortBy === "roll" ? (sortOrder === "asc" ? <ChevronUp size={14} className="text-indigo-600" /> : <ChevronDown size={14} className="text-indigo-600" />) : <ArrowUpDown size={12} className="opacity-30" />}
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  className="px-4 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-indigo-600 transition-colors min-w-[260px]"
                   onClick={() => handleSort("fullName")}
                 >
-                  <div className="flex items-center gap-1">
-                    Profile Information
-                    {sortBy === "fullName" ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                  <div className="flex items-center gap-2 text-slate-600 text-[11px] sm:text-sm font-bold uppercase tracking-wide">
+                    PROFILE INFORMATION
+                    {sortBy === "fullName" ? (sortOrder === "asc" ? <ChevronUp size={14} className="text-indigo-600" /> : <ChevronDown size={14} className="text-indigo-600" />) : <ArrowUpDown size={12} className="opacity-30" />}
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="hidden lg:table-cell text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  className="hidden lg:table-cell px-4 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-indigo-600 transition-colors min-w-[200px]"
                   onClick={() => handleSort("standard")}
                 >
-                  <div className="flex items-center gap-1">
-                    Placement
-                    {sortBy === "standard" ? (sortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                  <div className="flex items-center gap-2 text-slate-600 text-[11px] sm:text-sm font-bold uppercase tracking-wide">
+                    PLACEMENT
+                    {sortBy === "standard" ? (sortOrder === "asc" ? <ChevronUp size={14} className="text-indigo-600" /> : <ChevronDown size={14} className="text-indigo-600" />) : <ArrowUpDown size={12} className="opacity-30" />}
                   </div>
                 </TableHead>
-                <TableHead className="hidden xl:table-cell text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Identity Details</TableHead>
-                <TableHead className="hidden sm:table-cell text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Academic Status</TableHead>
-                <TableHead className="text-right pr-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Management</TableHead>
+                <TableHead className="hidden xl:table-cell px-4 text-[11px] font-black uppercase tracking-[0.2em] text-slate-600 font-bold uppercase tracking-wide min-w-[210px]">IDENTITY DETAILS</TableHead>
+                <TableHead className="hidden sm:table-cell px-4 text-[11px] font-black text-slate-600 font-bold uppercase tracking-wide min-w-[190px]">ACADEMIC STATUS</TableHead>
+                <TableHead className="text-right pr-6 sm:pr-10 pl-4 text-[11px] font-black uppercase text-slate-600 font-bold uppercase tracking-wide min-w-[120px]">MANAGEMENT</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {Array.isArray(filteredStudents) && filteredStudents.length > 0 ? (
                 filteredStudents.map((student) => (
-                  <TableRow key={student.id} className="hover:bg-slate-50/50 transition-colors group border-b border-slate-50/50 h-20">
-                    <TableCell className="pl-8">
+                  <TableRow key={student.id} className="hover:bg-slate-50/80 transition-all group border-b border-slate-100/50">
+                    {/* REGISTRY */}
+                    <TableCell className="pl-6 sm:pl-10 pr-4 py-6">
                        <SimpleTooltip content="Official Registration Number" side="right">
-                        <span className="font-mono text-xs font-black text-blue-600 bg-blue-50/50 px-2.5 py-1.5 rounded-lg border border-blue-100/50 cursor-help">
+                        <span className="font-mono text-[12px] font-black text-indigo-600 bg-indigo-50/50 px-3 py-2 rounded-xl border border-indigo-100/50 cursor-help shadow-sm group-hover:bg-white transition-colors whitespace-nowrap">
                           {(student as any).grno || student.id}
                         </span>
                        </SimpleTooltip>
                     </TableCell>
-                    <TableCell className="font-mono text-xs font-black text-slate-900 hidden md:table-cell">{student.roll.toString().padStart(2, '0')}</TableCell>
-                    <TableCell>
+                    {/* ROLL */}
+                    <TableCell className="px-4 py-6 font-mono text-sm font-black text-slate-400 hidden md:table-cell group-hover:text-slate-900 transition-colors">
+                      {student.roll.toString().padStart(2, '0')}
+                    </TableCell>
+                    {/* PROFILE */}
+                    <TableCell className="px-4 py-6">
                       <div className="flex items-center gap-4">
                         <div className="relative shrink-0">
-                          <Avatar className="h-11 w-11 border-2 border-white shadow-sm ring-1 ring-slate-100">
+                          <Avatar className="h-12 w-12 border-2 border-white shadow-md ring-1 ring-slate-100 group-hover:scale-110 transition-transform duration-300">
                             <AvatarImage src={resolvePhotoUrl(student.profilePhotoPath)} alt={student.name} />
-                            <AvatarFallback className="bg-gradient-to-br from-slate-100 to-slate-200 text-slate-700 text-xs font-black">
+                            <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-sm font-black">
                               {student.name ? student.name.split(" ").map((n: string) => n[0]).join("") : "S"}
                             </AvatarFallback>
                           </Avatar>
                           <SimpleTooltip content="Update photo" side="top">
                             <button 
                               onClick={() => triggerPhotoUpload(student.id)}
-                              className="absolute -bottom-1 -right-1 bg-white p-1.5 rounded-full border border-slate-100 shadow-md opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95"
+                              className="absolute -bottom-1 -right-1 bg-white p-1.5 rounded-full border border-slate-100 shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-125 active:scale-95"
                               aria-label="Change student photo"
                             >
-                              <Camera size={10} className="text-blue-600" />
+                              <Camera size={11} className="text-indigo-600 stroke-[2.5]" />
                             </button>
                           </SimpleTooltip>
                         </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="font-black text-slate-900 truncate tracking-tight text-sm">{student.name}</span>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                        <div className="flex flex-col min-w-0 space-y-1.5">
+                          <span className="font-black text-slate-800 truncate tracking-tight text-[14px] group-hover:text-indigo-600 transition-colors">{student.name}</span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap">
                               {student.gender}
                             </span>
-                            <span className="w-1 h-1 rounded-full bg-slate-200" />
-                            <span className="text-[10px] text-slate-500 font-bold truncate">Mom: {student.motherName || 'Registry Blank'}</span>
+                            <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
+                            <span className="text-[11px] text-slate-500 font-bold truncate">Mother: <span className="text-slate-700">{student.motherName || 'Registry Blank'}</span></span>
                           </div>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-black text-slate-800">{student.standard}</span>
-                          <span className="text-slate-300 font-thin">|</span>
-                          <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold">Section {student.section}</span>
+                    {/* PLACEMENT */}
+                    <TableCell className="hidden lg:table-cell px-4 py-6">
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[14px] font-black text-slate-800 whitespace-nowrap">Grade {student.standard}</span>
+                          <Badge variant="outline" className="bg-white border-slate-200 text-slate-500 text-[10px] font-black px-2 h-5 rounded-lg uppercase tracking-wider whitespace-nowrap">SEC {student.section}</Badge>
                         </div>
-                        <div className="mt-1 flex items-center gap-1.5">
-                          {user.role === "superadmin" && (
-                            <span className="text-[9px] font-black text-blue-500 uppercase tracking-tighter">
+                        {user.role === "superadmin" && (
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-1 h-1 rounded-full bg-indigo-400 shrink-0"></div>
+                            <span className="text-[11px] font-bold text-indigo-500/80 uppercase tracking-wide truncate">
                               {schools.find(sch => sch.id.toString() === student.schoolId)?.name || `ID: ${student.schoolId}`}
                             </span>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     </TableCell>
-                    <TableCell className="hidden xl:table-cell">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                           <span className="text-[10px] text-slate-500 font-bold">DOB: {student.birthDate || 'N/A'}</span>
+                    {/* IDENTITY */}
+                    <TableCell className="hidden xl:table-cell px-4 py-6">
+                      <div className="flex flex-col gap-2.5">
+                        <div className="flex items-center gap-2 font-bold text-[11px] text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                           DOB: <span className="text-slate-800">{student.birthDate || 'N/A'}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                           <span className="text-[10px] text-blue-600 bg-blue-50/50 px-1.5 rounded font-black tracking-tight tracking-widest">
+                        <div className="flex items-center">
+                           <span className="text-[11px] text-blue-600 font-extrabold bg-blue-50/80 px-3 py-1.5 rounded-xl border border-blue-100 shadow-sm flex items-center gap-2 whitespace-nowrap">
+                            <Smartphone size={12} className="stroke-[2.5]" />
                             {student.contactNumber || 'NO_CONTACT'}
                            </span>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <div className="flex flex-col gap-2">
-                         <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-500 rounded-full" style={{ width: student.attendance }}></div>
+                    {/* ACADEMIC STATUS */}
+                    <TableCell className="hidden sm:table-cell px-4 py-6">
+                      <div className="flex flex-col gap-2.5">
+                         <div className="w-28 h-2 bg-slate-100 rounded-full overflow-hidden shadow-inner p-0.5">
+                            <div className="h-full bg-gradient-to-r from-blue-400 to-indigo-600 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.4)]" style={{ width: student.attendance }}></div>
                          </div>
-                         <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Att: {student.attendance}</span>
+                         <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] whitespace-nowrap">ATT: {student.attendance}</span>
                             <Badge 
-                              variant="secondary" 
                               className={cn(
-                                "text-[9px] font-black uppercase tracking-widest px-1.5 h-4",
-                                student.performance === "Excellent" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" :
-                                student.performance === "Good" ? "bg-blue-50 text-blue-600 border border-blue-100" :
-                                "bg-amber-50 text-amber-600 border border-amber-100"
+                                "text-[10px] font-black uppercase tracking-widest px-2.5 h-5 rounded-lg border-none shadow-sm whitespace-nowrap",
+                                student.performance === "Excellent" ? "bg-green-100 text-emerald-800 shadow-emerald-200" :
+                                student.performance === "Good" ? "bg-indigo-500 text-white shadow-indigo-200" :
+                                "bg-amber-500 text-white shadow-amber-200"
                               )}
                             >
                               {student.performance}
@@ -3560,31 +3755,42 @@ Email Address
                          </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right pr-8">
+                    {/* MANAGEMENT */}
+                    <TableCell className="text-right pr-6 sm:pr-10 pl-4 py-6">
                       <DropdownMenu>
-                        <DropdownMenuTrigger
-                          render={
-                            <div className="flex items-center justify-center h-9 w-9 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-white hover:shadow-sm border-none bg-transparent outline-none cursor-pointer transition-all">
-                              <MoreHorizontal size={18} />
-                            </div>
-                          }
-                        />
-                        <DropdownMenuContent align="end" className="w-56 rounded-xl border-slate-100 shadow-2xl p-2">
-                          <DropdownMenuGroup>
-                            <DropdownMenuItem className="gap-3 py-3 px-4 rounded-xl font-bold text-slate-700 cursor-pointer focus:bg-blue-50 focus:text-blue-700" onClick={() => triggerPhotoUpload(student.id)}>
-                              <Camera size={16} /> Update Identity Image
+                        <DropdownMenuTrigger asChild nativeButton={true}>
+                          <Button variant="ghost" className="h-10 w-10 p-0 rounded-xl hover:bg-white hover:shadow-lg transition-all text-slate-400 hover:text-indigo-600">
+                            <MoreHorizontal size={20} />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 rounded-[1.5rem] border-none shadow-2xl p-2 bg-white/95 backdrop-blur-md">
+                          <DropdownMenuGroup className="space-y-1">
+                            <DropdownMenuItem className="gap-3 py-3 px-4 rounded-xl font-bold text-slate-700 cursor-pointer focus:bg-indigo-50 focus:text-indigo-700 transition-all" onClick={() => triggerPhotoUpload(student.id)}>
+                              <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                                <Camera size={16} className="stroke-[2.5]" />
+                              </div>
+                              Update Identity Image
                             </DropdownMenuItem>
                             {canManage && (
-                              <DropdownMenuItem className="gap-3 py-3 px-4 rounded-xl font-bold text-slate-700 cursor-pointer focus:bg-blue-50 focus:text-blue-700" onClick={() => openEditDialog(student)}>
-                                <Edit2 size={16} /> Edit Student Profile
+                              <DropdownMenuItem className="gap-3 py-3 px-4 rounded-xl font-bold text-slate-700 cursor-pointer focus:bg-indigo-50 focus:text-indigo-700 transition-all" onClick={() => openEditDialog(student)}>
+                                <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+                                  <Edit2 size={16} className="stroke-[2.5]" />
+                                </div>
+                                Edit Student Profile
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem className="gap-3 py-3 px-4 rounded-xl font-bold text-slate-700 cursor-pointer focus:bg-blue-50 focus:text-blue-700">
-                              <FileText size={16} /> Academic Statistics
+                            <DropdownMenuItem className="gap-3 py-3 px-4 rounded-xl font-bold text-slate-700 cursor-pointer focus:bg-sky-50 focus:text-sky-700 transition-all">
+                              <div className="p-2 bg-sky-50 rounded-lg text-sky-600">
+                                <FileText size={16} className="stroke-[2.5]" />
+                              </div>
+                              Academic Statistics
                             </DropdownMenuItem>
                             {canManage && (
-                              <DropdownMenuItem className="gap-3 py-3 px-4 rounded-xl font-bold text-red-600 cursor-pointer focus:bg-red-50 focus:text-red-700" onClick={() => handleDeleteStudent(student.id, student.name)}>
-                                <Trash2 size={16} /> Remove from Registry
+                              <DropdownMenuItem className="gap-3 py-3 px-4 rounded-xl font-bold text-rose-600 cursor-pointer focus:bg-rose-50 focus:text-rose-700 transition-all" onClick={() => handleDeleteStudent(student.id, student.name)}>
+                                <div className="p-2 bg-rose-100 rounded-lg text-rose-600">
+                                  <Trash2 size={16} className="stroke-[2.5]" />
+                                </div>
+                                Remove from Registry
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuGroup>
@@ -3609,68 +3815,67 @@ Email Address
             </Table>
           </div>
 
-          {/* Pagination Footer */}
-          <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 bg-slate-50/50 border-t border-slate-100 gap-4">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-              Showing <span className="text-slate-900 font-black">{students.length > 0 ? (page - 1) * pageSize + 1 : 0}</span> to <span className="text-slate-900 font-black">{Math.min(page * pageSize, totalCount)}</span> of <span className="text-slate-900 font-black">{totalCount}</span> entries
+          <div className="flex flex-col sm:flex-row items-center justify-between px-10 py-8 bg-slate-50/30 border-t border-slate-100/50 gap-6">
+            <div className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+              Showing <span className="text-slate-900 bg-white px-2 py-1 rounded-lg shadow-sm border border-slate-100">{students.length > 0 ? (page - 1) * pageSize + 1 : 0}</span> to <span className="text-slate-900 bg-white px-2 py-1 rounded-lg shadow-sm border border-slate-100">{Math.min(page * pageSize, totalCount)}</span> of <span className="text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg shadow-sm border border-indigo-100">{totalCount}</span> entries
             </div>
             
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 mr-4">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rows per page</span>
+            <div className="flex flex-col md:flex-row items-center gap-6 w-full md:w-auto">
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Rows per page</span>
                 <Select value={pageSize.toString()} onValueChange={(v) => { setPageSize(parseInt(v)); setPage(1); }}>
-                  <SelectTrigger className="w-[70px] h-8 bg-white border-slate-200 rounded-lg text-xs font-bold">
+                   <SelectTrigger className="w-[80px] h-10 bg-white border-slate-200 rounded-xl text-xs font-black shadow-sm focus:ring-4 focus:ring-indigo-500/5">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                  <SelectContent className="rounded-xl border-none shadow-2xl">
                     {[10, 25, 50, 100].map(size => (
-                      <SelectItem key={size} value={size.toString()} className="text-xs font-bold">{size}</SelectItem>
+                      <SelectItem key={size} value={size.toString()} className="text-xs font-bold rounded-lg focus:bg-indigo-50">{size}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-100/50 p-1.5 rounded-2xl border border-slate-200/50 w-full sm:w-auto justify-center">
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   size="icon" 
-                  className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-white shadow-sm hover:text-indigo-600 disabled:opacity-30 border border-slate-100"
                   onClick={() => setPage(1)}
                   disabled={page === 1}
                 >
-                  <ChevronsLeft size={14} />
+                  <ChevronsLeft size={16} className="stroke-[2.5]" />
                 </Button>
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   size="icon" 
-                  className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-white shadow-sm hover:text-indigo-600 disabled:opacity-30 border border-slate-100"
                   onClick={() => setPage(prev => Math.max(1, prev - 1))}
                   disabled={page === 1}
                 >
-                  <ChevronLeft size={14} />
+                  <ChevronLeft size={16} className="stroke-[2.5]" />
                 </Button>
 
-                <div className="flex items-center px-3 h-8 bg-white border border-slate-200 rounded-lg text-xs font-black text-slate-900 mx-1">
-                  Page {page} of {totalPages || 1}
+                <div className="flex items-center px-3 sm:px-4 h-8 sm:h-9 bg-indigo-600 text-[10px] sm:text-[11px] font-black text-white rounded-xl shadow-lg shadow-indigo-200 mx-1 uppercase tracking-widest whitespace-nowrap">
+                  Page {page} / {totalPages || 1}
                 </div>
 
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   size="icon" 
-                  className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-white shadow-sm hover:text-indigo-600 disabled:opacity-30 border border-slate-100"
                   onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={page >= totalPages}
                 >
-                  <ChevronRight size={14} />
+                  <ChevronRight size={16} className="stroke-[2.5]" />
                 </Button>
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   size="icon" 
-                  className="h-8 w-8 rounded-lg border-slate-200 hover:bg-white hover:text-blue-600 disabled:opacity-30"
+                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-white shadow-sm hover:text-indigo-600 disabled:opacity-30 border border-slate-100"
                   onClick={() => setPage(totalPages)}
                   disabled={page >= totalPages}
                 >
-                  <ChevronsRight size={14} />
+                  <ChevronsRight size={16} className="stroke-[2.5]" />
                 </Button>
               </div>
             </div>

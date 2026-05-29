@@ -26,7 +26,14 @@ import {
   ArrowUpRight,
   History,
   AlertCircle,
-  Loader2
+  Loader2,
+  Wallet,
+  Clock,
+  IndianRupee,
+  Building2,
+  Globe2,
+  School2,
+  ArrowRight
 } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { cn, parseSafeInt } from "@/lib/utils";
@@ -79,41 +86,208 @@ export default function Fees({ user }: { user: any }) {
     <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-          <div className="bg-[#5a67f2] p-4 rounded-[1.25rem] text-white shadow-2xl shadow-[#5a67f2]/20 transition-transform hover:rotate-3">
-             <DollarSign size={28} />
+          <div className="bg-[#5a67f2] p-3 rounded-2xl text-white shadow-xl shadow-[#5a67f2]/20 transition-transform hover:rotate-3">
+             <IndianRupee size={22} />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">Fee Management</h1>
-            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Track payments, issue invoices and monitor financial health.</p>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight truncate">Fee Management</h1>
+            <p className="text-slate-600 font-bold mt-1 text-xs sm:text-sm uppercase  leading-none">Track payments, issue invoices and monitor financial health.</p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {user.role === "superadmin" && (
-            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Branch:</span>
-              <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
-                <SelectTrigger className="h-9 w-[180px] border-none bg-slate-50 font-bold text-xs rounded-xl focus:ring-0">
-                  {/* Explicitly show school name to avoid ID display issues */}
-                  <SelectValue placeholder="Select School Branch">
-                    {selectedSchoolId ? schools.find(s => s.id.toString() === selectedSchoolId)?.name : undefined}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl border-slate-200 shadow-2xl p-2">
-                  <SelectItem value="" className="font-semibold py-2 px-3 rounded-lg text-slate-400 italic">Select School Branch</SelectItem>
-                  {Array.isArray(schools) && schools.map(s => (
-                    <SelectItem key={s.id} value={s.id.toString()} className="font-semibold py-2 px-3 rounded-lg">
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <div className="flex items-center gap-2 overflow-x-auto">
+        {user.role === "superadmin" && (
+  <div
+    className={cn(
+      "flex items-center gap-2 md:gap-4",
+      
+   
+      "transition-all duration-300"
+    )}
+  >
+
+  
+
+
+    {/* Select */}
+    <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
+      
+      <SelectTrigger
+        className={cn(
+          "relative h-10 min-h-[40px] w-[140px] sm:w-[180px] lg:w-[220px]",
+          "border border-slate-200",
+          "bg-white",
+          "rounded-xl pl-10 pr-4",
+          "font-bold text-[14px] text-slate-800",
+          "shadow-sm",
+          "hover:border-indigo-300",
+          "focus:ring-4 focus:ring-indigo-500/10",
+          "focus:border-indigo-400",
+          "transition-all duration-300",
+          "data-[state=open]:border-indigo-400",
+          "data-[state=open]:shadow-[0_14px_35px_rgba(99,102,241,0.14)]"
+        )}
+      >
+
+        {/* Inner Left Icon */}
+        <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100/50 shadow-sm text-indigo-600">
+          <School2 className="w-3.5 h-3.5" />
+        </div>
+
+        {/* Value */}
+        <div className="flex flex-col items-start text-left leading-tight truncate flex-1">
+          
+        
+
+          <div className="truncate text-[13px] font-bold text-slate-800">
+            <SelectValue placeholder="Select School Branch">
+              {selectedSchoolId
+                ? schools.find(
+                    s => s.id.toString() === selectedSchoolId
+                  )?.name
+                : "Select School Branch"}
+            </SelectValue>
+          </div>
+        </div>
+
+       
+
+      </SelectTrigger>
+
+      <SelectContent className="min-w-[320px] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl">
+
+        {/* Default Option */}
+        <SelectItem
+          value=""
+          className="group rounded-2xl py-3 px-3 cursor-pointer transition-all duration-200 focus:bg-slate-50"
+        >
+          <div className="flex items-center gap-3">
+
+            <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shadow-sm">
+              <Globe2 className="w-4 h-4 text-slate-500" />
             </div>
-          )}
+
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-extrabold text-slate-700">
+                Select School Branch
+              </span>
+
+              <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+                Campus Directory
+              </span>
+            </div>
+          </div>
+        </SelectItem>
+
+        {/* School Items */}
+        {Array.isArray(schools) && schools.map(s => (
+          <SelectItem
+            key={s.id}
+            value={s.id.toString()}
+            className="group rounded-2xl py-3 px-3 cursor-pointer transition-all duration-200 focus:bg-indigo-50 focus:text-indigo-700"
+          >
+            <div className="flex items-center gap-3">
+
+              {/* Item Icon */}
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 border border-indigo-200/40 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
+                <Building2 className="w-4 h-4 text-indigo-600" />
+              </div>
+
+              {/* Text */}
+              <div className="flex flex-col leading-tight">
+                <span className="text-sm font-extrabold text-slate-800">
+                  {s.name}
+                </span>
+
+                <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+                  Campus Branch
+                </span>
+              </div>
+
+            </div>
+          </SelectItem>
+        ))}
+
+      </SelectContent>
+    </Select>
+
+  </div>
+)}
           <div className="flex items-center gap-2">
               {isManagement && (
                 <>
-                  <Button variant="outline" className="gap-2"><History size={16} /> History</Button>
-                  <Button className="bg-slate-900 hover:bg-slate-800 gap-2"><Plus size={16} /> Collect Fees</Button>
+              <Button
+  variant="outline"
+  className={cn(
+    "relative h-10 px-3 md:px-5 gap-1.5 md:gap-3",
+    "rounded-xl border border-slate-200",
+    "bg-gradient-to-b from-white to-slate-50/90",
+    "font-black text-[11px] uppercase tracking-[0.16em]",
+    "text-slate-700",
+    "shadow-[0_4px_20px_rgba(15,23,42,0.05)]",
+    "hover:shadow-[0_12px_35px_rgba(99,102,241,0.10)]",
+    "hover:border-indigo-300 hover:text-indigo-700",
+  
+    
+  )}
+>
+
+  {/* Left Icon */}
+  <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100/50 shadow-sm group-hover:scale-105 transition-transform duration-300">
+    <History 
+      size={14} 
+      className="text-indigo-600 stroke-[2.5]" 
+    />
+  </div>
+
+  {/* Text */}
+  <span className="relative z-10">
+    History
+  </span>
+
+  {/* Right Arrow Icon */}
+  <div className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-50 border border-slate-100 group-hover:bg-indigo-50 transition-colors duration-300">
+    <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-indigo-600" />
+  </div>
+
+  {/* Hover Glow */}
+  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-indigo-50/40 via-transparent to-violet-50/40 pointer-events-none" />
+
+</Button>
+                <Button
+  className={cn(
+    "relative h-10 px-3 md:px-5 gap-1.5 md:gap-3",
+    "rounded-xl border border-slate-800",
+    "bg-gradient-to-b from-slate-900 to-slate-800",
+    "font-black text-[11px] uppercase tracking-[0.16em]",
+    "text-white",
+    "shadow-[0_10px_30px_rgba(15,23,42,0.18)]",
+    
+    "transition-all duration-300",
+    "group overflow-hidden"
+  )}
+>
+
+  {/* Left Icon */}
+  <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-white/10 border border-white/10 backdrop-blur-sm shadow-sm group-hover:scale-105 transition-transform duration-300">
+    <Plus 
+      size={14} 
+      className="text-white stroke-[2.7]" 
+    />
+  </div>
+
+  {/* Text */}
+  <span className="relative z-10">
+    Collect Fees
+  </span>
+
+  {/* Right Icon */}
+  <div className="hidden sm:flex items-center justify-center w-6 h-6 rounded-md bg-white/10 border border-white/10 group-hover:bg-white/15 transition-colors duration-300">
+    <Wallet className="w-3 h-3 text-white/90" />
+  </div>
+
+ 
+
+</Button>
                 </>
               )}
               {isParent && (
@@ -124,20 +298,20 @@ export default function Fees({ user }: { user: any }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-blue-600 text-white shadow-xl shadow-blue-500/20">
+        <Card className="bg-[#5a67f2] text-white shadow-xl shadow-blue-500/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-blue-100 text-xs uppercase tracking-widest font-bold">Total Collection (Term 1)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-end justify-between">
                 <div>
-                    <h2 className="text-4xl font-black">${(Array.isArray(fees) ? fees : []).reduce((acc, curr) => acc + curr.paidAmount, 0).toLocaleString()}</h2>
+                    <h2 className="text-4xl font-semibold font-black">₹{(Array.isArray(fees) ? fees : []).reduce((acc, curr) => acc + curr.paidAmount, 0).toLocaleString()}</h2>
                     <p className="text-blue-200 text-sm mt-1 flex items-center gap-1">
                         <ArrowUpRight size={14} /> 12% increase from last term
                     </p>
                 </div>
-                <div className="p-3 bg-blue-500 rounded-xl">
-                    <DollarSign size={24} />
+                <div className="p-3 bg-[#9ca5ff]    rounded-xl">
+                    <Wallet size={24} />
                 </div>
             </div>
           </CardContent>
@@ -150,11 +324,11 @@ export default function Fees({ user }: { user: any }) {
           <CardContent>
             <div className="flex items-end justify-between">
                 <div>
-                    <h2 className="text-4xl font-black text-amber-400">${(Array.isArray(fees) ? fees : []).reduce((acc, curr) => acc + (curr.totalAmount - curr.paidAmount), 0).toLocaleString()}</h2>
+                    <h2 className="text-4xl font-semibold font-black text-amber-400">₹{(Array.isArray(fees) ? fees : []).reduce((acc, curr) => acc + (curr.totalAmount - curr.paidAmount), 0).toLocaleString()}</h2>
                     <p className="text-slate-400 text-sm mt-1">From {Array.isArray(fees) ? fees.length : 0} students</p>
                 </div>
                 <div className="p-3 bg-slate-800 rounded-xl">
-                    <AlertCircle size={24} className="text-amber-400" />
+                    <Clock size={24} className="text-amber-400" />
                 </div>
             </div>
           </CardContent>
@@ -167,11 +341,11 @@ export default function Fees({ user }: { user: any }) {
           <CardContent className="pb-8">
             <div className="flex items-end justify-between">
                 <div>
-                    <h2 className="text-4xl font-black text-slate-900 tracking-tight">$0</h2>
+                    <h2 className="text-4xl font-semibold font-black text-slate-900 tracking-tight">₹0</h2>
                     <p className="text-slate-400 text-xs mt-2 font-bold uppercase tracking-widest">Financial Aid</p>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-2xl shadow-sm">
-                    <CreditCard size={28} className="text-slate-400" />
+                <div className="p-4 bg-emerald-50 rounded-2xl shadow-sm">
+                    <CreditCard size={28} className="text-emerald-400" />
                 </div>
             </div>
           </CardContent>
@@ -197,13 +371,13 @@ export default function Fees({ user }: { user: any }) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50/50 h-14">
-                  <TableHead className="pl-8 text-xs font-black text-slate-500 uppercase tracking-widest">Digital ID</TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Student Profile</TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Billing Term</TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Total Invoice</TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Paid to Date</TableHead>
-                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest">Standing</TableHead>
-                  <TableHead className="text-right pr-8 text-xs font-black text-slate-500 uppercase tracking-widest">Actions</TableHead>
+                  <TableHead className="pl-8 text-xs font-black text-slate-500 uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Digital ID</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Student Profile</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Billing Term</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Total Invoice</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Paid to Date</TableHead>
+                  <TableHead className="text-xs font-black text-slate-500 uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Standing</TableHead>
+                  <TableHead className="text-right pr-8 text-xs font-black text-slate-500 uppercase tracking-widest text-slate-600 text-xs sm:text-sm font-bold uppercase tracking-wide">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

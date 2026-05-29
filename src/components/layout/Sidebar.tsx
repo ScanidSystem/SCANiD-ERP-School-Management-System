@@ -514,7 +514,7 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
       )}
     >
       <div className={cn(
-        "p-6 flex flex-col items-center relative min-h-[140px] justify-center transition-all duration-300",
+        "p-6 flex flex-col items-center relative min-h-[110px] justify-center transition-all duration-300",
         isCollapsed ? "px-2" : "p-6"
       )}>
         {/* Mobile close button */}
@@ -541,22 +541,7 @@ export default function Sidebar({ user, onLogout, isMobileOpen, onCloseMobile }:
           <Logo isCollapsed={isCollapsed} size="md" />
         </div>
         
-        <AnimatePresence initial={false}>
-          {!isCollapsed && (
-            <motion.div
-              layout
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 5 }}
-              className="flex flex-col items-center"
-            >
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] text-center">
-                {user.role}
-              </p>
-              <div className="h-0.5 w-8 bg-blue-600/30 rounded-full mt-2" />
-            </motion.div>
-          )}
-        </AnimatePresence>
+
       </div>
       
       <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto overflow-x-visible custom-scrollbar scrollbar-hide">
