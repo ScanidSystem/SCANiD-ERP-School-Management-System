@@ -54,92 +54,37 @@ namespace ScanID.Api.Controllers
             [FromQuery] string sortOrder = "asc",
             [FromQuery] string? search = null,
             [FromQuery] int? standardId = null,
-            [FromQuery] int? sectionId = null)
+            [FromQuery] int? sectionId = null,
+            [FromQuery] int? lastId = null)
         {
-            // Retrieve all raw students for the given school and academic year from backend SQL DB repository
-            var studentsList = await _studentService.GetStudentsAsync(schoolId, academicYearId);
+            // Execute server-side pagination, searching, sorting and joins directly in SQL Server (AsNoTracking)
+            var (dataList, totalCount) = await _studentService.GetStudentsPagedAsync(
+                schoolId,
+                academicYearId,
+                page,
+                pageSize,
+                sortBy,
+                sortOrder,
+                search,
+                standardId,
+                sectionId,
+                lastId
+            );
             
-            // Convert to queryable list for high-performance in-memory sorting and filtering
-            var query = studentsList.AsQueryable();
-
-            // 1. Apply robust server-side text matching/searching
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                var searchLower = search.Trim().ToLower();
-                query = query.Where(s => 
-                    (s.Name != null && s.Name.ToLower().Contains(searchLower)) ||
-                    (s.GrNo != null && s.GrNo.ToLower().Contains(searchLower)) ||
-                    (s.RegistrationNumber != null && s.RegistrationNumber.ToLower().Contains(searchLower)) ||
-                    s.RollNumber.ToString().Contains(searchLower) ||
-                    (s.Standard != null && s.Standard.Name != null && s.Standard.Name.ToLower().Contains(searchLower)) ||
-                    (s.Section != null && s.Section.Name != null && s.Section.Name.ToLower().Contains(searchLower))
-                );
-            }
-
-            // 2. Apply academic Standard (Grade) filters
-            if (standardId.HasValue)
-            {
-                query = query.Where(s => s.StandardId == standardId.Value);
-            }
-
-            // 3. Apply division Section filters
-            if (sectionId.HasValue)
-            {
-                query = query.Where(s => s.SectionId == sectionId.Value);
-            }
-
-            // 4. Apply high-performance dynamic sorting
-            if (!string.IsNullOrWhiteSpace(sortBy))
-            {
-                bool isDesc = sortOrder != null && sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase);
-                switch (sortBy.ToLower())
-                {
-                    case "name":
-                        query = isDesc ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name);
-                        break;
-                    case "grno":
-                    case "registrationnumber":
-                        query = isDesc ? query.OrderByDescending(s => s.GrNo ?? s.RegistrationNumber) : query.OrderBy(s => s.GrNo ?? s.RegistrationNumber);
-                        break;
-                    case "roll":
-                    case "rollnumber":
-                        query = isDesc ? query.OrderByDescending(s => s.RollNumber) : query.OrderBy(s => s.RollNumber);
-                        break;
-                    case "standard":
-                        query = isDesc ? query.OrderByDescending(s => s.Standard != null ? s.Standard.Name : string.Empty) : query.OrderBy(s => s.Standard != null ? s.Standard.Name : string.Empty);
-                        break;
-                    case "section":
-                        query = isDesc ? query.OrderByDescending(s => s.Section != null ? s.Section.Name : string.Empty) : query.OrderBy(s => s.Section != null ? s.Section.Name : string.Empty);
-                        break;
-                    default:
-                        query = isDesc ? query.OrderByDescending(s => s.Id) : query.OrderBy(s => s.Id);
-                        break;
-                }
-            }
-            else
-            {
-                // Default fallback sorting to guarantee deterministic response matching
-                query = query.OrderBy(s => s.Id);
-            }
-
-            // 5. Build pagination parameters
-            var totalCount = query.Count();
             var totalPages = (int)Math.Max(1, Math.Ceiling((double)totalCount / pageSize));
-
-            // Adjust pages limits safely to avoid out-of-bounds queries
             var currentPage = Math.Max(1, page);
-            var safeDataSlice = query.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
 
             // Return enveloped paginated model perfectly parsed by React UI
             return Ok(new
             {
-                data = safeDataSlice,
+                data = dataList,
                 pagination = new
                 {
                     totalCount,
                     totalPages,
                     page = currentPage,
-                    pageSize
+                    pageSize,
+                    lastId = dataList.LastOrDefault()?.Id
                 }
             });
         }
@@ -186,14 +131,13 @@ namespace ScanID.Api.Controllers
 
             var csv = new System.Text.StringBuilder();
             // Header matching database schema column layout, ending with IsActive, IsDeleted, CreatedBy, CreatedOn, ModifiedBy, ModifiedOn
-            csv.AppendLine("Id,RegistrationNumber,Name,SchoolId,Status,RollNumber,FirstName,MiddleName,LastName,GrNo,Gender,DateOfBirth,Address,MotherName,FatherContactNo,MotherContactNo,AadharCard,UniformId,Rfid,SchoolSection,AdmissionDate,Email,Standard,Section,AcademicYear,Caste,SubCaste,Religion,BloodGroup,House,AdmissionType,City,State,Shift,Category,Sms,IsStateBoard,ProfilePhotoPath,DigitalUniform,DigitalNotebook,IsActive,IsDeleted,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn");
+            csv.AppendLine("Id,Name,SchoolId,Status,RollNumber,FirstName,MiddleName,LastName,GrNo,Gender,DateOfBirth,Address,MotherName,FatherContactNo,MotherContactNo,AadharCard,UniformId,Rfid,SchoolSection,AdmissionDate,Email,Standard,Section,AcademicYear,Caste,SubCaste,Religion,BloodGroup,House,AdmissionType,City,State,Shift,Category,Sms,IsStateBoard,ProfilePhotoPath,DigitalUniform,DigitalNotebook,OptedForBus,IsActive,IsDeleted,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn");
 
             foreach (var s in students)
             {
                 var row = new List<string?>
                 {
                     s.Id.ToString(),
-                    s.RegistrationNumber,
                     s.Name,
                     s.SchoolId.ToString(),
                     s.Status,
@@ -232,6 +176,7 @@ namespace ScanID.Api.Controllers
                     s.ProfilePhotoPath,
                     s.DigitalUniform.ToString().ToLower(),
                     s.DigitalNotebook.ToString().ToLower(),
+                    s.OptedForBus.ToString().ToLower(),
                     s.IsActive.ToString().ToLower(),
                     s.IsDeleted.ToString().ToLower(),
                     s.CreatedBy,
@@ -253,9 +198,9 @@ namespace ScanID.Api.Controllers
         {
             var csv = new System.Text.StringBuilder();
             // Required Header reflecting all active table fields in exact sequence ending with auditing columns
-            csv.AppendLine("RegistrationNumber,Name,SchoolId,Status,RollNumber,FirstName,MiddleName,LastName,GrNo,Gender,DateOfBirth,Address,MotherName,FatherContactNo,MotherContactNo,AadharCard,UniformId,Rfid,SchoolSectionName,AdmissionDate,Email,GradeName,SectionName,AcademicYear,CasteName,SubCasteName,ReligionName,BloodGroupName,HouseName,AdmissionType,CityName,StateName,ShiftName,CategoryName,Sms,IsStateBoard,ProfilePhotoPath,DigitalUniform,DigitalNotebook,IsActive,IsDeleted,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn");
+            csv.AppendLine("Name,SchoolId,Status,RollNumber,FirstName,MiddleName,LastName,GrNo,Gender,DateOfBirth,Address,MotherName,FatherContactNo,MotherContactNo,AadharCard,UniformId,Rfid,SchoolSectionName,AdmissionDate,Email,GradeName,SectionName,AcademicYear,CasteName,SubCasteName,ReligionName,BloodGroupName,HouseName,AdmissionType,CityName,StateName,ShiftName,CategoryName,Sms,IsStateBoard,ProfilePhotoPath,DigitalUniform,DigitalNotebook,OptedForBus,IsActive,IsDeleted,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn");
             // Example data row with Boolean sms/IsStateBoard mappings
-            csv.AppendLine("REG001,John Doe,1,Active,10,John,M.,Doe,1234,Male,2015-05-15,City Main Road,Jane Doe,9876543210,9876543211,123456789012,UniformID,RF-123,Primary,,john.doe@example.com,1,A,2024-25,General,,Hindu,B+,Red,Regular,,,Morning,General,true,false,/photos/1/example.jpg,true,false,true,false,Admin,2026-05-24 00:00:00,Admin,2026-05-24 00:00:00");
+            csv.AppendLine("John Doe,1,Active,10,John,M.,Doe,1234,Male,2015-05-15,City Main Road,Jane Doe,9876543210,9876543211,123456789012,UniformID,RF-123,Primary,,john.doe@example.com,1,A,2024-25,General,,Hindu,B+,Red,Regular,,,Morning,General,true,false,/photos/1/example.jpg,true,false,true,true,false,Admin,2026-05-24 00:00:00,Admin,2026-05-24 00:00:00");
 
             return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "Student_Upload_Template.csv");
         }

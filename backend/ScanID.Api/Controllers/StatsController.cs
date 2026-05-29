@@ -47,7 +47,7 @@ namespace ScanID.Api.Controllers
 
             var totalStudents = await studentQuery.CountAsync();
             var totalTeachers = await teacherQuery.CountAsync();
-
+            
             // Simplified stats for demo
             return Ok(new
             {

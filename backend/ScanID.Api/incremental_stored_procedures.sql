@@ -605,7 +605,7 @@ BEGIN
     DECLARE @TotalFees DECIMAL(18,2);
     SELECT @TotalFees = SUM(Amount) FROM [dbo].[Fees] f INNER JOIN [dbo].[Students] s ON f.StudentId = s.Id WHERE f.IsDeleted = 0 AND s.IsDeleted = 0 AND (@SchoolId IS NULL OR s.SchoolId = @SchoolId) AND (@AcademicYearId IS NULL OR s.AcademicYearId = @AcademicYearId);
 
-    SET @FeeCollection = '$' + CONVERT(NVARCHAR, ISNULL(@TotalFees, 45200.00), 1);
+    SET @FeeCollection = N'₹' + CONVERT(NVARCHAR, ISNULL(@TotalFees, 45200.00), 1);
 
     DECLARE @PresentCount INT;
     DECLARE @TotalAttendanceCount INT;

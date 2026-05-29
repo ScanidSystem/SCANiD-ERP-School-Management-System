@@ -16,6 +16,21 @@ namespace ScanID.Api.Interfaces
         Task<IEnumerable<Student>> GetStudentsAsync(int? schoolId, int? academicYearId);
 
         /// <summary>
+        /// Retrieves non-deleted students from SQL Server using server-side pagination, filtering, and sorting.
+        /// </summary>
+        Task<(IEnumerable<Student> Data, int TotalCount)> GetStudentsPagedAsync(
+            int? schoolId, 
+            int? academicYearId,
+            int page,
+            int pageSize,
+            string? sortBy,
+            string sortOrder,
+            string? search,
+            int? standardId,
+            int? sectionId,
+            int? lastId);
+
+        /// <summary>
         /// Retrieves a single student record.
         /// </summary>
         Task<Student?> GetStudentByIdAsync(int id);

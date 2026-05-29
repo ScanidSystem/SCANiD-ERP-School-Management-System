@@ -23,12 +23,12 @@
             "type": "coreclr",
             "request": "attach"
         },
-        {
-            "name": "Debug React in Chrome",
-            "type": "chrome",
-            "request": "launch",
-            "url": "http://localhost:3000",
-            "webRoot": "${workspaceFolder}"
+         {
+      "name": "Debug React in Chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}"
         }
     ]
 }

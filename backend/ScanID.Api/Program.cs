@@ -9,7 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.Configure<RouteOptions>(options =>
+builder.Services.AddMemoryCache();
+builder.Services.Configure<RouteOptions>(options => 
 {
     options.LowercaseUrls = true;
     options.LowercaseQueryStrings = true;
@@ -70,7 +71,7 @@ app.Use(async (context, next) =>
         FileLogger.LogError(ex);
 
         // Log to Database (optional, don't crash if DB is down)
-        try
+        try 
         {
             var db = context.RequestServices.GetRequiredService<ApplicationDbContext>();
             db.ErrorLogs.Add(new ErrorLog
@@ -87,13 +88,12 @@ app.Use(async (context, next) =>
         {
             FileLogger.LogError(new Exception("Failed to log error to database. " + dbEx.Message, dbEx));
         }
-
+        
         // Return a cleaner 500 error instead of throwing a raw exception that might leak info
         context.Response.StatusCode = 500;
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new
-        {
-            error = "Internal Server Error",
+        await context.Response.WriteAsJsonAsync(new { 
+            error = "Internal Server Error", 
             message = ex.Message,
             details = "Check server logs for more information."
         });
@@ -105,7 +105,6 @@ app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "ScanID API v1");
-    // c.SwaggerEndpoint("/scanid_erp_api/swagger/v1/swagger.json", "ScanID API v1");
     c.RoutePrefix = "swagger"; // Keep it at /swagger
 });
 
@@ -115,9 +114,9 @@ if (app.Environment.IsDevelopment())
     // In development, we might not have SSL certificates configured locally, 
     // so we skip redirection to prevent "Empty Response" errors.
 }
-else
+else 
 {
-    ///app.UseHttpsRedirection();
+    app.UseHttpsRedirection();
 }
 app.UseStaticFiles(); // Enable serving of static files from wwwroot
 app.UseCors("AllowReactApp");

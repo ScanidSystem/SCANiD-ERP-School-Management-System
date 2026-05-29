@@ -90,6 +90,37 @@ BEGIN
     BEGIN
         ALTER TABLE [dbo].[Students] ADD [DigitalNotebook] [bit] NOT NULL CONSTRAINT [DF_Students_DigitalNotebook] DEFAULT (0);
     END;
+
+    -- Self-Healing: Safe recovery check for all standard columns if they were dropped in a prior interrupted run
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'IsActive')
+    BEGIN
+        ALTER TABLE [dbo].[Students] ADD [IsActive] [bit] NOT NULL CONSTRAINT [DF_Students_IsActive] DEFAULT (1);
+    END;
+
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'IsDeleted')
+    BEGIN
+        ALTER TABLE [dbo].[Students] ADD [IsDeleted] [bit] NOT NULL CONSTRAINT [DF_Students_IsDeleted] DEFAULT (0);
+    END;
+
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'CreatedBy')
+    BEGIN
+        ALTER TABLE [dbo].[Students] ADD [CreatedBy] [nvarchar](max) NULL;
+    END;
+
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'CreatedOn')
+    BEGIN
+        ALTER TABLE [dbo].[Students] ADD [CreatedOn] [datetime2](7) NOT NULL CONSTRAINT [DF_Students_CreatedOn] DEFAULT (GETUTCDATE());
+    END;
+
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'ModifiedBy')
+    BEGIN
+        ALTER TABLE [dbo].[Students] ADD [ModifiedBy] [nvarchar](max) NULL;
+    END;
+
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'ModifiedOn')
+    BEGIN
+        ALTER TABLE [dbo].[Students] ADD [ModifiedOn] [datetime2](7) NOT NULL CONSTRAINT [DF_Students_ModifiedOn] DEFAULT (GETUTCDATE());
+    END;
 END;
 GO
 
@@ -222,6 +253,17 @@ GO
 -- 6. Move IsActive, IsDeleted, CreatedBy, CreatedOn, ModifiedBy, ModifiedOn to the end of the Students table (Consistency Standard)
 IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND type in (N'U'))
 BEGIN
+    -- Drop dependent search/filter indexes if they already exist, to avoid preventing table/column modifications
+    IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Students_School_Academics_Filters' AND object_id = OBJECT_ID('dbo.Students'))
+    BEGIN
+        DROP INDEX [IX_Students_School_Academics_Filters] ON [dbo].[Students];
+    END;
+
+    IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Students_Name_Search' AND object_id = OBJECT_ID('dbo.Students'))
+    BEGIN
+        DROP INDEX [IX_Students_Name_Search] ON [dbo].[Students];
+    END;
+
     -- Only run relocation if IsActive exists and is not already near the last columns
     IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = 'IsActive')
     BEGIN
@@ -311,6 +353,33 @@ BEGIN
         ALTER TABLE [dbo].[Students] DROP COLUMN [Temp_CreatedOn];
         ALTER TABLE [dbo].[Students] DROP COLUMN [Temp_ModifiedBy];
         ALTER TABLE [dbo].[Students] DROP COLUMN [Temp_ModifiedOn];
+    END;
+END;
+GO
+
+-- =========================================================================
+-- 7. High-Performance Database Indexing Strategy (Scalability Up To 90 Lakhs+ Records)
+-- =========================================================================
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND type in (N'U'))
+BEGIN
+    -- Ensure columns have precise, non-MAX types for indexing compatibility in SQL Server
+    ALTER TABLE [dbo].[Students] ALTER COLUMN [RegistrationNumber] NVARCHAR(100) NOT NULL;
+    ALTER TABLE [dbo].[Students] ALTER COLUMN [GrNo] NVARCHAR(100) NULL;
+
+    -- High Performance Composite Filter Index matching GetStudents queries
+    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Students_School_Academics_Filters' AND object_id = OBJECT_ID('dbo.Students'))
+    BEGIN
+        CREATE NONCLUSTERED INDEX [IX_Students_School_Academics_Filters] 
+        ON [dbo].[Students] ([SchoolId], [AcademicYearId], [StandardId], [SectionId], [IsDeleted])
+        INCLUDE ([Id], [RegistrationNumber], [Name], [RollNumber], [GrNo]);
+    END;
+
+    -- High Performance Index for Fast Dynamic Searching by Student details and GrNo
+    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Students_Name_Search' AND object_id = OBJECT_ID('dbo.Students'))
+    BEGIN
+        CREATE NONCLUSTERED INDEX [IX_Students_Name_Search] 
+        ON [dbo].[Students] ([GrNo], [RegistrationNumber], [RollNumber])
+        INCLUDE ([Name]);
     END;
 END;
 GO

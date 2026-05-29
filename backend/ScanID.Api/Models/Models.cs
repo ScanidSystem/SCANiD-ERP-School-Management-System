@@ -146,9 +146,6 @@ namespace ScanID.Api.Models
         public int Id { get; set; }
         
         [Required]
-        public string RegistrationNumber { get; set; } = string.Empty;
-        
-        [Required]
         public string Name { get; set; } = string.Empty;
         
         public int SchoolId { get; set; }
@@ -160,7 +157,9 @@ namespace ScanID.Api.Models
         public string? MiddleName { get; set; }
         public string? LastName { get; set; }
         
-        public string? GrNo { get; set; }
+        [Required]
+        public string GrNo { get; set; } = string.Empty;
+        
         public string? Gender { get; set; }
         public string? DateOfBirth { get; set; }
         public string? Address { get; set; }
@@ -178,6 +177,7 @@ namespace ScanID.Api.Models
         public bool IsStateBoard { get; set; }
         public bool DigitalUniform { get; set; }
         public bool DigitalNotebook { get; set; }
+        public bool OptedForBus { get; set; }
 
         [ForeignKey("SchoolSectionId")]
         public SchoolSection? SchoolSection { get; set; }
