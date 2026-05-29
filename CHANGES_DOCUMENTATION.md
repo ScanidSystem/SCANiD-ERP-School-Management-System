@@ -225,7 +225,29 @@ This document records the exact changes, the root causes identified, and the fix
 - `/src/pages/Students.tsx`: Aligned default form values for gender state initialization.
 - `/CHANGES_DOCUMENTATION.md`: Appended changes documentation for database validation alignments.
 
+---
 
+## 24. Issue: Datetime Normalization and Sequential Validation Flow Improvement
+- **Root Cause 1 (Datetime datatype column mismatch)**: The standard dates inside student records (`DateOfBirth`, `AdmissionDate`) were previously stored using `nvarchar(200)` data type instead of a formal `datetime` type. This was prone to inconsistencies and hindered native database filter queries. Attempting to convert them blindly raised exceptions where empty strings, blank entries, or invalid markers like `"N/A"` existed in the database table history.
+- **Root Cause 2 (Out-of-Order Validation & Popups)**: Validation behavior for special fields (such as `RFID` and `Uniform ID`) triggered arbitrary toast dialogs outside of the natural validation cycle, breaking the focused form field highlighting sequence.
+- **Root Cause 3 (Name Numeric Toast Noise)**: The name inputs relied on annoying warning validation dialogs upon form submission to catch inputs containing numbers rather than preventing users from entering numeric characters in the first place.
+- **Remediation**:
+  1. **Safe SQL Preprocessing & Conversion**: Wrote a robust database update script `/update_students_date_datatypes.sql` which first translates invalid labels (e.g. empty strings, blank spaces, `"N/A"`, or malformed strings) to SQL `NULL` via `ISDATE()` detection, and subsequently executes `ALTER TABLE ALTER COLUMN ... DATETIME`.
+  2. **Model & Service Datetime Standardization**: Integrated strict `DateTime?` mappings inside `/backend/ScanID.Api/Models/Models.cs`, updated bulk dataset schema generation inside `/backend/ScanID.Api/Services/StudentService.cs`, updated CSV exporting format in `/backend/ScanID.Api/Controllers/StudentsController.cs`, and aligned SQL representations inside `/database.sql`.
+  3. **Sequential Focus Validation**: Unified validation flow inside `/src/pages/Students.tsx` so that `RFID` length / creation requirements and `Uniform ID` presence are tracked seamlessly as part of `firstErrorField` and focused sequentially without intrusive custom toaster popups.
+  4. **Dynamic Input Numeric Filtering**: Refitted React handlers for name fields (First, Middle, Last, Mother) to dynamically strip any number characters from user keystrokes in real time, completely bypassing warning popups.
+
+---
+
+## 25. Standardized/Modified Files Summary (Date conversion & validation refining)
+
+- `/database.sql`: Swapped `DateOfBirth` and `AdmissionDate` to formal DATETIME column definitions.
+- `/update_students_date_datatypes.sql`: Incorporated safe SQL preprocessing & type conversion.
+- `/backend/ScanID.Api/Models/Models.cs`: Standardized C# API entity fields to `DateTime?` properties.
+- `/backend/ScanID.Api/Services/StudentService.cs`: Integrated `typeof(DateTime)` inside BulkCopy mappings.
+- `/backend/ScanID.Api/Controllers/StudentsController.cs`: Stringified datetime exports using the universal standard format `yyyy-MM-dd`.
+- `/src/pages/Students.tsx`: Unified sequential validation rules and added interactive character filtering to name text inputs.
+- `/CHANGES_DOCUMENTATION.md`: Documented newest features, UX enhancements, and structural database upgrades.
 
 
 

@@ -2,6 +2,30 @@
 -- INCREMENTAL DATABASE UPDATE: Convert Students Date Columns to DATETIME Type
 -- =================================================================================
 
+-- Preprocess existing data to avoid 'out-of-range' conversion errors 
+-- Convert any non-convertible dates (empty strings, 'N/A', spaces, or malformed strings) to NULL
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = N'DateOfBirth')
+BEGIN
+    PRINT 'Sanitizing existing [DateOfBirth] data to prepare for DATETIME conversion...';
+    
+    UPDATE [dbo].[Students]
+    SET [DateOfBirth] = NULL
+    WHERE [DateOfBirth] IS NOT NULL 
+      AND (LTRIM(RTRIM([DateOfBirth])) = '' OR LTRIM(RTRIM([DateOfBirth])) = 'N/A' OR ISDATE([DateOfBirth]) = 0);
+END
+GO
+
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = N'AdmissionDate')
+BEGIN
+    PRINT 'Sanitizing existing [AdmissionDate] data to prepare for DATETIME conversion...';
+    
+    UPDATE [dbo].[Students]
+    SET [AdmissionDate] = NULL
+    WHERE [AdmissionDate] IS NOT NULL 
+      AND (LTRIM(RTRIM([AdmissionDate])) = '' OR LTRIM(RTRIM([AdmissionDate])) = 'N/A' OR ISDATE([AdmissionDate]) = 0);
+END
+GO
+
 -- 1. Safe ALTER of [DateOfBirth] to [datetime] inside [dbo].[Students]
 IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Students]') AND name = N'DateOfBirth')
 BEGIN
