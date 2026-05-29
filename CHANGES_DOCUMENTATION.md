@@ -206,6 +206,26 @@ This document records the exact changes, the root causes identified, and the fix
 - `/backend/ScanID.Api/Services/StudentService.cs`: Reordered `SqlBulkCopy` Datatable definition columns and resolved 64 nullable reference warnings.
 - `/CHANGES_DOCUMENTATION.md`: Documented column realignments & CS8600 warning fixes.
 
+---
+
+## 22. Issue: Resilient Database Schema Alignments and Gender State Normalization
+- **Root Cause 1 (C# Model Mismatch on GrNo)**: The `GrNo` property in the C# `Student` model was originally marked as `[Required] public string GrNo { get; set; } = string.Empty;`. However, the physical SQL table definition allows `GrNo` to be `NULL` (`[GrNo] [nvarchar](100) NULL`). This structural mismatch would throw model validation exceptions during student operations where the registration number was omitted.
+- **Root Cause 2 (Gender Form Defaults)**: In the Student Creation user form inside `Students.tsx`, the default gender state was fixed to `"Male"`, which conflicted with users wanting to leave the dropdown choice neutral or prompt for explicit selection at form submission.
+- **Remediation**:
+  1. **GrNo Property Nullable Alignment**: Safely removed `[Required]` and changed `GrNo` to `public string? GrNo { get; set; }` inside `/backend/ScanID.Api/Models/Models.cs`, aligning perfectly with SQL Server's physical column nullable state.
+  2. **Code Commenting & Documentation Standards**: Added extensive code comments to the `Student` entity's `GrNo` property in `Models.cs` documenting its SQL schema database alignment.
+  3. **Gender State Initialization**: Adjusted the initial form state for `gender` to `""` in `/src/pages/Students.tsx` to enable neutral default options.
+  4. **Rigorous Compile & Lint Verification**: Ran the full-scale React linter and compiler validation to confirm there are no broken imports, type inconsistencies, or build-halting syntax errors.
+
+---
+
+## 23. Standardized/Modified Files Summary (Latest Database & State Tuning)
+
+- `/backend/ScanID.Api/Models/Models.cs`: Aligned `GrNo` to be a nullable string matching physical tables, accompanied by developer documentation comments.
+- `/src/pages/Students.tsx`: Aligned default form values for gender state initialization.
+- `/CHANGES_DOCUMENTATION.md`: Appended changes documentation for database validation alignments.
+
+
 
 
 

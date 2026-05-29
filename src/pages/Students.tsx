@@ -268,7 +268,11 @@ export default function Students({ user }: { user: UserType }) {
           digitalUniform: getVal("DigitalUniform") || getVal("digitalUniform") || s.digitalUniform || false,
           digitalNotebook: getVal("DigitalNotebook") || getVal("digitalNotebook") || s.digitalNotebook || false,
           status: getVal("Status") || s.status || "Active",
-          optedForBus: getVal("OptedForBus") || getVal("optedForBus") || s.optedForBus || false
+          optedForBus: getVal("OptedForBus") || getVal("optedForBus") || s.optedForBus || false,
+          createdBy: getVal("Createdby") || getVal("createdby") || s.createdby || "",
+          createdOn: getVal("CreatedOn") || getVal("createdon") || s.createdon || "",
+          modifiedBy: getVal("ModifiedBy") || getVal("modifiedBy") || s.modifiedBy || "",
+          modifiedOn: getVal("ModifiedOn") || getVal("modifiedon") || s.modifiedon || ""
         };
       });
 
@@ -379,7 +383,7 @@ export default function Students({ user }: { user: UserType }) {
     firstName: "",
     middleName: "",
     lastName: "",
-    gender: "Male",
+    gender: "",
     fatherContactNo: "",
     motherName: "",
     address: "",
@@ -613,19 +617,19 @@ export default function Students({ user }: { user: UserType }) {
       // Define standard headers based on all current student table fields in exact sequence
       // Using user-friendly names that the mapper will convert to IDs
       const headers = [
-        "RegistrationNumber", "Name", "SchoolName", "Status", "RollNumber",
-        "FirstName", "MiddleName", "LastName", "GrNo", "Gender",
+        "GrNo", "Name", "SchoolName", "Status", "RollNumber",
+        "FirstName", "MiddleName", "LastName", "Gender",
         "DateOfBirth", "Address", "MotherName", "FatherContactNo", "MotherContactNo",
         "AadharCard", "UniformID", "RFID", "SchoolSectionName", "AdmissionDate",
         "Email", "Standard", "Division", "AcademicYear", "CasteName",
         "SubCasteName", "ReligionName", "BloodGroupName", "HouseName", "AdmissionType",
         "CityName", "StateName", "ShiftName", "CategoryName", "SecondarySMS",
-        "IsStateBoard", "ProfilePhotoPath", "DigitalUniform", "DigitalNotebook"
+        "IsStateBoard", "ProfilePhotoPath", "DigitalUniform", "DigitalNotebook", "OptedForBus"
       ];
 
       const sampleData = [
         {
-          RegistrationNumber: "REG1001",
+          GrNo: "REG1001",
           Name: "John Doe Smith",
           SchoolName: schools.find(sch => sch.id?.toString() === user.schoolId?.toString())?.name || schools[0]?.name || "Main Campus",
           Status: "Active",
@@ -633,7 +637,6 @@ export default function Students({ user }: { user: UserType }) {
           FirstName: "John",
           MiddleName: "Doe",
           LastName: "Smith",
-          GrNo: "REG1001",
           Gender: "Male",
           DateOfBirth: "2010-05-20",
           Address: "123 Education Lane, Sector 4",
@@ -662,8 +665,9 @@ export default function Students({ user }: { user: UserType }) {
           SecondarySMS: "Yes",
           IsStateBoard: "No",
           ProfilePhotoPath: "/photos/1/example.jpg",
-          DigitalUniform: "Yes",
-          DigitalNotebook: "No"
+          DigitalUniform: "No",
+          DigitalNotebook: "No",
+          OptedForBus: "No"
         }
       ];
 
@@ -706,7 +710,7 @@ export default function Students({ user }: { user: UserType }) {
         // Initialize status tracking
         const initialResults = rawData.map((item: any, index: number) => ({
           id: index,
-          name: `${item.FirstName || ""} ${item.LastName || ""}`.trim() || item.RegistrationNumber || `Row ${index + 1}`,
+          name: `${item.FirstName || ""} ${item.LastName || ""}`.trim() || item.GrNo || `Row ${index + 1}`,
           status: 'pending',
           error: null
         }));
@@ -822,7 +826,7 @@ export default function Students({ user }: { user: UserType }) {
             const lName = getFieldCleanVal(["LastName", "LNAME", "last_name"]);
 
             return {
-              registrationNumber: regNum || `REG-${Date.now()}-${index}`,
+              GrNo: regNum,
               name: `${fName} ${mName} ${lName}`.trim() || item.Name || `Student ${index + 1}`,
               schoolId: parseInt(schMasterId || item.SchoolId || user.schoolId || "1"),
               rollNumber: parseInt(getFieldCleanVal(["RollNumber", "ROLLNO", "roll_number"]) || "0"),
@@ -890,7 +894,7 @@ export default function Students({ user }: { user: UserType }) {
         }
 
         // Build Sets of existing unique identifiers for fast O(1) lookup
-        const existingRegs = new Set<string>();
+        const existingGrnos = new Set<string>();
         const existingAadhars = new Set<string>();
         const existingRfids = new Set<string>();
         const existingUniforms = new Set<string>();
@@ -903,12 +907,12 @@ export default function Students({ user }: { user: UserType }) {
             const match = keys.find(k => k.toLowerCase() === prop.toLowerCase());
             return match ? s[match] : fallback;
           };
-          const reg = (getVal("GRNO") || s.registrationNumber || s.grno || "").toString().trim().toLowerCase();
+          const grno = (getVal("GRNO") || s.registrationNumber || s.grno || "").toString().trim().toLowerCase();
           const aadhar = (getVal("aadharcard") || s.aadharCard || "").toString().trim().toLowerCase();
           const rfidVal = (getVal("RFID") || s.rfid || s.CARDID || s.cardId || "").toString().trim().toLowerCase();
           const uniformVal = (getVal("uniformid") || s.uniformid || "").toString().trim().toLowerCase();
 
-          if (reg) existingRegs.add(reg);
+          if (grno) existingGrnos.add(grno);
           if (aadhar) existingAadhars.add(aadhar);
           if (rfidVal) existingRfids.add(rfidVal);
           if (uniformVal) existingUniforms.add(uniformVal);
@@ -934,7 +938,7 @@ export default function Students({ user }: { user: UserType }) {
           const s = processedStudents[idx];
           if (!s) return { ...result, status: 'error', error: 'Invalid record format' };
 
-          const reg = (s.registrationNumber || "").toString().trim().toLowerCase();
+          const grno = (s.GrNo || "").toString().trim().toLowerCase();
           const aadhar = (s.aadharCard || "").toString().trim().toLowerCase();
           const rfid = (s.rfid || "").toString().trim().toLowerCase();
           const uniform = (s.uniformId || "").toString().trim().toLowerCase();
@@ -942,13 +946,13 @@ export default function Students({ user }: { user: UserType }) {
           let rowError = "";
 
           // a) RegistrationNumber/GRNO
-          if (reg) {
-            if (batchRegs.has(reg)) {
-              rowError = `Duplicate Registration Number/GRNO '${s.registrationNumber}' in uploaded file.`;
-            } else if (existingRegs.has(reg)) {
-              rowError = `Registration Number/GRNO '${s.registrationNumber}' already exists in database.`;
+          if (grno) {
+            if (batchRegs.has(grno)) {
+              rowError = `Duplicate Registration Number/GRNO '${s.GrNo}' in uploaded file.`;
+            } else if (existingGrnos.has(grno)) {
+              rowError = `Registration Number/GRNO '${s.GrNo}' already exists in database.`;
             } else {
-              batchRegs.add(reg);
+              batchRegs.add(grno);
             }
           }
 
@@ -966,12 +970,15 @@ export default function Students({ user }: { user: UserType }) {
           // c) RFID
           if (!rowError && rfid) {
             if (batchRfids.has(rfid)) {
-              rowError = `Duplicate RFID/CardID '${s.rfid}' in uploaded file.`;
+              rowError = `Duplicate RFID '${s.rfid}' in uploaded file.`;
             } else if (existingRfids.has(rfid)) {
-              rowError = `RFID/CardID '${s.rfid}' already exists in database.`;
+              rowError = `RFID '${s.rfid}' already exists in database.`;
             } else {
               batchRfids.add(rfid);
             }
+          }
+          else {
+            batchRfids.add(rfid);
           }
 
           // d) UniformID
@@ -983,6 +990,9 @@ export default function Students({ user }: { user: UserType }) {
             } else {
               batchUniforms.add(uniform);
             }
+          }
+          else {
+            batchUniforms.add(uniform);
           }
 
           // e) Roll Number combination uniqueness check
@@ -1102,6 +1112,7 @@ export default function Students({ user }: { user: UserType }) {
     checkField("registrationNumber", !newStudentFormData.registrationNumber?.trim());
     checkField("rollNumber", !newStudentFormData.rollNumber?.trim());
     checkField("gender", !newStudentFormData.gender);
+    checkField("rfid", !newStudentFormData.rfid);
     checkField("schoolSectionId", !newStudentFormData.schoolSectionId);
     checkField("fatherContactNo", !newStudentFormData.fatherContactNo?.trim() || !/^\d{10}$/.test(newStudentFormData.fatherContactNo.replace(/\D/g, "")));
 
@@ -1132,7 +1143,7 @@ export default function Students({ user }: { user: UserType }) {
     checkField("firstName", !newStudentFormData.firstName?.trim() || hasNumeric(newStudentFormData.firstName));
     checkField("middleName", !newStudentFormData.middleName?.trim() || hasNumeric(newStudentFormData.middleName));
     checkField("lastName", !newStudentFormData.lastName?.trim() || hasNumeric(newStudentFormData.lastName));
-    
+
     if (newStudentFormData.firstName && hasNumeric(newStudentFormData.firstName)) {
       toast.error("First Name must not contain numeric characters.");
       return;
@@ -1302,7 +1313,7 @@ export default function Students({ user }: { user: UserType }) {
   };
 
   const filteredStudents = students; // Server now handles filtering, sorting and pagination
-
+  console.log("Rendering with students:", filteredStudents);
   return (
     <div className="space-y-4 sm:space-y-6 animate-in slide-in-from-bottom-2 duration-500">
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
@@ -2523,9 +2534,9 @@ export default function Students({ user }: { user: UserType }) {
                         <div className="flex items-center gap-4">
                           <div className="relative shrink-0">
                             <Avatar className="h-11 w-11 border-2 border-white shadow-sm ring-1 ring-slate-100">
-                              <AvatarImage 
-                                src={resolvePhotoUrl(student.profilePhotoPath || (student as any).ProfilePhotoPath || (student as any).photo)} 
-                                alt={student.name} 
+                              <AvatarImage
+                                src={resolvePhotoUrl(student.profilePhotoPath || (student as any).ProfilePhotoPath || (student as any).photo)}
+                                alt={student.name}
                                 onError={(e) => {
                                   console.warn(`[IMAGE_LOAD_WARNING] List avatar photo failed to load for student "${student.name}" (ID: ${student.id}) from URL: "${e.currentTarget.src}". Fallback to text initials will be triggered.`);
                                 }}

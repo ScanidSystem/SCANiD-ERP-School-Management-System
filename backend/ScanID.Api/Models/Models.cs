@@ -157,8 +157,8 @@ namespace ScanID.Api.Models
         public string? MiddleName { get; set; }
         public string? LastName { get; set; }
         
-        [Required]
-        public string GrNo { get; set; } = string.Empty;
+        // General Registration Number (GrNo) made nullable to match the [dbo].[Students] column schema [GrNo] [nvarchar](100) NULL
+        public string? GrNo { get; set; }
         
         public string? Gender { get; set; }
         public string? DateOfBirth { get; set; }
