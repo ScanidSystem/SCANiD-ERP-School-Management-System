@@ -11,6 +11,7 @@ namespace ScanID.Api.Interfaces
     public interface IUserService
     {
         Task<IEnumerable<User>> GetUsersAsync();
+        Task<(IEnumerable<User> Data, int TotalCount)> GetUsersPagedAsync(int page, int pageSize, string? sortBy, string? sortOrder, string? search, int? roleId, int? schoolId);
         Task<User?> GetUserByIdAsync(int id);
         Task<User> CreateUserAsync(User user);
         Task<bool> UpdateUserAsync(User user);

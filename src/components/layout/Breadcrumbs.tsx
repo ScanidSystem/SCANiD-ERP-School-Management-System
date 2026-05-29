@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   ChevronRight, 
@@ -37,9 +37,45 @@ import {
   Settings 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiService } from "@/lib/api";
 
-export default function Breadcrumbs() {
+interface NavItem {
+  id: number;
+  title: string;
+  icon: string | null;
+  path: string;
+}
+
+interface BreadcrumbsProps {
+  user?: any;
+}
+
+export default function Breadcrumbs({ user }: BreadcrumbsProps) {
   const location = useLocation();
+  const [menuItems, setMenuItems] = useState<NavItem[]>([]);
+
+  useEffect(() => {
+    const fetchNavigation = async () => {
+      try {
+        const currentRoleId = user?.roleId || 0;
+        const response = await apiService.getNavigations(currentRoleId);
+        const rawData = response.data?.data || response.data || [];
+        
+        if (Array.isArray(rawData)) {
+          setMenuItems(rawData.map((item: any) => ({
+            id: Number(item.id),
+            title: item.title,
+            icon: item.icon,
+            path: item.path || "#"
+          })));
+        }
+      } catch (error) {
+        console.error("Failed to fetch breadcrumb mapping from database:", error);
+      }
+    };
+
+    fetchNavigation();
+  }, [user?.roleId]);
 
   const breadcrumbs = useMemo(() => {
     const pathnames = location.pathname.split("/").filter((x) => x);
@@ -49,26 +85,38 @@ export default function Breadcrumbs() {
     
     pathnames.forEach((value, index) => {
       const path = `/${pathnames.slice(0, index + 1).join("/")}`;
-      
-      // Map names professionally
-      let name = value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, " ");
-      if (name.toLowerCase() === "configuration") {
-        name = "Configuration";
-      } else if (name.toLowerCase() === "role-master") {
-        name = "Role Master";
-      } else if (name.toLowerCase() === "role-assignment") {
-        name = "User Accounts";
-      } else if (name.toLowerCase() === "system-logs") {
-        name = "System Logs";
-      } else if (name.toLowerCase() === "marks") {
-        name = "Academic Reports";
+      const cleanPath = path.toLowerCase().replace(/\/$/, "");
+
+      // Match path dynamically against database-sourced navigation keys
+      const match = menuItems.find(item => {
+        const itemPath = (item.path || "").toLowerCase().replace(/\/$/, "");
+        return itemPath === cleanPath;
+      });
+
+      let name = "";
+      if (match) {
+        name = match.title;
+      } else {
+        // Humanized fallback for parameterized or newly added routes
+        name = value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, " ");
+        if (name.toLowerCase() === "configuration") {
+          name = "Masters & Config";
+        } else if (name.toLowerCase() === "role-master") {
+          name = "Role Master";
+        } else if (name.toLowerCase() === "role-assignment") {
+          name = "User Accounts";
+        } else if (name.toLowerCase() === "system-logs") {
+          name = "System Logs";
+        } else if (name.toLowerCase() === "marks") {
+          name = "Academic Reports";
+        }
       }
       
       crumbs.push({ name, path });
     });
     
     return crumbs;
-  }, [location.pathname]);
+  }, [location.pathname, menuItems]);
 
   const getIconForPath = (path: string, name: string) => {
     const cleanPath = path.toLowerCase().replace(/\/$/, "");

@@ -426,8 +426,8 @@ export default function Students({ user }: { user: UserType }) {
     setCurrentStudentId(null);
     setNewStudentFormData({
       ...initialFormState,
-      schoolId: user.schoolId?.toString() || "",
-      academicYearId: user.academicYearId?.toString() || ""
+      schoolId: "",
+      academicYearId: ""
     });
     setFormErrors({});
     setValMessage({});
@@ -1302,7 +1302,7 @@ export default function Students({ user }: { user: UserType }) {
         if (cleanErr.startsWith("Student validation failed: ")) {
           cleanErr = cleanErr.replace("Student validation failed: ", "");
         }
-        
+
         const errorsToSet: Record<string, boolean> = {};
         const messagesToSet: Record<string, string> = {};
         let focusedField = "";
@@ -1327,7 +1327,7 @@ export default function Students({ user }: { user: UserType }) {
           setFormErrors(prev => ({ ...prev, ...errorsToSet }));
           setValMessage(prev => ({ ...prev, ...messagesToSet }));
           toast.error(cleanErr);
-          
+
           setTimeout(() => {
             const element = inputRefs.current[focusedField];
             if (element) {
@@ -1438,7 +1438,7 @@ export default function Students({ user }: { user: UserType }) {
                       onDrop={handleDrop}
                       className={cn(
                         "p-10 border-4 border-dashed rounded-[2rem] flex flex-col items-center justify-center gap-6 transition-all group",
-                        isDragging 
+                        isDragging
                           ? "border-blue-500 bg-blue-50/20 scale-[1.01]"
                           : "border-slate-100 bg-slate-50/30 hover:bg-slate-55 hover:border-blue-100"
                       )}

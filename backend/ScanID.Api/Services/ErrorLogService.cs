@@ -6,6 +6,8 @@ using ScanID.Api.Models;
 using ScanID.Api.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -69,6 +71,64 @@ namespace ScanID.Api.Services
                 .AsNoTracking()
                 .ToListAsync();
             return logs.Take(limit);
+        }
+
+        /// <summary>
+        /// Retrieves error logs using server-side paging and sorting directly in a stored procedure.
+        /// </summary>
+        public async Task<(IEnumerable<ErrorLog> Data, int TotalCount)> GetErrorLogsPagedAsync(int page, int pageSize, string sortBy, string sortOrder)
+        {
+            return await ExecuteWithRetryAsync(async () =>
+            {
+                var list = new List<ErrorLog>();
+                int totalCount = 0;
+
+                var connection = _context.Database.GetDbConnection();
+                if (connection.State == ConnectionState.Closed)
+                {
+                    await _context.Database.OpenConnectionAsync();
+                }
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "dbo.sp_GetErrorLogsPaged";
+                command.CommandType = CommandType.StoredProcedure;
+
+                void AddParam(string name, object? val)
+                {
+                    var param = command.CreateParameter();
+                    param.ParameterName = name.StartsWith("@") ? name : "@" + name;
+                    param.Value = val ?? DBNull.Value;
+                    command.Parameters.Add(param);
+                }
+
+                AddParam("Page", page);
+                AddParam("PageSize", pageSize);
+                AddParam("SortBy", sortBy);
+                AddParam("SortOrder", sortOrder);
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var item = new ErrorLog
+                    {
+                        Id = reader["Id"] != DBNull.Value ? Convert.ToInt32(reader["Id"]) : 0,
+                        Message = reader["Message"] != DBNull.Value ? reader["Message"].ToString() : null,
+                        Level = reader["Level"] != DBNull.Value ? reader["Level"].ToString() : null,
+                        Timestamp = reader["Timestamp"] != DBNull.Value ? Convert.ToDateTime(reader["Timestamp"]) : DateTime.UtcNow,
+                        Exception = reader["Exception"] != DBNull.Value ? reader["Exception"].ToString() : null,
+                        Properties = reader["Properties"] != DBNull.Value ? reader["Properties"].ToString() : null
+                    };
+
+                    if (reader["TotalCount"] != DBNull.Value)
+                    {
+                        totalCount = Convert.ToInt32(reader["TotalCount"]);
+                    }
+
+                    list.Add(item);
+                }
+
+                return ((IEnumerable<ErrorLog>)list, totalCount);
+            });
         }
 
         /// <summary>

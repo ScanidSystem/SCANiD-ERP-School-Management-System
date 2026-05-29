@@ -38,51 +38,11 @@ namespace ScanID.Api.Controllers
             [FromQuery] string sortBy = "timestamp",
             [FromQuery] string sortOrder = "desc")
         {
-            // Execute decoupled service to pull logs from sp_GetAuditLogs containing a robust buffer size
-            var logs = await _auditLogService.GetAuditLogsAsync(10000);
+            // Fully optimized: Execute stored procedure for paged, sorted, and filtered audit trails
+            var (paginatedData, totalCount) = await _auditLogService.GetAuditLogsPagedAsync(page, pageSize, sortBy ?? "timestamp", sortOrder ?? "desc");
             
-            // Map to Queryable for dynamic sorting, paging, and slicing
-            var query = logs.AsQueryable();
-            
-            // Apply sorting rules safely from query criteria
-            if (!string.IsNullOrWhiteSpace(sortBy))
-            {
-                bool isDesc = sortOrder != null && sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase);
-                switch (sortBy.ToLower())
-                {
-                    case "timestamp":
-                    case "datetime":
-                    case "date":
-                        query = isDesc ? query.OrderByDescending(l => l.DateTime) : query.OrderBy(l => l.DateTime);
-                        break;
-                    case "type":
-                        query = isDesc ? query.OrderByDescending(l => l.Type) : query.OrderBy(l => l.Type);
-                        break;
-                    case "tablename":
-                    case "entity":
-                    case "entityaffected":
-                        query = isDesc ? query.OrderByDescending(l => l.TableName) : query.OrderBy(l => l.TableName);
-                        break;
-                    case "primarykey":
-                    case "uid":
-                        query = isDesc ? query.OrderByDescending(l => l.PrimaryKey) : query.OrderBy(l => l.PrimaryKey);
-                        break;
-                    default:
-                        query = isDesc ? query.OrderByDescending(l => l.DateTime) : query.OrderBy(l => l.DateTime);
-                        break;
-                }
-            }
-            else
-            {
-                // Fall back sorting to keep recent entries showing up first
-                query = query.OrderByDescending(l => l.DateTime);
-            }
-
-            var totalCount = query.Count();
             var totalPages = (int)Math.Max(1, Math.Ceiling((double)totalCount / pageSize));
             var currentPage = Math.Max(1, page);
-
-            var paginatedData = query.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
 
             // Return standardized paginated envelope
             return Ok(new

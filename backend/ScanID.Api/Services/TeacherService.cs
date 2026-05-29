@@ -69,6 +69,98 @@ namespace ScanID.Api.Services
             );
         }
 
+        public async Task<(IEnumerable<Teacher> Data, int TotalCount)> GetTeachersPagedAsync(
+            int? schoolId,
+            int? academicYearId,
+            int page,
+            int pageSize,
+            string? sortBy,
+            string? sortOrder,
+            string? search,
+            string? status,
+            string? subject)
+        {
+            return await ExecuteWithRetryAsync(async () =>
+            {
+                var list = new List<Teacher>();
+                int totalCount = 0;
+
+                var connection = _context.Database.GetDbConnection();
+                if (connection.State == System.Data.ConnectionState.Closed)
+                {
+                    await _context.Database.OpenConnectionAsync();
+                }
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "dbo.sp_GetTeachersPaged";
+                command.CommandType = System.Data.CommandType.StoredProcedure;
+
+                void AddParam(string name, object? val)
+                {
+                    var param = command.CreateParameter();
+                    param.ParameterName = name.StartsWith("@") ? name : "@" + name;
+                    param.Value = val ?? DBNull.Value;
+                    command.Parameters.Add(param);
+                }
+
+                AddParam("SchoolId", schoolId);
+                AddParam("AcademicYearId", academicYearId);
+                AddParam("Page", page);
+                AddParam("PageSize", pageSize);
+                AddParam("SortBy", sortBy);
+                AddParam("SortOrder", sortOrder);
+                AddParam("Search", search);
+                AddParam("Status", status);
+                AddParam("Subject", subject);
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var item = new Teacher
+                    {
+                        Id = reader["Id"] != DBNull.Value ? Convert.ToInt32(reader["Id"]) : 0,
+                        UserId = reader["UserId"] != DBNull.Value ? Convert.ToInt32(reader["UserId"]) : 0,
+                        ContactNumber = reader["ContactNumber"] != DBNull.Value ? reader["ContactNumber"].ToString() : null,
+                        Department = reader["Department"] != DBNull.Value ? reader["Department"].ToString() : null,
+                        Qualification = reader["Qualification"] != DBNull.Value ? reader["Qualification"].ToString() : null,
+                        Status = reader["Status"] != DBNull.Value ? reader["Status"].ToString() : "Active",
+                        SchoolId = reader["SchoolId"] != DBNull.Value ? Convert.ToInt32(reader["SchoolId"]) : 0,
+                        ProfilePhotoPath = reader["ProfilePhotoPath"] != DBNull.Value ? reader["ProfilePhotoPath"].ToString() : null,
+                        EmployeeId = reader["EmployeeId"] != DBNull.Value ? reader["EmployeeId"].ToString() : null,
+                        Experience = reader["Experience"] != DBNull.Value ? reader["Experience"].ToString() : null,
+                        Subject = reader["Subject"] != DBNull.Value ? reader["Subject"].ToString() : null,
+                        StandardId = reader["StandardId"] != DBNull.Value ? Convert.ToInt32(reader["StandardId"]) : null,
+                        SectionId = reader["SectionId"] != DBNull.Value ? Convert.ToInt32(reader["SectionId"]) : null,
+                        CreatedOn = reader["CreatedOn"] != DBNull.Value ? Convert.ToDateTime(reader["CreatedOn"]) : DateTime.UtcNow,
+                        ModifiedOn = reader["ModifiedOn"] != DBNull.Value ? Convert.ToDateTime(reader["ModifiedOn"]) : DateTime.UtcNow,
+                        CreatedBy = reader["CreatedBy"] != DBNull.Value ? reader["CreatedBy"].ToString() : null,
+                        ModifiedBy = reader["ModifiedBy"] != DBNull.Value ? reader["ModifiedBy"].ToString() : null,
+                        IsDeleted = reader["IsDeleted"] != DBNull.Value && Convert.ToBoolean(reader["IsDeleted"])
+                    };
+
+                    if (reader["UserName"] != DBNull.Value || reader["UserEmail"] != DBNull.Value)
+                    {
+                        item.User = new User
+                        {
+                            Id = item.UserId,
+                            Name = reader["UserName"] != DBNull.Value ? reader["UserName"].ToString() : "",
+                            Email = reader["UserEmail"] != DBNull.Value ? reader["UserEmail"].ToString() : "",
+                            Role = ""
+                        };
+                    }
+
+                    if (reader["TotalCount"] != DBNull.Value)
+                    {
+                        totalCount = Convert.ToInt32(reader["TotalCount"]);
+                    }
+
+                    list.Add(item);
+                }
+
+                return ((IEnumerable<Teacher>)list, totalCount);
+            });
+        }
+
         public async Task<Teacher?> GetTeacherByIdAsync(int id)
         {
             var list = await GetTeachersAsync(null);

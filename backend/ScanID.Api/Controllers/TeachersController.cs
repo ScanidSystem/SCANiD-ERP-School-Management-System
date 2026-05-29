@@ -30,16 +30,46 @@ namespace ScanID.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves a list of teachers, optionally filtered by school and academic year.
+        /// Retrieves a paged list of teachers, optionally sorted and filtered via stored procedures.
         /// </summary>
-        /// <param name="schoolId">The school ID (optional).</param>
-        /// <param name="academicYearId">The academic year ID (optional).</param>
-        /// <returns>A list of teachers with their linked user profiles.</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Teacher>>> GetTeachers(int? schoolId, int? academicYearId)
+        public async Task<ActionResult> GetTeachers(
+            [FromQuery] int? schoolId,
+            [FromQuery] int? academicYearId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? sortBy = null,
+            [FromQuery] string? sortOrder = null,
+            [FromQuery] string? search = null,
+            [FromQuery] string? status = null,
+            [FromQuery] string? subject = null)
         {
-            var teachers = await _teacherService.GetTeachersAsync(schoolId);
-            return Ok(teachers);
+            var (paginatedTeachers, totalCount) = await _teacherService.GetTeachersPagedAsync(
+                schoolId,
+                academicYearId,
+                page,
+                pageSize,
+                sortBy,
+                sortOrder,
+                search,
+                status,
+                subject
+            );
+
+            var totalPages = (int)Math.Max(1, Math.Ceiling((double)totalCount / pageSize));
+            var currentPage = Math.Max(1, page);
+
+            return Ok(new
+            {
+                data = paginatedTeachers,
+                pagination = new
+                {
+                    totalCount,
+                    totalPages,
+                    page = currentPage,
+                    pageSize
+                }
+            });
         }
 
         /// <summary>

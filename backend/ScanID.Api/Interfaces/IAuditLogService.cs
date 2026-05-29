@@ -11,6 +11,7 @@ namespace ScanID.Api.Interfaces
     public interface IAuditLogService
     {
         Task<IEnumerable<AuditLog>> GetAuditLogsAsync(int limit = 100);
+        Task<(IEnumerable<AuditLog> Data, int TotalCount)> GetAuditLogsPagedAsync(int page, int pageSize, string sortBy, string sortOrder);
         Task<bool> InsertAuditLogAsync(AuditLog log);
     }
 }

@@ -40,48 +40,11 @@ namespace ScanID.Api.Controllers
             [FromQuery] string sortBy = "timestamp",
             [FromQuery] string sortOrder = "desc")
         {
-            // Execute decoupled service to pull logs from sp_GetErrorLogs containing a robust buffer size
-            var logs = await _errorLogService.GetErrorLogsAsync(10000);
+            // Fully optimized: Execute stored procedure for paged and sorted database error logs
+            var (paginatedData, totalCount) = await _errorLogService.GetErrorLogsPagedAsync(page, pageSize, sortBy ?? "timestamp", sortOrder ?? "desc");
             
-            // Map to Queryable for dynamic sorting, paging, and slicing
-            var query = logs.AsQueryable();
-            
-            // Apply sorting rules safely from query criteria
-            if (!string.IsNullOrWhiteSpace(sortBy))
-            {
-                bool isDesc = sortOrder != null && sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase);
-                switch (sortBy.ToLower())
-                {
-                    case "timestamp":
-                    case "datetime":
-                    case "date":
-                    case "time":
-                        query = isDesc ? query.OrderByDescending(e => e.Timestamp) : query.OrderBy(e => e.Timestamp);
-                        break;
-                    case "level":
-                    case "severity":
-                        query = isDesc ? query.OrderByDescending(e => e.Level) : query.OrderBy(e => e.Level);
-                        break;
-                    case "properties":
-                    case "origin":
-                        query = isDesc ? query.OrderByDescending(e => e.Properties) : query.OrderBy(e => e.Properties);
-                        break;
-                    default:
-                        query = isDesc ? query.OrderByDescending(e => e.Timestamp) : query.OrderBy(e => e.Timestamp);
-                        break;
-                }
-            }
-            else
-            {
-                // Fall back sorting to keep recent entries showing up first
-                query = query.OrderByDescending(e => e.Timestamp);
-            }
-
-            var totalCount = query.Count();
             var totalPages = (int)Math.Max(1, Math.Ceiling((double)totalCount / pageSize));
             var currentPage = Math.Max(1, page);
-
-            var paginatedData = query.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
 
             // Return standardized paginated envelope
             return Ok(new

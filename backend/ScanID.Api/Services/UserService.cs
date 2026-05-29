@@ -65,6 +65,72 @@ namespace ScanID.Api.Services
             return await ScanID.Api.Utilities.DbMapper.ExecuteStoredProcedureAsync<User>(_context, "dbo.sp_GetUsers");
         }
 
+        public async Task<(IEnumerable<User> Data, int TotalCount)> GetUsersPagedAsync(int page, int pageSize, string? sortBy, string? sortOrder, string? search, int? roleId, int? schoolId)
+        {
+            return await ExecuteWithRetryAsync(async () =>
+            {
+                var list = new List<User>();
+                int totalCount = 0;
+
+                var connection = _context.Database.GetDbConnection();
+                if (connection.State == System.Data.ConnectionState.Closed)
+                {
+                    await _context.Database.OpenConnectionAsync();
+                }
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "dbo.sp_GetUsersPaged";
+                command.CommandType = System.Data.CommandType.StoredProcedure;
+
+                void AddParam(string name, object? val)
+                {
+                    var param = command.CreateParameter();
+                    param.ParameterName = name.StartsWith("@") ? name : "@" + name;
+                    param.Value = val ?? DBNull.Value;
+                    command.Parameters.Add(param);
+                }
+
+                AddParam("Page", page);
+                AddParam("PageSize", pageSize);
+                AddParam("SortBy", sortBy);
+                AddParam("SortOrder", sortOrder);
+                AddParam("Search", search);
+                AddParam("RoleId", roleId);
+                AddParam("SchoolId", schoolId);
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var item = new User
+                    {
+                        Id = reader["Id"] != DBNull.Value ? Convert.ToInt32(reader["Id"]) : 0,
+                        Username = reader["Username"] != DBNull.Value ? reader["Username"].ToString() : "",
+                        PasswordHash = reader["PasswordHash"] != DBNull.Value ? reader["PasswordHash"].ToString() : "",
+                        Name = reader["Name"] != DBNull.Value ? reader["Name"].ToString() : "",
+                        Email = reader["Email"] != DBNull.Value ? reader["Email"].ToString() : "",
+                        Role = reader["Role"] != DBNull.Value ? reader["Role"].ToString() : "",
+                        RoleId = reader["RoleId"] != DBNull.Value ? Convert.ToInt32(reader["RoleId"]) : null,
+                        SchoolId = reader["SchoolId"] != DBNull.Value ? Convert.ToInt32(reader["SchoolId"]) : null,
+                        IsActive = reader["IsActive"] != DBNull.Value && Convert.ToBoolean(reader["IsActive"]),
+                        IsDeleted = reader["IsDeleted"] != DBNull.Value && Convert.ToBoolean(reader["IsDeleted"]),
+                        CreatedOn = reader["CreatedOn"] != DBNull.Value ? Convert.ToDateTime(reader["CreatedOn"]) : DateTime.UtcNow,
+                        ModifiedOn = reader["ModifiedOn"] != DBNull.Value ? Convert.ToDateTime(reader["ModifiedOn"]) : DateTime.UtcNow,
+                        CreatedBy = reader["CreatedBy"] != DBNull.Value ? reader["CreatedBy"].ToString() : null,
+                        ModifiedBy = reader["ModifiedBy"] != DBNull.Value ? reader["ModifiedBy"].ToString() : null,
+                    };
+
+                    if (reader["TotalCount"] != DBNull.Value)
+                    {
+                        totalCount = Convert.ToInt32(reader["TotalCount"]);
+                    }
+
+                    list.Add(item);
+                }
+
+                return ((IEnumerable<User>)list, totalCount);
+            });
+        }
+
         public async Task<User?> GetUserByIdAsync(int id)
         {
             var list = await GetUsersAsync();

@@ -6,6 +6,8 @@ using ScanID.Api.Models;
 using ScanID.Api.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -66,6 +68,64 @@ namespace ScanID.Api.Services
                 .AsNoTracking()
                 .ToListAsync();
             return logs.Take(limit);
+        }
+
+        public async Task<(IEnumerable<AuditLog> Data, int TotalCount)> GetAuditLogsPagedAsync(int page, int pageSize, string sortBy, string sortOrder)
+        {
+            return await ExecuteWithRetryAsync(async () =>
+            {
+                var list = new List<AuditLog>();
+                int totalCount = 0;
+
+                var connection = _context.Database.GetDbConnection();
+                if (connection.State == ConnectionState.Closed)
+                {
+                    await _context.Database.OpenConnectionAsync();
+                }
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "dbo.sp_GetAuditLogsPaged";
+                command.CommandType = CommandType.StoredProcedure;
+
+                void AddParam(string name, object? val)
+                {
+                    var param = command.CreateParameter();
+                    param.ParameterName = name.StartsWith("@") ? name : "@" + name;
+                    param.Value = val ?? DBNull.Value;
+                    command.Parameters.Add(param);
+                }
+
+                AddParam("Page", page);
+                AddParam("PageSize", pageSize);
+                AddParam("SortBy", sortBy);
+                AddParam("SortOrder", sortOrder);
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var item = new AuditLog
+                    {
+                        Id = reader["Id"] != DBNull.Value ? Convert.ToInt32(reader["Id"]) : 0,
+                        UserId = reader["UserId"] != DBNull.Value ? reader["UserId"].ToString() : null,
+                        Type = reader["Type"] != DBNull.Value ? reader["Type"].ToString() : null,
+                        TableName = reader["TableName"] != DBNull.Value ? reader["TableName"].ToString() : null,
+                        DateTime = reader["DateTime"] != DBNull.Value ? Convert.ToDateTime(reader["DateTime"]) : DateTime.UtcNow,
+                        OldValues = reader["OldValues"] != DBNull.Value ? reader["OldValues"].ToString() : null,
+                        NewValues = reader["NewValues"] != DBNull.Value ? reader["NewValues"].ToString() : null,
+                        AffectedColumns = reader["AffectedColumns"] != DBNull.Value ? reader["AffectedColumns"].ToString() : null,
+                        PrimaryKey = reader["PrimaryKey"] != DBNull.Value ? reader["PrimaryKey"].ToString() : null
+                    };
+
+                    if (reader["TotalCount"] != DBNull.Value)
+                    {
+                        totalCount = Convert.ToInt32(reader["TotalCount"]);
+                    }
+
+                    list.Add(item);
+                }
+
+                return ((IEnumerable<AuditLog>)list, totalCount);
+            });
         }
 
         public async Task<bool> InsertAuditLogAsync(AuditLog log)

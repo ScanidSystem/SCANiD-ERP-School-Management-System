@@ -19,10 +19,39 @@ namespace ScanID.Api.Controllers
 
         // GET: api/Users
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult> GetUsers(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? sortBy = null,
+            [FromQuery] string? sortOrder = null,
+            [FromQuery] string? search = null,
+            [FromQuery] int? roleId = null,
+            [FromQuery] int? schoolId = null)
         {
-            var users = await _userService.GetUsersAsync();
-            return Ok(users);
+            var (paginatedUsers, totalCount) = await _userService.GetUsersPagedAsync(
+                page,
+                pageSize,
+                sortBy,
+                sortOrder,
+                search,
+                roleId,
+                schoolId
+            );
+
+            var totalPages = (int)Math.Max(1, Math.Ceiling((double)totalCount / pageSize));
+            var currentPage = Math.Max(1, page);
+
+            return Ok(new
+            {
+                data = paginatedUsers,
+                pagination = new
+                {
+                    totalCount,
+                    totalPages,
+                    page = currentPage,
+                    pageSize
+                }
+            });
         }
 
         // GET: api/Users/5
