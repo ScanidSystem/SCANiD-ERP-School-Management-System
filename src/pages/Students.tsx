@@ -915,66 +915,18 @@ export default function Students({ user }: { user: UserType }) {
     checkField("GENDER", !newStudentFormData.GENDER, "GENDER REQUIRED");
     checkField("aadharcard", !newStudentFormData.aadharcard?.trim() || !/^\d{12}$/.test(newStudentFormData.aadharcard.replace(/\s/g, "")), "AADHAR NUMBER REQUIRED");
     checkField("FNAME", !newStudentFormData.FNAME?.trim(), "FIRST NAME REQUIRED");
+    checkField("MNAME", !newStudentFormData.MNAME?.trim(), "MIDDLE NAME REQUIRED");
     checkField("LNAME", !newStudentFormData.LNAME?.trim(), "LAST NAME REQUIRED");
-    checkField("DOB", !newStudentFormData.DOB, "DATE OF BIRTH REQUIRED");
-    checkField("MOTHERNAME", !newStudentFormData.MOTHERNAME?.trim(), "MOTHER NAME REQUIRED");
+
     checkField("MOBILE", !newStudentFormData.MOBILE?.trim() || !/^\d{10}$/.test(newStudentFormData.MOBILE.replace(/\D/g, "")), "MOBILE NUMBER REQUIRED");
     checkField("ADDRESS", !newStudentFormData.ADDRESS?.trim(), "ADDRESS REQUIRED");
-    checkField("RELIGION", !newStudentFormData.RELIGION, "RELIGION REQUIRED");
-    checkField("BLOODGROUP", !newStudentFormData.BLOODGROUP, "BLOOD GROUP REQUIRED");
-    checkField("CASTE", !newStudentFormData.CASTE, "CASTE REQUIRED");
-    checkField("CATEGORY", !newStudentFormData.CATEGORY, "CATEGORY REQUIRED");
-    checkField("house", !newStudentFormData.house, "HOUSE REQUIRED");
-    checkField("admissiontype", !newStudentFormData.admissiontype, "ADMISSION TYPE REQUIRED");
+ 
     checkField("registrationNumber", !newStudentFormData.registrationNumber?.trim(), "REGISTRATION NUMBER REQUIRED");
     checkField("academicyear", !newStudentFormData.academicyear, "ACADEMIC YEAR REQUIRED");
     checkField("SHIFTNAME", !newStudentFormData.SHIFTNAME, "SHIFT REQUIRED");
     checkField("SchoolSectionId", !newStudentFormData.SchoolSectionId, "SECTION REQUIRED");
-    checkField("AdmissionDate", !newStudentFormData.AdmissionDate, "ADMISSION DATE REQUIRED");
-    checkField("StateId", !newStudentFormData.StateId, "STATE REQUIRED");
-    checkField("CityId", !newStudentFormData.CityId, "CITY REQUIRED");
-
-    // Email format validation if entered
-    if (newStudentFormData.email && newStudentFormData.email.trim() !== "") {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const isInvalidEmail = !emailRegex.test(newStudentFormData.email.trim());
-      checkField("email", isInvalidEmail);
-      if (isInvalidEmail) {
-        toast.error("Please enter a valid email address.");
-        return;
-      }
-    }
-
-    // No-numeric checks for name fields
-    const hasNumeric = (str: string) => /\d/.test(str);
-
-    if (newStudentFormData.FNAME && hasNumeric(newStudentFormData.FNAME)) {
-      checkField("FNAME", true, "FIRST NAME SHOULD NOT CONTAIN NUMBERS");
-    }
-    if (newStudentFormData.MNAME && hasNumeric(newStudentFormData.MNAME)) {
-      checkField("MNAME", true, "MIDDLE NAME SHOULD NOT CONTAIN NUMBERS");
-    }
-    if (newStudentFormData.LNAME && hasNumeric(newStudentFormData.LNAME)) {
-      checkField("LNAME", true, "LAST NAME SHOULD NOT CONTAIN NUMBERS");
-    }
-
-    if (newStudentFormData.MOTHERNAME && hasNumeric(newStudentFormData.MOTHERNAME)) {
-      checkField("MOTHERNAME", true, "MOTHER NAME SHOULD NOT CONTAIN NUMBERS");
-    }
-
-
-    // RFID rule: Mandatory on ADD screen, disabled on EDIT screen. Length must be 10 or 24 alphanumeric.
-    if (!isEditMode) {
-      const rfidTrimmed = newStudentFormData.RFID?.trim() || "";
-      if (rfidTrimmed === "") {
-        checkField("RFID", true, "RFID REQUIRED");
-      } else {
-        const rfidLen = rfidTrimmed.length;
-        if (rfidLen !== 10 && rfidLen !== 24) {
-          checkField("RFID", true, "INVALID RFID LENGTH");
-        }
-      }
-    }
+    checkField("RFID", !newStudentFormData.RFID?.trim(), "RFID REQUIRED");
+    checkField("uniformid", !newStudentFormData.uniformid?.trim(), "UNIFORM ID REQUIRED");
 
     setFormErrors(newErrors);
 
@@ -2131,18 +2083,18 @@ export default function Students({ user }: { user: UserType }) {
                                 placeholder="12-digit number" 
                                 className={cn(
                                   "h-14 border-2 bg-white font-bold rounded-xl pl-12 text-[15px] shadow-sm text-slate-800 focus:outline-none",
-                                  formErrors.aadharcard ? "border-red-500 focus:ring-4 focus:ring-red-500/10 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
+                                  formErrors.aadharcard ? " focus:ring-4 focus:ring-red-500/10 focus:border-red-500" : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400"
                                 )}
                               />
                             </div>
-                            {formErrors.aadharcard && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.aadharcard}</p>}
+                         
                           </div>
 
                           {/* RFID Card ID */}
                           <div className="space-y-2">
 
                               <Label htmlFor="RFID"  className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
-                                                         RFID Card ID
+                                                         RFID
                                                                                   </Label>
                             <div className="relative">
                               <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5 z-20 opacity-40" />
@@ -2309,7 +2261,7 @@ export default function Students({ user }: { user: UserType }) {
       "transition-all duration-300",
       "data-[state=open]:shadow-[0_12px_35px_rgba(16,185,129,0.14)]",
       formErrors.house
-        ? "border-red-500 focus:ring-4 focus:ring-red-500/10 focus:border-red-500 data-[state=open]:border-red-500"
+        ? " focus:ring-red-500/10 focus:border-red-500 "
         : "border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 data-[state=open]:border-indigo-400"
     )}
   >
@@ -3133,7 +3085,8 @@ Mother's Contact No.
                             { id: 'sms', label: 'SMS Alert', color: 'indigo' },
                            
                             { id: 'digitalUniform', label: 'Digital Uniform', color: 'indigo' },
-                            { id: 'digitalNotebook', label: 'Digital Notebook', color: 'indigo' }
+                            { id: 'digitalNotebook', label: 'Digital Notebook', color: 'indigo' },
+                            { id: 'optedforbus', label: 'Opted for Bus', color: 'indigo' }
                           ].map(pref => (
                             <label key={pref.id} className="flex items-center gap-3 cursor-pointer p-4 bg-slate-50/50 rounded-2xl border-2 border-slate-200/60 hover:bg-white hover:border-indigo-400 transition-all duration-300 select-none">
                               <div className={cn(
@@ -3171,10 +3124,10 @@ Residential Address
                             placeholder="Complete residential address" 
                             className={cn(
                               "h-[104px] border-2 border-slate-200 bg-white font-bold rounded-xl px-6 text-[15px] shadow-sm",
-                              formErrors.ADDRESS && "border-red-500"
+                              formErrors.ADDRESS && ""
                             )}
                           />
-                          {formErrors.ADDRESS && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.ADDRESS}</p>}
+                       
                         </div>
                       </div>
                     </div>
