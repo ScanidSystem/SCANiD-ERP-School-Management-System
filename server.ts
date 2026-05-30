@@ -6,12 +6,14 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import http from "http";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import fs from "fs";
+import multer from "multer";
 
 async function startServer() {
   const app = express();
   const httpServer = http.createServer(app);
-  // Enforce port 5000 for standard environment routing
-  const PORT = Number(process.env.PORT) || 5000;
+  // Enforce port 3000 for standard environment routing
+  const PORT = 3000;
 
   app.use(cors());
 
@@ -22,13 +24,81 @@ async function startServer() {
     next();
   });
 
-  // Mock data arrays for basic management
-  let schools = [
+  // Keep track of the real .NET backend online status via periodic health checks
+  let isBackendOnline = false;
+  function checkBackendHealth() {
+    const req = http.get("http://127.0.0.1:5000/api/health", (res) => {
+      isBackendOnline = res.statusCode === 200;
+      req.destroy();
+    });
+    req.on("error", () => {
+      isBackendOnline = false;
+    });
+    req.setTimeout(1000, () => {
+      isBackendOnline = false;
+      req.destroy();
+    });
+  }
+  checkBackendHealth();
+  // Probe the .NET backend API every 5 seconds
+  setInterval(checkBackendHealth, 5000);
+
+  // Dynamic route redirection middleware: Proxy to the real .NET API if it is running,
+  // else fall back to the in-memory mock handlers registered below. This ensures seamless
+  // transitions between mocked offline state and active live DB workflows.
+  let apiProxyInstance: any = null;
+  app.use((req, res, next) => {
+    if (isBackendOnline && apiProxyInstance && (req.url.startsWith('/api') || req.url.startsWith('/uploads') || req.url.startsWith('/photos') || req.url.startsWith('/SCANiD_ERP_API'))) {
+      return apiProxyInstance(req, res, next);
+    }
+    next();
+  });
+
+  const dbPath = path.join(process.cwd(), "database", "db.json");
+  const backendWwwRoot = path.join(process.cwd(), 'backend', 'ScanID.Api', 'wwwroot');
+  const uploadsDir = path.join(backendWwwRoot, 'uploads');
+  const photosDir = path.join(backendWwwRoot, 'photos');
+
+  // Create folders dynamically if they do not exist
+  if (!fs.existsSync(path.dirname(dbPath))) {
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+  }
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  if (!fs.existsSync(photosDir)) {
+    fs.mkdirSync(photosDir, { recursive: true });
+  }
+
+  // Multer Storage Configuration
+  const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, uploadsDir);
+    },
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname) || ".png";
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, uniqueSuffix + ext);
+    }
+  });
+  const upload = multer({ storage });
+
+  let dbData: any = {};
+  if (fs.existsSync(dbPath)) {
+    try {
+      dbData = JSON.parse(fs.readFileSync(dbPath, "utf8"));
+    } catch (e) {
+      console.error("Error loading db.json, using defaults", e);
+    }
+  }
+
+  // Mock data arrays for basic management (persisted dynamically in db.json)
+  let schools = dbData.schools || [
     { id: 1, name: "SCANiD PRIMARY SCHOOL", code: "SPS001", address: "MUMBAI, MAHARASHTRA", email: "pri@scanid.com", phone: "9876543210", totalStudents: 450, status: "Active" },
     { id: 2, name: "SCANiD SECONDARY HIGH SCHOOL", code: "SSHS002", address: "PUNE, MAHARASHTRA", email: "sec@scanid.com", phone: "9876543211", totalStudents: 620, status: "Active" }
   ];
 
-  let teachers = [
+  let teachers = dbData.teachers || [
     { 
       id: 1, 
       userId: 3, 
@@ -46,7 +116,7 @@ async function startServer() {
     }
   ];
 
-  let students: any[] = [
+  let students: any[] = dbData.students || [
     { 
       id: 1, 
       grNo: "REG1001", 
@@ -180,44 +250,44 @@ async function startServer() {
   ];
   
   // Master Data Mock Arrays
-  let standards = [{ id: 1, name: "1st" }, { id: 2, name: "2nd" }, { id: 3, name: "3rd" }, { id: 4, name: "4th" }, { id: 5, name: "5th" }, { id: 6, name: "LKG" }, { id: 7, name: "UKG" }];
-  let sections = [{ id: 1, name: "A" }, { id: 2, name: "B" }, { id: 3, name: "C" }];
-  let academicYears = [{ id: 1, name: "2024-2025", isCurrent: false }, { id: 2, name: "2025-2026", isCurrent: true }];
-  let castes = [{ id: 1, name: "OPEN" }, { id: 2, name: "OBC" }, { id: 3, name: "SC" }, { id: 4, name: "ST" }];
-  let subCastes = [{ id: 1, casteId: 2, name: "General" }, { id: 2, casteId: 2, name: "Kunbi" }];
-  let religions = [{ id: 1, name: "HINDU" }, { id: 2, name: "MUSLIM" }, { id: 3, name: "CHRISTIAN" }, { id: 4, name: "SIKH" }];
-  let states = [{ id: 1, name: "Maharashtra" }];
-  let cities = [{ id: 1, stateId: 1, name: "Mumbai" }];
-  let bloodGroups = [{ id: 1, name: "A+" }, { id: 2, name: "B+" }, { id: 3, name: "O+" }, { id: 4, name: "AB+" }];
-  let houses = [{ id: 1, name: "RED", color: "#EF4444" }, { id: 2, name: "BLUE", color: "#3B82F6" }, { id: 3, name: "GREEN", color: "#10B981" }, { id: 4, name: "YELLOW", color: "#F59E0B" }];
-  let admissionTypes = [{ id: 1, name: "REGULAR" }, { id: 2, name: "RTE" }, { id: 3, name: "STAFF CHILD" }];
-  let categories = [{ id: 1, name: "General" }];
-  let sessions = [{ id: 1, name: "Morning" }];
-  let batches = [{ id: 1, name: "Batch A" }];
-  let shifts = [{ id: 1, name: "MORNING" }, { id: 2, name: "AFTERNOON" }];
-  let subjects = [{ id: 1, name: "Mathematics" }, { id: 2, name: "Science" }];
-  let examTypes = [{ id: 1, name: "Mid-Term" }, { id: 2, name: "Final" }];
-  let designations = [{ id: 1, name: "Principal" }, { id: 2, name: "Teacher" }];
-  let occupations = [{ id: 1, name: "Service" }, { id: 2, name: "Business" }];
-  let schoolSections = [{ id: 1, name: "Primary" }, { id: 2, name: "Secondary" }, { id: 3, name: "Higher Secondary" }];
-  let roles = [{ id: 1, name: "superadmin" }, { id: 2, name: "admin" }, { id: 3, name: "teacher" }];
+  let standards = dbData.standards || [{ id: 1, name: "1st" }, { id: 2, name: "2nd" }, { id: 3, name: "3rd" }, { id: 4, name: "4th" }, { id: 5, name: "5th" }, { id: 6, name: "LKG" }, { id: 7, name: "UKG" }];
+  let sections = dbData.sections || [{ id: 1, name: "A" }, { id: 2, name: "B" }, { id: 3, name: "C" }];
+  let academicYears = dbData.academicYears || [{ id: 1, name: "2024-2025", isCurrent: false }, { id: 2, name: "2025-2026", isCurrent: true }];
+  let castes = dbData.castes || [{ id: 1, name: "OPEN" }, { id: 2, name: "OBC" }, { id: 3, name: "SC" }, { id: 4, name: "ST" }];
+  let subCastes = dbData.subCastes || [{ id: 1, casteId: 2, name: "General" }, { id: 2, casteId: 2, name: "Kunbi" }];
+  let religions = dbData.religions || [{ id: 1, name: "HINDU" }, { id: 2, name: "MUSLIM" }, { id: 3, name: "CHRISTIAN" }, { id: 4, name: "SIKH" }];
+  let states = dbData.states || [{ id: 1, name: "Maharashtra" }];
+  let cities = dbData.cities || [{ id: 1, stateId: 1, name: "Mumbai" }];
+  let bloodGroups = dbData.bloodGroups || [{ id: 1, name: "A+" }, { id: 2, name: "B+" }, { id: 3, name: "O+" }, { id: 4, name: "AB+" }];
+  let houses = dbData.houses || [{ id: 1, name: "RED", color: "#EF4444" }, { id: 2, name: "BLUE", color: "#3B82F6" }, { id: 3, name: "GREEN", color: "#10B981" }, { id: 4, name: "YELLOW", color: "#F59E0B" }];
+  let admissionTypes = dbData.admissionTypes || [{ id: 1, name: "REGULAR" }, { id: 2, name: "RTE" }, { id: 3, name: "STAFF CHILD" }];
+  let categories = dbData.categories || [{ id: 1, name: "General" }];
+  let sessions = dbData.sessions || [{ id: 1, name: "Morning" }];
+  let batches = dbData.batches || [{ id: 1, name: "Batch A" }];
+  let shifts = dbData.shifts || [{ id: 1, name: "MORNING" }, { id: 2, name: "AFTERNOON" }];
+  let subjects = dbData.subjects || [{ id: 1, name: "Mathematics" }, { id: 2, name: "Science" }];
+  let examTypes = dbData.examTypes || [{ id: 1, name: "Mid-Term" }, { id: 2, name: "Final" }];
+  let designations = dbData.designations || [{ id: 1, name: "Principal" }, { id: 2, name: "Teacher" }];
+  let occupations = dbData.occupations || [{ id: 1, name: "Service" }, { id: 2, name: "Business" }];
+  let schoolSections = dbData.schoolSections || [{ id: 1, name: "Primary" }, { id: 2, name: "Secondary" }, { id: 3, name: "Higher Secondary" }];
+  let roles = dbData.roles || [{ id: 1, name: "superadmin" }, { id: 2, name: "admin" }, { id: 3, name: "teacher" }];
 
-  let attendance = [
+  let attendance = dbData.attendance || [
     { id: 1, studentId: 1, date: new Date().toISOString().split('T')[0], status: "Present" },
     { id: 2, studentId: 2, date: new Date().toISOString().split('T')[0], status: "Absent" }
   ];
 
-  let notifications = [
+  let notifications = dbData.notifications || [
     { id: 1, title: "System Update", message: "New academic module is live.", type: "info", isRead: false, createdAt: new Date().toISOString() },
     { id: 2, title: "Fee Reminder", message: "Late fee applies after 30th May.", type: "warning", isRead: true, createdAt: new Date().toISOString() }
   ];
 
-  let messages = [
+  let messages = dbData.messages || [
     { id: 1, senderId: 1, receiverId: 2, subject: "Meeting Invitation", content: "Let's discuss the new curriculum.", isRead: false, type: "Direct", createdAt: new Date().toISOString() },
     { id: 2, senderId: 2, receiverId: 1, subject: "Re: Meeting Invitation", content: "Sure, let's meet tomorrow.", isRead: true, type: "Direct", createdAt: new Date().toISOString() }
   ];
 
-  let navigationItems = [
+  let navigationItems = dbData.navigationItems || [
     // IDs: SuperAdmin=1, Admin=2, Teacher=3, Student=4, Parent=5, All=0
     // Root level items
     { id: 1, title: "Dashboard", icon: "LayoutDashboard", path: "/", parentId: null, sortOrder: 1, roleIds: [1, 2, 3, 4, 5] },
@@ -309,10 +379,49 @@ async function startServer() {
   };
 
   // Users
-  let users = [
+  let users = dbData.users || [
     { id: 1, fullName: "Global Admin", username: "superadmin", email: "admin@scanid.com", role: "superadmin", status: "Active" },
     { id: 2, fullName: "Teacher One", username: "teacher01", email: "teacher01@scanid.com", role: "teacher", status: "Active" }
   ];
+
+  const saveDb = () => {
+    try {
+      const data = {
+        schools,
+        teachers,
+        students,
+        users,
+        navigationItems,
+        attendance,
+        notifications,
+        messages,
+        standards,
+        sections,
+        academicYears,
+        castes,
+        subCastes,
+        religions,
+        states,
+        cities,
+        bloodGroups,
+        houses,
+        admissionTypes,
+        categories,
+        sessions,
+        batches,
+        shifts,
+        subjects,
+        examTypes,
+        designations,
+        occupations,
+        schoolSections,
+        roles
+      };
+      fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), "utf8");
+    } catch (e) {
+      console.error("Error saving to db.json", e);
+    }
+  };
 
   const applySortingAndPagination = (data: any[], query: any) => {
     let result = [...data];
@@ -418,41 +527,29 @@ async function startServer() {
     res.json(applySortingAndPagination(schools, req.query));
   });
   app.post("/api/schools", (req, res) => {
-    const newItem = { id: schools.length + 1, ...req.body };
+    const newItem = { id: schools.length > 0 ? Math.max(...schools.map((s: any) => s.id)) + 1 : 1, ...req.body };
     schools.push(newItem);
+    saveDb();
     res.status(201).json({ data: newItem });
-  });
-
-  app.get("/api/schools/:id", (req, res) => {
-    const id = parseInt(req.params.id);
-    const item = schools.find(s => s.id === id);
-    if (item) {
-      res.json({ data: item });
-    } else {
-      res.status(404).json({ error: "School not found" });
-    }
   });
 
   app.put("/api/schools/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = schools.findIndex(s => s.id === id);
+    const index = schools.findIndex((s: any) => s.id === id);
     if (index !== -1) {
       schools[index] = { ...schools[index], ...req.body };
+      saveDb();
       res.json({ data: schools[index] });
     } else {
-      res.status(404).json({ error: "School not found" });
+      res.status(404).json({ message: "School not found" });
     }
   });
 
   app.delete("/api/schools/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = schools.findIndex(s => s.id === id);
-    if (index !== -1) {
-      schools.splice(index, 1);
-      res.json({ success: true });
-    } else {
-      res.status(404).json({ error: "School not found" });
-    }
+    schools = schools.filter((s: any) => s.id !== id);
+    saveDb();
+    res.status(204).send();
   });
 
   // Students
@@ -509,6 +606,7 @@ async function startServer() {
       uniformId: body.uniformId || body.uniformid || "",
     };
     students.push(newStudent);
+    saveDb();
     res.status(201).json({ data: newStudent });
   });
 
@@ -577,6 +675,7 @@ async function startServer() {
     }));
 
     students = [...students, ...newItems];
+    saveDb();
     res.status(201).json({ success: true, count: newItems.length });
   });
 
@@ -604,6 +703,7 @@ async function startServer() {
         fullName: body.fullName || `${body.firstName || body.FNAME || students[index].firstName || ""} ${body.lastName || body.LNAME || students[index].lastName || ""}`.trim()
       };
       students[index] = updated;
+      saveDb();
       res.json({ data: students[index] });
     } else {
       res.status(404).json({ message: "Student not found" });
@@ -613,33 +713,60 @@ async function startServer() {
   app.delete("/api/students/:id", (req, res) => {
     const id = parseInt(req.params.id);
     students = students.filter(s => s.id !== id);
+    saveDb();
     res.json({ success: true });
   });
 
-  app.post("/api/students/:id/photo", (req, res) => {
+  app.post("/api/students/:id/photo", upload.single("file"), (req, res) => {
     const id = parseInt(req.params.id);
     const index = students.findIndex(s => s.id === id);
-    const mockPath = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + id + "_" + Date.now();
-    if (index !== -1) {
-      // @ts-ignore
-      students[index].photo = mockPath;
-      // @ts-ignore
-      students[index].ProfilePhotoPath = mockPath;
+    if (req.file) {
+      const webPath = `/uploads/${req.file.filename}`;
+      if (index !== -1) {
+        students[index].photo = webPath;
+        students[index].profilePhotoPath = webPath;
+        students[index].ProfilePhotoPath = webPath;
+        saveDb();
+      }
+      res.json({ data: { path: webPath } });
+    } else {
+      res.status(400).json({ message: "No photo file provided" });
     }
-    res.json({ data: { path: mockPath } });
   });
 
-  app.post("/api/schools/:id/photo", (req, res) => {
+  app.post("/api/schools/:id/photo", upload.single("file"), (req, res) => {
     const id = parseInt(req.params.id);
-    const index = schools.findIndex(s => s.id === id);
-    const mockPath = "https://api.dicebear.com/7.x/initials/svg?seed=" + id + "_" + Date.now();
-    if (index !== -1) {
-      // @ts-ignore
-      schools[index].ProfilePhotoPath = mockPath;
-      // @ts-ignore
-      schools[index].profilePhotoPath = mockPath;
+    const index = schools.findIndex((s: any) => s.id === id);
+    if (req.file) {
+      const webPath = `/uploads/${req.file.filename}`;
+      if (index !== -1) {
+        schools[index].photo = webPath;
+        schools[index].profilePhotoPath = webPath;
+        schools[index].ProfilePhotoPath = webPath;
+        schools[index].logo = webPath;
+        saveDb();
+      }
+      res.json({ data: { path: webPath } });
+    } else {
+      res.status(400).json({ message: "No photo file provided" });
     }
-    res.json({ data: { path: mockPath } });
+  });
+
+  app.post("/api/teachers/:id/photo", upload.single("file"), (req, res) => {
+    const id = parseInt(req.params.id);
+    const index = teachers.findIndex((t: any) => t.id === id);
+    if (req.file) {
+      const webPath = `/uploads/${req.file.filename}`;
+      if (index !== -1) {
+        teachers[index].photo = webPath;
+        teachers[index].profilePhotoPath = webPath;
+        teachers[index].ProfilePhotoPath = webPath;
+        saveDb();
+      }
+      res.json({ data: { path: webPath } });
+    } else {
+      res.status(400).json({ message: "No photo file provided" });
+    }
   });
 
   // Attendance
@@ -647,7 +774,7 @@ async function startServer() {
     const date = req.query.date as string;
     let filtered = attendance;
     if (date) {
-      filtered = attendance.filter(a => a.date === date);
+      filtered = attendance.filter((a: any) => a.date === date);
     }
     res.json({ data: filtered });
   });
@@ -655,7 +782,7 @@ async function startServer() {
   app.post("/api/attendance", (req, res) => {
     const records = Array.isArray(req.body) ? req.body : [req.body];
     records.forEach(record => {
-      const existingIdx = attendance.findIndex(a => a.studentId === record.studentId && a.date === record.date);
+      const existingIdx = attendance.findIndex((a: any) => a.studentId === record.studentId && a.date === record.date);
       if (existingIdx !== -1) {
         attendance[existingIdx] = { ...attendance[existingIdx], ...record };
       } else {
@@ -722,18 +849,20 @@ async function startServer() {
 
   app.post("/api/teachers", (req, res) => {
     const newItem = {
-      id: teachers.length > 0 ? Math.max(...teachers.map(t => t.id)) + 1 : 1,
+      id: teachers.length > 0 ? Math.max(...teachers.map((t: any) => t.id)) + 1 : 1,
       ...req.body
     };
     teachers.push(newItem);
+    saveDb();
     res.status(201).json({ data: newItem });
   });
 
   app.put("/api/teachers/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = teachers.findIndex(t => t.id === id);
+    const index = teachers.findIndex((t: any) => t.id === id);
     if (index !== -1) {
       teachers[index] = { ...teachers[index], ...req.body };
+      saveDb();
       res.json({ data: teachers[index] });
     } else {
       res.status(404).json({ message: "Teacher not found" });
@@ -742,7 +871,8 @@ async function startServer() {
 
   app.delete("/api/teachers/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    teachers = teachers.filter(t => t.id !== id);
+    teachers = teachers.filter((t: any) => t.id !== id);
+    saveDb();
     res.status(204).send();
   });
   app.get("/api/fees", (req, res) => res.json({ data: [] }));
@@ -756,8 +886,9 @@ async function startServer() {
     });
     
     app.post(`/api/masters/${resourceName}`, (req, res) => {
-      const newItem = { id: dataArray.length + 1, ...req.body, isActive: true };
+      const newItem = { id: dataArray.length > 0 ? Math.max(...dataArray.map(item => item.id)) + 1 : 1, ...req.body, isActive: true };
       dataArray.push(newItem);
+      saveDb();
       res.status(201).json({ data: newItem });
     });
 
@@ -766,6 +897,7 @@ async function startServer() {
       const index = dataArray.findIndex(item => item.id === id);
       if (index !== -1) {
         dataArray[index] = { ...dataArray[index], ...req.body };
+        saveDb();
         res.json({ data: dataArray[index] });
       } else {
         res.status(404).json({ message: "Not found" });
@@ -777,6 +909,7 @@ async function startServer() {
       const index = dataArray.findIndex(item => item.id === id);
       if (index !== -1) {
         dataArray.splice(index, 1);
+        saveDb();
         res.status(204).send();
       } else {
         res.status(404).json({ message: "Not found" });
@@ -789,20 +922,22 @@ async function startServer() {
     const roleId = req.query.roleId as string;
     let filtered = [...users];
     if (roleId) {
-      filtered = filtered.filter(u => u.role === roleId);
+      filtered = filtered.filter((u: any) => u.role === roleId);
     }
     res.json(applySortingAndPagination(filtered, req.query));
   });
   app.post("/api/users", (req, res) => {
-    const newItem = { id: users.length + 1, ...req.body, status: "Active" };
+    const newItem = { id: users.length > 0 ? Math.max(...users.map((u: any) => u.id)) + 1 : 1, ...req.body, status: "Active" };
     users.push(newItem);
+    saveDb();
     res.status(201).json({ data: newItem });
   });
   app.put("/api/users/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = users.findIndex(u => u.id === id);
+    const index = users.findIndex((u: any) => u.id === id);
     if (index !== -1) {
       users[index] = { ...users[index], ...req.body };
+      saveDb();
       res.json({ data: users[index] });
     } else {
       res.status(404).json({ message: "Not found" });
@@ -810,15 +945,31 @@ async function startServer() {
   });
   app.delete("/api/users/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    users = users.filter(u => u.id !== id);
+    users = users.filter((u: any) => u.id !== id);
+    saveDb();
     res.status(204).send();
   });
   app.put("/api/users/:id/role", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = users.findIndex(u => u.id === id);
+    const index = users.findIndex((u: any) => u.id === id);
     if (index !== -1) {
-      users[index].role = req.body.role;
-      res.json({ success: true, data: users[index] });
+      const roleStr = req.body.role || "";
+      const userObj: any = users[index];
+      userObj.role = roleStr;
+      
+      let roleId = 4; // default Student
+      const rLower = roleStr.toLowerCase().replace(/\s+/g, '');
+      if (rLower === "superadmin") roleId = 1;
+      else if (rLower === "admin") roleId = 2;
+      else if (rLower === "teacher") roleId = 3;
+      else if (rLower === "student") roleId = 4;
+      else if (rLower === "parent") roleId = 5;
+      
+      userObj.roleId = roleId;
+      userObj.RoleId = roleId; // Support both cases
+      
+      saveDb();
+      res.json({ success: true, data: userObj });
     } else {
       res.status(404).json({ message: "Not found" });
     }
@@ -828,13 +979,13 @@ async function startServer() {
   app.get("/api/notifications", (req, res) => res.json({ data: notifications }));
   app.get("/api/notifications/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const notif = notifications.find(n => n.id === id);
+    const notif = notifications.find((n: any) => n.id === id);
     if (notif) res.json({ data: notif });
     else res.status(404).json({ message: "Notification not found" });
   });
   app.put("/api/notifications/:id/read", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = notifications.findIndex(n => n.id === id);
+    const index = notifications.findIndex((n: any) => n.id === id);
     if (index !== -1) {
       notifications[index].isRead = true;
       res.json({ data: notifications[index] });
@@ -844,7 +995,7 @@ async function startServer() {
   });
   app.delete("/api/notifications/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    notifications = notifications.filter(n => n.id !== id);
+    notifications = notifications.filter((n: any) => n.id !== id);
     res.status(204).send();
   });
 
@@ -852,7 +1003,7 @@ async function startServer() {
   app.get("/api/messages", (req, res) => res.json({ data: messages }));
   app.post("/api/messages", (req, res) => {
     const newMessage = {
-      id: messages.length > 0 ? Math.max(...messages.map(m => m.id)) + 1 : 1,
+      id: messages.length > 0 ? Math.max(...messages.map((m: any) => m.id)) + 1 : 1,
       senderId: req.body.senderId || 1,
       createdAt: new Date().toISOString(),
       isRead: false,
@@ -863,7 +1014,7 @@ async function startServer() {
   });
   app.put("/api/messages/:id/read", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = messages.findIndex(m => m.id === id);
+    const index = messages.findIndex((m: any) => m.id === id);
     if (index !== -1) {
       messages[index].isRead = true;
       res.json({ data: messages[index] });
@@ -879,7 +1030,7 @@ async function startServer() {
     if (roleId !== null) {
       // IDs: SuperAdmin=1 bypasses filter or matched directly
       if (roleId !== 1) {
-        filtered = navigationItems.filter(item => 
+        filtered = navigationItems.filter((item: any) => 
           Array.isArray(item.roleIds) && (item.roleIds.includes(roleId) || item.roleIds.includes(0))
         );
       }
@@ -889,7 +1040,7 @@ async function startServer() {
 
   app.post("/api/navigation", (req, res) => {
     const newItem = { 
-      id: navigationItems.length > 0 ? Math.max(...navigationItems.map(n => n.id)) + 1 : 1, 
+      id: navigationItems.length > 0 ? Math.max(...navigationItems.map((n: any) => n.id)) + 1 : 1, 
       ...req.body,
       roles: Array.isArray(req.body.roles) ? req.body.roles : ["superadmin"]
     };
@@ -899,7 +1050,7 @@ async function startServer() {
 
   app.put("/api/navigation/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = navigationItems.findIndex(n => n.id === id);
+    const index = navigationItems.findIndex((n: any) => n.id === id);
     if (index !== -1) {
       navigationItems[index] = { ...navigationItems[index], ...req.body };
       res.json({ data: navigationItems[index] });
@@ -910,7 +1061,7 @@ async function startServer() {
 
   app.delete("/api/navigation/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const index = navigationItems.findIndex(n => n.id === id);
+    const index = navigationItems.findIndex((n: any) => n.id === id);
     if (index !== -1) {
       navigationItems.splice(index, 1);
       res.status(204).send();
@@ -946,6 +1097,9 @@ async function startServer() {
     changeOrigin: true,
     secure: false,
     ws: true,
+    pathRewrite: {
+      "^/SCANiD_ERP_API": ""
+    },
     // Filter logic to only forward if it hasn't been handled by previous routes
     pathFilter: (pathname, req) => {
       return (pathname.startsWith('/api') || pathname.startsWith('/uploads') || pathname.startsWith('/photos') || pathname.startsWith('/SCANiD_ERP_API'));
@@ -979,14 +1133,16 @@ async function startServer() {
       }
     }
   });
+  apiProxyInstance = apiProxy;
 
   // Proxy as a fallback for routes NOT handled by the mocks above
   app.use(['/api', '/uploads', '/photos', '/SCANiD_ERP_API'], apiProxy);
 
   // Safeguard: Serve static files from backend/ScanID.Api/wwwroot for uploads and photos if the proxy backend is unavailable
-  const backendWwwRoot = path.join(process.cwd(), 'backend/ScanID.Api/wwwroot');
-  app.use('/uploads', express.static(path.join(backendWwwRoot, 'uploads')));
-  app.use('/photos', express.static(path.join(backendWwwRoot, 'photos')));
+  app.use('/uploads', express.static(uploadsDir));
+  app.use('/photos', express.static(photosDir));
+  app.use('/SCANiD_ERP_API/uploads', express.static(uploadsDir));
+  app.use('/SCANiD_ERP_API/photos', express.static(photosDir));
 
   app.all("/api/*", (req, res) => {
     console.warn(`[404] API Route Not Found: ${req.method} ${req.url}`);
