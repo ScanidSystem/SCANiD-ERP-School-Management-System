@@ -22,12 +22,15 @@ export const Logo: React.FC<LogoProps> = ({ className, isCollapsed, size = 'md' 
       <motion.div
         layoutId="logo-collapsed"
         className={cn(
-          "flex items-center justify-center bg-slate-900 rounded-lg p-1 border border-slate-800",
+          "flex items-center justify-center bg-slate-900/50 rounded-xl p-2 border border-slate-800 shadow-inner",
           className
         )}
       >
-        <span className="font-black text-purple-600">S</span>
-        <span className="font-black text-orange-500">iD</span>
+        <span className="font-black text-[#8b31ff] text-xl">S</span>
+        <div className="flex -ml-0.5">
+          <span className="font-black text-[#8b31ff] text-xl">i</span>
+          <span className="font-black text-[#f97316] text-xl uppercase">D</span>
+        </div>
       </motion.div>
     );
   }
@@ -37,14 +40,18 @@ export const Logo: React.FC<LogoProps> = ({ className, isCollapsed, size = 'md' 
       layoutId="logo-full"
       className={cn("flex flex-col items-center justify-center select-none", className)}
     >
-      <div className={cn("font-black tracking-tighter flex items-baseline", currentSize.text)}>
-        <span className="text-purple-600 uppercase">SCAN</span>
-        <span className="text-orange-500">iD</span>
-        <span className="text-[10px] text-slate-500 ml-0.5 align-top">®</span>
+      <div className={cn("font-black tracking-tighter flex items-center", currentSize.text)}>
+        <span className="text-[#8b31ff] uppercase">SCAN</span>
+        <div className="flex -ml-0.5">
+          <span className="text-[#8b31ff]">i</span>
+          <span className="text-[#f97316] uppercase">D</span>
+        </div>
+        <span className="text-[10px] text-slate-500 ml-1 align-top font-bold">®</span>
       </div>
-      <div className="bg-purple-700 px-2 py-0.5 mt-[-2px] w-full flex justify-center items-center rounded-sm">
-        <span className={cn("text-white font-bold tracking-[0.1em] whitespace-nowrap", currentSize.bar)}>
-          SCAN<span className="text-orange-400">iD</span> SYSTEMS PVT. LTD.
+      
+      <div className="mt-1 bg-[#8b31ff] px-5 py-1 rounded-full shadow-lg shadow-purple-600/20 border border-white/5">
+        <span className={cn("text-white font-bold tracking-[0.1em] whitespace-nowrap uppercase", currentSize.bar)}>
+          <span className="font-black">SCAN</span>iD SYSTEMS PVT. LTD.
         </span>
       </div>
     </motion.div>

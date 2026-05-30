@@ -44,7 +44,9 @@ import {
   Mars,
   Venus,
   Droplets,
-  ArrowUpRight
+  ArrowUpRight,
+  School,
+  ArrowRight
 } from "lucide-react";
 import { 
   Table, 
@@ -361,9 +363,9 @@ export default function Teachers({ user }: { user: any }) {
       }
     };
 
-    checkField("schoolId", !formData.schoolId || formData.schoolId === "none", "Assigned School Branch required");
-    checkField("firstName", !formData.firstName?.trim(), "First Name required");
-    checkField("lastName", !formData.lastName?.trim(), "Last Name required");
+    checkField("schoolId", !formData.schoolId || formData.schoolId === "none", "Campus Branch is required");
+    checkField("firstName", !formData.firstName?.trim(), "First Name is required");
+    checkField("lastName", !formData.lastName?.trim(), "Last Name is required");
     checkField("email", !formData.email?.trim() || !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email), "Valid Email Protocol required");
     checkField("phone", !formData.phone?.trim() || !/^\d{10}$/.test(formData.phone), "10-digit Direct Line required");
     checkField("qualification", !formData.qualification?.trim(), "Education Deck required");
@@ -410,7 +412,7 @@ export default function Teachers({ user }: { user: any }) {
         ProfilePhotoPath: formData.photo || "",
         user: {
            username: formData.email.split('@')[0] + Date.now(),
-           name: `${formData.firstName} ${formData.lastName}`.trim(),
+           name: `${formData.firstName} ${formData.middleName ? formData.middleName + ' ' : ''}${formData.lastName}`.trim(),
            passwordHash: "temp123",
            email: formData.email,
            role: "teacher",
@@ -579,10 +581,265 @@ export default function Teachers({ user }: { user: any }) {
                   <div className="absolute right-[-10%] top-[-20%] w-64 h-64 sm:w-96 sm:h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
                 </div>
               
-                <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-10 py-6 sm:py-8 bg-white custom-scrollbar">
-                  <div className="max-w-4xl mx-auto space-y-10">
-                    {/* INSTITUTIONAL CONTEXT - Branch Selector (Already at top) */}
-                    
+                <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-10 py-6 sm:py-8 bg-[#FDFDFF] custom-scrollbar">
+                  <div className="max-w-4xl mx-auto space-y-8 sm:space-y-10">
+                    {/* INSTITUTIONAL CONTEXT */}
+                    <section className="space-y-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                        <Building2 className="size-5 text-blue-600" />
+                        <h3 className="text-base font-black text-slate-900 tracking-tight uppercase tracking-[0.05em]">Institutional Context</h3>
+                      </div>
+
+                      <div className="space-y-4">
+                        <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Campus Branch</Label>
+                   <Select 
+  value={formData.schoolId} 
+  onValueChange={v => {
+    setFormData({ ...formData, schoolId: v });
+
+    if (formErrors.schoolId) {
+      setFormErrors(prev => ({ 
+        ...prev, 
+        schoolId: "" 
+      }));
+    }
+  }}
+  disabled={user.role !== "superadmin" && !!user.schoolId}
+>
+  <SelectTrigger
+    ref={el => { inputRefs.current["schoolId"] = el; }}
+    className={cn(
+      "relative h-[76px] min-h-[76px]",
+      "rounded-[1.8rem]",
+      "border-2",
+      "bg-gradient-to-b from-white via-slate-50/70 to-slate-100/60",
+      "pl-[72px] pr-5",
+      "shadow-[0_8px_30px_rgba(15,23,42,0.06)]",
+      "hover:shadow-[0_18px_45px_rgba(59,130,246,0.12)]",
+      "transition-all duration-300",
+      "data-[state=open]:shadow-[0_22px_55px_rgba(59,130,246,0.16)]",
+      formErrors.schoolId
+        ? "border-red-500 ring-4 ring-red-500/5 focus:border-red-500 data-[state=open]:border-red-500"
+        : "border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 data-[state=open]:border-blue-400",
+      (user.role !== "superadmin" && !!user.schoolId) &&
+        "opacity-80 cursor-not-allowed bg-slate-100"
+    )}
+  >
+
+    {/* Left Icon */}
+    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 border border-blue-200/50 shadow-sm">
+      <School2 className="w-5 h-5 text-blue-700" />
+    </div>
+
+    {/* Content */}
+    <div className="flex flex-col items-start justify-center leading-tight w-full overflow-hidden">
+
+      
+
+      <div className="w-full truncate text-[15px] font-extrabold text-slate-800">
+        <SelectValue placeholder="Select Campus Branch">
+          {formData.schoolId
+            ? schools.find(
+                s =>
+                  s.id.toString() ===
+                  formData.schoolId.toString()
+              )?.name
+            : "Select Campus Branch"}
+        </SelectValue>
+      </div>
+
+    </div>
+
+
+
+  </SelectTrigger>
+
+  <SelectContent
+    className={cn(
+      "min-w-[340px]",
+      "rounded-[2rem]",
+      "border border-slate-200",
+      "bg-white/95 backdrop-blur-xl",
+      "p-2",
+      "shadow-[0_25px_80px_rgba(15,23,42,0.18)]"
+    )}
+  >
+
+    {/* Placeholder */}
+    <SelectItem
+      value=""
+      className="group rounded-2xl py-4 px-4 cursor-pointer focus:bg-slate-50 transition-all"
+    >
+      <div className="flex items-center gap-3">
+
+        <div className="w-10 h-10 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center">
+          <School className="w-4 h-4 text-slate-500" />
+        </div>
+
+        <div className="flex flex-col">
+          <span className="text-sm font-extrabold text-slate-700">
+            Select Campus Branch
+          </span>
+
+          <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-black mt-1">
+            Institution Selection
+          </span>
+        </div>
+
+      </div>
+    </SelectItem>
+
+    {/* Schools */}
+    {schools.map((school) => (
+      <SelectItem
+        key={school.id}
+        value={school.id.toString()}
+        className="group rounded-2xl py-4 px-3 cursor-pointer focus:bg-blue-50 transition-all duration-200"
+      >
+        <div className="flex items-center gap-3 w-full">
+
+          {/* Icon */}
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 border border-blue-200/50 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
+            <Building2 className="w-5 h-5 text-blue-700" />
+          </div>
+
+          {/* Text */}
+          <div className="flex flex-col leading-tight min-w-0 flex-1">
+
+            <span className="text-[14px] font-extrabold text-slate-800 truncate">
+              {school.name}
+            </span>
+
+            <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-black mt-1">
+              School Campus Branch
+            </span>
+
+          </div>
+
+          {/* Arrow */}
+          <div className="opacity-0 group-focus:opacity-100 transition-opacity duration-200">
+            <ArrowRight className="w-4 h-4 text-blue-600" />
+          </div>
+
+        </div>
+      </SelectItem>
+    ))}
+
+  </SelectContent>
+</Select>
+                        {formErrors.schoolId && <p className="text-[11px] font-bold text-red-500 ml-1 tracking-wide">{formErrors.schoolId}</p>}
+                      </div>
+                    </section>
+
+                    {/* FACULTY IDENTITY SECTION */}
+                    <section className="space-y-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-6 bg-indigo-600 rounded-full"></div>
+                        <UserCircle className="size-5 text-indigo-600" />
+                        <h3 className="text-base font-black text-slate-900 tracking-tight uppercase tracking-[0.05em]">Faculty Identity Photo</h3>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                        {/* Photo Upload Area */}
+                        <div className="lg:col-span-4">
+                          <div 
+                            onClick={() => triggerPhotoUpload("new")}
+                            className={cn(
+                              "relative aspect-square rounded-[2.5rem] border-4 border-dashed transition-all duration-500 cursor-pointer group overflow-hidden flex flex-col items-center justify-center gap-4 bg-slate-50/50",
+                              localPhotoPreview ? "border-indigo-500 bg-white" : "border-slate-200 hover:border-indigo-400 hover:bg-slate-50"
+                            )}
+                          >
+                            {localPhotoPreview ? (
+                              <>
+                                <img src={localPhotoPreview} alt="Preview" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Camera className="text-white w-10 h-10" />
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="w-20 h-20 rounded-full bg-white shadow-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 border border-slate-100 relative">
+                                  <Camera className="text-slate-400 group-hover:text-indigo-600 transition-colors" size={32} />
+                                  <div className="absolute bottom-0 right-0 w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+                                    <Plus size={16} className="text-white" />
+                                  </div>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-sm font-black text-slate-900 uppercase tracking-tight">Upload Photo</p>
+                                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">JPG, PNG (Max. 2MB)</p>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Name Fields */}
+                        <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-3">
+                            <Label className="text-slate-900 text-xs font-bold pl-0.5 uppercase tracking-wide">First Name</Label>
+                            <div className="relative group">
+                              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                <User className="w-5 h-5 stroke-[2.5]" />
+                              </div>
+                              <Input
+                                ref={el => { inputRefs.current["firstName"] = el; }}
+                                value={formData.firstName}
+                                onChange={e => {
+                                  setFormData({...formData, firstName: e.target.value});
+                                  if (formErrors.firstName) setFormErrors(prev => ({ ...prev, firstName: "" }));
+                                }}
+                                placeholder="Robert"
+                                className={cn(
+                                  "h-14 pl-12 border-2 bg-white font-bold rounded-2xl text-[15px] transition-all",
+                                  formErrors.firstName ? "border-red-500 ring-4 ring-red-500/5" : "border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                                )}
+                              />
+                            </div>
+                            {formErrors.firstName && <p className="text-[11px] font-bold text-red-500 ml-1 tracking-wide">{formErrors.firstName}</p>}
+                          </div>
+
+                          <div className="space-y-3">
+                            <Label className="text-slate-900 text-xs font-bold pl-0.5 uppercase tracking-wide">Middle Name</Label>
+                            <div className="relative group">
+                              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                <User className="w-5 h-5 stroke-[2.5]" />
+                              </div>
+                              <Input
+                                value={formData.middleName}
+                                onChange={e => setFormData({...formData, middleName: e.target.value})}
+                                placeholder="Optional"
+                                className="h-14 pl-12 border-2 bg-white font-bold rounded-2xl text-[15px] border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-3 md:col-span-2">
+                            <Label className="text-slate-900 text-xs font-bold pl-0.5 uppercase tracking-wide">Last Name</Label>
+                            <div className="relative group">
+                              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                <User className="w-5 h-5 stroke-[2.5]" />
+                              </div>
+                              <Input
+                                ref={el => { inputRefs.current["lastName"] = el; }}
+                                value={formData.lastName}
+                                onChange={e => {
+                                  setFormData({...formData, lastName: e.target.value});
+                                  if (formErrors.lastName) setFormErrors(prev => ({ ...prev, lastName: "" }));
+                                }}
+                                placeholder="gfnh"
+                                className={cn(
+                                  "h-14 pl-12 border-2 bg-white font-bold rounded-2xl text-[15px] transition-all",
+                                  formErrors.lastName ? "border-red-500 ring-4 ring-red-500/5" : "border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                                )}
+                              />
+                            </div>
+                            {formErrors.lastName && <p className="text-[11px] font-bold text-red-500 ml-1 tracking-wide">{formErrors.lastName}</p>}
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
                     <div className="space-y-10">
                       {/* CONNECTABILITY SECTION */}
                       <section className="relative overflow-hidden rounded-[2.8rem] border border-slate-200 bg-white p-6 sm:p-8 md:p-10 shadow-[0_25px_80px_rgba(15,23,42,0.08)]">
@@ -711,25 +968,159 @@ export default function Teachers({ user }: { user: any }) {
 
                           <div className="space-y-4 md:col-span-2">
                             <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Access Status</Label>
-                            <Select value={formData.status} onValueChange={v => {
-                              setFormData({...formData, status: v});
-                              if (formErrors.status) setFormErrors(prev => ({ ...prev, status: "" }));
-                            }}>
-                              <SelectTrigger className={cn(
-                                "h-16 border-2 bg-slate-50/30 font-bold rounded-2xl text-[15px] pl-14 focus:bg-white focus:border-indigo-400",
-                                formErrors.status ? "border-red-500" : "border-slate-200"
-                              )}>
-                                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">
-                                  <BadgeCheck size={19} />
-                                </div>
-                                <SelectValue placeholder="Select Status" />
-                              </SelectTrigger>
-                              <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
-                                <SelectItem value="Active" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-indigo-50">Active</SelectItem>
-                                <SelectItem value="On Leave" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-indigo-50">On Leave</SelectItem>
-                                <SelectItem value="Resigned" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-indigo-50">Resigned</SelectItem>
-                              </SelectContent>
-                            </Select>
+                         <Select 
+  value={formData.status} 
+  onValueChange={v => {
+    setFormData({...formData, status: v});
+    if (formErrors.status) {
+      setFormErrors(prev => ({ ...prev, status: "" }));
+    }
+  }}
+>
+  <SelectTrigger
+    className={cn(
+      "relative h-[72px] min-h-[72px] border-2",
+      "bg-gradient-to-b from-white to-slate-50/90",
+      "rounded-[1.6rem] pl-17 pr-10",
+      "shadow-[0_6px_24px_rgba(15,23,42,0.06)]",
+      "hover:shadow-[0_14px_40px_rgba(99,102,241,0.12)]",
+      "transition-all duration-300",
+      "data-[state=open]:shadow-[0_18px_45px_rgba(99,102,241,0.16)]",
+      "focus:ring-4 focus:ring-indigo-500/10",
+      formErrors.status
+        ? "border-red-500 focus:border-red-500 data-[state=open]:border-red-500"
+        : "border-slate-200 focus:border-indigo-400 data-[state=open]:border-indigo-400"
+    )}
+  >
+
+    {/* Left Icon */}
+    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 border border-indigo-200/40 shadow-sm">
+      {formData.status === "Active" ? (
+        <BadgeCheck className="w-5 h-5 text-indigo-700" />
+      ) : formData.status === "On Leave" ? (
+        <Clock3 className="w-5 h-5 text-amber-600" />
+      ) : formData.status === "Resigned" ? (
+        <UserMinus className="w-5 h-5 text-rose-600" />
+      ) : (
+        <ShieldCheck className="w-5 h-5 text-indigo-700" />
+      )}
+    </div>
+
+    {/* Value */}
+    <div className="flex flex-col items-start justify-center leading-tight w-full truncate">
+
+
+      <div className="truncate text-[14px] font-extrabold text-slate-800">
+        <SelectValue placeholder="Select Access Status">
+          {formData.status || "Select Access Status"}
+        </SelectValue>
+      </div>
+    </div>
+
+ 
+
+  </SelectTrigger>
+
+ <SelectContent className="min-w-[320px] rounded-[1.8rem] border border-slate-200 bg-white p-2.5 shadow-[0_20px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl">
+
+  {/* Default Option */}
+  <SelectItem
+    value=""
+    className="group rounded-2xl py-3.5 px-3 cursor-pointer transition-all duration-200 focus:bg-slate-50"
+  >
+    <div className="flex items-center gap-3">
+
+      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shadow-sm border border-slate-200/40">
+        <ShieldCheck className="w-5 h-5 text-slate-600" />
+      </div>
+
+      <div className="flex flex-col leading-tight">
+        <span className="text-[13px] font-extrabold text-slate-700">
+          Select Access Status
+        </span>
+
+        <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+          Choose Employee Status
+        </span>
+      </div>
+
+    </div>
+  </SelectItem>
+
+  {/* Active */}
+  <SelectItem
+    value="Active"
+    className="group rounded-2xl py-3.5 px-3 cursor-pointer transition-all duration-200 focus:bg-indigo-50"
+  >
+    <div className="flex items-center gap-3">
+
+      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center shadow-sm border border-indigo-200/40">
+        <BadgeCheck className="w-5 h-5 text-indigo-700" />
+      </div>
+
+      <div className="flex flex-col leading-tight">
+        <span className="text-[13px] font-extrabold text-slate-800">
+          Active
+        </span>
+
+        <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+          Currently Working
+        </span>
+      </div>
+
+    </div>
+  </SelectItem>
+
+  {/* On Leave */}
+  <SelectItem
+    value="On Leave"
+    className="group rounded-2xl py-3.5 px-3 cursor-pointer transition-all duration-200 focus:bg-amber-50"
+  >
+    <div className="flex items-center gap-3">
+
+      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-100 to-yellow-100 flex items-center justify-center shadow-sm border border-amber-200/40">
+        <Clock3 className="w-5 h-5 text-amber-700" />
+      </div>
+
+      <div className="flex flex-col leading-tight">
+        <span className="text-[13px] font-extrabold text-slate-800">
+          On Leave
+        </span>
+
+        <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+          Temporary Break
+        </span>
+      </div>
+
+    </div>
+  </SelectItem>
+
+  {/* Resigned */}
+  <SelectItem
+    value="Resigned"
+    className="group rounded-2xl py-3.5 px-3 cursor-pointer transition-all duration-200 focus:bg-rose-50"
+  >
+    <div className="flex items-center gap-3">
+
+      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center shadow-sm border border-rose-200/40">
+        <UserMinus className="w-5 h-5 text-rose-700" />
+      </div>
+
+      <div className="flex flex-col leading-tight">
+        <span className="text-[13px] font-extrabold text-slate-800">
+          Resigned
+        </span>
+
+        <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+          No Longer Active
+        </span>
+      </div>
+
+    </div>
+  </SelectItem>
+
+</SelectContent>
+</Select>
                             {formErrors.status && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.status}</p>}
                           </div>
                         </div>

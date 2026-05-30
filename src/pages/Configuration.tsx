@@ -1064,10 +1064,11 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 
           <DialogContent className={cn(
-            "rounded-xl border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] p-0 overflow-hidden transition-all duration-300 bg-white w-[95vw] max-w-[95vw] max-h-[95vh] sm:max-h-[85vh]",
+            "flex flex-col p-0 border-none rounded-[2.5rem] overflow-hidden bg-white group/modal",
+            activeTab === "schools" ? "sm:max-w-[1000px] w-[95vw] max-h-[98vh] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)]" : "rounded-xl border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] w-[95vw] max-w-[95vw] max-h-[95vh] sm:max-h-[85vh]",
             "fixed left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2",
             activeTab === "role-assignment" ? "sm:max-w-2xl" :
-              (activeTab === "schools" || activeTab === "navigation") ? "sm:max-w-[700px]" : "sm:max-w-[400px]"
+              (activeTab === "navigation" ? "sm:max-w-[700px]" : activeTab !== "schools" ? "sm:max-w-[400px]" : "")
           )}>
 
 
@@ -1077,15 +1078,45 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
 
 
 
-            {/* redesigned Header - Clean and Elegant */}
+            {activeTab === "schools" ? (
+            <div className="bg-[#111827] px-5 sm:px-10 py-5 sm:py-7 text-white relative shrink-0 overflow-hidden border-b border-white/5">
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="flex items-center gap-3 sm:gap-5">
+                  <div className="w-10 h-10 sm:w-16 sm:h-16 bg-indigo-600 rounded-xl sm:rounded-[1.25rem] flex items-center justify-center shadow-2xl shadow-indigo-500/40 border border-white/10 transition-transform group-hover/modal:scale-105 duration-500 shrink-0">
+                  {(localPhotoPreview || formData.profilePhotoPath) ? (
+                    <img src={localPhotoPreview || resolvePhotoUrl(formData.profilePhotoPath)} className="w-full h-full object-cover rounded-xl sm:rounded-[1.25rem]" alt="Logo" />
+                  ) : (
+                    <>
+                      <LucideIcons.School size={24} className="text-white fill-white/10 sm:hidden" />
+                      <LucideIcons.School size={32} className="text-white fill-white/10 hidden sm:block" />
+                    </>
+                  )}
+                  </div>
+                  <div className="flex flex-col gap-0.5 sm:gap-1 overflow-hidden">
+                    <DialogTitle className="text-base sm:text-2xl font-black tracking-tight leading-tight truncate">
+                      {editingItem ? "Update School Details" : "Add New School"}
+                    </DialogTitle>
+                    <DialogDescription className="text-slate-400 text-[9px] sm:text-xs font-bold uppercase tracking-widest opacity-80 truncate">
+                      Institutional configuration registry
+                    </DialogDescription>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsDialogOpen(false)}
+                  className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all cursor-pointer border-none outline-none shrink-0 z-50"
+                >
+                  <LucideIcons.XCircle size={22} className="sm:size-[26px] stroke-[2.5]" />
+                </button>
+              </div>
+              <div className="absolute right-[-5%] top-[-20%] w-64 h-64 sm:w-96 sm:h-96 bg-indigo-600/20 rounded-full blur-[80px] sm:blur-[100px] pointer-events-none animate-pulse"></div>
+              <div className="absolute left-[-5%] bottom-[-20%] w-48 h-48 sm:w-64 sm:h-64 bg-blue-600/10 rounded-full blur-[60px] sm:blur-[80px] pointer-events-none"></div>
+            </div>
+            ) : (
             <div className="px-4 sm:px-6 py-3 sm:py-5 relative overflow-hidden shrink-0 border-b border-slate-50 bg-slate-900">
               <DialogHeader className="relative z-10 p-0 bg-transparent flex-row items-center gap-3 sm:gap-4 pr-10 sm:pr-12">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 shadow-lg transition-transform hover:scale-105 bg-[#5a67f2] text-white backdrop-blur-md">
-                  {(activeTab === "schools" && (localPhotoPreview || formData.profilePhotoPath)) ? (
-                    <img src={localPhotoPreview || resolvePhotoUrl(formData.profilePhotoPath)} className="w-full h-full object-cover rounded-xl" alt="Logo" />
-                  ) : (
-                    <activeConfig.icon className="size-5 sm:size-6 stroke-[2.5]" />
-                  )}
+                  <activeConfig.icon className="size-5 sm:size-6 stroke-[2.5]" />
                 </div>
                 <div className="flex flex-col gap-0.5 overflow-hidden">
                   <DialogTitle className="text-base sm:text-lg font-heading font-extrabold tracking-tight leading-tight text-white truncate">
@@ -1104,10 +1135,10 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                 </button>
               </DialogHeader>
             </div>
+            )}
 
             <div className={cn(
-              "px-4 sm:px-8 pt-4 sm:pt-6 pb-6 space-y-6 overflow-y-auto custom-scrollbar flex-1",
-              activeTab === "schools" ? "max-h-[55vh] sm:max-h-[50vh]" : "max-h-[40vh] sm:max-h-[45vh]"
+               activeTab === "schools" ? "flex-1 overflow-y-auto overflow-x-hidden px-6 sm:px-10 py-6 sm:py-8 bg-[#FDFDFF] custom-scrollbar" : "px-4 sm:px-8 pt-4 sm:pt-6 pb-6 space-y-6 overflow-y-auto custom-scrollbar flex-1 max-h-[40vh] sm:max-h-[45vh]"
             )}>
 
 
@@ -1548,11 +1579,8 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
 
 
               {activeTab === "schools" && (
-                <div className="space-y-8 overflow-y-auto max-h-[70vh] pr-3 custom-scrollbar">
-                  {/* Institutional Identity (Top Header) - School Name, Short Name, Email, Phone */}
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_250px] gap-6">
-                      <div className="space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                  <div className="lg:col-span-8 space-y-6">
                         <div className="space-y-3">
                           <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
                             SCHOOL NAME
@@ -1582,7 +1610,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                           )}
                         </div>
 
-                        <div className="grid grid-cols-1 gap-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                           <div className="space-y-3">
                             <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
                               Short Name/Code
@@ -1620,7 +1648,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                           </div>
                         </div>
 
-             <div className="grid grid-cols-1 gap-4">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
   
   {/* EMAIL */}
   <div className="space-y-3">
@@ -1640,7 +1668,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
         type="email"
         placeholder="school@email.com"
         className={cn(
-          "w-full h-16 pl-16 pr-5 bg-gradient-to-b from-white to-slate-50/80",
+          "w-full h-14 pl-16 pr-5 bg-gradient-to-b from-white to-slate-50/80",
           "border-2 rounded-2xl text-[14px] sm:text-[15px] font-bold text-slate-800",
           "shadow-[0_4px_20px_rgba(15,23,42,0.05)]",
           "hover:shadow-[0_12px_35px_rgba(99,102,241,0.10)]",
@@ -1696,7 +1724,7 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
         type="text"
         placeholder="10 Digits"
         className={cn(
-          "w-full h-16 pl-16 pr-5 bg-gradient-to-b from-white to-slate-50/80",
+          "w-full h-14 pl-16 pr-5 bg-gradient-to-b from-white to-slate-50/80",
           "border-2 rounded-2xl text-[14px] sm:text-[15px] font-bold text-slate-800",
           "shadow-[0_4px_20px_rgba(15,23,42,0.05)]",
           "hover:shadow-[0_12px_35px_rgba(99,102,241,0.10)]",
@@ -1731,13 +1759,13 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
   </div>
 
 </div>
-                      </div>
+                  </div>
 
-                      {/* Branding Photo */}
-                      <div className="flex flex-row sm:flex-col items-center justify-between sm:justify-center p-3 sm:p-4 bg-slate-50/30 border-2 border-slate-100 rounded-xl sm:rounded-[2rem] gap-3">
+                  <div className="lg:col-span-4 space-y-6">
+                      <div className="flex flex-col items-center justify-center h-full gap-3">
                         <div 
                           onClick={() => fileInputRef.current?.click()}
-                          className="w-20 h-20 sm:w-32 sm:h-32 rounded-xl sm:rounded-xl bg-white border-2 border-dashed border-indigo-100 flex flex-col items-center justify-center gap-1 sm:gap-2 cursor-pointer group hover:bg-indigo-50/50 hover:border-indigo-300 transition-all overflow-hidden relative shadow-sm"
+                          className="w-full aspect-[4/5] rounded-[2rem] bg-indigo-50/20 border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center gap-1 sm:gap-2 cursor-pointer group hover:bg-indigo-50/70 hover:border-indigo-400 transition-all overflow-hidden relative shadow-sm"
                         >
                           <input
                             type="file"
@@ -1758,17 +1786,22 @@ export default function Configuration({ user, defaultTab = "schools" }: Configur
                             <img src={localPhotoPreview || resolvePhotoUrl(formData.profilePhotoPath)} alt="Logo" className="w-full h-full object-contain p-2" />
                           ) : (
                             <>
-                              <LucideIcons.Image className="text-slate-300 group-hover:text-indigo-400" size={24} sm:size={32} />
-                              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-indigo-500">Logo</span>
+                              <div className="w-16 h-16 rounded-3xl bg-indigo-100 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-sm relative">
+                                <LucideIcons.Camera className="size-7 text-indigo-500" />
+                                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                                  <LucideIcons.Plus className="size-3 text-white stroke-[3]" />
+                                </div>
+                              </div>
+                              <span className="text-[13px] font-black text-slate-800 uppercase tracking-widest text-center">NO IMAGE UPLOADED</span>
+                              <span className="text-[10px] font-bold text-slate-400 mt-2 text-center uppercase tracking-widest group-hover:text-indigo-500 transition-colors">CLICK TO UPLOAD OR CHANGE</span>
+                              <span className="text-[9px] font-bold text-slate-400/80 mt-1 uppercase tracking-widest">JPG, PNG (Max. 2MB)</span>
                             </>
                           )}
                         </div>
-                        
-                        <Label className="text-slate-900 text-[11px] sm:text-sm font-bold pl-0.5 uppercase tracking-wide text-right sm:text-center">
-                        School logo / Branding
-                        </Label>
                       </div>
-                    </div>
+                  </div>
+
+                  <div className="lg:col-span-12 space-y-6">
 
                     {/* Location & Address Section */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1973,7 +2006,6 @@ INSTITUTIONAL ADDRESS
                         <p className="text-red-500 text-[11px] font-black uppercase tracking-widest pl-1 mt-1">INSTITUTIONAL ADDRESS REQUIRED</p>
                       )}
                     </div>
-                  </div>
 
                   {/* Section: SMS & WhatsApp Gateway */}
                   <div className="space-y-4">
@@ -2321,6 +2353,7 @@ SMS & WhatsApp Gateway Configuration
                       />
                     </div>
                   </div>
+                  </div>
                 </div>
               )}
 
@@ -2653,6 +2686,16 @@ SMS & WhatsApp Gateway Configuration
               </div>
             </div>
 
+            {activeTab === "schools" ? (
+              <DialogFooter className="bg-white px-5 sm:px-10 py-5 sm:py-6 shrink-0 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 sm:justify-end">
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto h-12 sm:h-14 px-8 rounded-xl border-2 border-slate-200 text-slate-500 font-black tracking-widest uppercase hover:bg-slate-50 hover:text-slate-700 transition-all text-xs order-2 sm:order-1">
+                  <LucideIcons.XCircle size={18} className="mr-2" /> CANCEL 
+                </Button>
+                <Button onClick={handleSave} className="w-full sm:w-auto h-12 sm:h-14 px-10 sm:px-12 bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-xl shadow-indigo-600/20 rounded-xl transition-all active:scale-[0.98] text-xs sm:text-[13px] uppercase tracking-[0.15em] flex items-center justify-center gap-2 order-1 sm:order-2">
+                  <LucideIcons.Plus size={18} className="mr-2" /> {editingItem ? "UPDATE MASTER" : "CREATE MASTER"}
+                </Button>
+              </DialogFooter>
+            ) : (
             <DialogFooter className={cn(
                "px-4 sm:px-6 pb-4 sm:pb-6 pt-3 sm:pt-6 !flex !flex-col sm:!flex-row items-stretch sm:items-center gap-3 sm:gap-4 shrink-0 border-t border-slate-50 bg-slate-50/10 sm:justify-end"
             )}> 
@@ -2672,6 +2715,7 @@ SMS & WhatsApp Gateway Configuration
                 {editingItem ? "Update Master" : "Create Master"}
               </Button>
             </DialogFooter>
+            )}
 
 
 

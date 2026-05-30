@@ -220,7 +220,7 @@ export default function Navbar({ user, onLogout, onUserUpdate, toggleSidebar }: 
           {user.role === "superadmin" && (
             <div className="flex items-center gap-2 px-2.5 sm:px-3 h-9 sm:h-10 rounded-xl bg-slate-900 text-white shadow-lg shadow-slate-200 transition-all border border-slate-800 shrink-0">
                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
-               <span className="text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap hidden sm:inline-block">Super Admin</span>
+               <span className="text-[10px] font-black uppercase  text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide  whitespace-nowrap hidden sm:inline-block">Super Admin</span>
             </div>
           )}
           
