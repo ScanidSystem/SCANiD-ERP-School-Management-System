@@ -15,6 +15,8 @@ import {
   Calendar,
   CheckCircle2,
   XCircle,
+  X,
+  Check,
   Filter,
   UserPlus,
   Users,
@@ -27,7 +29,24 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Download,
-  Loader2
+  Loader2,
+  User,
+  BadgeCheck,
+  Clock3,
+  UserMinus,
+  ShieldCheck,
+  Save,
+  Building2,
+  School2,
+  BriefcaseBusiness,
+  FileText,
+  UserRound,
+  Mars,
+  Venus,
+  Droplets,
+  ArrowUpRight,
+  School,
+  ArrowRight
 } from "lucide-react";
 import { 
   Table, 
@@ -71,7 +90,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn, parseSafeInt, resolvePhotoUrl } from "@/lib/utils";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
 
 interface Teacher {
   id: string;
@@ -114,7 +132,7 @@ export default function Teachers({ user }: { user: any }) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterSubject, setFilterSubject] = useState<string>("all");
-  const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, any>>({});
   const [schools, setSchools] = useState<any[]>([]);
   const inputRefs = React.useRef<Record<string, any>>({});
   const [formData, setFormData] = useState<any>({
@@ -126,10 +144,20 @@ export default function Teachers({ user }: { user: any }) {
     qualification: "",
     experience: "",
     subject: "",
-    standard: "",
-    section: "",
+    standard: "10th",
+    section: "A",
     status: "Active",
-    schoolId: user.schoolId || ""
+    schoolId: (user.schoolId && user.schoolId !== "all") ? user.schoolId.toString() : "",
+    employeeId: "",
+    employeeType: "Full Time",
+    gender: "Male",
+    dob: "",
+    joiningDate: new Date().toISOString().split('T')[0],
+    address: "",
+    RFID: "",
+    RFID2: "",
+    bloodGroup: "O+",
+    photo: ""
   });
 
   const fetchSchools = async () => {
@@ -294,35 +322,6 @@ export default function Teachers({ user }: { user: any }) {
 
   const filteredTeachers = teachers;
 
-  const handleExport = () => {
-    try {
-      const exportData = filteredTeachers.map((t: any) => ({
-        "Faculty ID": t.employeeId || t.id || "",
-        "Name": t.name || "",
-        "Email": t.email || "",
-        "Core Expertise": t.subject || t.department || "",
-        "Credentials": t.qualification || "",
-        "Status": t.status || "Active",
-        "Phone": t.contactNumber || t.phone || ""
-      }));
-
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      XLSX.utils.book_append_sheet(wb, ws, "Faculty Registry");
-
-      const wscols = [
-        { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 12 }, { wch: 15 }
-      ];
-      ws['!cols'] = wscols;
-
-      XLSX.writeFile(wb, `Faculty_Registry_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
-      toast.success("Faculty registry exported to Excel successfully!");
-    } catch (e) {
-      console.error("Teacher export error:", e);
-      toast.error("Failed to generate Excel export.");
-    }
-  };
-
   const resetForm = () => {
     setFormData({
       firstName: "",
@@ -336,7 +335,16 @@ export default function Teachers({ user }: { user: any }) {
       standard: "10th",
       section: "A",
       status: "Active",
-      schoolId: user.schoolId || "",
+      schoolId: (user.schoolId && user.schoolId !== "all") ? user.schoolId.toString() : "",
+      employeeId: "",
+      employeeType: "Full Time",
+      gender: "Male",
+      dob: "",
+      joiningDate: new Date().toISOString().split('T')[0],
+      address: "",
+      RFID: "",
+      RFID2: "",
+      bloodGroup: "O+",
       photo: ""
     });
     setSelectedTeacher(null);
@@ -345,23 +353,27 @@ export default function Teachers({ user }: { user: any }) {
   };
 
   const handleCreateOrUpdate = async () => {
-    const newErrors: Record<string, boolean> = {};
+    const newErrors: Record<string, any> = {};
     let firstErrorField = "";
 
-    const checkField = (field: string, condition: boolean) => {
+    const checkField = (field: string, condition: boolean, message: string) => {
       if (condition) {
-        newErrors[field] = true;
+        newErrors[field] = message;
         if (!firstErrorField) firstErrorField = field;
       }
     };
 
-    checkField("firstName", !formData.firstName?.trim());
-    checkField("lastName", !formData.lastName?.trim());
-    checkField("email", !formData.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email));
-    checkField("phone", !formData.phone?.trim() || !/^\d{10}$/.test(formData.phone.replace(/\D/g, "")));
-    checkField("qualification", !formData.qualification?.trim());
-    checkField("subject", !formData.subject?.trim());
-    checkField("schoolId", !formData.schoolId);
+    checkField("schoolId", !formData.schoolId || formData.schoolId === "none", "Campus Branch is required");
+    checkField("firstName", !formData.firstName?.trim(), "First Name is required");
+    checkField("lastName", !formData.lastName?.trim(), "Last Name is required");
+    checkField("email", !formData.email?.trim() || !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email), "Valid Email Protocol required");
+    checkField("phone", !formData.phone?.trim() || !/^\d{10}$/.test(formData.phone), "10-digit Direct Line required");
+    checkField("qualification", !formData.qualification?.trim(), "Education Deck required");
+    checkField("subject", !formData.subject?.trim(), "Primary Domain required");
+    checkField("status", !formData.status || formData.status === "none", "Access Status required");
+    checkField("experience", !formData.experience?.trim(), "Professional Texture required");
+    checkField("standard", !formData.standard?.trim(), "Assigned Grade required");
+    checkField("joiningDate", !formData.joiningDate, "Year required");
 
     setFormErrors(newErrors);
 
@@ -380,32 +392,38 @@ export default function Teachers({ user }: { user: any }) {
     try {
       const payload: any = {
         schoolId: parseSafeInt(formData.schoolId) || 1,
-        employeeId: isEditing ? selectedTeacher?.employeeId : `EMP-${Date.now()}`,
+        employeeId: formData.employeeId || (isEditing ? selectedTeacher?.employeeId : `EMP-${Date.now()}`),
+        employeeType: formData.employeeType,
         designation: "Faculty",
         department: formData.subject,
         qualification: formData.qualification,
         status: formData.status,
         contactNumber: formData.phone,
+        gender: formData.gender,
+        dob: formData.dob,
+        joiningDate: formData.joiningDate,
+        experience: formData.experience,
+        address: formData.address,
+        RFID: formData.RFID,
+        RFID2: formData.RFID2,
+        bloodGroup: formData.bloodGroup,
+        standardId: formData.standard,
         profilePhotoPath: formData.photo || "",
         ProfilePhotoPath: formData.photo || "",
         user: {
            username: formData.email.split('@')[0] + Date.now(),
-           name: `${formData.firstName} ${formData.lastName}`.trim(),
+           name: `${formData.firstName} ${formData.middleName ? formData.middleName + ' ' : ''}${formData.lastName}`.trim(),
            passwordHash: "temp123",
            email: formData.email,
            role: "teacher",
            schoolId: parseSafeInt(formData.schoolId) || 1
         },
-        // Audit fields: Ensure CreatedBy and ModifiedBy are captured for backend audit logging
-        // CreatedBy is only set for new records, ModifiedBy is updated for every modification
         CreatedBy: isEditing ? undefined : (user.name || user.email),
         ModifiedBy: user.name || user.email
       };
 
       if (isEditing && selectedTeacher) {
         payload.id = parseSafeInt(selectedTeacher.id) || 0;
-        payload.userId = parseSafeInt(selectedTeacher.userId) || 0;
-        payload.UserId = parseSafeInt(selectedTeacher.userId) || 0;
         if (payload.user && selectedTeacher.userId) {
           payload.user.id = parseSafeInt(selectedTeacher.userId) || 0;
         }
@@ -511,14 +529,14 @@ export default function Teachers({ user }: { user: any }) {
         className="hidden" 
         accept="image/*"
       />
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-7">
         <div className="flex items-center gap-5">
-           <div className="bg-blue-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:-rotate-3">
+           <div className="bg-[#5a67f2] p-4 rounded-[1.25rem] text-white shadow-2xl shadow-[#5a67f2]/20 transition-transform hover:-rotate-3">
             <Users size={28} />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">Faculty Management</h1>
-            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Administrative control for teaching staff & assignments</p>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight truncate">Faculty Management</h1>
+            <p className="text-slate-600 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Administrative control for teaching staff & assignments</p>
           </div>
         </div>
         {isAdmin && (
@@ -538,326 +556,708 @@ export default function Teachers({ user }: { user: any }) {
                 </div>
               }
             />
-            <DialogContent className="sm:max-w-[850px] w-[95vw] max-h-[90vh] flex flex-col p-0 border-none shadow-3xl rounded-[2.5rem] overflow-hidden">
-                <div className="bg-slate-900 px-10 py-8 text-white relative shrink-0">
-                  <div className="relative z-10 flex items-center justify-between">
-                    <DialogHeader>
-                      <DialogTitle className="text-2xl font-black tracking-tight flex items-center gap-4">
-                        <div className="p-3 bg-blue-500 rounded-2xl shadow-2xl shadow-blue-500/20">
-                          <UserPlus size={24} className="text-white" />
-                        </div>
-                        {isEditing ? "Modify Profile" : "Onboard Faculty"}
-                      </DialogTitle>
-                      <DialogDescription className="text-slate-400 text-sm mt-2 font-bold max-w-2xl leading-relaxed uppercase tracking-wider">
-                        {isEditing 
-                          ? "Update professional qualifications and work assignments." 
-                          : "Enter credentials and department assignments for new staff."}
-                      </DialogDescription>
-                    </DialogHeader>
+            <DialogContent className="sm:max-w-[850px] w-[95vw] max-h-[90vh] flex flex-col p-0 border-none shadow-3xl rounded-[2.5rem] overflow-hidden bg-white">
+                <div className="bg-[#0f172a] p-5 sm:p-6 sm:px-10 text-white relative shrink-0">
+                  <div className="relative z-10 flex items-start sm:items-center justify-between">
+                    <div className="flex items-center gap-4 sm:gap-6">
+                      <div className="p-3 sm:p-4 bg-[#5a67f2] rounded-xl sm:rounded-2xl shadow-xl shadow-[#5a67f2]/40 transition-transform">
+                        <UserPlus className="text-white w-6 h-6 sm:w-8 sm:h-8" />
+                      </div>
+                      <div className="flex flex-col">
+                        <h2 className="text-xl sm:text-3xl font-black tracking-tight text-white leading-none">Onboard Faculty</h2>
+                        <p className="text-slate-400 text-[11px] sm:text-[14px] mt-1 sm:mt-2 font-semibold sm:font-black sm:uppercase tracking-wide sm:tracking-[0.1em] opacity-80 leading-tight">
+                          Enter credentials and department assignments for new staff.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddDialogOpen(false)}
+                      className="w-8 h-8 sm:w-10 sm:h-10 ml-2 rounded-full flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all cursor-pointer shrink-0"
+                    >
+                      <X className="w-[18px] h-[18px] sm:w-[24px] sm:h-[24px] stroke-[2.5]" />
+                    </button>
                   </div>
-                  <div className="absolute right-[-5%] top-[-5%] w-72 h-72 bg-blue-600/20 rounded-full blur-[100px] pointer-events-none"></div>
+                  <div className="absolute right-[-10%] top-[-20%] w-64 h-64 sm:w-96 sm:h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
                 </div>
               
-                <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-8 bg-white custom-scrollbar">
-                  <div className="max-w-4xl mx-auto space-y-10">
-                    <section>
-                      <div className="flex items-center gap-4 mb-6 pb-2 border-b border-slate-50">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-10 py-6 sm:py-8 bg-[#FDFDFF] custom-scrollbar">
+                  <div className="max-w-4xl mx-auto space-y-8 sm:space-y-10">
+                    {/* INSTITUTIONAL CONTEXT */}
+                    <section className="space-y-6">
+                      <div className="flex items-center gap-3">
                         <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Institutional Context</h3>
+                        <Building2 className="size-5 text-blue-600" />
+                        <h3 className="text-base font-black text-slate-900 tracking-tight uppercase tracking-[0.05em]">Institutional Context</h3>
                       </div>
-                      
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                          <div className="md:col-span-12 space-y-2">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.schoolId ? "text-red-500" : "text-slate-400")}>Campus Branch {formErrors.schoolId && "*"}</Label>
-                            <Select 
-                              value={formData.schoolId.toString()} 
-                              onValueChange={(v) => {
-                                setFormData({...formData, schoolId: v});
-                                if (formErrors.schoolId) setFormErrors(prev => ({ ...prev, schoolId: false }));
-                              }}
-                              disabled={user.role !== "superadmin" && !!user.schoolId}
-                            >
-                              <SelectTrigger 
-                                ref={el => { inputRefs.current["schoolId"] = el; }}
-                                className={cn(
-                                  "h-12 border-slate-100 bg-slate-50/50 font-black text-slate-800 rounded-2xl px-5 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm",
-                                  formErrors.schoolId && "border-red-500 ring-2 ring-red-500/10",
-                                  (user.role !== "superadmin" && !!user.schoolId) && "opacity-80 cursor-not-allowed bg-slate-100"
-                                )}
-                              >
-                                {/* Custom label display to show only the name when a campus is selected, avoiding full ID/Address view in trigger */}
-                                <SelectValue placeholder="Select Campus">
-                                  {formData.schoolId ? schools.find(s => s.id.toString() === formData.schoolId.toString())?.name : undefined}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent className="max-h-80 rounded-[2rem] shadow-2xl border-slate-100 p-3">
-                                <SelectItem value="" className="font-bold py-3 px-4 rounded-xl focus:bg-slate-50 text-slate-400 italic">
-                                  Select Campus
-                                </SelectItem>
-                                {Array.isArray(schools) && schools.length > 0 ? (
-                                  schools.map(s => (
-                                    <SelectItem key={s.id} value={s.id.toString()} className="font-black py-4 px-4 rounded-2xl focus:bg-blue-50 focus:text-blue-700 cursor-pointer">
-                                      <div className="flex flex-col gap-1">
-                                        <span className="text-sm uppercase tracking-tight">{s.name}</span>
-                                        <span className="text-[10px] text-slate-400 font-bold tracking-[0.1em]">ID: SCH-{s.id} • {s.address?.split(',')[0]}</span>
-                                      </div>
-                                    </SelectItem>
-                                  ))
-                                ) : (
-                                  <div className="p-6 text-xs font-black text-slate-400 text-center uppercase tracking-widest flex flex-col items-center gap-3 italic">
-                                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
-                                    Syncing branches...
-                                  </div>
-                                )}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>                        <div className="flex flex-col md:flex-row gap-8 mt-8">
-                          {/* Left: Identity Image */}
-                          <div className="flex flex-col items-center gap-4">
-                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Faculty Identity Photo</Label>
-                            <div 
-                              className="relative group cursor-pointer"
-                              onClick={() => triggerPhotoUpload((isEditing && selectedTeacher?.id) ? selectedTeacher.id.toString() : "new")}
-                            >
-                              <div className="w-44 h-44 rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-100 bg-slate-50 flex items-center justify-center transition-all group-hover:shadow-blue-200/50 group-hover:scale-[1.02]">
-                                 {(localPhotoPreview || formData.photo) ? (
-                                   <img 
-                                     src={localPhotoPreview || resolvePhotoUrl(formData.photo)} 
-                                     alt="Faculty" 
-                                     className="w-full h-full object-cover"
-                                     onError={(e) => {
-                                       console.error(`[IMAGE_LOAD_FAIL] Failed to load teacher preview image from URL: "${e.currentTarget.src}"`);
-                                       e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.firstName}`;
-                                     }}
-                                   />
-                                 ) : (
-                                   <div className="flex flex-col items-center gap-3 text-slate-300">
-                                     <div className="p-4 bg-slate-100 rounded-2xl">
-                                        <UserCircle size={36} className="opacity-20" />
-                                     </div>
-                                     <span className="text-[10px] font-black tracking-widest">NO IMAGE</span>
-                                   </div>
-                                 )}
 
-                                 <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
-                                    <div className="p-2 bg-white/20 rounded-full">
-                                      <Camera size={24} />
-                                    </div>
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Update Photo</span>
-                                 </div>
-                              </div>
-                              
-                              {(localPhotoPreview || formData.photo) && (
-                                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
-                                   <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
-                                </div>
-                              )}
-                            </div>
-                            <p className="text-[10px] text-slate-400 font-bold max-w-[150px] text-center leading-relaxed">
-                              Click frame to select or update professional photograph.
-                            </p>
-                          </div>
+                      <div className="space-y-4">
+                        <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Campus Branch</Label>
+                   <Select 
+  value={formData.schoolId} 
+  onValueChange={v => {
+    setFormData({ ...formData, schoolId: v });
 
-                          {/* Right: Primary Bio */}
-                          <div className="flex-1 space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              <div className="space-y-2">
-                                <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.firstName ? "text-red-500" : "text-slate-400")}>First Name {formErrors.firstName && "*"}</Label>
-                                <Input 
-                                  ref={el => { inputRefs.current["firstName"] = el; }}
-                                  value={formData.firstName} 
-                                  onChange={e => {
-                                    setFormData({...formData, firstName: e.target.value});
-                                    if (formErrors.firstName) setFormErrors(prev => ({ ...prev, firstName: false }));
-                                  }} 
-                                  placeholder="Robert" 
-                                  className={cn(
-                                    "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300",
-                                    formErrors.firstName && "border-red-500 ring-2 ring-red-500/10"
-                                  )}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Middle Name</Label>
-                                <Input value={formData.middleName} onChange={e => setFormData({...formData, middleName: e.target.value})} placeholder="Optional" className="h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300" />
-                              </div>
-                              <div className="md:col-span-2 space-y-2">
-                                <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.lastName ? "text-red-500" : "text-slate-400")}>Last Name {formErrors.lastName && "*"}</Label>
-                                <Input 
-                                  ref={el => { inputRefs.current["lastName"] = el; }}
-                                  value={formData.lastName} 
-                                  onChange={e => {
-                                    setFormData({...formData, lastName: e.target.value});
-                                    if (formErrors.lastName) setFormErrors(prev => ({ ...prev, lastName: false }));
-                                  }} 
-                                  placeholder="Smith" 
-                                  className={cn(
-                                    "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-slate-300",
-                                    formErrors.lastName && "border-red-500 ring-2 ring-red-500/10"
-                                  )}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+    if (formErrors.schoolId) {
+      setFormErrors(prev => ({ 
+        ...prev, 
+        schoolId: "" 
+      }));
+    }
+  }}
+  disabled={user.role !== "superadmin" && !!user.schoolId}
+>
+  <SelectTrigger
+    ref={el => { inputRefs.current["schoolId"] = el; }}
+    className={cn(
+      "relative h-[76px] min-h-[76px]",
+      "rounded-[1.8rem]",
+      "border-2",
+      "bg-gradient-to-b from-white via-slate-50/70 to-slate-100/60",
+      "pl-[72px] pr-5",
+      "shadow-[0_8px_30px_rgba(15,23,42,0.06)]",
+      "hover:shadow-[0_18px_45px_rgba(59,130,246,0.12)]",
+      "transition-all duration-300",
+      "data-[state=open]:shadow-[0_22px_55px_rgba(59,130,246,0.16)]",
+      formErrors.schoolId
+        ? "border-red-500 ring-4 ring-red-500/5 focus:border-red-500 data-[state=open]:border-red-500"
+        : "border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 data-[state=open]:border-blue-400",
+      (user.role !== "superadmin" && !!user.schoolId) &&
+        "opacity-80 cursor-not-allowed bg-slate-100"
+    )}
+  >
+
+    {/* Left Icon */}
+    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 border border-blue-200/50 shadow-sm">
+      <School2 className="w-5 h-5 text-blue-700" />
+    </div>
+
+    {/* Content */}
+    <div className="flex flex-col items-start justify-center leading-tight w-full overflow-hidden">
+
+      
+
+      <div className="w-full truncate text-[15px] font-extrabold text-slate-800">
+        <SelectValue placeholder="Select Campus Branch">
+          {formData.schoolId
+            ? schools.find(
+                s =>
+                  s.id.toString() ===
+                  formData.schoolId.toString()
+              )?.name
+            : "Select Campus Branch"}
+        </SelectValue>
+      </div>
+
+    </div>
+
+
+
+  </SelectTrigger>
+
+  <SelectContent
+    className={cn(
+      "min-w-[340px]",
+      "rounded-[2rem]",
+      "border border-slate-200",
+      "bg-white/95 backdrop-blur-xl",
+      "p-2",
+      "shadow-[0_25px_80px_rgba(15,23,42,0.18)]"
+    )}
+  >
+
+    {/* Placeholder */}
+    <SelectItem
+      value=""
+      className="group rounded-2xl py-4 px-4 cursor-pointer focus:bg-slate-50 transition-all"
+    >
+      <div className="flex items-center gap-3">
+
+        <div className="w-10 h-10 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center">
+          <School className="w-4 h-4 text-slate-500" />
+        </div>
+
+        <div className="flex flex-col">
+          <span className="text-sm font-extrabold text-slate-700">
+            Select Campus Branch
+          </span>
+
+          <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-black mt-1">
+            Institution Selection
+          </span>
+        </div>
+
+      </div>
+    </SelectItem>
+
+    {/* Schools */}
+    {schools.map((school) => (
+      <SelectItem
+        key={school.id}
+        value={school.id.toString()}
+        className="group rounded-2xl py-4 px-3 cursor-pointer focus:bg-blue-50 transition-all duration-200"
+      >
+        <div className="flex items-center gap-3 w-full">
+
+          {/* Icon */}
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 border border-blue-200/50 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
+            <Building2 className="w-5 h-5 text-blue-700" />
+          </div>
+
+          {/* Text */}
+          <div className="flex flex-col leading-tight min-w-0 flex-1">
+
+            <span className="text-[14px] font-extrabold text-slate-800 truncate">
+              {school.name}
+            </span>
+
+            <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-black mt-1">
+              School Campus Branch
+            </span>
+
+          </div>
+
+          {/* Arrow */}
+          <div className="opacity-0 group-focus:opacity-100 transition-opacity duration-200">
+            <ArrowRight className="w-4 h-4 text-blue-600" />
+          </div>
+
+        </div>
+      </SelectItem>
+    ))}
+
+  </SelectContent>
+</Select>
+                        {formErrors.schoolId && <p className="text-[11px] font-bold text-red-500 ml-1 tracking-wide">{formErrors.schoolId}</p>}
+                      </div>
                     </section>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                      <section>
-                        <div className="flex items-center gap-4 mb-6 pb-2 border-b border-slate-50">
-                          <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
-                          <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Connectability</h3>
-                        </div>
-                        <div className="space-y-5">
-                          <div className="space-y-2">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.email ? "text-red-500" : "text-slate-400")}>Email Protocol {formErrors.email && "*"}</Label>
-                            <Input 
-                              ref={el => { inputRefs.current["email"] = el; }}
-                              type="email" 
-                              value={formData.email} 
-                              onChange={e => {
-                                setFormData({...formData, email: e.target.value});
-                                if (formErrors.email) setFormErrors(prev => ({ ...prev, email: false }));
-                              }} 
-                              placeholder="faculty@college.edu" 
-                              className={cn(
-                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all",
-                                formErrors.email && "border-red-500 ring-2 ring-red-500/10"
-                              )}
-                            />
+                    {/* FACULTY IDENTITY SECTION */}
+                    <section className="space-y-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-6 bg-indigo-600 rounded-full"></div>
+                        <UserCircle className="size-5 text-indigo-600" />
+                        <h3 className="text-base font-black text-slate-900 tracking-tight uppercase tracking-[0.05em]">Faculty Identity Photo</h3>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                        {/* Photo Upload Area */}
+                        <div className="lg:col-span-4">
+                          <div 
+                            onClick={() => triggerPhotoUpload("new")}
+                            className={cn(
+                              "relative aspect-square rounded-[2.5rem] border-4 border-dashed transition-all duration-500 cursor-pointer group overflow-hidden flex flex-col items-center justify-center gap-4 bg-slate-50/50",
+                              localPhotoPreview ? "border-indigo-500 bg-white" : "border-slate-200 hover:border-indigo-400 hover:bg-slate-50"
+                            )}
+                          >
+                            {localPhotoPreview ? (
+                              <>
+                                <img src={localPhotoPreview} alt="Preview" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Camera className="text-white w-10 h-10" />
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="w-20 h-20 rounded-full bg-white shadow-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 border border-slate-100 relative">
+                                  <Camera className="text-slate-400 group-hover:text-indigo-600 transition-colors" size={32} />
+                                  <div className="absolute bottom-0 right-0 w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+                                    <Plus size={16} className="text-white" />
+                                  </div>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-sm font-black text-slate-900 uppercase tracking-tight">Upload Photo</p>
+                                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">JPG, PNG (Max. 2MB)</p>
+                                </div>
+                              </>
+                            )}
                           </div>
-                          <div className="space-y-2">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.phone ? "text-red-500" : "text-slate-400")}>Direct Line {formErrors.phone && "*"}</Label>
-                            <Input 
-                              ref={el => { inputRefs.current["phone"] = el; }}
-                              value={formData.phone} 
-                              maxLength={10}
-                              onChange={e => {
-                                const val = e.target.value.replace(/\D/g, "").slice(0, 10);
-                                setFormData({...formData, phone: val});
-                                if (formErrors.phone) setFormErrors(prev => ({ ...prev, phone: false }));
-                              }} 
-                              placeholder="10-digit mobile" 
-                              className={cn(
-                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all",
-                                formErrors.phone && "border-red-500 ring-2 ring-red-500/10"
-                              )}
-                            />
+                        </div>
+
+                        {/* Name Fields */}
+                        <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-3">
+                            <Label className="text-slate-900 text-xs font-bold pl-0.5 uppercase tracking-wide">First Name</Label>
+                            <div className="relative group">
+                              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                <User className="w-5 h-5 stroke-[2.5]" />
+                              </div>
+                              <Input
+                                ref={el => { inputRefs.current["firstName"] = el; }}
+                                value={formData.firstName}
+                                onChange={e => {
+                                  setFormData({...formData, firstName: e.target.value});
+                                  if (formErrors.firstName) setFormErrors(prev => ({ ...prev, firstName: "" }));
+                                }}
+                                placeholder="Robert"
+                                className={cn(
+                                  "h-14 pl-12 border-2 bg-white font-bold rounded-2xl text-[15px] transition-all",
+                                  formErrors.firstName ? "border-red-500 ring-4 ring-red-500/5" : "border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                                )}
+                              />
+                            </div>
+                            {formErrors.firstName && <p className="text-[11px] font-bold text-red-500 ml-1 tracking-wide">{formErrors.firstName}</p>}
+                          </div>
+
+                          <div className="space-y-3">
+                            <Label className="text-slate-900 text-xs font-bold pl-0.5 uppercase tracking-wide">Middle Name</Label>
+                            <div className="relative group">
+                              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                <User className="w-5 h-5 stroke-[2.5]" />
+                              </div>
+                              <Input
+                                value={formData.middleName}
+                                onChange={e => setFormData({...formData, middleName: e.target.value})}
+                                placeholder="Optional"
+                                className="h-14 pl-12 border-2 bg-white font-bold rounded-2xl text-[15px] border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-3 md:col-span-2">
+                            <Label className="text-slate-900 text-xs font-bold pl-0.5 uppercase tracking-wide">Last Name</Label>
+                            <div className="relative group">
+                              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                <User className="w-5 h-5 stroke-[2.5]" />
+                              </div>
+                              <Input
+                                ref={el => { inputRefs.current["lastName"] = el; }}
+                                value={formData.lastName}
+                                onChange={e => {
+                                  setFormData({...formData, lastName: e.target.value});
+                                  if (formErrors.lastName) setFormErrors(prev => ({ ...prev, lastName: "" }));
+                                }}
+                                placeholder="gfnh"
+                                className={cn(
+                                  "h-14 pl-12 border-2 bg-white font-bold rounded-2xl text-[15px] transition-all",
+                                  formErrors.lastName ? "border-red-500 ring-4 ring-red-500/5" : "border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                                )}
+                              />
+                            </div>
+                            {formErrors.lastName && <p className="text-[11px] font-bold text-red-500 ml-1 tracking-wide">{formErrors.lastName}</p>}
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <div className="space-y-10">
+                      {/* CONNECTABILITY SECTION */}
+                      <section className="relative overflow-hidden rounded-[2.8rem] border border-slate-200 bg-white p-6 sm:p-8 md:p-10 shadow-[0_25px_80px_rgba(15,23,42,0.08)]">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/50 blur-3xl rounded-full"></div>
+                        <div className="relative flex items-center gap-5 mb-10">
+                          <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-100 shadow-sm">
+                            <Mail size={24} className="text-blue-700 stroke-[2.5]" />
+                          </div>
+                          <div>
+                            <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Connectability</Label>
+                            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-700 mt-1">Electronic protocol & Direct Line bindings</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="space-y-4">
+                            <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Email Protocol</Label>
+                            <div className="relative group">
+                              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                                <Mail size={19} className="stroke-[2.5]" />
+                              </div>
+                              <Input
+                                ref={el => { inputRefs.current["email"] = el; }}
+                                type="email"
+                                value={formData.email}
+                                onChange={e => {
+                                  setFormData({...formData, email: e.target.value});
+                                  if (formErrors.email) setFormErrors(prev => ({ ...prev, email: "" }));
+                                }}
+                                placeholder="faculty@college.edu"
+                                className={cn(
+                                  "h-16 pl-14 border-2 bg-slate-50/30 font-bold rounded-2xl text-[15px] transition-all placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-offset-0",
+                                  formErrors.email ? "border-red-500 ring-4 ring-red-500/5 bg-red-50/20" : "border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                                )}
+                              />
+                            </div>
+                            {formErrors.email && <p className="text-[11px] font-bold text-red-500 ml-1 tracking-wide">{formErrors.email}</p>}
+                          </div>
+
+                          <div className="space-y-4">
+                            <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Direct Line</Label>
+                            <div className="relative group">
+                              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                                <Phone size={19} className="stroke-[2.5]" />
+                              </div>
+                              <Input
+                                ref={el => { inputRefs.current["phone"] = el; }}
+                                value={formData.phone}
+                                maxLength={10}
+                                onChange={e => {
+                                  const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                                  setFormData({...formData, phone: val});
+                                  if (formErrors.phone) setFormErrors(prev => ({ ...prev, phone: "" }));
+                                }}
+                                placeholder="10-digit mobile"
+                                className={cn(
+                                  "h-16 pl-14 border-2 bg-slate-50/30 font-bold rounded-2xl text-[15px] transition-all placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-offset-0",
+                                  formErrors.phone ? "border-red-500 ring-4 ring-red-500/5 bg-red-50/20" : "border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                                )}
+                              />
+                            </div>
+                            {formErrors.phone && <p className="text-[11px] font-bold text-red-500 ml-1 tracking-wide">{formErrors.phone}</p>}
                           </div>
                         </div>
                       </section>
 
-                      <section>
-                        <div className="flex items-center gap-4 mb-6 pb-2 border-b border-slate-50">
-                          <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
-                          <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Professional Rank</h3>
-                        </div>
-                        <div className="space-y-5">
-                          <div className="space-y-2">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.qualification ? "text-red-500" : "text-slate-400")}>Education Deck {formErrors.qualification && "*"}</Label>
-                            <Input 
-                              ref={el => { inputRefs.current["qualification"] = el; }}
-                              value={formData.qualification} 
-                              onChange={e => {
-                                setFormData({...formData, qualification: e.target.value});
-                                if (formErrors.qualification) setFormErrors(prev => ({ ...prev, qualification: false }));
-                              }} 
-                              placeholder="M.Ed, PhD" 
-                              className={cn(
-                                "h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all",
-                                formErrors.qualification && "border-red-500 ring-2 ring-red-500/10"
-                              )}
-                            />
+                      {/* DEPARTMENT SECTION */}
+                      <section className="relative overflow-hidden rounded-[2.8rem] border border-slate-200 bg-white p-6 sm:p-8 md:p-10 shadow-[0_25px_80px_rgba(15,23,42,0.08)]">
+                        <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-100/40 blur-3xl rounded-full"></div>
+                        <div className="relative flex items-center gap-5 mb-10">
+                          <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-100 shadow-sm">
+                            <GraduationCap size={24} className="text-indigo-700 stroke-[2.5]" />
                           </div>
-                          <div className="space-y-2">
-                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Tenure (Years)</Label>
-                            <Input value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} placeholder="5 Years" className="h-12 border-slate-100 bg-slate-50/50 font-black rounded-2xl px-5 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all" />
+                          <div>
+                            <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Departmental Payload</Label>
+                            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-700 mt-1">Academic & operational configuration</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="space-y-4">
+                            <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Primary Domain</Label>
+                            <div className="relative group">
+                              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                                <BookOpen size={20} className="stroke-[2.5]" />
+                              </div>
+                              <Input
+                                ref={el => { inputRefs.current["subject"] = el; }}
+                                value={formData.subject}
+                                onChange={e => {
+                                  setFormData({...formData, subject: e.target.value});
+                                  if (formErrors.subject) setFormErrors(prev => ({ ...prev, subject: "" }));
+                                }}
+                                placeholder="Mathematics"
+                                className={cn(
+                                  "h-16 pl-14 border-2 bg-slate-50/30 font-bold rounded-2xl text-[15px] transition-all placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-offset-0",
+                                  formErrors.subject ? "border-red-500 ring-4 ring-red-500/5 bg-red-50/20" : "border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                                )}
+                              />
+                            </div>
+                            {formErrors.subject && <p className="text-[11px] font-bold text-red-500 ml-1 tracking-wide">{formErrors.subject}</p>}
+                          </div>
+
+                          <div className="space-y-4">
+                            <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Assigned Grade</Label>
+                            <div className="relative group">
+                              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                                <GraduationCap size={20} className="stroke-[2.5]" />
+                              </div>
+                              <Input
+                                ref={el => { inputRefs.current["standard"] = el; }}
+                                value={formData.standard}
+                                onChange={e => {
+                                  setFormData({...formData, standard: e.target.value});
+                                  if (formErrors.standard) setFormErrors(prev => ({ ...prev, standard: "" }));
+                                }}
+                                placeholder="10th Standard"
+                                className={cn(
+                                  "h-16 pl-14 border-2 bg-slate-50/30 font-bold rounded-2xl text-[15px] transition-all placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-offset-0",
+                                  formErrors.standard ? "border-red-500 ring-4 ring-red-500/5 bg-red-50/20" : "border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                                )}
+                              />
+                            </div>
+                            {formErrors.standard && <p className="text-[11px] font-bold text-red-500 ml-1 tracking-wide">{formErrors.standard}</p>}
+                          </div>
+
+                          <div className="space-y-4 md:col-span-2">
+                            <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Access Status</Label>
+                         <Select 
+  value={formData.status} 
+  onValueChange={v => {
+    setFormData({...formData, status: v});
+    if (formErrors.status) {
+      setFormErrors(prev => ({ ...prev, status: "" }));
+    }
+  }}
+>
+  <SelectTrigger
+    className={cn(
+      "relative h-[72px] min-h-[72px] border-2",
+      "bg-gradient-to-b from-white to-slate-50/90",
+      "rounded-[1.6rem] pl-17 pr-10",
+      "shadow-[0_6px_24px_rgba(15,23,42,0.06)]",
+      "hover:shadow-[0_14px_40px_rgba(99,102,241,0.12)]",
+      "transition-all duration-300",
+      "data-[state=open]:shadow-[0_18px_45px_rgba(99,102,241,0.16)]",
+      "focus:ring-4 focus:ring-indigo-500/10",
+      formErrors.status
+        ? "border-red-500 focus:border-red-500 data-[state=open]:border-red-500"
+        : "border-slate-200 focus:border-indigo-400 data-[state=open]:border-indigo-400"
+    )}
+  >
+
+    {/* Left Icon */}
+    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 border border-indigo-200/40 shadow-sm">
+      {formData.status === "Active" ? (
+        <BadgeCheck className="w-5 h-5 text-indigo-700" />
+      ) : formData.status === "On Leave" ? (
+        <Clock3 className="w-5 h-5 text-amber-600" />
+      ) : formData.status === "Resigned" ? (
+        <UserMinus className="w-5 h-5 text-rose-600" />
+      ) : (
+        <ShieldCheck className="w-5 h-5 text-indigo-700" />
+      )}
+    </div>
+
+    {/* Value */}
+    <div className="flex flex-col items-start justify-center leading-tight w-full truncate">
+
+
+      <div className="truncate text-[14px] font-extrabold text-slate-800">
+        <SelectValue placeholder="Select Access Status">
+          {formData.status || "Select Access Status"}
+        </SelectValue>
+      </div>
+    </div>
+
+ 
+
+  </SelectTrigger>
+
+ <SelectContent className="min-w-[320px] rounded-[1.8rem] border border-slate-200 bg-white p-2.5 shadow-[0_20px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl">
+
+  {/* Default Option */}
+  <SelectItem
+    value=""
+    className="group rounded-2xl py-3.5 px-3 cursor-pointer transition-all duration-200 focus:bg-slate-50"
+  >
+    <div className="flex items-center gap-3">
+
+      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shadow-sm border border-slate-200/40">
+        <ShieldCheck className="w-5 h-5 text-slate-600" />
+      </div>
+
+      <div className="flex flex-col leading-tight">
+        <span className="text-[13px] font-extrabold text-slate-700">
+          Select Access Status
+        </span>
+
+        <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+          Choose Employee Status
+        </span>
+      </div>
+
+    </div>
+  </SelectItem>
+
+  {/* Active */}
+  <SelectItem
+    value="Active"
+    className="group rounded-2xl py-3.5 px-3 cursor-pointer transition-all duration-200 focus:bg-indigo-50"
+  >
+    <div className="flex items-center gap-3">
+
+      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center shadow-sm border border-indigo-200/40">
+        <BadgeCheck className="w-5 h-5 text-indigo-700" />
+      </div>
+
+      <div className="flex flex-col leading-tight">
+        <span className="text-[13px] font-extrabold text-slate-800">
+          Active
+        </span>
+
+        <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+          Currently Working
+        </span>
+      </div>
+
+    </div>
+  </SelectItem>
+
+  {/* On Leave */}
+  <SelectItem
+    value="On Leave"
+    className="group rounded-2xl py-3.5 px-3 cursor-pointer transition-all duration-200 focus:bg-amber-50"
+  >
+    <div className="flex items-center gap-3">
+
+      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-100 to-yellow-100 flex items-center justify-center shadow-sm border border-amber-200/40">
+        <Clock3 className="w-5 h-5 text-amber-700" />
+      </div>
+
+      <div className="flex flex-col leading-tight">
+        <span className="text-[13px] font-extrabold text-slate-800">
+          On Leave
+        </span>
+
+        <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+          Temporary Break
+        </span>
+      </div>
+
+    </div>
+  </SelectItem>
+
+  {/* Resigned */}
+  <SelectItem
+    value="Resigned"
+    className="group rounded-2xl py-3.5 px-3 cursor-pointer transition-all duration-200 focus:bg-rose-50"
+  >
+    <div className="flex items-center gap-3">
+
+      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center shadow-sm border border-rose-200/40">
+        <UserMinus className="w-5 h-5 text-rose-700" />
+      </div>
+
+      <div className="flex flex-col leading-tight">
+        <span className="text-[13px] font-extrabold text-slate-800">
+          Resigned
+        </span>
+
+        <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+          No Longer Active
+        </span>
+      </div>
+
+    </div>
+  </SelectItem>
+
+</SelectContent>
+</Select>
+                            {formErrors.status && <p className="text-[11px] font-bold text-red-500 ml-1 mt-1">{formErrors.status}</p>}
+                          </div>
+                        </div>
+                      </section>
+
+                      {/* PROFESSIONAL RANK SECTION */}
+                      <section className="relative overflow-hidden rounded-[2.8rem] border border-slate-200 bg-white p-6 sm:p-8 md:p-10 shadow-[0_25px_80px_rgba(15,23,42,0.08)]">
+                        <div className="relative flex items-center gap-5 mb-10">
+                          <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-50 shadow-sm">
+                            <ShieldCheck size={24} className="text-indigo-700 stroke-[2.5]" />
+                          </div>
+                          <div>
+                            <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Professional Rank</Label>
+                            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-700 mt-1">Official credentials & biometric bindings</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="space-y-4">
+                            <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Education Deck</Label>
+                            <Input
+                              ref={el => { inputRefs.current["qualification"] = el; }}
+                              value={formData.qualification}
+                              onChange={e => setFormData({...formData, qualification: e.target.value})}
+                              placeholder="M.Sc, B.Ed"
+                              className={cn("h-16 border-2 font-bold rounded-2xl text-[15px]", formErrors.qualification ? "border-red-500 bg-red-50/10" : "border-slate-200")}
+                            />
+                            {formErrors.qualification && <p className="text-[11px] font-bold text-red-500 ml-1">{formErrors.qualification}</p>}
+                          </div>
+
+                          <div className="space-y-4">
+                            <Label className="text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Tenure (Years)</Label>
+                            <Input
+                              ref={el => { inputRefs.current["experience"] = el; }}
+                              value={formData.experience}
+                              onChange={e => setFormData({...formData, experience: e.target.value})}
+                              placeholder="5 Years"
+                              className="h-16 border-2 border-slate-200 font-bold rounded-2xl text-[15px]"
+                            />
                           </div>
                         </div>
                       </section>
                     </div>
-
-                    <section className="bg-slate-50/80 p-8 rounded-[2rem] border border-slate-100 shadow-sm transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-100/50">
-                      <div className="flex items-center gap-4 mb-6 pt-1">
-                        <div className="w-1.5 h-6 bg-red-600 rounded-full"></div>
-                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Departmental Payload</h3>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="space-y-2">
-                          <Label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1", formErrors.subject ? "text-red-500" : "text-slate-400")}>Primary Domain {formErrors.subject && "*"}</Label>
-                          <Input 
-                            ref={el => { inputRefs.current["subject"] = el; }}
-                            value={formData.subject} 
-                            onChange={e => {
-                              setFormData({...formData, subject: e.target.value});
-                              if (formErrors.subject) setFormErrors(prev => ({ ...prev, subject: false }));
-                            }} 
-                            placeholder="Mathematics" 
-                            className={cn(
-                              "h-12 border-slate-100 bg-white font-black rounded-[1.25rem] px-5 text-sm focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:italic",
-                              formErrors.subject && "border-red-500 ring-2 ring-red-500/10"
-                            )}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Assigned Grade</Label>
-                          <Input value={formData.standard} onChange={e => setFormData({...formData, standard: e.target.value})} placeholder="10th" className="h-12 border-slate-100 bg-white font-black rounded-[1.25rem] px-5 text-sm focus:ring-4 focus:ring-blue-500/5 transition-all" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Access Status</Label>
-                          <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
-                            <SelectTrigger className="h-12 border-slate-100 bg-white font-black rounded-[1.25rem] px-5 text-sm focus:ring-4 focus:ring-blue-500/5 transition-all">
-                              <SelectValue placeholder="Access Status">
-                              {formData.status || undefined}
-                            </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
-                              <SelectItem value="Active" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-blue-50 focus:text-blue-700">Active</SelectItem>
-                              <SelectItem value="On Leave" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-blue-50 focus:text-blue-700">On Leave</SelectItem>
-                              <SelectItem value="Resigned" className="font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest focus:bg-blue-50 focus:text-blue-700">Resigned</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </section>
                   </div>
                 </div>
 
-                <DialogFooter className="bg-slate-50 px-10 py-6 shrink-0 border-t border-slate-100 flex flex-row items-center justify-end gap-4">
-                  <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="h-11 px-8 font-black text-slate-400 hover:text-slate-900 rounded-2xl text-[10px] uppercase tracking-[0.2em] transition-all">
+                <DialogFooter className="bg-white p-6 sm:px-10 sm:py-8 shrink-0 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-center justify-end gap-3 sm:gap-6 mt-6 sm:mt-0">
+                  <button onClick={() => setIsAddDialogOpen(false)} className="w-full sm:w-auto h-12 sm:h-14 px-8 text-slate-500 font-bold hover:text-slate-900 border border-transparent hover:border-slate-200 hover:bg-slate-50 rounded-xl sm:rounded-[1.25rem] transition-all uppercase tracking-widest text-[11px] sm:text-xs flex justify-center items-center gap-2">
+                    <X size={16} className="stroke-[2.5]" />
                     Dismiss
-                  </Button>
-                  <Button 
-                    onClick={handleCreateOrUpdate} 
-                    className="h-12 px-10 bg-slate-900 hover:bg-blue-600 text-white font-black shadow-2xl shadow-slate-200/50 rounded-2xl transition-all active:scale-[0.98] text-[10px] uppercase tracking-[0.2em] border-none"
-                  >
+                  </button>
+                  <Button onClick={handleCreateOrUpdate} className="w-full sm:w-auto h-12 sm:h-14 px-10 bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-xl sm:shadow-2xl sm:shadow-indigo-200 rounded-xl sm:rounded-[1.25rem] transition-all active:scale-[0.98] text-[11px] sm:text-[12px] uppercase tracking-[0.15em] sm:tracking-[0.2em] border-none flex items-center justify-center gap-3">
+                    {isEditing ? <Check size={18} className="stroke-[3]" /> : <Plus size={18} className="stroke-[3]" />}
                     {isEditing ? "Apply Updates" : "Commit Record"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
-          </Dialog>
-        )}
+            </Dialog>
+          )}
       </div>
 
       <Card className="dashboard-card border-none overflow-hidden">
         <CardHeader className="p-8 border-b border-slate-50 bg-white/50 backdrop-blur-sm">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="relative group flex-1 max-w-sm">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
-              <Input 
-                placeholder="Query faculty index..." 
-                className="pl-12 h-12 bg-slate-50/50 border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-sm font-bold rounded-2xl"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
-            </div>
+          <div className="relative group flex-1 max-w-sm">
+
+  {/* Left Icon */}
+  <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 border border-indigo-200/50 shadow-sm z-10 transition-all duration-300 group-focus-within:scale-105">
+    <Search 
+      className="text-indigo-600 group-focus-within:text-indigo-700 transition-colors stroke-[2.6]" 
+      size={17} 
+    />
+  </div>
+
+  <Input 
+    placeholder="Query faculty index..."
+    className={cn(
+      "h-[62px] w-full",
+      "pl-14 pr-5",
+      "bg-gradient-to-b from-white to-slate-50/90",
+      "border-2 border-slate-200",
+      "rounded-2xl",
+      "text-[14px] font-extrabold text-slate-800",
+      "placeholder:text-slate-400 placeholder:font-bold",
+      "shadow-[0_4px_20px_rgba(15,23,42,0.05)]",
+      "hover:shadow-[0_10px_30px_rgba(99,102,241,0.10)]",
+      "focus:bg-white",
+      "focus:border-indigo-400",
+      "focus:ring-4 focus:ring-indigo-500/10",
+      "transition-all duration-300"
+    )}
+    value={searchQuery}
+    onChange={e => setSearchQuery(e.target.value)}
+  />
+
+
+
+</div>
             <div className="flex items-center gap-2">
-                <Button onClick={handleExport} variant="outline" size="sm" className="h-10 px-4 rounded-xl border-slate-100 text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest">
-                  <Download size={16} className="mr-2" /> Export
-                </Button>
+             <Button
+  variant="outline"
+  size="sm"
+  className={cn(
+    "relative h-[58px] px-5",
+    "rounded-2xl border-2 border-slate-200",
+    "bg-gradient-to-b from-white to-slate-50/90",
+    "text-slate-700",
+    "font-black text-[11px] uppercase tracking-[0.16em]",
+    "shadow-[0_4px_20px_rgba(15,23,42,0.05)]",
+    "hover:shadow-[0_12px_35px_rgba(99,102,241,0.10)]",
+    "hover:border-indigo-300 hover:text-indigo-700",
+    "transition-all duration-300",
+    "group overflow-hidden"
+  )}
+>
+
+  {/* Left Icon */}
+  <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 border border-indigo-200/50 shadow-sm mr-3 group-hover:scale-105 transition-transform duration-300">
+    <Download 
+      size={16} 
+      className="text-indigo-600 stroke-[2.5]" 
+    />
+  </div>
+
+  {/* Text */}
+  <span className="relative z-10 text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">
+    Export
+  </span>
+
+ 
+
+  {/* Hover Glow */}
+  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-indigo-50/40 via-transparent to-violet-50/40 pointer-events-none" />
+
+</Button>
                 <div className="h-6 w-px bg-slate-100 mx-2" />
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Total Records: {Array.isArray(filteredTeachers) ? filteredTeachers.length : 0}</p>
+                <p className="text-[10px] font-blacktext-slate-600 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Total Records: {Array.isArray(filteredTeachers) ? filteredTeachers.length : 0}</p>
             </div>
           </div>
         </CardHeader>
@@ -874,31 +1274,31 @@ export default function Teachers({ user }: { user: any }) {
               <TableHeader className="bg-slate-50/30">
                 <TableRow className="h-16 border-slate-50">
                   <TableHead className="w-[140px] pl-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('employeeId')}>
-                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
+                    <div className="flex text-slate-600 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide items-center gap-2 group-hover:text-blue-600 transition-colors">
                       Index ID 
                       {sortBy === 'employeeId' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('name')}>
-                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
+                    <div className="flex items-center text-slate-600 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide gap-2 group-hover:text-blue-600 transition-colors">
                       Faculty Entity 
                       {sortBy === 'name' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('subject')}>
-                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
+                    <div className="flex items-center text-slate-600 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide gap-2 group-hover:text-blue-600 transition-colors">
                       Core Expertise 
                       {sortBy === 'subject' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
                   <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group" onClick={() => handleSort('qualification')}>
-                    <div className="flex items-center gap-2 group-hover:text-blue-600 transition-colors">
+                    <div className="flex items-center text-slate-600 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide gap-2 group-hover:text-blue-600 transition-colors">
                       Credentials 
                       {sortBy === 'qualification' ? (sortOrder === "asc" ? <ChevronUp size={14} className="opacity-100 text-blue-600" /> : <ChevronDown size={14} className="opacity-100 text-blue-600" />) : <ChevronDown size={14} className="transition-all opacity-0 group-hover:opacity-100" />}
                     </div>
                   </TableHead>
-                  <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Operational Status</TableHead>
-                  <TableHead className="text-right pr-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Manage</TableHead>
+                  <TableHead className="text-[10px] font-black text-slate-600 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Operational Status</TableHead>
+                  <TableHead className="text-right pr-8 text-[10px] font-black text-slate-600 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide">Manage</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -909,7 +1309,7 @@ export default function Teachers({ user }: { user: any }) {
                            <div className="p-6 bg-slate-50 rounded-full text-slate-200">
                              <Users size={48} />
                            </div>
-                           <p className="text-lg font-black text-slate-300 italic tracking-tight uppercase">No Faculty Matches Found</p>
+                           <p className="text-lg font-black text-slate-300  tracking-tight uppercase">No Faculty Matches Found</p>
                         </div>
                      </TableCell>
                   </TableRow>
@@ -925,12 +1325,7 @@ export default function Teachers({ user }: { user: any }) {
                       <div className="flex items-center gap-4">
                         <div className="relative shrink-0">
                           <Avatar className="h-11 w-11 ring-4 ring-white shadow-lg shadow-slate-200 transition-transform group-hover:scale-105">
-                            <AvatarImage 
-                              src={resolvePhotoUrl(teacher.photo || (teacher as any).ProfilePhotoPath || (teacher as any).profilePhotoPath)} 
-                              onError={(e) => {
-                                console.warn(`[IMAGE_LOAD_WARNING] List avatar image failed to load for teacher "${teacher.name}" (ID: ${teacher.id}) from URL: "${e.currentTarget.src}". Fallback to initials will trigger.`);
-                              }}
-                            />
+                            <AvatarImage src={resolvePhotoUrl(teacher.photo)} />
                             <AvatarFallback className="bg-indigo-600 text-white font-black uppercase text-sm">
                               {(teacher.name || "U")[0]}
                             </AvatarFallback>
@@ -998,6 +1393,15 @@ export default function Teachers({ user }: { user: any }) {
                                 section: teacher.section,
                                 status: teacher.status,
                                 schoolId: teacher.schoolId || user.schoolId || "",
+                                employeeId: teacher.employeeId || "",
+                                employeeType: (teacher as any).employeeType || "Full Time",
+                                gender: (teacher as any).gender || "Male",
+                                dob: (teacher as any).dob || "",
+                                joiningDate: (teacher as any).joiningDate || new Date().toISOString().split('T')[0],
+                                address: (teacher as any).address || "",
+                                RFID: (teacher as any).RFID || "",
+                                RFID2: (teacher as any).RFID2 || "",
+                                bloodGroup: (teacher as any).bloodGroup || "O+",
                                 photo: teacher.photo || ""
                               });
                               setIsAddDialogOpen(true);

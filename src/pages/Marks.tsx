@@ -2,20 +2,29 @@ import { useState, useEffect } from "react";
 import { apiService } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
-import { Printer, Download, Eye, FileText, ChevronRight, BarChart3, Settings2, Edit3, Loader2, Search, ArrowUpDown } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Printer, Download, Eye, FileText, ChevronRight, BarChart3,
+  Settings2, Edit3, Loader2, Search, Filter, MoreVertical,
+  CalendarDays, CloudDownload, X,
+  Building2,
+  Globe2,
+  ChevronDown,
+  Users,
+  ChartColumn
+} from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
   DialogClose
 } from "@/components/ui/dialog";
@@ -32,7 +41,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import ReportBuilder from "@/components/reports/ReportBuilder";
 import MarksEntry from "@/components/reports/MarksEntry";
-
 import { User as UserType } from "@/types";
 
 export default function Marks({ user }: { user: UserType }) {
@@ -43,6 +51,12 @@ export default function Marks({ user }: { user: UserType }) {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
   const [schools, setSchools] = useState<any[]>([]);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>(user.schoolId?.toString() || "");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  // Today's date display
+  const today = new Date();
+  const dateDisplay = today.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
   useEffect(() => {
     const fetchSchools = async () => {
@@ -87,25 +101,26 @@ export default function Marks({ user }: { user: UserType }) {
 
   const filteredMarks = marks.filter(m => {
     const s = m.student || {};
-    const studentName = s.name || s.fullName || s.FullName || (s.firstName ? `${s.firstName || ''} ${s.lastName || ''}`.trim() : "") || `${s.FNAME || ''} ${s.LNAME || ''}`.trim() || "";
+    const studentName = s.name || s.fullName || s.FullName ||
+      (s.firstName ? `${s.firstName || ''} ${s.lastName || ''}`.trim() : "") ||
+      `${s.FNAME || ''} ${s.LNAME || ''}`.trim() || "";
     const regNo = s.registrationNumber || s.RegistrationNumber || s.GRNO || "";
     const rollNo = s.rollNumber?.toString() || s.RollNumber?.toString() || s.ROLLNO?.toString() || "";
-    
+
     return studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           regNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           rollNo.includes(searchQuery) ||
-           m.examName?.toLowerCase().includes(searchQuery.toLowerCase());
+      regNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rollNo.includes(searchQuery) ||
+      m.examName?.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   const sortedMarks = [...filteredMarks].sort((a, b) => {
     if (!sortConfig) return 0;
     const { key, direction } = sortConfig;
-    
     let aValue, bValue;
-    
+
     if (key === 'studentName') {
-      aValue = a.student?.name || a.student?.fullName || a.student?.FullName || (a.student?.firstName ? `${a.student?.firstName || ''} ${a.student?.lastName || ''}`.trim() : "") || `${a.student?.FNAME || ''} ${a.student?.LNAME || ''}`.trim() || "";
-      bValue = b.student?.name || b.student?.fullName || b.student?.FullName || (b.student?.firstName ? `${b.student?.firstName || ''} ${b.student?.lastName || ''}`.trim() : "") || `${b.student?.FNAME || ''} ${b.student?.LNAME || ''}`.trim() || "";
+      aValue = a.student?.name || `${a.student?.FNAME || ''} ${a.student?.LNAME || ''}`.trim() || "";
+      bValue = b.student?.name || `${b.student?.FNAME || ''} ${b.student?.LNAME || ''}`.trim() || "";
     } else if (key === 'performance') {
       aValue = a.obtMarks / a.totalMarks;
       bValue = b.obtMarks / b.totalMarks;
@@ -119,302 +134,529 @@ export default function Marks({ user }: { user: UserType }) {
     return 0;
   });
 
+  const totalPages = Math.max(1, Math.ceil(sortedMarks.length / pageSize));
+  const pagedMarks = sortedMarks.slice((page - 1) * pageSize, page * pageSize);
+
+  // Helper: student display name
+  const getStudentName = (result: any) => {
+    const s = result.student || {};
+    return s.name || s.fullName || s.FullName ||
+      (s.firstName ? `${s.firstName} ${s.lastName || ''}`.trim() : "") ||
+      (s.FNAME ? `${s.FNAME} ${s.LNAME || ''}`.trim() : "Student");
+  };
+
+  // Helper: student initials
+  const getInitials = (name: string) =>
+    name.split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase();
+
+  // Helper: avatar color
+  const avatarColors = [
+    "from-indigo-500 to-violet-600",
+    "from-sky-500 to-blue-600",
+    "from-emerald-500 to-teal-600",
+    "from-rose-500 to-pink-600",
+    "from-amber-500 to-orange-500",
+    "from-purple-500 to-fuchsia-600",
+  ];
+  const getAvatarColor = (idx: number) => avatarColors[idx % avatarColors.length];
+
+  // Helper: pass/fail badge
+  const getPerfBadge = (obtMarks: number, totalMarks: number) => {
+    const pct = totalMarks > 0 ? obtMarks / totalMarks : 0;
+    if (pct >= 0.4) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[11px] font-black uppercase tracking-widest">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+          Passed
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-100 text-[11px] font-black uppercase tracking-widest">
+        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block" />
+        Failed
+      </span>
+    );
+  };
+
   return (
-    <div className="animate-in slide-in-from-bottom-2 duration-700 min-w-0 space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-5">
-          <div className="bg-indigo-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-indigo-200 transition-transform hover:rotate-3">
-            <BarChart3 size={28} />
+    <div className="animate-in slide-in-from-bottom-2 duration-500 space-y-0 min-w-0">
+      <Tabs defaultValue="recent" className="w-full flex flex-col">
+
+         <div className="flex items-center gap-5">
+           <div className="bg-[#5a67f2] p-4 rounded-[1.25rem] text-white shadow-2xl shadow-[#5a67f2]/20 transition-transform hover:-rotate-3">
+            <ChartColumn size={28} />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">Academic Analytics</h1>
-            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Global performance indexing & examination registry</p>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight truncate">Academic Analytics</h1>
+            <p className="text-slate-600 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Global performance indexing & examination registry
+</p>
           </div>
         </div>
-      </div>
 
-      <Tabs defaultValue="recent" className="w-full flex flex-col space-y-8">
-        <div className="shrink-0 overflow-x-auto scrollbar-hide border-b border-slate-100 px-1">
-          <TabsList className="bg-transparent w-full justify-start rounded-none h-14 p-0 gap-10 min-w-max" variant="line">
-            <TabsTrigger 
-              value="recent" 
-              className="px-0 h-14 rounded-none border-b-[3px] border-transparent data-[active]:border-indigo-600 data-[active]:bg-transparent data-[active]:text-indigo-600 gap-3 font-black text-[11px] uppercase tracking-[0.2em] text-slate-400 hover:text-slate-900 transition-all flex-none focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none border-t-0 border-x-0 outline-none"
+        {/* ─── Tab Navigation ─── */}
+        <div className="shrink-0 overflow-x-auto scrollbar-hide border-b border-slate-100 px-1 mb-0">
+          <TabsList className="bg-transparent w-full justify-start rounded-none h-14 p-0 gap-8 sm:gap-10 min-w-max" variant="line">
+            <TabsTrigger
+              value="recent"
+              className="px-0text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide h-14 rounded-none border-b-[3px] border-transparent data-[active]:border-indigo-600 data-[active]:bg-transparent data-[active]:text-indigo-600 gap-2.5 font-black text-[11px] uppercase hover:text-slate-600 transition-all flex-none shadow-none border-t-0 border-x-0 outline-none focus:outline-none"
             >
-              <BarChart3 size={16} className="stroke-[3]" /> Recent Results
+              <BarChart3 size={15} className="stroke-[3]" /> Recent Results
             </TabsTrigger>
-            <TabsTrigger 
-              value="entry" 
-              className="px-0 h-14 rounded-none border-b-[3px] border-transparent data-[active]:border-indigo-600 data-[active]:bg-transparent data-[active]:text-indigo-600 gap-3 font-black text-[11px] uppercase tracking-[0.2em] text-slate-400 hover:text-slate-900 transition-all flex-none focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none border-t-0 border-x-0 outline-none"
+            <TabsTrigger
+              value="entry"
+              className="px-0 h-14text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide rounded-none border-b-[3px] border-transparent data-[active]:border-indigo-600 data-[active]:bg-transparent data-[active]:text-indigo-600 gap-2.5 font-black text-[11px] uppercase  text-slate-600 hover:text-slate-600 transition-all flex-none shadow-none border-t-0 border-x-0 outline-none focus:outline-none"
             >
-              <Edit3 size={16} className="stroke-[3]" /> Marks Entry
+              <Edit3 size={15} className="stroke-[3]" /> Mark Entry
             </TabsTrigger>
             {(user.role === "superadmin" || user.role === "admin") && (
-              <TabsTrigger 
-                value="builder" 
-                className="px-0 h-14 rounded-none border-b-[3px] border-transparent data-[active]:border-indigo-600 data-[active]:bg-transparent data-[active]:text-indigo-600 gap-3 font-black text-[11px] uppercase tracking-[0.2em] text-slate-400 hover:text-slate-900 transition-all flex-none focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none border-t-0 border-x-0 outline-none"
+              <TabsTrigger
+                value="builder"
+                className="px-0 h-14 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide rounded-none border-b-[3px] border-transparent data-[active]:border-indigo-600 data-[active]:bg-transparent data-[active]:text-indigo-600 gap-2.5 font-black text-[11px] uppercase text-slate-600 hover:text-slate-600 transition-all flex-none shadow-none border-t-0 border-x-0 outline-none focus:outline-none"
               >
-                <Settings2 size={16} className="stroke-[3]" /> Report Builder
+                <Settings2 size={15} className="stroke-[3]" /> Report Builder
               </TabsTrigger>
             )}
           </TabsList>
         </div>
 
-        <TabsContent value="recent" className="space-y-8 focus-visible:outline-none">
-          {user.role === "superadmin" && (
-            <Card className="border-none shadow-3xl shadow-indigo-100/40 bg-white rounded-[2rem] overflow-hidden mb-2 transition-all hover:shadow-indigo-200/50 group">
-              <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="flex items-center gap-5 w-full">
-                  <div className="p-4 bg-indigo-50 text-indigo-600 rounded-2xl group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
-                    <Settings2 size={22} className="stroke-[2.5]" />
-                  </div>
-                  <div className="flex flex-col">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-2">Global Session Control</p>
-                    <h4 className="text-lg font-black text-slate-900 tracking-tight leading-none group-hover:translate-x-1 transition-transform">Campus Branch Intelligence</h4>
-                  </div>
-                </div>
-                <div className="w-full max-w-sm">
-                  <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
-                    <SelectTrigger className="h-12 border-slate-100 bg-slate-50/50 rounded-2xl font-black text-slate-800 focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all text-sm px-5">
-                      {/* Explicitly show school name to avoid layout/ID issues in trigger */}
-                      <SelectValue placeholder="Select Academic Branch">
-                        {selectedSchoolId ? schools.find(s => s.id.toString() === selectedSchoolId)?.name : undefined}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="rounded-[2rem] border-slate-100 shadow-3xl p-3 max-h-80">
-                      <SelectItem value="" className="font-bold py-3 px-4 rounded-xl text-slate-400 italic">Select Academic Branch</SelectItem>
-                      {Array.isArray(schools) && schools.map(s => (
-                        <SelectItem key={s.id} value={s.id.toString()} className="font-black py-4 px-4 rounded-2xl focus:bg-indigo-50 focus:text-indigo-700 cursor-pointer">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-sm uppercase tracking-tight">{s.name}</span>
-                            <span className="text-[10px] text-slate-400 font-bold tracking-[0.1em]">CODE: SCH-{s.id} • {s.address?.split(',')[0]}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+        {/* ─── Recent Results Tab ─── */}
+        <TabsContent value="recent" className="focus-visible:outline-none mt-0">
+          <div className="flex flex-col xl:flex-row gap-0 min-h-0">
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <Card className="lg:col-span-2 dashboard-card border-none overflow-hidden min-w-0">
-              <CardHeader className="p-8 border-b border-slate-50 bg-white/50 backdrop-blur-sm flex flex-col sm:flex-row items-center justify-between gap-6">
+            {/* ════════════════ LEFT MAIN PANEL ════════════════ */}
+            <div className="flex-1 min-w-0 flex flex-col">
+
+              {/* Page Header */}
+              <div className="px-6 sm:px-8 pt-8 pb-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-slate-100">
                 <div>
-                  <CardTitle className="text-2xl font-black text-slate-900 tracking-tight">Academic Ledger</CardTitle>
-                  <CardDescription className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">Registry for current examination terms</CardDescription>
+                  <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight truncate">Recent Results</h1>
+                  <p className="text-slate-600 text-[13px] font-medium mt-1 leading-none">View and manage the latest examination results and registry data.</p>
                 </div>
-                <div className="relative group w-full max-w-xs">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
-                  <Input 
-                    placeholder="Query index or name..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 h-11 border-slate-100 bg-slate-50/50 rounded-2xl text-xs font-bold focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
-                  />
+                <div className="flex items-center gap-2 text-slate-400 text-[13px] font-semibold shrink-0 mt-1">
+                  <CalendarDays size={15} className="shrink-0" />
+                  <span>{dateDisplay}</span>
                 </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                {loading ? (
-                   <div className="p-24 flex flex-col items-center justify-center gap-4 animate-pulse">
-                      <div className="p-4 bg-slate-50 rounded-full">
-                        <Loader2 className="animate-spin text-indigo-600" size={32} />
-                      </div>
-                      <p className="font-black text-slate-300 uppercase tracking-widest text-[10px]">Compiling analytics...</p>
-                   </div>
-                ) : (
-                  <div className="min-w-full overflow-x-auto">
-                    <Table>
-                      <TableHeader className="bg-slate-50/30">
-                        <TableRow className="h-16 border-slate-50">
-                          <TableHead 
-                            className="w-[300px] pl-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group"
-                            onClick={() => requestSort('studentName')}
-                          >
-                            <div className="flex items-center gap-2 group-hover:text-indigo-600 transition-colors">
-                              Entity <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100" />
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group"
-                            onClick={() => requestSort('performance')}
-                          >
-                            <div className="flex items-center gap-2 group-hover:text-indigo-600 transition-colors">
-                              Vector <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100" />
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group"
-                            onClick={() => requestSort('term')}
-                          >
-                            <div className="flex items-center gap-2 group-hover:text-indigo-600 transition-colors">
-                              Session <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100" />
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer group"
-                            onClick={() => requestSort('examName')}
-                          >
-                            <div className="flex items-center gap-2 group-hover:text-indigo-600 transition-colors">
-                              Module <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100" />
-                            </div>
-                          </TableHead>
-                          <TableHead className="text-right pr-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Data</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {Array.isArray(sortedMarks) && sortedMarks.map((result) => (
-                          <TableRow key={result.id} className="group hover:bg-slate-50/50 transition-all border-b border-slate-50/80 h-20">
-                            <TableCell className="pl-8">
-                              <div className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors tracking-tight text-sm mb-1">
-                                {result.student?.name || result.student?.fullName || result.student?.FullName || 
-                                 (result.student?.firstName ? `${result.student.firstName} ${result.student.lastName || ''}`.trim() : "") || 
-                                 (result.student?.FNAME ? `${result.student.FNAME} ${result.student.LNAME || ''}`.trim() : "Student")}
-                              </div>
-                              <div className="font-mono text-[9px] font-black text-slate-400 bg-slate-100/50 px-2 py-0.5 rounded border border-slate-200/50 inline-block italic tracking-tighter uppercase">
-                                ROLL: {result.student?.rollNumber || result.student?.RollNumber || result.student?.ROLLNO || "0"}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <div className={cn(
-                                  "inline-flex items-center justify-center w-10 h-10 rounded-xl text-xs font-black shadow-lg transition-transform group-hover:scale-110 duration-500",
-                                  (result.obtMarks / result.totalMarks) >= 0.8 ? "bg-emerald-500 text-white shadow-emerald-200" :
-                                  (result.obtMarks / result.totalMarks) >= 0.4 ? "bg-indigo-600 text-white shadow-indigo-200" : "bg-rose-500 text-white shadow-rose-200"
-                                )}>
-                                  {Math.round((result.obtMarks / result.totalMarks) * 100)}%
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="font-black text-slate-900 text-xs tracking-tight">{result.obtMarks}</span>
-                                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-none">Limit: {result.totalMarks}</span>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <span className="px-3 py-1 bg-slate-100/80 text-slate-700 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-200 group-hover:bg-slate-900 group-hover:text-white group-hover:border-slate-900 transition-all">
-                                {result.term}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-xs font-black text-slate-400 italic tracking-tight uppercase">{result.examName}</TableCell>
-                            <TableCell className="text-right pr-8">
-                              <Dialog>
-                                <DialogTrigger
-                                  render={
-                                    <Button variant="ghost" size="sm" className="h-9 px-4 rounded-xl gap-2 text-indigo-600 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50 transition-all active:scale-95" onClick={() => setSelectedStudent(result)}>
-                                      <Eye size={14} className="stroke-[3]" /> Certificate
-                                    </Button>
-                                  }
-                                />
-                                <DialogContent className="max-w-4xl w-[95vw] p-0 overflow-hidden border-none shadow-3xl rounded-[2.5rem] bg-white">
-                                  <div className="max-h-[90vh] overflow-y-auto">
-                                    <MarksheetView student={selectedStudent} />
-                                  </div>
-                                </DialogContent>
-                              </Dialog>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              </div>
 
-            <div className="space-y-8 min-w-0">
-              <Card className="dashboard-card border-none pt-2 shadow-indigo-100/50">
-                <CardHeader className="px-8 pt-8 pb-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-1.5 h-6 bg-indigo-600 rounded-full"></div>
-                    <CardTitle className="text-lg font-black text-slate-900 tracking-tight">Export Interface</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="px-8 pb-8 space-y-6">
-                  <div className="grid grid-cols-1 gap-3">
-                    <Button variant="outline" className="group h-auto py-5 px-6 rounded-2xl border-slate-100 hover:border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm">
-                      <div className="flex items-center justify-between w-full">
-                        <div className="text-left flex items-center gap-4">
-                          <div className="p-3 bg-slate-50 text-slate-400 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                            <FileText size={20} />
-                          </div>
-                          <div>
-                            <div className="text-sm font-black text-slate-900 tracking-tight leading-none mb-1">Standard Ledger</div>
-                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">PDF • PRINT READY</div>
-                          </div>
-                        </div>
-                        <ChevronRight size={18} className="text-slate-300 group-hover:text-indigo-600 transition-all group-hover:translate-x-1" />
-                      </div>
-                    </Button>
-
-                    <Button variant="outline" className="group h-auto py-5 px-6 rounded-2xl border-slate-100 hover:border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm">
-                      <div className="flex items-center justify-between w-full">
-                        <div className="text-left flex items-center gap-4">
-                          <div className="p-3 bg-slate-50 text-slate-400 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                            <Download size={20} />
-                          </div>
-                          <div>
-                            <div className="text-sm font-black text-slate-900 tracking-tight leading-none mb-1">Data Analytics</div>
-                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">EXCEL • CSV • SQL</div>
-                          </div>
-                        </div>
-                        <ChevronRight size={18} className="text-slate-300 group-hover:text-indigo-600 transition-all group-hover:translate-x-1" />
-                      </div>
-                    </Button>
-                  </div>
-
-                  <Button className="w-full h-14 bg-slate-900 hover:bg-indigo-600 text-white font-black rounded-2xl shadow-2xl shadow-indigo-200/50 text-xs uppercase tracking-[0.2em] transition-all group active:scale-[0.98]">
-                    <Download size={18} className="mr-3 stroke-[3] group-hover:animate-bounce" /> Bulk Registry Download
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-slate-900 text-white rounded-[2.5rem] border-none shadow-3xl shadow-slate-900/20 overflow-hidden group p-1 transition-all hover:scale-[1.02]">
-                <div className="bg-slate-900 px-8 pt-10 pb-8 relative rounded-[2.2rem]">
-                  <div className="relative z-10 space-y-6">
+              {/* Campus Branch Intelligence Card (superadmin only) */}
+              {user.role === "superadmin" && (
+                <div className="px-6 sm:px-8 py-5 border-b border-slate-100">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
                     <div className="flex items-center gap-4">
-                      <div className="p-3 bg-indigo-500 rounded-xl shadow-2xl shadow-indigo-500/20">
-                        <BarChart3 size={20} className="text-white" />
+                      <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                        <Settings2 size={18} className="text-indigo-600" />
                       </div>
-                      <CardTitle className="text-white text-xl font-black tracking-tight leading-none">Performance Vector</CardTitle>
+                      <div>
+                        <p className="text-[9px] font-black text-slate-600 text-slate-900  font-bold pl-0.5 uppercase tracking-wide uppercase leading-none mb-1">Global Session Control</p>
+                        <h3 className="text-[15px] font-black text-slate-900 leading-tight tracking-tight">Campus Branch Intelligence</h3>
+                        <p className="text-[12px] text-slate-400 font-medium mt-0.5">Monitor and analyze campus performance in real-time</p>
+                      </div>
                     </div>
-                    
-                    <p className="text-xs text-indigo-200/70 font-bold uppercase tracking-widest leading-relaxed">
-                      Aggregate operational efficiency is up <span className="text-indigo-400">+4.2%</span> relative to historic baseline.
-                    </p>
+                    <div className="sm:min-w-[220px]">
+                    <Select value={selectedSchoolId} onValueChange={setSelectedSchoolId}>
+  
+  <SelectTrigger
+    className={cn(
+      "relative h-[62px] min-h-[62px]",
+      "border-2 border-slate-200",
+      "bg-gradient-to-b from-white to-slate-50/90",
+      "rounded-2xl pl-14 pr-4",
+      "text-sm font-bold text-slate-800",
+      "shadow-[0_4px_20px_rgba(15,23,42,0.05)]",
+      "hover:shadow-[0_10px_30px_rgba(99,102,241,0.10)]",
+      "transition-all duration-300",
+      "focus:ring-4 focus:ring-indigo-500/10",
+      "focus:border-indigo-400",
+      "data-[state=open]:border-indigo-400",
+      "data-[state=open]:shadow-[0_18px_45px_rgba(99,102,241,0.14)]",
+      "min-w-[240px]"
+    )}
+  >
 
-                    <div className="space-y-6 pt-2">
-                       <div className="space-y-3">
-                        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em]">
-                          <span className="text-slate-400">Survival Rate</span>
-                          <span className="text-indigo-400">98.5%</span>
-                        </div>
-                        <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden p-[2px]">
-                          <div className="h-full bg-indigo-500 w-[98.5%] rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]"></div>
-                        </div>
-                      </div>
+    {/* Left Icon */}
+    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 border border-indigo-200/50 shadow-sm">
+      <Building2 className="w-4 h-4 text-indigo-600" />
+    </div>
 
-                      <div className="flex items-center justify-between bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-2">Peak Rank Count</span>
-                          <span className="text-2xl font-black text-white leading-none">124 <span className="text-xs text-indigo-400 ml-1 font-black">A+</span></span>
-                        </div>
-                        <div className="p-3 bg-slate-900 rounded-xl text-indigo-400 border border-slate-700">
-                          <Printer size={18} />
-                        </div>
-                      </div>
+    {/* Content */}
+    <div className="flex items-center justify-between w-full gap-3">
+
+      <div className="flex flex-col items-start text-left leading-tight truncate flex-1">
+
+      
+
+        <div className="truncate text-[14px] font-extrabold text-slate-800">
+          <SelectValue placeholder="All Campuses">
+            {selectedSchoolId
+              ? schools.find(
+                  s => s.id.toString() === selectedSchoolId
+                )?.name
+              : "All Campuses"}
+          </SelectValue>
+        </div>
+      </div>
+
+    
+    </div>
+
+  </SelectTrigger>
+
+  <SelectContent
+    className="min-w-[320px] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl max-h-72"
+  >
+
+    {/* All Campuses */}
+    <SelectItem
+      value="All Campuses"
+      className="group rounded-2xl py-3 px-3 cursor-pointer transition-all duration-200 focus:bg-slate-50"
+    >
+      <div className="flex items-center gap-3 w-full">
+
+        <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shadow-sm">
+          <Globe2 className="w-4 h-4 text-slate-500" />
+        </div>
+
+        <div className="flex flex-col leading-tight">
+          <span className="text-sm font-extrabold text-slate-700">
+            All Campuses
+          </span>
+
+          <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+            Entire Organization
+          </span>
+        </div>
+      </div>
+    </SelectItem>
+
+    {/* Schools */}
+    {Array.isArray(schools) && schools.map(s => (
+      <SelectItem
+        key={s.id}
+        value={s.id.toString()}
+        className="group rounded-2xl py-3 px-3 cursor-pointer transition-all duration-200 focus:bg-indigo-50 focus:text-indigo-700"
+      >
+        <div className="flex items-center gap-3 w-full">
+
+          {/* Icon */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 border border-indigo-200/40 flex items-center justify-center shadow-sm group-focus:scale-105 transition-transform">
+            <Building2 className="w-4 h-4 text-indigo-600" />
+          </div>
+
+          {/* Text */}
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-extrabold text-slate-800">
+              {s.name}
+            </span>
+
+            <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400 font-bold">
+              Campus Branch
+            </span>
+          </div>
+        </div>
+      </SelectItem>
+    ))}
+
+  </SelectContent>
+</Select>
                     </div>
                   </div>
-                  <div className="absolute right-[-20%] bottom-[-20%] w-60 h-60 bg-indigo-600/20 rounded-full blur-[80px] pointer-events-none group-hover:bg-indigo-600/30 transition-all duration-700"></div>
                 </div>
-              </Card>
+              )}
+
+              {/* Academic Ledger Card */}
+              <div className="px-6 sm:px-8 py-6 flex-1 flex flex-col">
+                <div className="bg-white border border-slate-100 rounded-2xl shadow-sm flex-1 flex flex-col overflow-hidden">
+
+                  {/* Card Top: Title + Search + Filter */}
+                  <div className="px-6 py-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-[18px] font-black text-slate-900 tracking-tight leading-tight">Academic Ledger</h2>
+                      <p className="text-[12px] text-slate-400 font-medium mt-0.5">Registry for current examination terms</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="relative group">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={15} />
+                        <Input
+                          placeholder="Search by index or name..."
+                          value={searchQuery}
+                          onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                          className="pl-9 h-9 w-full sm:w-[220px] border-slate-200 bg-slate-50 rounded-xl text-[13px] font-medium focus:bg-white focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 transition-all placeholder:text-slate-400"
+                        />
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-all">
+                        <Filter size={15} />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Table */}
+                  {loading ? (
+                    <div className="flex-1 flex flex-col items-center justify-center py-20 gap-4">
+                      <div className="p-4 bg-slate-50 rounded-full">
+                        <Loader2 className="animate-spin text-indigo-500" size={28} />
+                      </div>
+                      <p className="text-[11px] font-black text-slate-300 uppercase tracking-widest">Compiling analytics...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="overflow-x-auto">
+                        <Table className="min-w-[750px]">
+                          <TableHeader>
+                            <TableRow className="bg-slate-50/60 border-slate-100 hover:bg-slate-50/60 h-12">
+                              <TableHead className="pl-6 pr-4 py-3 text-[12px] font-black text-slate-600  font-bold uppercase whitespace-nowrap">
+                                Entity / Student
+                              </TableHead>
+                              <TableHead className="pl-6 pr-4 py-3 text-[12px] font-black text-slate-600  font-bold uppercase whitespace-nowrap">
+                                Vector / Program
+                              </TableHead>
+                              <TableHead className="pl-6 pr-4 py-3 text-[12px] font-black text-slate-600  font-bold uppercase whitespace-nowrap">
+                                Session / Year
+                              </TableHead>
+                              <TableHead className="pl-6 pr-4 py-3 text-[12px] font-black text-slate-600  font-bold uppercase whitespace-nowrap">
+                                Module / Subject
+                              </TableHead>
+                              <TableHead className="pl-6 pr-4 py-3 text-[12px] font-black text-slate-600  font-bold uppercase whitespace-nowrap">
+                                Data / Status
+                              </TableHead>
+                              <TableHead className="pl-6 pr-4 py-3 text-[12px] font-black text-slate-600  font-bold uppercase whitespace-nowrap">
+                                Actions
+                              </TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {pagedMarks.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={6} className="py-20 text-center">
+                                  <div className="flex flex-col items-center gap-3">
+                                    <div className="p-4 bg-slate-50 rounded-full">
+                                      <Search className="text-slate-300" size={28} />
+                                    </div>
+                                    <p className="text-sm font-bold text-slate-400">No results found</p>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              pagedMarks.map((result, idx) => {
+                                const name = getStudentName(result);
+                                const initials = getInitials(name);
+                                const regNo = result.student?.registrationNumber || result.student?.RegistrationNumber ||
+                                  result.student?.GRNO || `IDX-${new Date().getFullYear()}-${String(result.student?.rollNumber || result.id || idx).padStart(5, "0")}`;
+                                const pct = result.totalMarks > 0 ? Math.round((result.obtMarks / result.totalMarks) * 100) : 0;
+
+                                return (
+                                  <TableRow key={result.id || idx} className="group border-b border-slate-50 hover:bg-slate-50/50 transition-all">
+                                    {/* ENTITY / STUDENT */}
+                                    <TableCell className="pl-6 pr-4 py-5">
+                                      <div className="flex items-center gap-3">
+                                        <div className={cn(
+                                          "w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-black shrink-0 bg-gradient-to-br",
+                                          getAvatarColor(idx)
+                                        )}>
+                                          {initials}
+                                        </div>
+                                        <div className="min-w-0">
+                                          <div className="text-[13px] font-black text-slate-900 leading-tight tracking-tight truncate">{name}</div>
+                                          <div className="text-[11px] text-slate-400 font-semibold mt-0.5 truncate">{regNo}</div>
+                                        </div>
+                                      </div>
+                                    </TableCell>
+
+                                    {/* VECTOR / PROGRAM */}
+                                    <TableCell className="px-4 py-5">
+                                      <div className="text-[13px] font-bold text-slate-800 leading-tight truncate max-w-[160px]">
+                                        {result.student?.program || result.student?.standard
+                                          ? `Class ${result.student?.standard || ""}`
+                                          : (result.examName || "General")}
+                                      </div>
+                                      <div className="text-[11px] text-slate-400 font-medium mt-0.5">
+                                        {result.student?.section ? `Section ${result.student.section}` : "Full Time"}
+                                      </div>
+                                    </TableCell>
+
+                                    {/* SESSION / YEAR */}
+                                    <TableCell className="px-4 py-5">
+                                      <div className="text-[13px] font-bold text-slate-800 leading-tight">
+                                        {result.academicYear || user.academicYearId || "2024-2025"}
+                                      </div>
+                                      <div className="text-[11px] text-slate-400 font-medium mt-0.5">
+                                        {result.term || "Spring"}
+                                      </div>
+                                    </TableCell>
+
+                                    {/* MODULE / SUBJECT */}
+                                    <TableCell className="px-4 py-5">
+                                      <div className="text-[13px] font-bold text-slate-800 leading-tight truncate max-w-[140px]">
+                                        {result.examName || result.subjectName || "General Exam"}
+                                      </div>
+                                      <div className="text-[11px] text-slate-400 font-medium mt-0.5">
+                                        {result.subjectCode || result.examCode || `EX-${String(result.id || idx).padStart(3, "0")}`}
+                                      </div>
+                                    </TableCell>
+
+                                    {/* DATA / STATUS */}
+                                    <TableCell className="px-4 py-5">
+                                      <div className="space-y-1.5">
+                                        {getPerfBadge(result.obtMarks, result.totalMarks)}
+                                        <div className="text-[12px] font-black text-slate-600 leading-none">{pct}%</div>
+                                      </div>
+                                    </TableCell>
+
+                                    {/* ACTIONS */}
+                                    <TableCell className="pr-6 pl-4 py-5 text-right">
+                                      <Dialog>
+                                        <DialogTrigger
+                                          render={
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-8 w-8 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-all"
+                                              onClick={() => setSelectedStudent(result)}
+                                            >
+                                              <MoreVertical size={16} />
+                                            </Button>
+                                          }
+                                        />
+                                        <DialogContent className="max-w-4xl w-[95vw] p-0 overflow-hidden border-none shadow-2xl rounded-[2.5rem] bg-white">
+                                          <div className="max-h-[90vh] overflow-y-auto">
+                                            <MarksheetView student={selectedStudent} />
+                                          </div>
+                                        </DialogContent>
+                                      </Dialog>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+
+                      {/* Pagination Footer */}
+                      <div className="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <p className="text-[12px] font-semibold text-slate-400">
+                          Showing <span className="text-slate-700 font-black">{sortedMarks.length > 0 ? (page - 1) * pageSize + 1 : 0}</span> to{" "}
+                          <span className="text-slate-700 font-black">{Math.min(page * pageSize, sortedMarks.length)}</span> of{" "}
+                          <span className="text-slate-700 font-black">{sortedMarks.length}</span> results
+                        </p>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-100 disabled:opacity-30"
+                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                            disabled={page === 1}
+                          >
+                            <ChevronRight size={14} className="rotate-180" />
+                          </Button>
+                          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(p => (
+                            <Button
+                              key={p}
+                              variant={page === p ? "default" : "ghost"}
+                              size="icon"
+                              className={cn(
+                                "h-8 w-8 rounded-lg text-[13px] font-black transition-all",
+                                page === p ? "bg-indigo-600 text-white shadow-md shadow-indigo-200 hover:bg-indigo-700 border-0" : "border border-slate-200 text-slate-500 hover:bg-slate-100"
+                              )}
+                              onClick={() => setPage(p)}
+                            >
+                              {p}
+                            </Button>
+                          ))}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-100 disabled:opacity-30"
+                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                            disabled={page >= totalPages}
+                          >
+                            <ChevronRight size={14} />
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ════════════════ RIGHT SIDEBAR ════════════════ */}
+            <div className="xl:w-[300px] shrink-0 border-l border-slate-100 flex flex-col">
+              <div className="px-6 pt-8 pb-5 border-b border-slate-100">
+                <h2 className="text-[18px] font-black text-indigo-600 tracking-tight">Export Interface</h2>
+                <p className="text-[12px] text-slate-400 font-medium mt-1">Choose an export format to download registry data.</p>
+              </div>
+
+              <div className="px-5 py-5 space-y-3 flex-1">
+                {/* Standard Ledger */}
+                <button className="group w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm transition-all text-left">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center group-hover:bg-indigo-50 group-hover:border-indigo-100 transition-all shrink-0">
+                      <FileText size={16} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                    </div>
+                    <div>
+                      <div className="text-[13px] font-black text-slate-900 leading-tight">Standard Ledger</div>
+                      <div className="text-[11px] text-slate-400 font-semibold mt-0.5">PDF • Print Ready Format</div>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+                </button>
+
+                {/* Data Analytics */}
+                <button className="group w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm transition-all text-left">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center group-hover:bg-indigo-50 group-hover:border-indigo-100 transition-all shrink-0">
+                      <Download size={16} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                    </div>
+                    <div>
+                      <div className="text-[13px] font-black text-slate-900 leading-tight">Data Analytics</div>
+                      <div className="text-[11px] text-slate-400 font-semibold mt-0.5">Excel • CSV • SQL</div>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+                </button>
+
+                {/* Bulk Registry Download */}
+                <div className="mt-4 rounded-2xl bg-indigo-600 overflow-hidden">
+                  <div className="px-5 py-5 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-indigo-500 flex items-center justify-center shrink-0">
+                        <CloudDownload size={18} className="text-white" />
+                      </div>
+                      <div>
+                        <div className="text-[13px] font-black text-white leading-tight">Bulk Registry Download</div>
+                        <div className="text-[11px] text-indigo-200 font-medium mt-0.5">Download complete registry data in bulk format.</div>
+                      </div>
+                    </div>
+                    <Button className="w-full h-9 bg-white hover:bg-slate-50 text-indigo-700 font-black text-[12px] rounded-xl shadow-sm transition-all gap-2 border-0">
+                      <Download size={14} className="stroke-[2.5]" />
+                      Download Now
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Info note */}
+              <div className="px-5 pb-6">
+                <div className="flex gap-2.5 p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="w-4 h-4 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-indigo-600 text-[10px] font-black leading-none">i</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                    Exports are generated in real-time and include the latest data.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </TabsContent>
 
+        {/* ─── Builder Tab ─── */}
         <TabsContent value="builder" className="focus-visible:outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
           <ReportBuilder />
         </TabsContent>
 
+        {/* ─── Marks Entry Tab ─── */}
         <TabsContent value="entry" className="focus-visible:outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
           <MarksEntry user={user} forcedSchoolId={user.role === "superadmin" ? parseSafeInt(selectedSchoolId) : undefined} />
         </TabsContent>
@@ -423,6 +665,7 @@ export default function Marks({ user }: { user: UserType }) {
   );
 }
 
+/* ──────────── Marksheet Certificate View (unchanged logic) ──────────── */
 function MarksheetView({ student }: { student: any }) {
   if (!student) return null;
 
@@ -438,11 +681,10 @@ function MarksheetView({ student }: { student: any }) {
 
   return (
     <div className="p-10 bg-white space-y-8 border-8 border-slate-50 relative overflow-hidden">
-      {/* Decorative corners */}
-      <div className="absolute top-0 left-0 w-32 h-32 border-t-2 border-l-2 border-slate-200 pointer-events-none"></div>
-      <div className="absolute top-0 right-0 w-32 h-32 border-t-2 border-r-2 border-slate-200 pointer-events-none"></div>
-      <div className="absolute bottom-0 left-0 w-32 h-32 border-b-2 border-l-2 border-slate-200 pointer-events-none"></div>
-      <div className="absolute bottom-0 right-0 w-32 h-32 border-b-2 border-r-2 border-slate-200 pointer-events-none"></div>
+      <div className="absolute top-0 left-0 w-32 h-32 border-t-2 border-l-2 border-slate-200 pointer-events-none" />
+      <div className="absolute top-0 right-0 w-32 h-32 border-t-2 border-r-2 border-slate-200 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-32 h-32 border-b-2 border-l-2 border-slate-200 pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-32 h-32 border-b-2 border-r-2 border-slate-200 pointer-events-none" />
 
       <div className="flex flex-col items-center text-center space-y-4 border-b-2 border-slate-900 pb-8">
         <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center text-white font-black text-2xl tracking-tighter">
@@ -463,14 +705,13 @@ function MarksheetView({ student }: { student: any }) {
         <div className="space-y-1 col-span-2">
           <p className="text-[10px] uppercase font-bold text-slate-400">Student Name</p>
           <p className="font-extrabold text-xl text-slate-900">
-            {student.student?.name || student.student?.fullName || student.student?.FullName || 
-             (student.student?.firstName ? `${student.student?.firstName} ${student.student?.lastName || ''}`.trim() : "") || 
-             (student.student?.FNAME ? `${student.student.FNAME} ${student.student.LNAME || ''}`.trim() : "")}
+            {student.student?.name || student.student?.fullName ||
+              (student.student?.FNAME ? `${student.student.FNAME} ${student.student.LNAME || ''}`.trim() : "")}
           </p>
         </div>
         <div className="space-y-1">
           <p className="text-[10px] uppercase font-bold text-slate-400">Roll Number</p>
-          <p className="font-bold text-slate-900">{student.student?.rollNumber || student.student?.RollNumber || student.student?.ROLLNO || "0"}</p>
+          <p className="font-bold text-slate-900">{student.student?.rollNumber || student.student?.ROLLNO || "0"}</p>
         </div>
         <div className="space-y-1">
           <p className="text-[10px] uppercase font-bold text-slate-400">Session</p>
@@ -514,17 +755,17 @@ function MarksheetView({ student }: { student: any }) {
 
       <div className="pt-8 grid grid-cols-3 gap-12">
         <div className="space-y-4 text-center">
-            <div className="h-12 border-b border-slate-300"></div>
-            <p className="text-[10px] uppercase font-bold text-slate-400">Class Teacher</p>
+          <div className="h-12 border-b border-slate-300" />
+          <p className="text-[10px] uppercase font-bold text-slate-400">Class Teacher</p>
         </div>
         <div className="flex flex-col items-center justify-center">
-            <div className="w-20 h-20 border-4 border-slate-100 rounded-full flex items-center justify-center italic text-[8px] text-slate-300 font-bold uppercase text-center rotate-12">
-                ScanID<br/>Official Seal
-            </div>
+          <div className="w-20 h-20 border-4 border-slate-100 rounded-full flex items-center justify-center italic text-[8px] text-slate-300 font-bold uppercase text-center rotate-12">
+            ScanID<br />Official Seal
+          </div>
         </div>
         <div className="space-y-4 text-center">
-            <div className="h-12 border-b border-slate-300"></div>
-            <p className="text-[10px] uppercase font-bold text-slate-400">Principal Signature</p>
+          <div className="h-12 border-b border-slate-300" />
+          <p className="text-[10px] uppercase font-bold text-slate-400">Principal Signature</p>
         </div>
       </div>
 

@@ -96,14 +96,16 @@ export default function MarksEntry({ user, forcedSchoolId }: { user: UserType, f
           apiService.getStandards(),
           apiService.getSections()
         ]);
-        setStandardsMaster(standardsRes.data || []);
-        setSectionsMaster(sectionsRes.data || []);
+        const standardsData = Array.isArray(standardsRes.data) ? standardsRes.data : (standardsRes.data?.data || []);
+        const sectionsData = Array.isArray(sectionsRes.data) ? sectionsRes.data : (sectionsRes.data?.data || []);
+        setStandardsMaster(standardsData);
+        setSectionsMaster(sectionsData);
         
-        if (standardsRes.data?.length > 0 && !standard) {
-          setStandard(standardsRes.data[0].name);
+        if (standardsData.length > 0 && !standard) {
+          setStandard(standardsData[0].name);
         }
-        if (sectionsRes.data?.length > 0 && !section) {
-          setSection(sectionsRes.data[0].name);
+        if (sectionsData.length > 0 && !section) {
+          setSection(sectionsData[0].name);
         }
       } catch (error) {
         console.error("Failed to fetch masters", error);

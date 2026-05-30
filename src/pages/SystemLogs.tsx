@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, RefreshCw, Trash2, Database, AlertCircle, History, Copy, Check, ChevronRight, Home, Terminal, ChevronLeft, ChevronsLeft, ChevronsRight, ChevronUp, ChevronDown, ArrowUpDown } from "lucide-react";
+import { Loader2, RefreshCw, Trash2, Database, AlertCircle, History, Copy, Check, ChevronRight, Home, Terminal, ChevronLeft, ChevronsLeft, ChevronsRight, ChevronUp, ChevronDown, ArrowUpDown, XCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { Link, Navigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -171,373 +171,482 @@ export default function SystemLogs({ user }: SystemLogsProps) {
   }
 
   return (
-    <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500 pb-10">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-5">
-          <div className="bg-blue-600 p-4 rounded-[1.25rem] text-white shadow-2xl shadow-blue-200 transition-transform hover:rotate-3">
-             <Terminal size={28} />
+    <div className="min-h-screen bg-[#F8FAFC] pb-12 animate-in fade-in duration-700">
+      {/* Breadcrumb Navigation */}
+      <div className="px-6 sm:px-10 py-5 flex items-center gap-2 text-[13px] font-bold">
+        <Link to="/" className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-600 transition-colors">
+          <Home size={14} />
+          <span>Home</span>
+        </Link>
+        <ChevronRight size={14} className="text-slate-300" />
+        <span className="text-indigo-600 font-bold">System Logs</span>
+      </div>
+
+      {/* Main Page Header */}
+      <div className="px-6 sm:px-10 mb-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="flex items-center gap-6">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-blue-600/20 rounded-[2rem] blur-xl group-hover:bg-blue-600/30 transition-all duration-500"></div>
+            <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[1.75rem] flex items-center justify-center text-white shadow-2xl shadow-blue-500/20 border border-white/20 transition-transform hover:scale-105 duration-300">
+              <Terminal size={32} className="sm:size-10" />
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">System Infrastructure</h1>
-            <p className="text-slate-400 font-bold mt-1 text-xs sm:text-sm uppercase tracking-widest leading-none">Monitor system activities, exceptions, and institutional data health.</p>
+          <div className="space-y-1">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-none text-slate-900 font-bold pl-0.5 uppercase tracking-wide">System Infrastructure</h1>
+            <p className="text-slate-600 font-bold text-xs sm:text-base opacity-90 leading-tight mt-1">Monitor system activities, exceptions, and institutional data health.</p>
           </div>
         </div>
         <Button 
           variant="outline" 
-          size="sm" 
           onClick={fetchData} 
           disabled={refreshing}
-          className="rounded-xl border-slate-200 font-bold bg-white shadow-sm hover:bg-slate-50 h-11 px-6 text-xs uppercase tracking-widest"
+          className="h-12 px-8 rounded-2xl border-slate-200 bg-white text-slate-900 font-black text-[11px] uppercase tracking-widest shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shrink-0 flex items-center gap-2"
         >
-          <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          <RefreshCw className={cn("h-4 w-4 text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase  stroke-[3]", refreshing && "animate-spin")} />
           Sync System Data
         </Button>
       </div>
 
-      <Tabs defaultValue="audit" orientation="horizontal" className="w-full">
-        <TabsList className="bg-slate-100/80 p-1.5 rounded-2xl h-auto overflow-x-auto max-w-full flex justify-start sm:justify-center no-scrollbar">
-          <TabsTrigger value="audit" className="px-4 sm:px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50 text-xs sm:text-sm whitespace-nowrap">
-            <History className="mr-2 h-4 w-4" />
-            Audit Trail
-          </TabsTrigger>
-          <TabsTrigger value="errors" className="px-4 sm:px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50 text-xs sm:text-sm whitespace-nowrap">
-            <AlertCircle className="mr-2 h-4 w-4" />
-            Database Errors
-          </TabsTrigger>
-          <TabsTrigger value="applogs" className="px-4 sm:px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50 text-xs sm:text-sm whitespace-nowrap">
-            <Terminal className="mr-2 h-4 w-4" />
-            Application Logs
-          </TabsTrigger>
-          <TabsTrigger value="database" className="px-4 sm:px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50 text-xs sm:text-sm whitespace-nowrap">
-            <Database className="mr-2 h-4 w-4" />
-            DB Schema
-          </TabsTrigger>
-          <TabsTrigger value="seed" className="px-4 sm:px-6 rounded-xl data-active:shadow-lg data-active:shadow-slate-200/50 text-xs sm:text-sm whitespace-nowrap">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Dummy Data
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="audit" className="mt-8">
-          <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
-            <CardHeader className="bg-white px-8 pt-8 pb-4">
-              <CardTitle className="text-2xl font-black text-slate-900">Audit Trail</CardTitle>
-              <CardDescription className="font-medium text-slate-400">Chronological record of data transactions and modifications.</CardDescription>
-            </CardHeader>
-            <CardContent className="px-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-slate-50/50 border-y border-slate-100 h-14">
-                      <TableHead className="pl-8 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleAuditSort('timestamp')}>
-                        <div className="flex items-center gap-1">
-                          Timestamp
-                          {auditSortBy === 'timestamp' ? (auditSortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
-                        </div>
-                      </TableHead>
-                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleAuditSort('type')}>
-                        <div className="flex items-center gap-1">
-                          Event Type
-                          {auditSortBy === 'type' ? (auditSortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
-                        </div>
-                      </TableHead>
-                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleAuditSort('tableName')}>
-                        <div className="flex items-center gap-1">
-                          Entity Affected
-                          {auditSortBy === 'tableName' ? (auditSortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
-                        </div>
-                      </TableHead>
-                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">UID</TableHead>
-                      <TableHead className="pr-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Operation Context</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(!Array.isArray(auditLogs) || auditLogs.length === 0) ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-20">
-                          <div className="flex flex-col items-center gap-3">
-                            <div className="p-4 bg-slate-50 rounded-full text-slate-300">
-                              <History size={32} />
-                            </div>
-                            <p className="text-slate-400 font-bold text-sm tracking-tight">No audit logs found.</p>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      auditLogs.map((log: any) => (
-                        <TableRow key={log.id || log.Id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-50">
-                          <TableCell className="pl-8 font-mono text-[10px] text-slate-500 font-bold italic">
-                            {new Date(log.dateTime || log.DateTime || log.Timestamp || log.timestamp).toLocaleString()}
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={cn(
-                              "font-black text-[9px] uppercase tracking-wider px-2",
-                              (log.type || log.Type) === "Create" ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : 
-                              (log.type || log.Type) === "Delete" ? "bg-red-100 text-red-700 hover:bg-red-100" : 
-                              "bg-blue-100 text-blue-700 hover:bg-blue-100"
-                            )}>
-                              {log.type || log.Type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="font-black text-slate-700 tracking-tight text-sm uppercase">{log.tableName || log.TableName}</TableCell>
-                          <TableCell className="text-[10px] font-mono text-slate-400">ID:{log.primaryKey || log.PrimaryKey}</TableCell>
-                          <TableCell className="pr-8">
-                            <div className="max-w-md truncate text-[11px] font-bold text-slate-400" title={log.newValues || log.NewValues || ""}>
-                              {(log.affectedColumns || log.AffectedColumns) ? `Changes in: ${log.affectedColumns || log.AffectedColumns}` : "Full entity record interaction"}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Audit Pagination */}
-              <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 bg-slate-50/50 border-t border-slate-100 gap-4">
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest text-[10px]">
-                  Showing <span className="text-slate-900 font-black">{auditLogs.length > 0 ? (auditPage - 1) * auditPageSize + 1 : 0}</span> to <span className="text-slate-900 font-black">{Math.min(auditPage * auditPageSize, auditTotalCount)}</span> of <span className="text-slate-900 font-black">{auditTotalCount}</span> entries
-                </div>
+      <div className="px-6 sm:px-10">
+        <Tabs defaultValue="errors" orientation="horizontal" className="w-full">
+          <div className="mb-10 overflow-x-auto no-scrollbar">
+            <TabsList className="bg-transparent h-auto p-0 gap-4 flex justify-start items-center">
+              <TabsTrigger 
+                value="audit" 
+                className={cn(
+                  "h-14 px-8 rounded-xl font-black text-[11px] uppercase transition-all border shrink-0",
+                  "bg-white text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide",
+                  "data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:border-indigo-200 data-[state=active]:shadow-lg data-[state=active]:shadow-indigo-100/50"
+                )}
+              >
+                <History className="mr-3 h-4 w-4 ms-5 stroke-[3]" />
                 
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 mr-4">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rows</span>
-                    <Select value={auditPageSize.toString()} onValueChange={(v) => { setAuditPageSize(parseInt(v)); setAuditPage(1); }}>
-                      <SelectTrigger className="w-[70px] h-8 bg-white border-slate-200 rounded-lg text-xs font-bold">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                        {[10, 25, 50, 100].map(size => (
-                          <SelectItem key={size} value={size.toString()} className="text-xs font-bold">{size}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setAuditPage(1)} disabled={auditPage === 1}>
-                      <ChevronsLeft size={14} />
-                    </Button>
-                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setAuditPage(prev => Math.max(1, prev - 1))} disabled={auditPage === 1}>
-                      <ChevronLeft size={14} />
-                    </Button>
-                    <div className="flex items-center px-3 h-8 bg-white border border-slate-200 rounded-lg text-xs font-black mx-1">
-                      {auditPage} / {auditTotalPages || 1}
-                    </div>
-                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setAuditPage(prev => Math.min(auditTotalPages, prev + 1))} disabled={auditPage >= auditTotalPages}>
-                      <ChevronRight size={14} />
-                    </Button>
-                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setAuditPage(auditTotalPages)} disabled={auditPage >= auditTotalPages}>
-                      <ChevronsRight size={14} />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="errors" className="mt-8">
-          <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
-        <CardHeader className="bg-white px-4 sm:px-8 pt-6 sm:pt-8 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <CardTitle className="text-xl sm:text-2xl font-black text-slate-900">Database Errors</CardTitle>
-            <CardDescription className="font-medium text-slate-400">Exceptions recorded during database operations.</CardDescription>
+                
+                Audit Trail
+              </TabsTrigger>
+              <TabsTrigger 
+                value="errors" 
+                className={cn(
+                  "h-14 px-8 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all border shrink-0",
+                  "bg-white border-slate-100 shadow-sm text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide",
+                  "data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:border-indigo-200 data-[state=active]:shadow-lg data-[state=active]:shadow-indigo-100/50"
+                )}
+              >
+                <Database className="mr-3 h-4 w-4 ms-5 stroke-[3]" />
+                Database Errors
+              </TabsTrigger>
+              <TabsTrigger 
+                value="applogs" 
+                className={cn(
+                  "h-14 px-8 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all border shrink-0",
+                  "bg-white border-slate-100 shadow-sm text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide",
+                  "data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:border-indigo-200 data-[state=active]:shadow-lg data-[state=active]:shadow-indigo-100/50"
+                )}
+              >
+                <Terminal className="mr-3 h-4 w-4 ms-5 stroke-[3]" />
+                Application Logs
+              </TabsTrigger>
+              <TabsTrigger 
+                value="database" 
+                className={cn(
+                  "h-14 px-8 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all border shrink-0",
+                  "bg-white border-slate-100 shadow-sm text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide",
+                  "data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:border-indigo-200 data-[state=active]:shadow-lg data-[state=active]:shadow-indigo-100/50"
+                )}
+              >
+                <Database className="mr-3 h-4 w-4 ms-5 stroke-[3]" />
+                DB Schema
+              </TabsTrigger>
+              <TabsTrigger 
+                value="seed" 
+                className={cn(
+                  "h-14 px-8 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all border shrink-0",
+                  "bg-white border-slate-100 shadow-sm text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide",
+                  "data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:border-indigo-200 data-[state=active]:shadow-lg data-[state=active]:shadow-indigo-100/50"
+                )}
+              >
+                <RefreshCw className="mr-3 h-4 w-4 ms-5 stroke-[3]" />
+                Dummy Data
+              </TabsTrigger>
+            </TabsList>
           </div>
-          <Button 
-            variant="destructive" 
-            size="sm" 
-            onClick={clearErrorLogs} 
-            disabled={errorLogs.length === 0}
-            className="rounded-xl font-black px-5 h-9 text-[10px] uppercase tracking-widest shadow-lg shadow-red-100 w-full sm:w-auto"
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Flush Logs
-          </Button>
-        </CardHeader>
-            <CardContent className="px-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-slate-50/50 border-y border-slate-100 h-14">
-                      <TableHead className="pl-8 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleErrorSort('timestamp')}>
-                        <div className="flex items-center gap-1">
-                          Event Time
-                          {errorSortBy === 'timestamp' ? (errorSortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
-                        </div>
-                      </TableHead>
-                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleErrorSort('level')}>
-                        <div className="flex items-center gap-1">
-                          Severity
-                          {errorSortBy === 'level' ? (errorSortOrder === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ArrowUpDown size={10} className="opacity-30" />}
-                        </div>
-                      </TableHead>
-                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Error Origin</TableHead>
-                      <TableHead className="pr-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Message Detail</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(!Array.isArray(errorLogs) || errorLogs.length === 0) ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center py-20">
-                          <div className="flex flex-col items-center gap-3">
-                            <div className="p-4 bg-slate-50 rounded-full text-slate-300">
-                              <AlertCircle size={32} />
-                            </div>
-                            <p className="text-slate-400 font-bold text-sm tracking-tight">Systems are healthy. No errors found.</p>
+
+          <TabsContent value="errors" className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-6 duration-700">
+            <Card className="shadow-[0_32px_64px_-16px_rgba(0,0,0,0.05)] border border-slate-100 rounded-[2.5rem] overflow-hidden bg-white">
+              <CardHeader className="px-8 sm:px-12 pt-12 pb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-8">
+                <div className="flex items-center gap-6">
+                  <div className="relative">
+                    <div className="w-16 h-16 bg-red-50 rounded-[1.25rem] flex items-center justify-center text-red-500 shadow-sm border border-red-100/50">
+                      <Database size={32} className="stroke-[2.5]" />
+                    </div>
+                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full border-4 border-white flex items-center justify-center text-white shadow-sm">
+                      <AlertCircle size={10} className="stroke-[3]" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <CardTitle className="text-xl sm:text-3xl font-black font-semibold  text-slate-900 tracking-tight">Database Errors</CardTitle>
+                    <CardDescription className="text-slate-700 font-bold uppercase tracking-[0.1em] text-[11px] opacity-80 leading-tight">Exceptions recorded during database operations.</CardDescription>
+                  </div>
+                </div>
+                <Button 
+                  variant="destructive" 
+                  onClick={clearErrorLogs} 
+                  disabled={errorLogs.length === 0}
+                  className="h-12 px-8 rounded-2xl bg-[#FFF1F1] hover:bg-red-50 text-red-500 font-black text-[11px] uppercase tracking-widest border border-red-100 shadow-sm transition-all flex items-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4 stroke-[3]" />
+                  Flush Logs
+                </Button>
+              </CardHeader>
+
+              <CardContent className="px-0 pt-0">
+                <div className="overflow-x-auto selection:bg-indigo-100">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50/50 border-y border-slate-100 h-20">
+                        <TableHead className="pl-12 w-[240px]">
+                          <div className="flex items-center gap-2 cursor-pointer text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 hover:text-indigo-600 transition-colors" onClick={() => handleErrorSort('timestamp')}>
+                            Event Timestamp
+                            <ArrowUpDown size={12} className="opacity-40" />
                           </div>
-                        </TableCell>
+                        </TableHead>
+                        <TableHead className="w-[180px]">
+                          <div className="flex items-center gap-2 cursor-pointer text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 hover:text-indigo-600 transition-colors" onClick={() => handleErrorSort('level')}>
+                            Severity
+                            <ArrowUpDown size={12} className="opacity-40" />
+                          </div>
+                        </TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 min-w-[200px]">
+                          Error Origin
+                        </TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 min-w-[300px]">
+                          Detailed Signal
+                        </TableHead>
+                        <TableHead className="pr-12 text-right w-20"></TableHead>
                       </TableRow>
-                    ) : (
-                      errorLogs.map((log: any) => (
-                        <TableRow key={log.id || log.Id} className="hover:bg-red-50/30 transition-colors border-b border-slate-50">
-                          <TableCell className="pl-8 font-mono text-[10px] text-slate-500 font-bold italic whitespace-nowrap">
-                            {new Date(log.timestamp || log.Timestamp || log.dateTime || log.DateTime).toLocaleString()}
-                          </TableCell>
-                          <TableCell>
-                            <Badge className="bg-red-500 text-white font-black text-[9px] uppercase tracking-wider px-2 hover:bg-red-600">
-                              {log.level || log.Level || "Error"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="font-black text-slate-700 tracking-tight text-xs uppercase">{log.properties || log.Properties || "System"}</TableCell>
-                          <TableCell className="pr-8">
-                            <p className="text-[11px] font-bold text-slate-500 max-w-xl">{log.message || log.Message}</p>
+                    </TableHeader>
+                    <TableBody>
+                      {(!Array.isArray(errorLogs) || errorLogs.length === 0) ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="py-32 text-center bg-white">
+                            <div className="flex flex-col items-center gap-5">
+                              <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 border border-slate-100/50 shadow-inner">
+                                <Database size={48} />
+                              </div>
+                              <div className="space-y-2">
+                                <p className="text-slate-900 font-black text-xl tracking-tight leading-none">All Systems Healthy</p>
+                                <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.1em] opacity-80">No database exceptions recorded in the current session</p>
+                              </div>
+                            </div>
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Error Pagination */}
-              <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 bg-slate-50/50 border-t border-slate-100 gap-4">
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest text-[10px]">
-                  Showing <span className="text-slate-900 font-black">{errorLogs.length > 0 ? (errorPage - 1) * errorPageSize + 1 : 0}</span> to <span className="text-slate-900 font-black">{Math.min(errorPage * errorPageSize, errorTotalCount)}</span> of <span className="text-slate-900 font-black">{errorTotalCount}</span> entries
+                      ) : (
+                        errorLogs.map((log: any) => (
+                          <TableRow key={log.id || log.Id} className="group hover:bg-slate-50/40 transition-all border-b border-slate-50 h-[100px] bg-white">
+                            <TableCell className="pl-12">
+                              <div className="flex items-center gap-5">
+                                <div className="w-12 h-12 rounded-2xl border border-slate-100 bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-100 group-hover:rotate-6 transition-all duration-500">
+                                  <Clock size={18} strokeWidth={2.5} />
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                  <span className="text-[14px] font-black text-slate-900 leading-none tracking-tight">
+                                    {new Date(log.timestamp || log.Timestamp || log.dateTime || log.DateTime).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}
+                                  </span>
+                                  <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 opacity-70">
+                                    {new Date(log.timestamp || log.Timestamp || log.dateTime || log.DateTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                  </span>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              { (log.level || log.Level || "Error") === "Warning" ? (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 text-amber-600 border border-amber-100 rounded-xl w-fit shadow-sm">
+                                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                   <span className="text-[10px] font-black uppercase tracking-widest">Warning</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 border border-red-100 rounded-xl w-fit shadow-sm">
+                                   <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                   <span className="text-[10px] font-black uppercase tracking-widest">Exception</span>
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-2">
+                                <span className="text-[13px] font-black text-slate-800 tracking-tight leading-none truncate max-w-[200px]">
+                                  {log.properties?.includes('USER:') ? log.properties : (log.properties || "/API/INSTITUTION")}
+                                </span>
+                                <span className="text-[9px] font-black text-indigo-500 uppercase tracking-[0.2em] bg-indigo-50/50 px-2 py-1 rounded-lg w-fit border border-indigo-100/30">
+                                  {log.properties?.includes('User') ? "Access Control" : "Data Master"}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <p className="text-[13px] font-bold text-slate-500 max-w-[450px] line-clamp-2 group-hover:text-slate-900 transition-colors leading-relaxed" title={log.message || log.Message}>
+                                {log.message || log.Message}
+                              </p>
+                            </TableCell>
+                            <TableCell className="pr-12 text-right">
+                               <button className="p-2.5 rounded-xl bg-slate-50 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
+                                 <ChevronRight size={16} />
+                               </button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
-                
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 mr-4">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rows</span>
-                    <Select value={errorPageSize.toString()} onValueChange={(v) => { setErrorPageSize(parseInt(v)); setErrorPage(1); }}>
-                      <SelectTrigger className="w-[70px] h-8 bg-white border-slate-200 rounded-lg text-xs font-bold">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                        {[10, 25, 50, 100].map(size => (
-                          <SelectItem key={size} value={size.toString()} className="text-xs font-bold">{size}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
 
-                  <div className="flex items-center gap-1">
-                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setErrorPage(1)} disabled={errorPage === 1}>
-                      <ChevronsLeft size={14} />
-                    </Button>
-                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setErrorPage(prev => Math.max(1, prev - 1))} disabled={errorPage === 1}>
-                      <ChevronLeft size={14} />
-                    </Button>
-                    <div className="flex items-center px-3 h-8 bg-white border border-slate-200 rounded-lg text-xs font-black mx-1">
-                      {errorPage} / {errorTotalPages || 1}
+                {/* Pagination Footer */}
+                <div className="flex flex-col sm:flex-row items-center justify-between px-12 py-10 bg-white border-t border-slate-50 gap-8 mt-6">
+                  <div className="text-[12px] font-black text-slate-400 uppercase tracking-[0.15em] opacity-80">
+                    Showing <span className="text-slate-900 font-black">{errorLogs.length > 0 ? (errorPage - 1) * errorPageSize + 1 : 0}</span> to <span className="text-slate-900 font-black">{Math.min(errorPage * errorPageSize, errorTotalCount)}</span> of <span className="text-slate-900 font-black">{errorTotalCount}</span> entries
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row items-center gap-8">
+                    <div className="flex items-center gap-4">
+                      <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Rows per page</span>
+                      <Select value={errorPageSize.toString()} onValueChange={(v) => { setErrorPageSize(parseInt(v)); setErrorPage(1); }}>
+                        <SelectTrigger className="w-[85px] h-11 bg-[#F8FAFC] border-slate-100 rounded-xl text-[13px] font-black text-slate-900 shadow-sm focus:ring-4 focus:ring-indigo-500/5 transition-all">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
+                          {[10, 25, 50, 100].map(size => (
+                            <SelectItem key={size} value={size.toString()} className="text-[13px] font-bold rounded-xl py-3 px-4 focus:bg-indigo-50 focus:text-indigo-600 transition-all">{size}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setErrorPage(prev => Math.min(errorTotalPages, prev + 1))} disabled={errorPage >= errorTotalPages}>
-                      <ChevronRight size={14} />
-                    </Button>
-                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setErrorPage(errorTotalPages)} disabled={errorPage >= errorTotalPages}>
-                      <ChevronsRight size={14} />
-                    </Button>
+
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" className="h-11 w-11 rounded-2xl text-slate-400 hover:bg-slate-50 transition-all" onClick={() => setErrorPage(1)} disabled={errorPage === 1}>
+                        <ChevronsLeft size={18} />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-11 w-11 rounded-2xl text-slate-400 hover:bg-slate-50 transition-all" onClick={() => setErrorPage(prev => Math.max(1, prev - 1))} disabled={errorPage === 1}>
+                        <ChevronLeft size={18} />
+                      </Button>
+                      <div className="flex items-center justify-center min-w-[44px] h-11 px-4 bg-indigo-600 rounded-2xl text-[13px] font-black text-white shadow-xl shadow-indigo-200">
+                        {errorPage}
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-11 w-11 rounded-2xl text-slate-400 hover:bg-slate-50 transition-all" onClick={() => setErrorPage(prev => Math.min(errorTotalPages, prev + 1))} disabled={errorPage >= errorTotalPages}>
+                        <ChevronRight size={18} />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-11 w-11 rounded-2xl text-slate-400 hover:bg-slate-50 transition-all" onClick={() => setErrorPage(errorTotalPages)} disabled={errorPage >= errorTotalPages}>
+                        <ChevronsRight size={18} />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        <TabsContent value="applogs" className="mt-8">
-          <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
-            <CardHeader className="bg-white px-8 pt-8 pb-4">
-              <CardTitle className="text-2xl font-black text-slate-900">Application Runtime Logs</CardTitle>
-              <CardDescription className="font-medium text-slate-400">Real-time logs captured on the server filesystem.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-8 pb-10">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-blue-500/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                <ScrollArea className="h-[600px] w-full rounded-[1.5rem] border-4 border-slate-900 bg-slate-950 p-6 shadow-2xl relative z-10">
-                  <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-800/50">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                    <span className="text-[10px] font-mono text-slate-600 ml-2 uppercase font-black tracking-widest underline decoration-blue-500/50 decoration-2">server_log_active</span>
+          {/* Audit Trail Tab - Standardized with new high-fidelity design */}
+          <TabsContent value="audit" className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-6 duration-700">
+             <Card className="shadow-[0_32px_64px_-16px_rgba(0,0,0,0.05)] border border-slate-100 rounded-[2.5rem] overflow-hidden bg-white">
+              <CardHeader className="px-8 sm:px-12 pt-12 pb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-8">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-indigo-50 rounded-[1.25rem] flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100/50">
+                    <History size={32} className="stroke-[2.5]" />
                   </div>
-                  <pre className="font-mono text-xs leading-relaxed text-blue-200/80 whitespace-pre-wrap selection:bg-blue-500/30">
-                    {appLogs || "-- No recent application activity logged yet."}
+                  <div className="space-y-1">
+                    <CardTitle className="text-2xl sm:text-3xl font-black font-semibold  text-slate-900 tracking-tight">Audit Trail</CardTitle>
+                    <CardDescription className="text-slate-700 font-bold mt-1 uppercase tracking-[0.1em] text-[11px] opacity-80 leading-tight">Chronological record of data transactions and modifications.</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="px-0 pt-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50/50 border-y border-slate-100 h-20">
+                        <TableHead className="pl-12 w-[240px] text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Event Timestamp</TableHead>
+                        <TableHead className="w-[180px] text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Action Type</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 min-w-[200px]">Target Entity</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 w-[120px]">Entity ID</TableHead>
+                        <TableHead className="pr-12 text-right text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 min-w-[300px]">Transaction Context</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(!Array.isArray(auditLogs) || auditLogs.length === 0) ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-32 bg-white">
+                            <div className="flex flex-col items-center gap-5">
+                              <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 shadow-inner">
+                                <History size={48} />
+                              </div>
+                              <p className="text-slate-400 font-bold text-sm uppercase tracking-[0.2em]">No operational history detected yet</p>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        auditLogs.map((log: any) => (
+                          <TableRow key={log.id || log.Id} className="hover:bg-slate-50/40 transition-all border-b border-slate-50 h-[100px] bg-white group">
+                            <TableCell className="pl-12">
+                              <div className="flex items-center gap-5">
+                                <div className="w-12 h-12 rounded-2xl border border-slate-100 bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:rotate-6 transition-all duration-500">
+                                  <History size={18} strokeWidth={2.5} />
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                  <span className="text-[14px] font-black text-slate-900 leading-none tracking-tight">
+                                    {new Date(log.dateTime || log.DateTime || log.Timestamp || log.timestamp).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}
+                                  </span>
+                                  <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 opacity-70">
+                                    {new Date(log.dateTime || log.DateTime || log.Timestamp || log.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                  </span>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className={cn(
+                                "flex items-center gap-2 px-3 py-1.5 rounded-xl border-none transition-all shadow-sm w-fit",
+                                (log.type || log.Type) === "Create" ? "bg-emerald-50 text-emerald-600" : 
+                                (log.type || log.Type) === "Delete" ? "bg-red-50 text-red-600" : 
+                                "bg-indigo-50 text-indigo-600"
+                              )}>
+                                <div className={cn(
+                                   "w-1.5 h-1.5 rounded-full",
+                                   (log.type || log.Type) === "Create" ? "bg-emerald-500" : 
+                                   (log.type || log.Type) === "Delete" ? "bg-red-500" : 
+                                   "bg-indigo-500"
+                                )} />
+                                <span className="text-[10px] font-black uppercase tracking-widest">
+                                  {log.type || log.Type}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-2">
+                                <span className="text-[14px] font-black text-slate-800 tracking-tight leading-none uppercase">
+                                  {log.tableName || log.TableName}
+                                </span>
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">System Entity</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <code className="text-[11px] font-black font-mono text-slate-500 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-100">
+                                #{log.primaryKey || log.PrimaryKey}
+                              </code>
+                            </TableCell>
+                            <TableCell className="pr-12 text-right">
+                              <div className="max-w-[400px] ml-auto text-[13px] font-bold text-slate-500 italic bg-slate-50/50 px-4 py-2 rounded-xl group-hover:text-indigo-600 group-hover:bg-indigo-50 transition-all border border-transparent group-hover:border-indigo-100 line-clamp-2" title={log.newValues || log.NewValues || ""}>
+                                {(log.affectedColumns || log.AffectedColumns) ? `Modified: ${log.affectedColumns || log.AffectedColumns}` : "System-level state modification"}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Application Logs Tab - Modern Terminal Design */}
+          <TabsContent value="applogs" className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-6 duration-700">
+             <Card className="shadow-[0_32px_64px_-16px_rgba(0,0,0,0.05)] border border-slate-100 rounded-[2.5rem] overflow-hidden bg-white">
+              <CardHeader className="px-12 pt-12 pb-10 flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-slate-900 rounded-[1.25rem] flex items-center justify-center text-emerald-400 shadow-2xl shadow-slate-900/10 border border-white/5">
+                    <Terminal size={32} className="stroke-[2.5]" />
+                  </div>
+                  <div className="space-y-1">
+                    <CardTitle className="text-2xl sm:text-3xl font-black text-slate-900 font-semibold  tracking-tight">Application Runtime Logs</CardTitle>
+                    <CardDescription className="text-slate-700 font-bold mt-1 uppercase tracking-[0.1em] text-[11px] opacity-80 leading-tight">Real-time logs captured on the server filesystem.</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="px-12 pb-12 pt-0">
+                <div className="relative group p-2 bg-slate-900 rounded-[2.5rem] shadow-[0_45px_70px_-20px_rgba(0,0,0,0.4)] border border-white/5">
+                  <ScrollArea className="h-[650px] w-full rounded-[2.2rem] bg-[#020617] p-10 border border-white/5 custom-scrollbar">
+                    <div className="flex items-center gap-2.5 mb-10 pb-6 border-b border-white/5">
+                      <div className="w-3.5 h-3.5 rounded-full bg-[#FF5F56] shadow-[0_0_12px_rgba(255,95,86,0.6)]"></div>
+                      <div className="w-3.5 h-3.5 rounded-full bg-[#FFBD2E] shadow-[0_0_12px_rgba(255,189,46,0.6)]"></div>
+                      <div className="w-3.5 h-3.5 rounded-full bg-[#27C93F] shadow-[0_0_12px_rgba(39,201,63,0.6)]"></div>
+                      <span className="text-[12px] font-black text-slate-500 ml-4 uppercase tracking-[0.3em] font-mono opacity-80 underline decoration-indigo-500/40 decoration-2 underline-offset-8">scanid_log_active • connection_v2.1</span>
+                    </div>
+                    <pre className="font-mono text-[14px] leading-relaxed text-[#CBD5E1]/90 whitespace-pre-wrap selection:bg-indigo-500/40 tracking-tight">
+                      {appLogs || "-- No recent application activity logged yet."}
+                    </pre>
+                  </ScrollArea>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Database Schema Tab */}
+          <TabsContent value="database" className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-6 duration-700">
+             <Card className="shadow-[0_32px_64px_-16px_rgba(0,0,0,0.05)] border border-slate-100 rounded-[2.5rem] overflow-hidden bg-white">
+              <CardHeader className="px-12 pt-12 pb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-8">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-blue-50 rounded-[1.25rem] flex items-center justify-center text-blue-600 shadow-sm border border-blue-100/50">
+                    <Database size={32} className="stroke-[2.5]" />
+                  </div>
+                  <div className="space-y-1">
+                    <CardTitle className="text-2xl sm:text-3xl font-black text-slate-900 font-semibold tracking-tight">Database Schema</CardTitle>
+                    <CardDescription className="text-slate-700 font-bold mt-1 uppercase tracking-[0.1em] text-[11px] opacity-80 leading-tight">Current institutional database structure for environment provisioning.</CardDescription>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={copyToClipboard}
+                  className="h-12 px-8 rounded-2xl border-slate-200 bg-white text-slate-900 font-black text-[11px] uppercase tracking-widest shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shrink-0 flex items-center gap-2"
+                >
+                  {copied ? <Check className="h-4 w-4 text-emerald-500 stroke-[3]" /> : <Copy className="h-4 w-4 stroke-[3]" />}
+                  {copied ? "Script Saved" : "Copy Schema SQL"}
+                </Button>
+              </CardHeader>
+              <CardContent className="px-12 pb-12 pt-0">
+                <ScrollArea className="h-[600px] w-full rounded-[2.5rem] bg-slate-50/50 border border-slate-100 p-10 font-mono text-[14px] text-slate-700 leading-relaxed shadow-inner selection:bg-indigo-100">
+                  <pre className="whitespace-pre-wrap text-indigo-900/80 tracking-tight">
+                    {dbScript || "-- The database script could not be loaded at this time."}
                   </pre>
                 </ScrollArea>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        <TabsContent value="database" className="mt-8">
-          <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
-            <CardHeader className="bg-white px-8 pt-8 pb-4 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl font-black text-slate-900">Database Schema</CardTitle>
-                <CardDescription className="font-medium text-slate-400">Current institutional database structure for environment provisioning.</CardDescription>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={copyToClipboard}
-                className="rounded-xl font-black px-6 h-9 border-slate-200 text-[10px] uppercase tracking-widest bg-white shadow-sm hover:bg-slate-50"
-              >
-                {copied ? <Check className="mr-2 h-4 w-4 text-emerald-500" /> : <Copy className="mr-2 h-4 w-4" />}
-                {copied ? "Script Saved" : "Copy Schema SQL"}
-              </Button>
-            </CardHeader>
-            <CardContent className="p-8 pb-10">
-              <ScrollArea className="h-[600px] w-full rounded-[1.5rem] bg-slate-50 border border-slate-200 p-8 font-mono text-[13px] text-slate-700 leading-relaxed shadow-inner">
-                <pre className="whitespace-pre-wrap selection:bg-blue-100">
-                  {dbScript || "-- The database script could not be loaded at this time."}
-                </pre>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="seed" className="mt-8">
-          <Card className="shadow-2xl shadow-slate-200/60 border-none rounded-[2rem] overflow-hidden">
-            <CardHeader className="bg-white px-8 pt-8 pb-4 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl font-black text-slate-900">Dummy Data Insert Script</CardTitle>
-                <CardDescription className="font-medium text-slate-400">SQL script to populate all tables with dummy data for testing.</CardDescription>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  navigator.clipboard.writeText(seedScript);
-                  setSeedCopied(true);
-                  toast.success("Seed script copied");
-                  setTimeout(() => setSeedCopied(false), 2000);
-                }}
-                className="rounded-xl font-black px-6 h-9 border-slate-200 text-[10px] uppercase tracking-widest bg-white shadow-sm hover:bg-slate-50"
-              >
-                {seedCopied ? <Check className="mr-2 h-4 w-4 text-emerald-500" /> : <Copy className="mr-2 h-4 w-4" />}
-                {seedCopied ? "Data Script Saved" : "Copy Data SQL"}
-              </Button>
-            </CardHeader>
-            <CardContent className="p-8 pb-10">
-              <ScrollArea className="h-[600px] w-full rounded-[1.5rem] bg-slate-100 border border-slate-200 p-8 font-mono text-[13px] text-slate-700 leading-relaxed shadow-inner">
-                <pre className="whitespace-pre-wrap selection:bg-blue-100">
-                  {seedScript || "-- The seed data script could not be loaded at this time."}
-                </pre>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          {/* Dummy Data Tab */}
+          <TabsContent value="seed" className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-6 duration-700">
+             <Card className="shadow-[0_32px_64px_-16px_rgba(0,0,0,0.05)] border border-slate-100 rounded-[2.5rem] overflow-hidden bg-white">
+              <CardHeader className="px-12 pt-12 pb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-8">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-emerald-50 rounded-[1.25rem] flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-100/50">
+                    <RefreshCw size={32} className="stroke-[2.5]" />
+                  </div>
+                  <div className="space-y-1">
+                    <CardTitle className="text-2xl sm:text-3xl font-black font-semibold  text-slate-900 tracking-tight">Seed Master Data</CardTitle>
+                    <CardDescription className="text-slate-700 font-bold mt-1 uppercase tracking-[0.1em] text-[11px] opacity-80 leading-tight">SQL script to populate all tables with dummy data for testing.</CardDescription>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    navigator.clipboard.writeText(seedScript);
+                    setSeedCopied(true);
+                    toast.success("Seed script copied");
+                    setTimeout(() => setSeedCopied(false), 2000);
+                  }}
+                  className="h-12 px-8 rounded-2xl border-slate-200 bg-white text-slate-900 font-black text-[11px] uppercase tracking-widest shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shrink-0 flex items-center gap-2"
+                >
+                  {seedCopied ? <Check className="h-4 w-4 text-emerald-500 text-slate-900 text-xs sm:text-sm font-bold pl-0.5 uppercase tracking-wide stroke-[3]" /> : <Copy className="h-4 w-4 stroke-[3]" />}
+                  {seedCopied ? "Data Script Saved" : "Copy Data SQL"}
+                </Button>
+              </CardHeader>
+              <CardContent className="px-12 pb-12 pt-0">
+                <ScrollArea className="h-[600px] w-full rounded-[2.5rem] bg-slate-50/50 border border-slate-100 p-10 font-mono text-[14px] text-slate-700 leading-relaxed shadow-inner selection:bg-indigo-100">
+                  <pre className="whitespace-pre-wrap text-emerald-900/80 tracking-tight">
+                    {seedScript || "-- The seed data script could not be loaded at this time."}
+                  </pre>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
+
